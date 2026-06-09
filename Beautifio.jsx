@@ -14,12 +14,14 @@ import {
    ────────────────────────────────────────────────────────── */
 
 const C = {
-  plum: "#4A2335", plumDeep: "#351826", rose: "#BF5577", roseDeep: "#A33F62",
-  blush: "#E2A0B5", soft: "#F4D8E1", cream: "#FBF4EF", white: "#FFFFFF",
-  caramel: "#B97D4B", caramelBg: "#FBF2E8", sage: "#7E9B6F", sageDeep: "#5E7A50",
-  charcoal: "#2E1922", gray: "#8A6B76", border: "#ECD6DE", gold: "#D89A52",
+  gold: "#FFD05B", yellow: "#FFD462", yellowSoft: "#FFF1C8", pink: "#F56BA4", pinkDeep: "#D41D6E",
+  blush: "#F4C4D1", black: "#1B1220", blackSoft: "#2B1D33", cream: "#FFF7EA", white: "#FFFFFF",
+  gray: "#6D5A70", border: "#E8D5DA", accent: "#0D0A0E",
+  plum: "#2B1D33", plumDeep: "#1B1220", rose: "#F56BA4", roseDeep: "#D41D6E",
+  soft: "#FFF1C8", caramel: "#FFD05B", caramelBg: "#FFF1C8", charcoal: "#1B1220", sage: "#D41D6E", sageDeep: "#D41D6E"
 };
-const serif = "Georgia, 'Times New Roman', serif";
+const brandFont = "'Montserrat', sans-serif";
+const serif = brandFont;
 
 /* ── DATA ────────────────────────────────────────────────── */
 const PRODUCTS = [
@@ -134,40 +136,42 @@ function Stars({ value, size = 13 }) {
 function ProductCard({ p, onClick, matchScore, reasons }) {
   return (
     <button onClick={onClick} className="w-full text-left"
-      style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 18, padding: 14, marginBottom: 12 }}>
+      style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 24, padding: 16, marginBottom: 14, boxShadow: "0 18px 45px rgba(27,18,32,0.06)" }}>
       <div className="flex gap-3">
         <div className="flex items-center justify-center shrink-0"
-          style={{ width: 60, height: 60, borderRadius: 14, background: C.soft, fontSize: 28 }}>
+          style={{ width: 66, height: 66, borderRadius: 20, background: C.yellowSoft, fontSize: 28, color: C.pinkDeep }}>
           {p.emoji}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <p style={{ fontSize: 10, fontWeight: 700, color: C.rose, letterSpacing: 1 }}>{p.brand.toUpperCase()}</p>
+            <span className="inline-flex items-center gap-1" style={{ fontSize: 10.5, fontWeight: 700, color: C.pinkDeep, letterSpacing: 1 }}>
+              <Sparkles size={12} /> {p.brand.toUpperCase()}
+            </span>
             {matchScore != null && (
-              <Pill bg={matchScore >= 80 ? C.sage : matchScore >= 60 ? C.gold : C.gray} color={C.white}>
+              <Pill bg={matchScore >= 80 ? C.pink : matchScore >= 60 ? C.yellow : C.border} color={matchScore >= 60 ? C.black : C.gray}>
                 {matchScore}% cocok
               </Pill>
             )}
           </div>
-          <p style={{ fontSize: 14, fontWeight: 700, color: C.charcoal, lineHeight: 1.2, marginTop: 2 }}>{p.name}</p>
-          <div className="flex items-center gap-2 mt-1">
+          <p style={{ fontSize: 15, fontWeight: 800, color: C.black, lineHeight: 1.3, marginTop: 4 }}>{p.name}</p>
+          <div className="flex items-center gap-2 mt-2">
             <Stars value={p.rating} />
             <span style={{ fontSize: 11, color: C.gray }}>{p.rating} · {p.reviews} ulasan</span>
           </div>
-          <div className="flex items-center justify-between mt-2">
-            <span style={{ fontSize: 15, fontWeight: 800, color: C.charcoal }}>{rupiah(p.price)}</span>
+          <div className="flex items-center justify-between mt-3">
+            <span style={{ fontSize: 16, fontWeight: 800, color: C.black }}>{rupiah(p.price)}</span>
             <VerifiedTag ok={p.verified} />
           </div>
         </div>
       </div>
       {reasons && reasons.length > 0 && (
-        <div className="mt-3 pt-3" style={{ borderTop: `1px dashed ${C.border}` }}>
-          <p style={{ fontSize: 10, fontWeight: 700, color: C.sageDeep, marginBottom: 4 }}>KENAPA COCOK UNTUKMU</p>
-          <div className="flex flex-wrap gap-1.5">
+        <div className="mt-4 pt-4" style={{ borderTop: `1px dashed ${C.border}` }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: C.pinkDeep, marginBottom: 5 }}>KENAPA COCOK UNTUKMU</p>
+          <div className="flex flex-wrap gap-2">
             {reasons.map((r, i) => (
               <span key={i} className="inline-flex items-center gap-1"
-                style={{ fontSize: 11, color: C.charcoal, background: C.cream, padding: "3px 8px", borderRadius: 999 }}>
-                <Check size={11} style={{ color: C.sage }} /> {r}
+                style={{ fontSize: 11, color: C.black, background: C.yellowSoft, padding: "5px 10px", borderRadius: 999 }}>
+                <Check size={12} style={{ color: C.pinkDeep }} /> {r}
               </span>
             ))}
           </div>
@@ -182,32 +186,32 @@ function HomeScreen({ go, openProduct }) {
   return (
     <div className="pb-2">
       {/* Hero */}
-      <div style={{ background: C.plum, padding: "22px 18px 26px", borderRadius: "0 0 26px 26px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", right: -30, top: -30, width: 140, height: 140, borderRadius: 999, background: C.rose, opacity: 0.35 }} />
-        <div style={{ position: "absolute", right: 50, bottom: -40, width: 90, height: 90, borderRadius: 999, background: C.caramel, opacity: 0.25 }} />
-        <p style={{ color: C.blush, fontSize: 12, fontWeight: 600, letterSpacing: 1 }}>HALO, SASA 👋</p>
-        <h1 style={{ color: C.white, fontFamily: serif, fontSize: 24, fontWeight: 700, lineHeight: 1.15, marginTop: 6, maxWidth: 260 }}>
-          Skincare yang cocok untukmu, bukan untuk semua orang.
+      <div style={{ background: `linear-gradient(135deg, ${C.blackSoft} 0%, ${C.black} 100%)`, padding: "24px 20px 28px", borderRadius: "0 0 32px 32px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", right: -26, top: -26, width: 140, height: 140, borderRadius: 999, background: C.pink, opacity: 0.25 }} />
+        <div style={{ position: "absolute", left: -24, top: 30, width: 100, height: 100, borderRadius: 999, background: C.yellow, opacity: 0.22 }} />
+        <p style={{ color: C.yellow, fontSize: 12, fontWeight: 700, letterSpacing: 1.5 }}>HALO, SASA 👋</p>
+        <h1 style={{ color: C.white, fontFamily: brandFont, fontSize: 28, fontWeight: 800, lineHeight: 1.1, marginTop: 10, maxWidth: 280 }}>
+          Skincare premium yang pas untuk gaya & kebutuhan kulitmu.
         </h1>
-        <div className="flex gap-2 mt-4">
-          <button onClick={() => go("match")} className="flex-1 flex items-center gap-2"
-            style={{ background: C.white, borderRadius: 14, padding: "12px 14px" }}>
-            <span style={{ width: 34, height: 34, borderRadius: 10, background: C.soft, display: "grid", placeItems: "center" }}>
-              <Sparkles size={18} style={{ color: C.rose }} />
+        <div className="flex gap-2 mt-5">
+          <button onClick={() => go("match")} className="flex-1 flex items-center gap-3"
+            style={{ background: C.pink, color: C.white, borderRadius: 18, padding: "16px 16px", boxShadow: "0 20px 50px rgba(245,107,164,0.18)" }}>
+            <span style={{ width: 38, height: 38, borderRadius: 14, background: C.white, display: "grid", placeItems: "center" }}>
+              <Sparkles size={20} style={{ color: C.pinkDeep }} />
             </span>
             <span className="text-left">
-              <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: C.charcoal }}>Cocokin</span>
-              <span style={{ display: "block", fontSize: 10, color: C.gray }}>Cari yang pas</span>
+              <span style={{ display: "block", fontSize: 14, fontWeight: 800 }}>Cocokin</span>
+              <span style={{ display: "block", fontSize: 11.5, opacity: 0.85 }}>Rekomendasi yang nyata</span>
             </span>
           </button>
-          <button onClick={() => go("safety")} className="flex-1 flex items-center gap-2"
-            style={{ background: C.white, borderRadius: 14, padding: "12px 14px" }}>
-            <span style={{ width: 34, height: 34, borderRadius: 10, background: C.caramelBg, display: "grid", placeItems: "center" }}>
-              <ShieldCheck size={18} style={{ color: C.caramel }} />
+          <button onClick={() => go("safety")} className="flex-1 flex items-center gap-3"
+            style={{ background: C.yellow, color: C.black, borderRadius: 18, padding: "16px 16px", boxShadow: "0 20px 50px rgba(255,208,91,0.16)" }}>
+            <span style={{ width: 38, height: 38, borderRadius: 14, background: C.white, display: "grid", placeItems: "center" }}>
+              <ShieldCheck size={20} style={{ color: C.yellow }} />
             </span>
             <span className="text-left">
-              <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: C.charcoal }}>Cek Aman</span>
-              <span style={{ display: "block", fontSize: 10, color: C.gray }}>BPOM & asli</span>
+              <span style={{ display: "block", fontSize: 14, fontWeight: 800 }}>Cek Aman</span>
+              <span style={{ display: "block", fontSize: 11.5, opacity: 0.85 }}>BPOM & keaslian</span>
             </span>
           </button>
         </div>
@@ -216,16 +220,16 @@ function HomeScreen({ go, openProduct }) {
       <div className="px-4 pt-5">
         {/* Honest verdict banner */}
         <div className="flex items-start gap-3" style={{ background: C.cream, border: `1px solid ${C.border}`, borderRadius: 16, padding: 14, marginBottom: 18 }}>
-          <MessageSquareHeart size={20} style={{ color: C.rose, marginTop: 2 }} />
-          <p style={{ fontSize: 12.5, color: C.charcoal, lineHeight: 1.45 }}>
+          <MessageSquareHeart size={20} style={{ color: C.pink, marginTop: 2 }} />
+          <p style={{ fontSize: 12.5, color: C.black, lineHeight: 1.45 }}>
             <b>Review jujur, bukan endorse.</b> Kalau produk jelek, kami bilang jelek — walau brand-nya bayar kami.
           </p>
         </div>
 
         {/* Trending honest reviews */}
         <div className="flex items-center justify-between mb-3">
-          <h2 style={{ fontFamily: serif, fontSize: 17, fontWeight: 700, color: C.charcoal }}>Lagi ramai dibahas</h2>
-          <span className="inline-flex items-center gap-1" style={{ fontSize: 11, fontWeight: 600, color: C.rose }}>
+          <h2 style={{ fontFamily: brandFont, fontSize: 17, fontWeight: 700, color: C.black }}>Lagi ramai dibahas</h2>
+          <span className="inline-flex items-center gap-1" style={{ fontSize: 11, fontWeight: 600, color: C.pink }}>
             <TrendingUp size={13} /> Trending
           </span>
         </div>
@@ -390,16 +394,16 @@ function NextBtn({ disabled, onClick, flex, label = "Lanjut" }) {
   return (
     <button disabled={disabled} onClick={onClick}
       className={flex ? "flex-1" : "w-full"}
-      style={{ marginTop: flex ? 0 : 28, background: disabled ? C.border : C.rose, color: C.white,
-        fontSize: 14, fontWeight: 700, padding: "14px", borderRadius: 14, opacity: disabled ? 0.7 : 1 }}>
+      style={{ marginTop: flex ? 0 : 28, background: disabled ? C.border : C.pink, color: disabled ? C.gray : C.white,
+        fontSize: 14, fontWeight: 700, padding: "14px", borderRadius: 16, opacity: disabled ? 0.65 : 1, border: "none" }}>
       {label}
     </button>
   );
 }
 function BackBtn({ onClick }) {
   return (
-    <button onClick={onClick} style={{ background: C.white, border: `1.5px solid ${C.border}`, borderRadius: 14, padding: "14px 18px" }}>
-      <ArrowLeft size={18} style={{ color: C.charcoal }} />
+    <button onClick={onClick} style={{ background: C.white, border: `1.5px solid ${C.border}`, borderRadius: 16, padding: "14px 18px" }}>
+      <ArrowLeft size={18} style={{ color: C.black }} />
     </button>
   );
 }
@@ -724,13 +728,13 @@ export default function Beautifio() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: C.charcoal, display: "flex", justifyContent: "center", alignItems: "flex-start", fontFamily: "system-ui, -apple-system, sans-serif", padding: "0" }}>
+    <div style={{ minHeight: "100vh", background: C.black, display: "flex", justifyContent: "center", alignItems: "flex-start", fontFamily: brandFont, padding: "0" }}>
       {/* Phone frame */}
       <div style={{ width: "100%", maxWidth: 412, minHeight: "100vh", background: C.cream, position: "relative", display: "flex", flexDirection: "column", boxShadow: "0 0 40px rgba(0,0,0,0.3)" }}>
         {/* top status bar */}
-        <div className="flex items-center justify-between" style={{ padding: "10px 18px 6px", background: tab === "home" || tab === "profile" || product ? C.plum : C.cream }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: tab === "home" || tab === "profile" || product ? C.white : C.charcoal, fontFamily: serif, letterSpacing: 2 }}>BEAUTIFIO</span>
-          <span style={{ fontSize: 11, color: tab === "home" || tab === "profile" || product ? C.blush : C.gray }}>Jogja</span>
+        <div className="flex items-center justify-between" style={{ padding: "10px 18px 6px", background: tab === "home" || tab === "profile" || product ? C.black : C.cream }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: C.white, fontFamily: brandFont, letterSpacing: 1.8 }}>BEAUTIFIO</span>
+          <span style={{ fontSize: 11, color: C.yellow }}>Jogja</span>
         </div>
 
         {/* content */}
