@@ -3,7 +3,7 @@ import {
   Home, Sparkles, ShieldCheck, MessageSquareHeart, User,
   Search, Star, Heart, ChevronRight, Check, X, ArrowLeft,
   TrendingUp, BadgeCheck, AlertTriangle, Coffee, Gift,
-  Flame, Droplet, Sun, ShieldAlt, ChevronDown, Coins, Award
+  Flame, Droplet, Sun, ChevronDown, Coins, Award
 } from "lucide-react";
 
 /* ──────────────────────────────────────────────────────────
