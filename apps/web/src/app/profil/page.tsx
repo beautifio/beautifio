@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Home,
   Compass,
@@ -20,6 +21,7 @@ import {
   LogOut,
   Heart,
   Star,
+  LogIn,
 } from "lucide-react";
 import {
   Card,
@@ -30,7 +32,9 @@ import {
   Avatar,
   ProgressBar,
   BottomNavigation,
+  Button,
 } from "@beautifio/ui";
+import { useAuth } from "@/hooks/use-auth";
 
 const tabs = [
   { id: "home", label: "Beranda", icon: Home },
@@ -72,20 +76,34 @@ const MOCK_USER = {
   ],
 };
 
-function ProfileHeader() {
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function ProfileHeader({ name, initials, bio, city }: { name: string; initials: string; bio?: string; city?: string }) {
   return (
     <div className="flex flex-col items-center pt-4 pb-6">
-      <Avatar initials={MOCK_USER.initials} size="xl" />
+      <Avatar initials={initials} size="xl" />
       <h1 className="text-xl font-bold text-text-primary mt-4">
-        {MOCK_USER.name}
+        {name}
       </h1>
-      <p className="text-sm text-text-secondary mt-1 text-center px-4">
-        {MOCK_USER.bio}
-      </p>
-      <div className="flex items-center gap-2 mt-2">
-        <MapPin size={14} className="text-text-secondary/50" />
-        <span className="text-xs text-text-secondary">{MOCK_USER.city}</span>
-      </div>
+      {bio && (
+        <p className="text-sm text-text-secondary mt-1 text-center px-4">
+          {bio}
+        </p>
+      )}
+      {city && (
+        <div className="flex items-center gap-2 mt-2">
+          <MapPin size={14} className="text-text-secondary/50" />
+          <span className="text-xs text-text-secondary">{city}</span>
+        </div>
+      )}
       <div className="flex items-center gap-3 mt-4">
         <div className="flex flex-col items-center">
           <span className="text-lg font-bold text-text-primary">12</span>
@@ -111,7 +129,7 @@ function ProfileHeader() {
   );
 }
 
-function GoalSection() {
+function GoalSection({ goals }: { goals: string[] }) {
   return (
     <Card padding="lg">
       <CardHeader>
@@ -121,7 +139,7 @@ function GoalSection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {MOCK_USER.goals.map((goal, i) => (
+        {goals.map((goal, i) => (
           <div
             key={i}
             className="flex items-center gap-3 p-3 rounded-sm border border-border hover:bg-muted/30 transition-colors cursor-pointer"
@@ -138,7 +156,7 @@ function GoalSection() {
   );
 }
 
-function RoadmapSection() {
+function RoadmapSection({ roadmap }: { roadmap: typeof MOCK_USER.roadmap }) {
   return (
     <Card padding="lg">
       <CardHeader>
@@ -150,23 +168,23 @@ function RoadmapSection() {
       <CardContent>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-semibold text-text-primary">
-            {MOCK_USER.roadmap.title}
+            {roadmap.title}
           </span>
           <Badge variant="secondary">Aktif</Badge>
         </div>
         <ProgressBar
-          value={MOCK_USER.roadmap.progress}
+          value={roadmap.progress}
           showLabel
           variant="accent"
         />
         <div className="flex items-center justify-between mt-3">
           <span className="text-xs text-text-secondary">
-            {MOCK_USER.roadmap.milestones.done} dari {MOCK_USER.roadmap.milestones.total} milestone
+            {roadmap.milestones.done} dari {roadmap.milestones.total} milestone
           </span>
           <div className="flex items-center gap-1">
             <Trophy size={14} className="text-accent" />
             <span className="text-xs font-semibold text-accent">
-              {MOCK_USER.roadmap.progress}%
+              {roadmap.progress}%
             </span>
           </div>
         </div>
@@ -175,7 +193,7 @@ function RoadmapSection() {
   );
 }
 
-function CircleListSection() {
+function CircleListSection({ circles }: { circles: typeof MOCK_USER.circles }) {
   return (
     <Card padding="lg">
       <CardHeader>
@@ -190,7 +208,7 @@ function CircleListSection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        {MOCK_USER.circles.map((circle, i) => (
+        {circles.map((circle, i) => (
           <div
             key={i}
             className="flex items-center gap-3 p-3 rounded-sm hover:bg-muted/30 transition-colors cursor-pointer"
@@ -214,7 +232,7 @@ function CircleListSection() {
   );
 }
 
-function SavedStoriesSection() {
+function SavedStoriesSection({ stories }: { stories: typeof MOCK_USER.savedStories }) {
   const router = useRouter();
   return (
     <Card padding="lg">
@@ -225,7 +243,7 @@ function SavedStoriesSection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        {MOCK_USER.savedStories.map((story, i) => (
+        {stories.map((story, i) => (
           <div
             key={i}
             onClick={() => router.push(`/cerita/${story.slug}`)}
@@ -245,8 +263,7 @@ function SavedStoriesSection() {
   );
 }
 
-function SavedOpportunitiesSection() {
-  const router = useRouter();
+function SavedOpportunitiesSection({ opportunities }: { opportunities: typeof MOCK_USER.savedOpportunities }) {
   return (
     <Card padding="lg">
       <CardHeader>
@@ -256,7 +273,7 @@ function SavedOpportunitiesSection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        {MOCK_USER.savedOpportunities.map((opp, i) => (
+        {opportunities.map((opp, i) => (
           <div
             key={i}
             className="flex items-center gap-3 p-3 rounded-sm hover:bg-muted/30 transition-colors cursor-pointer"
@@ -278,7 +295,7 @@ function SavedOpportunitiesSection() {
   );
 }
 
-function MentorFollowingSection() {
+function MentorFollowingSection({ mentors }: { mentors: typeof MOCK_USER.mentors }) {
   const router = useRouter();
   return (
     <Card padding="lg">
@@ -297,7 +314,7 @@ function MentorFollowingSection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        {MOCK_USER.mentors.map((mentor, i) => (
+        {mentors.map((mentor, i) => (
           <div
             key={i}
             className="flex items-center gap-3 p-3 rounded-sm hover:bg-muted/30 transition-colors cursor-pointer"
@@ -318,12 +335,13 @@ function MentorFollowingSection() {
 }
 
 function SettingsSection() {
+  const { signOut } = useAuth();
   const menuItems = [
     { icon: User, label: "Edit Profil" },
     { icon: Settings, label: "Pengaturan Akun" },
     { icon: Circle, label: "Notifikasi" },
     { icon: BookOpen, label: "Kebijakan Privasi" },
-    { icon: LogOut, label: "Keluar", danger: true },
+    { icon: LogOut, label: "Keluar", danger: true, action: signOut },
   ];
 
   return (
@@ -340,6 +358,7 @@ function SettingsSection() {
           return (
             <div
               key={i}
+              onClick={item.action}
               className={`flex items-center gap-3 p-3 rounded-sm hover:bg-muted/30 transition-colors cursor-pointer ${
                 i < menuItems.length - 1 ? "border-b border-border" : ""
               }`}
@@ -364,21 +383,80 @@ function SettingsSection() {
   );
 }
 
+function LoginPrompt() {
+  return (
+    <div className="flex flex-col items-center justify-center pt-16 pb-8 px-6">
+      <div className="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center mb-6">
+        <User size={36} className="text-primary/40" />
+      </div>
+      <h2 className="text-xl font-bold text-text-primary mb-2 text-center">
+        Masuk untuk Melihat Profil
+      </h2>
+      <p className="text-sm text-text-secondary text-center mb-8 max-w-xs">
+        Simpan progress, cerita, dan peluang favoritmu dengan masuk ke akun Beautifio.
+      </p>
+      <Link href="/login" className="w-full max-w-xs">
+        <Button variant="primary" size="lg" className="w-full">
+          <LogIn size={16} /> Masuk
+        </Button>
+      </Link>
+      <p className="text-xs text-text-secondary mt-4">
+        Belum punya akun?{" "}
+        <Link href="/register" className="text-secondary font-semibold hover:underline">
+          Daftar
+        </Link>
+      </p>
+    </div>
+  );
+}
+
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState("profil");
   const router = useRouter();
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-text-secondary">Memuat profil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isLoggedIn = !!user;
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Pengguna";
+  const displayInitials = user?.user_metadata?.full_name
+    ? getInitials(user.user_metadata.full_name)
+    : user?.email
+    ? user.email[0].toUpperCase()
+    : "U";
+  const displayEmail = user?.email || "";
 
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-[390px] mx-auto px-6 pt-6 pb-24 space-y-6">
-        <ProfileHeader />
-        <GoalSection />
-        <RoadmapSection />
-        <CircleListSection />
-        <SavedStoriesSection />
-        <SavedOpportunitiesSection />
-        <MentorFollowingSection />
-        <SettingsSection />
+        {isLoggedIn ? (
+          <>
+            <ProfileHeader
+              name={displayName}
+              initials={displayInitials}
+              bio={displayEmail}
+              city=""
+            />
+            <GoalSection goals={MOCK_USER.goals} />
+            <RoadmapSection roadmap={MOCK_USER.roadmap} />
+            <CircleListSection circles={MOCK_USER.circles} />
+            <SavedStoriesSection stories={MOCK_USER.savedStories} />
+            <SavedOpportunitiesSection opportunities={MOCK_USER.savedOpportunities} />
+            <MentorFollowingSection mentors={MOCK_USER.mentors} />
+            <SettingsSection />
+          </>
+        ) : (
+          <LoginPrompt />
+        )}
       </div>
 
       <BottomNavigation
