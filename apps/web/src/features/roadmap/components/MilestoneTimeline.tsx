@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, Circle, Lock, ChevronDown } from "lucide-react";
 import { ProgressBar } from "@beautifio/ui";
 import type { RoadmapTemplateMilestone, RoadmapTask } from "@beautifio/types";
+import { useAuthStore } from "@/stores/auth-store";
+import { AuthModal } from "@/components/AuthModal";
 
 function loadTaskStates(slug: string): Record<string, boolean> {
   try {
@@ -29,18 +31,24 @@ export function MilestoneTimeline({
 }) {
   const [expanded, setExpanded] = useState<string | null>(milestones[0]?.id ?? null);
   const [taskStates, setTaskStates] = useState<Record<string, boolean>>({});
+  const [showAuth, setShowAuth] = useState(false);
+  const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
     if (slug) setTaskStates(loadTaskStates(slug));
   }, [slug]);
 
   const toggleTask = useCallback((key: string) => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
     setTaskStates((prev) => {
       const next = { ...prev, [key]: !prev[key] };
       if (slug) saveTaskStates(slug, next);
       return next;
     });
-  }, [slug]);
+  }, [slug, user]);
 
   const totalTasks = milestones.reduce((sum, m) => sum + (m.tasks as RoadmapTask[]).length, 0);
   const doneTasks = milestones.reduce((sum, m) =>
@@ -49,6 +57,7 @@ export function MilestoneTimeline({
   const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   return (
+    <>
     <section>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-bold text-text-primary">Milestones</h3>
@@ -153,5 +162,11 @@ export function MilestoneTimeline({
         })}
       </div>
     </section>
+
+    <AuthModal
+      open={showAuth}
+      onClose={() => setShowAuth(false)}
+    />
+    </>
   );
 }

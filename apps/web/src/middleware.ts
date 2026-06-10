@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 const authPages = ["/login", "/register", "/forgot-password", "/auth"];
-const protectedPages = ["/profil", "/profile"];
+const protectedPages: string[] = [];
 
 function isAuthPage(pathname: string): boolean {
   return authPages.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -47,13 +47,6 @@ export async function middleware(request: NextRequest) {
   if (isAuth && isAuthPage(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
-    return NextResponse.redirect(url);
-  }
-
-  if (!isAuth && isProtectedPage(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 
