@@ -37,6 +37,23 @@ export interface Database {
         Insert: { id?: string; template_id: string; milestone_id?: string | null; resource_type: "circle" | "mentor" | "opportunity"; resource_id: string; resource_name: string; resource_description?: string | null; resource_image?: string | null };
         Update: Record<string, never>;
       };
+      journals: {
+        Row: { id: string; user_id: string; title: string; slug: string; description: string | null; cover_image: string | null; goal_category: string | null; roadmap_slug: string | null; is_public: boolean; entry_count: number; follower_count: number; reaction_count: number; created_at: string; updated_at: string; deleted_at: string | null };
+        Insert: { id?: string; user_id: string; title: string; slug: string; description?: string | null; cover_image?: string | null; goal_category?: string | null; roadmap_slug?: string | null; is_public?: boolean; entry_count?: number; follower_count?: number; reaction_count?: number };
+        Update: { title?: string; description?: string | null; cover_image?: string | null; goal_category?: string | null; roadmap_slug?: string | null; is_public?: boolean };
+      };
+      journal_entries: {
+        Row: { id: string; journal_id: string; title: string | null; content: string; mood: "sangat_bahagia" | "bahagia" | "biasa" | "sedih" | "sangat_sedih" | null; day_number: number; milestone_id: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; journal_id: string; title?: string | null; content: string; mood?: "sangat_bahagia" | "bahagia" | "biasa" | "sedih" | "sangat_sedih" | null; day_number?: number; milestone_id?: string | null };
+        Update: { title?: string | null; content?: string; mood?: "sangat_bahagia" | "bahagia" | "biasa" | "sedih" | "sangat_sedih" | null; milestone_id?: string | null };
+      };
+      journal_milestones: {
+        Row: { id: string; journal_id: string; title: string; description: string | null; is_achieved: boolean; achieved_at: string | null; created_at: string };
+        Insert: { id?: string; journal_id: string; title: string; description?: string | null; is_achieved?: boolean; achieved_at?: string | null };
+        Update: { title?: string; description?: string | null; is_achieved?: boolean; achieved_at?: string | null };
+      };
+      journal_followers: { Row: { id: string; journal_id: string; user_id: string; created_at: string }; Insert: { id?: string; journal_id: string; user_id: string }; Update: Record<string, never> };
+      journal_reactions: { Row: { id: string; journal_id: string; user_id: string; emoji: string; created_at: string }; Insert: { id?: string; journal_id: string; user_id: string; emoji: string }; Update: Record<string, never> };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

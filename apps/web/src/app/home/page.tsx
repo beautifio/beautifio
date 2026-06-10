@@ -12,6 +12,7 @@ import {
   Sparkles,
   CheckCircle2,
   Circle,
+  ChevronRight,
   Zap,
   Users,
   MapPin,
@@ -218,6 +219,56 @@ function GoalProgressCard() {
             </div>
           ))}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function JournalJourneyCard() {
+  const router = useRouter();
+  const journal = (() => {
+    try {
+      const stored = typeof window !== "undefined" ? localStorage.getItem("beautifio_journals") : null;
+      const userJ = stored ? JSON.parse(stored) : [];
+      return userJ.length > 0 ? userJ[0] : null;
+    } catch { return null; }
+  })();
+
+  if (!journal) return null;
+
+  return (
+    <Card padding="lg" className="animate-in fade-in duration-500 delay-[300ms]">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpen size={18} className="text-primary" />
+            <CardTitle>Jurnal Perjalanan</CardTitle>
+          </div>
+          <button onClick={() => router.push("/jurnal")} className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer">
+            Buka
+          </button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div
+          onClick={() => router.push(`/jurnal/${journal.slug}`)}
+          className="flex items-center gap-4 p-4 rounded-xl bg-primary/[0.03] border border-primary/10 hover:bg-primary/[0.06] transition-colors cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <BookOpen size={18} className="text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-text-primary truncate">{journal.title}</p>
+            <p className="text-xs text-text-secondary mt-0.5">{journal.entry_count} entri · {journal.follower_count} pengikut</p>
+          </div>
+          <ChevronRight size={16} className="text-text-secondary/40 flex-shrink-0" />
+        </div>
+        <button
+          onClick={() => router.push(`/jurnal/${journal.slug}`)}
+          className="mt-3 w-full text-center text-xs font-medium text-primary hover:underline cursor-pointer"
+        >
+          + Tambah entri baru
+        </button>
       </CardContent>
     </Card>
   );
@@ -464,6 +515,7 @@ export default function HomeScreen() {
         <GreetingHeader />
         <QuickStats />
         <GoalProgressCard />
+        <JournalJourneyCard />
         <WeeklyActionCard />
         <CircleActivity />
         <StoryPreview />

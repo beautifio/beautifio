@@ -136,6 +136,52 @@ export interface MentorProfile {
   rating: number;
 }
 
+export type Mood = "sangat_bahagia" | "bahagia" | "biasa" | "sedih" | "sangat_sedih";
+
+export interface Journal {
+  id: string;
+  user_id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  cover_image?: string;
+  goal_category?: string;
+  roadmap_slug?: string;
+  is_public: boolean;
+  entry_count: number;
+  follower_count: number;
+  reaction_count: number;
+  created_at: string;
+  updated_at: string;
+  entries?: JournalEntry[];
+  milestones?: JournalMilestone[];
+  author_name?: string;
+  author_initials?: string;
+  author_avatar?: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  journal_id: string;
+  title?: string;
+  content: string;
+  mood?: Mood;
+  day_number: number;
+  milestone_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JournalMilestone {
+  id: string;
+  journal_id: string;
+  title: string;
+  description?: string;
+  is_achieved: boolean;
+  achieved_at?: string;
+  created_at: string;
+}
+
 export interface MentorSession {
   id: string;
   mentorId: string;

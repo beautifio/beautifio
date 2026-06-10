@@ -255,6 +255,62 @@ function SavedStoriesSection({ stories }: { stories: typeof MOCK_USER.savedStori
   );
 }
 
+function JournalSection() {
+  const router = useRouter();
+  const journals = (() => {
+    try {
+      const stored = typeof window !== "undefined" ? localStorage.getItem("beautifio_journals") : null;
+      const userJ = stored ? JSON.parse(stored) : [];
+      const mockJ = [{ slug: "road-to-medical-school", title: "Road to Medical School", entry_count: 12, follower_count: 45 }, { slug: "my-running-journey", title: "My Running Journey", entry_count: 28, follower_count: 67 }];
+      return [...userJ, ...mockJ].slice(0, 3);
+    } catch { return []; }
+  })();
+
+  return (
+    <Card padding="lg">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpen size={18} className="text-primary" />
+            <CardTitle>Jurnal Perjalanan</CardTitle>
+          </div>
+          <button
+            onClick={() => router.push("/jurnal")}
+            className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+          >
+            Lihat Semua
+          </button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {journals.length > 0 ? journals.map((j: any, i: number) => (
+          <div
+            key={i}
+            onClick={() => router.push(`/jurnal/${j.slug}`)}
+            className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <BookOpen size={16} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-medium text-text-primary block truncate">{j.title}</span>
+              <span className="text-xs text-text-secondary">{j.entry_count} entri · {j.follower_count} pengikut</span>
+            </div>
+            <ChevronRight size={16} className="text-text-secondary/30 flex-shrink-0" />
+          </div>
+        )) : (
+          <div className="text-center py-6">
+            <p className="text-sm text-text-secondary">Belum ada jurnal</p>
+            <button onClick={() => router.push("/jurnal/buat")} className="text-xs font-medium text-primary hover:underline mt-1 cursor-pointer">
+              Buat jurnal sekarang
+            </button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function SavedOpportunitiesSection({ opportunities }: { opportunities: typeof MOCK_USER.savedOpportunities }) {
   return (
     <Card padding="lg">
@@ -457,6 +513,7 @@ export default function ProfileScreen() {
             <RoadmapSection roadmap={MOCK_USER.roadmap} />
             <CircleListSection circles={MOCK_USER.circles} />
             <SavedStoriesSection stories={MOCK_USER.savedStories} />
+            <JournalSection />
             <SavedOpportunitiesSection opportunities={MOCK_USER.savedOpportunities} />
             <MentorFollowingSection mentors={MOCK_USER.mentors} />
             <SettingsSection />
