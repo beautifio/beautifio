@@ -1,6 +1,10 @@
 {
   "name": "beautifio",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "cd apps/web && npx next dev",
     "build": "cd apps/web && npx next build",
@@ -9,10 +13,13 @@
     "clean": "rm -rf apps/web/.next"
   },
   "dependencies": {
-    "next": "^15.3.0"
+    "next": "^15.4.11"
   },
   "devDependencies": {
     "typescript": "^5.8.0"
   },
-  "packageManager": "pnpm@10.8.0"
+  "overrides": {
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  }
 }
