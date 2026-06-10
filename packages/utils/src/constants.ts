@@ -428,6 +428,34 @@ export const MOCK_OPPORTUNITIES: OpportunityConstant[] = [
   { id: "o30", slug: "program-kreator-gaming", title: "Gaming Creator Partnership", category: "program-kreator", organization: "GameDev ID & Moonton", description: "Program partnership untuk kreator game mobile dan PC. Dapatkan early access, skin eksklusif, dan revenue share.", location: "Online", deadline: "10 Agu 2026", benefit: "Revenue share + item eksklusif + akses turnamen", eligibility: "Min 5K followers di platform streaming", isFeatured: false, tags: ["Gaming", "Streaming", "Partnership"] },
 ];
 
+export interface ProductConstant {
+  id: string; name: string; description: string; price: string;
+  image?: string; category: string; tags: string[];
+}
+
+export const MOCK_PRODUCTS: ProductConstant[] = [
+  { id: "p1", name: "Running Shoes", description: "Sepatu lari dengan bantalan responsif untuk performa maksimal.", price: "Rp850.000", category: "sports", tags: ["olahraga", "lari"] },
+  { id: "p2", name: "Smartwatch", description: "Jam tangan pintar dengan GPS, heart rate monitor, dan pelacak kebugaran.", price: "Rp2.500.000", category: "tech", tags: ["teknologi", "kebugaran"] },
+  { id: "p3", name: "Running Jersey", description: "Jersey olahraga berbahan dry-fit untuk kenyamanan saat berlari.", price: "Rp250.000", category: "sports", tags: ["olahraga", "lari"] },
+  { id: "p4", name: "Microphone", description: "Mikrofon kondensor USB untuk podcast dan content creation.", price: "Rp1.200.000", category: "creator", tags: ["kreator", "audio"] },
+  { id: "p5", name: "Ring Light", description: "Cahaya cincin LED dengan tripod untuk pencahayaan konten.", price: "Rp350.000", category: "creator", tags: ["kreator", "cahaya"] },
+  { id: "p6", name: "Camera", description: "Kamera mirrorless untuk fotografi dan videografi berkualitas tinggi.", price: "Rp8.500.000", category: "creator", tags: ["kreator", "fotografi"] },
+  { id: "p7", name: "Sunscreen SPF 50", description: "Tabir surya dengan SPF 50 untuk perlindungan maksimal dari sinar UV.", price: "Rp85.000", category: "beauty", tags: ["kecantikan", "skincare"] },
+  { id: "p8", name: "Skincare Set", description: "Paket perawatan kulit lengkap: cleanser, toner, serum, dan moisturizer.", price: "Rp450.000", category: "beauty", tags: ["kecantikan", "skincare"] },
+  { id: "p9", name: "Makeup Kit", description: "Set makeup lengkap untuk sehari-hari: foundation, blush, eyeshadow, lipstick.", price: "Rp380.000", category: "beauty", tags: ["kecantikan", "makeup"] },
+  { id: "p10", name: "Skill Academy Subscription", description: "Platform kursus online dengan ribuan materi dan sertifikat resmi.", price: "Rp299.000/bln", category: "education", tags: ["edukasi", "online"] },
+  { id: "p11", name: "Laptop", description: "Laptop ringan dan bertenaga untuk coding dan produktivitas.", price: "Rp12.000.000", category: "tech", tags: ["teknologi", "laptop"] },
+  { id: "p12", name: "Mechanical Keyboard", description: "Keyboard mekanikal dengan switch yang nyaman untuk mengetik dan coding.", price: "Rp1.800.000", category: "tech", tags: ["teknologi", "keyboard"] },
+  { id: "p13", name: "Gaming Mouse", description: "Mouse gaming dengan sensor presisi tinggi dan tombol programmable.", price: "Rp650.000", category: "gaming", tags: ["gaming", "mouse"] },
+  { id: "p14", name: "Headphones", description: "Headphone studio dengan kualitas suara jernih dan noise cancellation.", price: "Rp2.200.000", category: "music", tags: ["musik", "audio"] },
+  { id: "p15", name: "DAW Software", description: "Digital Audio Workstation untuk produksi musik dan recording.", price: "Rp3.500.000", category: "music", tags: ["musik", "software"] },
+  { id: "p16", name: "Notion Plus", description: "All-in-one workspace untuk organisasi belajar dan bisnis.", price: "Rp120.000/bln", category: "education", tags: ["produktivitas", "organisasi"] },
+  { id: "p17", name: "Canva Pro", description: "Tools desain grafis premium dengan template tak terbatas dan fitur AI.", price: "Rp150.000/bln", category: "creator", tags: ["desain", "kreator"] },
+  { id: "p18", name: "LinkedIn Premium", description: "Fitur premium LinkedIn untuk networking dan pencarian kerja.", price: "Rp250.000/bln", category: "career", tags: ["karir", "profesional"] },
+  { id: "p19", name: "Guitar Pickup", description: "Pickup gitar elektrik untuk koneksi ke amplifier dan audio interface.", price: "Rp750.000", category: "music", tags: ["musik", "gitar"] },
+  { id: "p20", name: "Ergonomic Chair", description: "Kursi ergonomis untuk kenyamanan bekerja dan belajar dalam waktu lama.", price: "Rp3.800.000", category: "tech", tags: ["teknologi", "produktivitas"] },
+];
+
 export const ROADMAP_TEMPLATES: RoadmapTemplateConstant[] = [
   { slug: "doctor", title: "Dokter", description: "Jalur lengkap menjadi dokter profesional", icon: "Stethoscope", color: "from-blue-600 to-cyan-500", label: "Dokter", duration: "8-12 tahun", category: "health" },
   { slug: "football-player", title: "Pemain Sepak Bola", description: "Roadmap menjadi pemain sepak bola profesional", icon: "Trophy", color: "from-green-600 to-emerald-500", label: "Sepak Bola", duration: "8-15 tahun", category: "sports" },

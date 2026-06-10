@@ -5,7 +5,7 @@ interface SeedMilestone {
 
 interface SeedRecommendation {
   id: string; template_id: string; milestone_id?: string;
-  resource_type: "circle" | "mentor" | "opportunity";
+  resource_type: "circle" | "mentor" | "opportunity" | "product";
   resource_id: string; resource_name: string; resource_description?: string; resource_image?: string;
 }
 
@@ -98,50 +98,73 @@ export const ROADMAP_SEED_RECOMMENDATIONS: Record<string, SeedRecommendation[]> 
     { id: "doc-rec1", template_id: "doctor", milestone_id: "doc-m1", resource_type: "circle", resource_id: "1", resource_name: "Tech Founders Circle", resource_description: "Diskusi dengan mahasiswa kedokteran dari berbagai universitas." },
     { id: "doc-rec2", template_id: "doctor", milestone_id: "doc-m3", resource_type: "mentor", resource_id: "1", resource_name: "Dr. Rudi Hartono", resource_description: "Dokter spesialis bedah dengan 15 tahun pengalaman." },
     { id: "doc-rec3", template_id: "doctor", milestone_id: "doc-m4", resource_type: "opportunity", resource_id: "1", resource_name: "Program Dokter PTT", resource_description: "Penempatan dokter di daerah terpencil dengan insentif menarik." },
+    { id: "doc-rec4", template_id: "doctor", resource_type: "product", resource_id: "p11", resource_name: "Laptop", resource_description: "Laptop untuk riset medis dan administrasi praktik." },
   ],
   programmer: [
     { id: "prog-rec1", template_id: "programmer", milestone_id: "prog-m1", resource_type: "circle", resource_id: "5", resource_name: "Data Science ID Circle", resource_description: "Komunitas programmer untuk diskusi dan belajar." },
     { id: "prog-rec2", template_id: "programmer", milestone_id: "prog-m3", resource_type: "mentor", resource_id: "9", resource_name: "Pak Anton", resource_description: "Senior engineer dengan pengalaman di FAANG." },
     { id: "prog-rec3", template_id: "programmer", milestone_id: "prog-m4", resource_type: "opportunity", resource_id: "9", resource_name: "Program Magang Frontend", resource_description: "Magang di perusahaan tech terkemuka." },
+    { id: "prog-rec4", template_id: "programmer", resource_type: "product", resource_id: "p12", resource_name: "Mechanical Keyboard", resource_description: "Keyboard mekanikal yang nyaman untuk coding seharian." },
+    { id: "prog-rec5", template_id: "programmer", resource_type: "product", resource_id: "p20", resource_name: "Ergonomic Chair", resource_description: "Kursi ergonomis untuk kenyamanan coding dalam waktu lama." },
   ],
   "content-creator": [
     { id: "cc-rec1", template_id: "content-creator", milestone_id: "cc-m1", resource_type: "circle", resource_id: "2", resource_name: "Creative Lab Circle", resource_description: "Komunitas kreator untuk kolaborasi dan belajar." },
     { id: "cc-rec2", template_id: "content-creator", milestone_id: "cc-m3", resource_type: "mentor", resource_id: "6", resource_name: "Ria SW", resource_description: "Content creator dengan 500K+ followers di TikTok." },
     { id: "cc-rec3", template_id: "content-creator", milestone_id: "cc-m4", resource_type: "opportunity", resource_id: "6", resource_name: "Program Kreator TikTok", resource_description: "Akses fitur eksklusif dan pendampingan kreator." },
+    { id: "cc-rec4", template_id: "content-creator", resource_type: "product", resource_id: "p4", resource_name: "Microphone", resource_description: "Mikrofon kondensor USB untuk podcast dan content creation." },
+    { id: "cc-rec5", template_id: "content-creator", resource_type: "product", resource_id: "p5", resource_name: "Ring Light", resource_description: "Cahaya cincin LED untuk pencahayaan konten profesional." },
+    { id: "cc-rec6", template_id: "content-creator", resource_type: "product", resource_id: "p6", resource_name: "Camera", resource_description: "Kamera mirrorless untuk konten visual berkualitas tinggi." },
   ],
   entrepreneur: [
     { id: "ent-rec1", template_id: "entrepreneur", milestone_id: "ent-m1", resource_type: "circle", resource_id: "1", resource_name: "Tech Founders Circle", resource_description: "Komunitas founder startup untuk diskusi dan mentoring." },
     { id: "ent-rec2", template_id: "entrepreneur", milestone_id: "ent-m3", resource_type: "mentor", resource_id: "7", resource_name: "William Tanuwijaya", resource_description: "Founder Tokopedia dengan pengalaman membangun unicorn." },
     { id: "ent-rec3", template_id: "entrepreneur", milestone_id: "ent-m4", resource_type: "opportunity", resource_id: "7", resource_name: "Akselerator Startup", resource_description: "Program akselerasi startup dengan pendanaan awal." },
+    { id: "ent-rec4", template_id: "entrepreneur", resource_type: "product", resource_id: "p16", resource_name: "Notion Plus", resource_description: "Workspace all-in-one untuk mengelola bisnis." },
+    { id: "ent-rec5", template_id: "entrepreneur", resource_type: "product", resource_id: "p17", resource_name: "Canva Pro", resource_description: "Desain materi promosi dan brand kit untuk bisnis." },
   ],
   "digital-marketer": [
     { id: "dm-rec1", template_id: "digital-marketer", milestone_id: "dm-m1", resource_type: "circle", resource_id: "5", resource_name: "Data Science ID Circle", resource_description: "Analisis data untuk marketing." },
     { id: "dm-rec2", template_id: "digital-marketer", milestone_id: "dm-m2", resource_type: "mentor", resource_id: "8", resource_name: "Dina Maulana", resource_description: "Digital marketing lead di e-commerce terkemuka." },
     { id: "dm-rec3", template_id: "digital-marketer", milestone_id: "dm-m4", resource_type: "opportunity", resource_id: "8", resource_name: "Magang Digital Marketing", resource_description: "Program magang di agensi digital marketing." },
+    { id: "dm-rec4", template_id: "digital-marketer", resource_type: "product", resource_id: "p18", resource_name: "LinkedIn Premium", resource_description: "Fitur premium untuk networking profesional." },
+    { id: "dm-rec5", template_id: "digital-marketer", resource_type: "product", resource_id: "p17", resource_name: "Canva Pro", resource_description: "Buat materi marketing visual yang menarik." },
   ],
   "beauty-creator": [
     { id: "bc-rec1", template_id: "beauty-creator", milestone_id: "bc-m1", resource_type: "circle", resource_id: "2", resource_name: "Creative Lab Circle", resource_description: "Komunitas beauty creator untuk sharing dan kolaborasi." },
     { id: "bc-rec2", template_id: "beauty-creator", milestone_id: "bc-m3", resource_type: "mentor", resource_id: "10", resource_name: "Tasya Farasya", resource_description: "Beauty influencer dengan jutaan followers." },
     { id: "bc-rec3", template_id: "beauty-creator", milestone_id: "bc-m4", resource_type: "opportunity", resource_id: "10", resource_name: "Program Beauty Creator", resource_description: "Dukungan untuk beauty creator pemula dari brand ternama." },
+    { id: "bc-rec4", template_id: "beauty-creator", resource_type: "product", resource_id: "p7", resource_name: "Sunscreen SPF 50", resource_description: "Tabir surya untuk perlindungan kulit maksimal." },
+    { id: "bc-rec5", template_id: "beauty-creator", resource_type: "product", resource_id: "p8", resource_name: "Skincare Set", resource_description: "Paket perawatan kulit lengkap untuk kulit sehat." },
+    { id: "bc-rec6", template_id: "beauty-creator", resource_type: "product", resource_id: "p9", resource_name: "Makeup Kit", resource_description: "Set makeup lengkap untuk sehari-hari." },
   ],
   musician: [
     { id: "mus-rec1", template_id: "musician", milestone_id: "mus-m2", resource_type: "circle", resource_id: "2", resource_name: "Creative Lab Circle", resource_description: "Kolaborasi dengan musisi lain dan berbagi pengalaman." },
     { id: "mus-rec2", template_id: "musician", milestone_id: "mus-m3", resource_type: "mentor", resource_id: "5", resource_name: "Tohpati", resource_description: "Gitaris dan produser musik profesional." },
     { id: "mus-rec3", template_id: "musician", milestone_id: "mus-m4", resource_type: "opportunity", resource_id: "5", resource_name: "Festival Musik Independen", resource_description: "Daftar festival musik untuk exposure dan networking." },
+    { id: "mus-rec4", template_id: "musician", resource_type: "product", resource_id: "p14", resource_name: "Headphones", resource_description: "Headphone studio dengan kualitas suara jernih." },
+    { id: "mus-rec5", template_id: "musician", resource_type: "product", resource_id: "p15", resource_name: "DAW Software", resource_description: "Digital Audio Workstation untuk produksi musik." },
+    { id: "mus-rec6", template_id: "musician", resource_type: "product", resource_id: "p4", resource_name: "Microphone", resource_description: "Mikrofon untuk recording vokal dan instrumen." },
   ],
   "football-player": [
     { id: "fb-rec1", template_id: "football-player", milestone_id: "fb-m1", resource_type: "circle", resource_id: "4", resource_name: "Green Warriors Circle", resource_description: "Temukan teman latihan dan sparing partner." },
     { id: "fb-rec2", template_id: "football-player", milestone_id: "fb-m3", resource_type: "mentor", resource_id: "2", resource_name: "Bambang Pamungkas", resource_description: "Eks pemain timnas dengan pengalaman karir profesional." },
     { id: "fb-rec3", template_id: "football-player", milestone_id: "fb-m4", resource_type: "opportunity", resource_id: "2", resource_name: "Program Pembinaan Atlet Muda", resource_description: "Beasiswa dan fasilitas latihan untuk atlet berbakat." },
+    { id: "fb-rec4", template_id: "football-player", resource_type: "product", resource_id: "p1", resource_name: "Running Shoes", resource_description: "Sepatu olahraga dengan bantalan responsif." },
+    { id: "fb-rec5", template_id: "football-player", resource_type: "product", resource_id: "p2", resource_name: "Smartwatch", resource_description: "Jam pintar dengan pelacak kebugaran." },
   ],
   runner: [
     { id: "run-rec1", template_id: "runner", milestone_id: "run-m1", resource_type: "circle", resource_id: "4", resource_name: "Green Warriors Circle", resource_description: "Komunitas lari dan aktivitas outdoor." },
     { id: "run-rec2", template_id: "runner", milestone_id: "run-m3", resource_type: "mentor", resource_id: "3", resource_name: "Agus Prayogo", resource_description: "Pelari maraton nasional dengan pengalaman internasional." },
     { id: "run-rec3", template_id: "runner", milestone_id: "run-m4", resource_type: "opportunity", resource_id: "3", resource_name: "Event Lari Tahunan", resource_description: "Daftar event lari nasional dan dapatkan medali." },
+    { id: "run-rec4", template_id: "runner", resource_type: "product", resource_id: "p1", resource_name: "Running Shoes", resource_description: "Sepatu lari dengan bantalan responsif untuk performa maksimal." },
+    { id: "run-rec5", template_id: "runner", resource_type: "product", resource_id: "p2", resource_name: "Smartwatch", resource_description: "Jam tangan pintar dengan GPS dan heart rate monitor." },
+    { id: "run-rec6", template_id: "runner", resource_type: "product", resource_id: "p3", resource_name: "Running Jersey", resource_description: "Jersey dry-fit untuk kenyamanan saat berlari." },
   ],
   golfer: [
     { id: "gol-rec1", template_id: "golfer", milestone_id: "gol-m1", resource_type: "circle", resource_id: "4", resource_name: "Green Warriors Circle", resource_description: "Komunitas golf amatir dan profesional." },
     { id: "gol-rec2", template_id: "golfer", milestone_id: "gol-m3", resource_type: "mentor", resource_id: "4", resource_name: "Rory Mulyadi", resource_description: "Instruktur golf profesional bersertifikasi internasional." },
     { id: "gol-rec3", template_id: "golfer", milestone_id: "gol-m4", resource_type: "opportunity", resource_id: "4", resource_name: "Turnamen Golf Amatir", resource_description: "Ikuti turnamen golf amatir nasional." },
+    { id: "gol-rec4", template_id: "golfer", resource_type: "product", resource_id: "p2", resource_name: "Smartwatch", resource_description: "Jam pintar dengan GPS untuk melacak skor golf." },
+    { id: "gol-rec5", template_id: "golfer", resource_type: "product", resource_id: "p1", resource_name: "Running Shoes", resource_description: "Sepatu olahraga nyaman untuk walking di lapangan." },
   ],
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, GraduationCap, Briefcase } from "lucide-react";
+import { Users, GraduationCap, Briefcase, Package } from "lucide-react";
 import { Badge } from "@beautifio/ui";
 import type { RoadmapTemplateRecommendation } from "@beautifio/types";
 
@@ -8,6 +8,7 @@ const config = {
   circle: { icon: Users, label: "Circle Rekomendasi", color: "text-secondary", bg: "bg-secondary/10", badge: "secondary" as const },
   mentor: { icon: GraduationCap, label: "Mentor Rekomendasi", color: "text-accent", bg: "bg-accent/10", badge: "accent" as const },
   opportunity: { icon: Briefcase, label: "Peluang", color: "text-primary", bg: "bg-primary/10", badge: "default" as const },
+  product: { icon: Package, label: "Produk Rekomendasi", color: "text-primary", bg: "bg-primary/10", badge: "default" as const },
 };
 
 export function RoadmapRecommendations({
@@ -19,6 +20,7 @@ export function RoadmapRecommendations({
     circle: recommendations.filter((r) => r.resource_type === "circle"),
     mentor: recommendations.filter((r) => r.resource_type === "mentor"),
     opportunity: recommendations.filter((r) => r.resource_type === "opportunity"),
+    product: recommendations.filter((r) => r.resource_type === "product"),
   };
 
   const hasAny = Object.values(grouped).some((g) => g.length > 0);
@@ -28,7 +30,7 @@ export function RoadmapRecommendations({
     <section>
       <h3 className="text-base font-bold text-text-primary mb-4">Rekomendasi</h3>
       <div className="space-y-5">
-        {(["circle", "mentor", "opportunity"] as const).map((type) => {
+        {(["circle", "mentor", "opportunity", "product"] as const).map((type) => {
           const items = grouped[type];
           if (items.length === 0) return null;
           const c = config[type];

@@ -69,24 +69,34 @@ const MOCK_RECOMMENDATIONS: Record<string, StoryRecommendation[]> = {
   "pengenalan-ai-untuk-pemula": [
     { id: "r1", story_id: "s19", resource_type: "roadmap", resource_id: "1", resource_name: "Roadmap Belajar AI", resource_description: "Panduan langkah demi langkah belajar AI dari nol hingga mahir." },
     { id: "r2", story_id: "s19", resource_type: "circle", resource_id: "3", resource_name: "Data Science ID Circle", resource_description: "Komunitas belajar data science dan AI untuk pemula." },
+    { id: "r1-p1", story_id: "s19", resource_type: "product", resource_id: "p11", resource_name: "Laptop", resource_description: "Laptop ringan dan bertenaga untuk coding dan produktivitas." },
   ],
   "panduan-membangun-karir-di-teknologi": [
     { id: "r3", story_id: "s4", resource_type: "circle", resource_id: "1", resource_name: "Tech Founders Circle", resource_description: "Diskusi dan kolaborasi untuk para tech enthusiast." },
+    { id: "r3-p1", story_id: "s4", resource_type: "product", resource_id: "p12", resource_name: "Mechanical Keyboard", resource_description: "Keyboard mekanikal yang nyaman untuk coding seharian." },
+    { id: "r3-p2", story_id: "s4", resource_type: "product", resource_id: "p18", resource_name: "LinkedIn Premium", resource_description: "Fitur premium untuk networking dan pencarian kerja." },
   ],
   "cara-belajar-efektif-di-era-digital": [
-    { id: "r4", story_id: "s1", resource_type: "product", resource_id: "1", resource_name: "Skill Academy Subscription", resource_description: "Platform kursus online dengan ribuan materi dan sertifikat resmi." },
+    { id: "r4", story_id: "s1", resource_type: "product", resource_id: "p10", resource_name: "Skill Academy Subscription", resource_description: "Platform kursus online dengan ribuan materi dan sertifikat resmi." },
+    { id: "r4-p1", story_id: "s1", resource_type: "product", resource_id: "p16", resource_name: "Notion Plus", resource_description: "All-in-one workspace untuk organisasi belajar." },
   ],
   "panduan-lengkap-content-creator": [
     { id: "r5", story_id: "s15", resource_type: "circle", resource_id: "2", resource_name: "Creative Lab Circle", resource_description: "Ruang berkarya untuk desainer, penulis, dan content creator." },
+    { id: "r5-p1", story_id: "s15", resource_type: "product", resource_id: "p4", resource_name: "Microphone", resource_description: "Mikrofon kondensor USB untuk podcast dan content creation." },
+    { id: "r5-p2", story_id: "s15", resource_type: "product", resource_id: "p5", resource_name: "Ring Light", resource_description: "Cahaya cincin LED dengan tripod untuk pencahayaan konten." },
+    { id: "r5-p3", story_id: "s15", resource_type: "product", resource_id: "p6", resource_name: "Camera", resource_description: "Kamera mirrorless untuk fotografi dan videografi." },
   ],
   "strategi-konten-viral-tiktok-2026": [
     { id: "r6", story_id: "s16", resource_type: "roadmap", resource_id: "2", resource_name: "Roadmap Jadi Content Creator", resource_description: "Panduan step-by-step dari 0 hingga 10.000 followers." },
+    { id: "r6-p1", story_id: "s16", resource_type: "product", resource_id: "p17", resource_name: "Canva Pro", resource_description: "Tools desain grafis premium dengan template tak terbatas." },
   ],
   "membangun-personal-branding-gen-z": [
-    { id: "r7", story_id: "s6", resource_type: "product", resource_id: "2", resource_name: "Canva Pro", resource_description: "Tools desain grafis untuk membuat konten visual yang menarik." },
+    { id: "r7", story_id: "s6", resource_type: "product", resource_id: "p17", resource_name: "Canva Pro", resource_description: "Tools desain grafis untuk membuat konten visual yang menarik." },
+    { id: "r7-p1", story_id: "s6", resource_type: "product", resource_id: "p18", resource_name: "LinkedIn Premium", resource_description: "Fitur premium untuk membangun personal branding." },
   ],
   "ide-bisnis-online-modal-kecil": [
-    { id: "r8", story_id: "s7", resource_type: "product", resource_id: "3", resource_name: "Notion Plus", resource_description: "All-in-one workspace untuk organisasi belajar dan bisnis." },
+    { id: "r8", story_id: "s7", resource_type: "product", resource_id: "p16", resource_name: "Notion Plus", resource_description: "All-in-one workspace untuk organisasi belajar dan bisnis." },
+    { id: "r8-p1", story_id: "s7", resource_type: "product", resource_id: "p17", resource_name: "Canva Pro", resource_description: "Buat desain produk dan konten promosi dengan mudah." },
   ],
 };
 

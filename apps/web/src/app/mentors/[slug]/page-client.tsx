@@ -3,11 +3,11 @@
 import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Users, MapPin, Star, Calendar, CheckCircle, Heart } from "lucide-react";
+import { ArrowLeft, Users, MapPin, Star, Calendar, CheckCircle, Heart, Package } from "lucide-react";
 import { Badge, Avatar } from "@beautifio/ui";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import {
-  MOCK_MENTORS, ROADMAP_TEMPLATES, STORY_CATEGORIES,
+  MOCK_MENTORS, ROADMAP_TEMPLATES, STORY_CATEGORIES, MOCK_PRODUCTS,
 } from "@beautifio/utils";
 import type { Story, MentorSession } from "@beautifio/types";
 import { MentorBadge } from "@/features/mentor/components/MentorBadge";
@@ -246,6 +246,53 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
               </div>
             </section>
           )}
+
+          <section>
+            <h3 className="text-sm font-bold text-text-primary mb-3">Produk Rekomendasi</h3>
+            <div className="space-y-3">
+              {(() => {
+                const productIds = mentor?.roadmapSlugs.flatMap((slug) => {
+                  const map: Record<string, string[]> = {
+                    programmer: ["p11", "p12", "p20"],
+                    runner: ["p1", "p2", "p3"],
+                    musician: ["p14", "p15", "p19"],
+                    "content-creator": ["p4", "p5", "p6"],
+                    entrepreneur: ["p16", "p17", "p11"],
+                    "digital-marketer": ["p18", "p17", "p11"],
+                    "beauty-creator": ["p7", "p8", "p9"],
+                    "football-player": ["p1", "p2", "p3"],
+                    golfer: ["p1", "p2", "p14"],
+                    doctor: ["p11", "p16", "p20"],
+                  };
+                  return map[slug] ?? [];
+                }) ?? [];
+                const uniqueIds = [...new Set(productIds)];
+                const products = uniqueIds
+                  .map((id) => MOCK_PRODUCTS.find((p) => p.id === id))
+                  .filter(Boolean);
+
+                if (products.length === 0) {
+                  return <p className="text-xs text-text-secondary">Belum ada rekomendasi produk.</p>;
+                }
+
+                return products.map((product) => (
+                  <div
+                    key={product!.id}
+                    className="flex items-center gap-3 p-4 rounded-sm border border-border hover:border-secondary/30 transition-all cursor-pointer group"
+                  >
+                    <div className="w-10 h-10 rounded-sm bg-primary/5 flex items-center justify-center flex-shrink-0">
+                      <Package size={18} className="text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-semibold text-text-primary truncate">{product!.name}</h4>
+                      <p className="text-xs text-text-secondary mt-0.5 line-clamp-1">{product!.description}</p>
+                      <p className="text-xs font-semibold text-accent mt-0.5">{product!.price}</p>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </section>
         </div>
       </div>
     </div>

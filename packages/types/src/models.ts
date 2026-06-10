@@ -11,7 +11,17 @@ export type MilestoneStatus = "locked" | "available" | "in_progress" | "complete
 export type OppCategory = "beasiswa" | "magang" | "pekerjaan" | "turnamen" | "kompetisi" | "relawan" | "pendanaan" | "program-kreator";
 export type NotifType = "message" | "mentor_reply" | "milestone" | "opportunity" | "system";
 export type StoryResourceType = "roadmap" | "circle" | "product";
-export type RoadmapResourceType = "circle" | "mentor" | "opportunity";
+export type RoadmapResourceType = "circle" | "mentor" | "opportunity" | "product";
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  image?: string;
+  category: string;
+  tags: string[];
+}
 
 export interface Profile { id: string; email: string; full_name: string; role: UserRole; avatar_url?: string; bio?: string; city?: string; status: UserStatus; created_at: string; }
 export interface Goal { id: string; user_id: string; goal_name: string; goal_category: GoalCategory; target_date?: string; status: GoalStatus; progress: number; created_at: string; }

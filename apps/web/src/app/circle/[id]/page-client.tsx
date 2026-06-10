@@ -14,9 +14,11 @@ import {
   Sparkles,
   GraduationCap,
   BookOpen,
+  Package,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { Avatar, Badge, Card } from "@beautifio/ui";
+import { MOCK_PRODUCTS } from "@beautifio/utils";
 import { ProtectedAction } from "@/components/ProtectedAction";
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
@@ -496,6 +498,55 @@ function SessionCard({ session }: { session: typeof MOCK_SESSIONS["1"][0] }) {
   );
 }
 
+// ─── Circle Product Recommendations ──────────────────────────────────────────
+
+const CIRCLE_PRODUCT_IDS: Record<string, string[]> = {
+  "1": ["p11", "p12", "p20"],
+  "2": ["p4", "p5", "p6"],
+  "3": ["p18", "p10", "p16"],
+  "4": ["p1", "p3", "p2"],
+  "5": ["p11", "p12", "p13"],
+  "6": ["p4", "p5", "p6"],
+  "7": ["p1", "p2", "p3"],
+  "8": ["p14", "p15", "p4"],
+  "9": ["p13", "p14", "p12"],
+  "10": ["p7", "p8", "p9"],
+  "11": ["p10", "p16", "p11"],
+  "12": ["p18", "p10", "p16"],
+};
+
+function CircleProductRecommendations({ circleId }: { circleId: string }) {
+  const productIds = CIRCLE_PRODUCT_IDS[circleId] ?? [];
+  const products = productIds
+    .map((id) => MOCK_PRODUCTS.find((p) => p.id === id))
+    .filter(Boolean);
+
+  if (products.length === 0) return null;
+
+  return (
+    <section className="px-6 py-4">
+      <h3 className="text-base font-bold text-text-primary mb-3">Produk Rekomendasi</h3>
+      <div className="space-y-3">
+        {products.map((product) => (
+          <div
+            key={product!.id}
+            className="flex items-center gap-3 p-4 rounded-sm border border-border hover:border-secondary/30 transition-all cursor-pointer group"
+          >
+            <div className="w-10 h-10 rounded-sm bg-primary/5 flex items-center justify-center flex-shrink-0">
+              <Package size={18} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-text-primary truncate">{product!.name}</h4>
+              <p className="text-xs text-text-secondary mt-0.5 line-clamp-1">{product!.description}</p>
+              <p className="text-xs font-semibold text-accent mt-0.5">{product!.price}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function CircleDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -905,6 +956,8 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
         {activeTab === "mentor" && mentorTab}
         {activeTab === "members" && membersTab}
         {activeTab === "sessions" && sessionsTab}
+
+        <CircleProductRecommendations circleId={id} />
       </div>
     </div>
   );
