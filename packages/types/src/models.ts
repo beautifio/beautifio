@@ -1,5 +1,3 @@
-import type { StoryCategory } from "./database";
-
 export type UserRole = "user" | "mentor" | "admin";
 export type UserStatus = "active" | "suspended" | "banned";
 export type GoalCategory = "karir" | "pendidikan" | "skill" | "bisnis";
@@ -94,6 +92,14 @@ export interface Opportunity {
   created_at: string;
 }
 
+export interface StoryCategory {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  description?: string;
+}
+
 export interface Story {
   id: string;
   slug: string;
@@ -103,7 +109,8 @@ export interface Story {
   author_name: string;
   author_avatar?: string;
   content: string;
-  category: StoryCategory;
+  category_id: string;
+  category?: StoryCategory;
   reading_time: number;
   like_count: number;
   save_count: number;

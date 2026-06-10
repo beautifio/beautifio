@@ -44,6 +44,29 @@ export interface Database {
           last_active_at?: string | null;
         };
       };
+      story_categories: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          icon: string | null;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          icon?: string | null;
+          description?: string | null;
+        };
+        Update: {
+          name?: string;
+          slug?: string;
+          icon?: string | null;
+          description?: string | null;
+        };
+      };
       stories: {
         Row: {
           id: string;
@@ -54,7 +77,7 @@ export interface Database {
           author_name: string;
           author_avatar: string | null;
           content: string;
-          category: StoryCategory;
+          category_id: string;
           reading_time: number;
           like_count: number;
           save_count: number;
@@ -74,7 +97,7 @@ export interface Database {
           author_name: string;
           author_avatar?: string | null;
           content: string;
-          category: StoryCategory;
+          category_id: string;
           reading_time: number;
           like_count?: number;
           save_count?: number;
@@ -87,7 +110,7 @@ export interface Database {
           title?: string;
           cover_image?: string | null;
           content?: string;
-          category?: StoryCategory;
+          category_id?: string;
           reading_time?: number;
           like_count?: number;
           save_count?: number;
@@ -97,74 +120,23 @@ export interface Database {
         };
       };
       story_likes: {
-        Row: {
-          id: string;
-          story_id: string;
-          user_id: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          story_id: string;
-          user_id: string;
-        };
+        Row: { id: string; story_id: string; user_id: string; created_at: string };
+        Insert: { id?: string; story_id: string; user_id: string };
         Update: Record<string, never>;
       };
       story_saves: {
-        Row: {
-          id: string;
-          story_id: string;
-          user_id: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          story_id: string;
-          user_id: string;
-        };
+        Row: { id: string; story_id: string; user_id: string; created_at: string };
+        Insert: { id?: string; story_id: string; user_id: string };
         Update: Record<string, never>;
       };
       story_comments: {
-        Row: {
-          id: string;
-          story_id: string;
-          user_id: string;
-          parent_id: string | null;
-          content: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          story_id: string;
-          user_id: string;
-          parent_id?: string | null;
-          content: string;
-        };
-        Update: {
-          content?: string;
-        };
+        Row: { id: string; story_id: string; user_id: string; parent_id: string | null; content: string; created_at: string; updated_at: string };
+        Insert: { id?: string; story_id: string; user_id: string; parent_id?: string | null; content: string };
+        Update: { content?: string };
       };
       story_recommendations: {
-        Row: {
-          id: string;
-          story_id: string;
-          resource_type: "roadmap" | "circle" | "product";
-          resource_id: string;
-          resource_name: string;
-          resource_description: string | null;
-          resource_image: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          story_id: string;
-          resource_type: "roadmap" | "circle" | "product";
-          resource_id: string;
-          resource_name: string;
-          resource_description?: string | null;
-          resource_image?: string | null;
-        };
+        Row: { id: string; story_id: string; resource_type: "roadmap" | "circle" | "product"; resource_id: string; resource_name: string; resource_description: string | null; resource_image: string | null; created_at: string };
+        Insert: { id?: string; story_id: string; resource_type: "roadmap" | "circle" | "product"; resource_id: string; resource_name: string; resource_description?: string | null; resource_image?: string | null };
         Update: Record<string, never>;
       };
     };
@@ -181,9 +153,6 @@ export interface Database {
       milestone_status: "locked" | "available" | "in_progress" | "completed";
       opp_category: "beasiswa" | "magang" | "kompetisi" | "workshop";
       notif_type: "message" | "mentor_reply" | "milestone" | "opportunity" | "system";
-      story_category: StoryCategory;
     };
   };
 }
-
-export type StoryCategory = "education" | "career" | "business" | "sports" | "music" | "gaming" | "creator" | "beauty" | "technology";

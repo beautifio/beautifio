@@ -1,23 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Clock, Heart } from "lucide-react";
+import { Clock, Heart, MessageSquare } from "lucide-react";
 import { Badge } from "@beautifio/ui";
 import type { Story } from "@beautifio/types";
 
-const categoryLabels: Record<string, string> = {
-  education: "Edukasi",
-  career: "Karir",
-  business: "Bisnis",
-  sports: "Olahraga",
-  music: "Musik",
-  gaming: "Gaming",
-  creator: "Kreator",
-  beauty: "Kecantikan",
-  technology: "Teknologi",
-};
-
 export function StoryCard({ story }: { story: Story }) {
+  const categoryName = story.category?.name ?? "";
+  const categorySlug = story.category?.slug ?? "";
+
   return (
     <Link href={`/cerita/${story.slug}`} className="block">
       <div className="bg-card border border-border rounded-md shadow-card overflow-hidden hover:border-primary/30 transition-all group">
@@ -32,7 +23,7 @@ export function StoryCard({ story }: { story: Story }) {
         )}
         <div className="p-5">
           <Badge variant="secondary" className="mb-2">
-            {categoryLabels[story.category] || story.category}
+            {categoryName}
           </Badge>
           <h3 className="text-base font-bold text-text-primary leading-snug line-clamp-2 group-hover:text-primary transition-colors">
             {story.title}
@@ -50,7 +41,7 @@ export function StoryCard({ story }: { story: Story }) {
               {story.like_count}
             </span>
             <span className="flex items-center gap-1">
-              <BookOpen size={12} />
+              <MessageSquare size={12} />
               {story.comment_count}
             </span>
           </div>

@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import { MessageSquare, Send } from "lucide-react";
-import { Avatar, Card } from "@beautifio/ui";
+import { Avatar } from "@beautifio/ui";
 import type { StoryComment } from "@beautifio/types";
 
-const MOCK_COMMENTS: Record<string, StoryComment[]> = {};
-
 export function CommentSection({ storyId }: { storyId: string }) {
-  const [comments, setComments] = useState<StoryComment[]>(MOCK_COMMENTS[storyId] ?? []);
+  const [comments, setComments] = useState<StoryComment[]>([]);
   const [input, setInput] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyInput, setReplyInput] = useState("");
@@ -19,11 +17,9 @@ export function CommentSection({ storyId }: { storyId: string }) {
       id: `c${Date.now()}`,
       story_id: storyId,
       user_id: "u1",
-      parent_id: undefined,
       content: input.trim(),
       created_at: new Date().toISOString(),
       author_name: "Andini Putri",
-      author_avatar: undefined,
       replies: [],
     };
     setComments((prev) => [newComment, ...prev]);
@@ -107,12 +103,7 @@ export function CommentSection({ storyId }: { storyId: string }) {
 }
 
 function CommentItem({
-  comment,
-  replyTo,
-  setReplyTo,
-  replyInput,
-  setReplyInput,
-  onReply,
+  comment, replyTo, setReplyTo, replyInput, setReplyInput, onReply,
 }: {
   comment: StoryComment;
   replyTo: string | null;
@@ -121,32 +112,29 @@ function CommentItem({
   setReplyInput: (v: string) => void;
   onReply: (parentId: string) => void;
 }) {
-  const timeAgo = getTimeAgo(comment.created_at);
+  const initials = (comment.author_name ?? "??")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2);
 
   return (
     <div className="flex gap-3">
-      <Avatar
-        initials={(comment.author_name ?? "??")
-          .split(" ")
-          .map((w) => w[0])
-          .join("")
-          .slice(0, 2)}
-        size="sm"
-      />
+      <Avatar initials={initials} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-text-primary">
             {comment.author_name ?? "User"}
           </span>
-          <span className="text-[10px] text-text-secondary">{timeAgo}</span>
+          <span className="text-[10px] text-text-secondary">
+            {timeAgo(comment.created_at)}
+          </span>
         </div>
         <p className="text-sm text-text-primary mt-0.5 leading-relaxed">
           {comment.content}
         </p>
         <button
-          onClick={() =>
-            setReplyTo(replyTo === comment.id ? null : comment.id)
-          }
+          onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
           className="text-[11px] font-medium text-secondary hover:text-secondary/80 transition-colors mt-1 cursor-pointer"
         >
           Balas
@@ -157,9 +145,7 @@ function CommentItem({
             <input
               value={replyInput}
               onChange={(e) => setReplyInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onReply(comment.id);
-              }}
+              onKeyDown={(e) => { if (e.key === "Enter") onReply(comment.id); }}
               placeholder="Tulis balasan..."
               className="flex-1 h-8 px-3 rounded-sm border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
               autoFocus
@@ -192,7 +178,7 @@ function CommentItem({
                       {reply.author_name ?? "User"}
                     </span>
                     <span className="text-[10px] text-text-secondary">
-                      {getTimeAgo(reply.created_at)}
+                      {timeAgo(reply.created_at)}
                     </span>
                   </div>
                   <p className="text-sm text-text-primary mt-0.5 leading-relaxed">
@@ -208,10 +194,8 @@ function CommentItem({
   );
 }
 
-function getTimeAgo(dateStr: string): string {
-  const now = Date.now();
-  const date = new Date(dateStr).getTime();
-  const diff = now - date;
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "baru saja";
   if (mins < 60) return `${mins}m lalu`;

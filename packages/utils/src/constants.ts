@@ -25,26 +25,22 @@ export const MILESTONE_STATUS_LABEL = {
   completed: "Selesai",
 } as const;
 
-export const STORY_CATEGORIES = [
-  { value: "education", label: "Edukasi", icon: "BookOpen" },
-  { value: "career", label: "Karir", icon: "Briefcase" },
-  { value: "business", label: "Bisnis", icon: "TrendingUp" },
-  { value: "sports", label: "Olahraga", icon: "Dumbbell" },
-  { value: "music", label: "Musik", icon: "Music" },
-  { value: "gaming", label: "Gaming", icon: "Gamepad2" },
-  { value: "creator", label: "Kreator", icon: "Camera" },
-  { value: "beauty", label: "Kecantikan", icon: "Sparkles" },
-  { value: "technology", label: "Teknologi", icon: "Monitor" },
-] as const;
+export interface StoryCategoryConstant {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  label: string;
+}
 
-export const CATEGORY_ICONS: Record<string, string> = {
-  education: "BookOpen",
-  career: "Briefcase",
-  business: "TrendingUp",
-  sports: "Dumbbell",
-  music: "Music",
-  gaming: "Gamepad2",
-  creator: "Camera",
-  beauty: "Sparkles",
-  technology: "Monitor",
-};
+export const STORY_CATEGORIES: StoryCategoryConstant[] = [
+  { id: "cat-edu", name: "Education", slug: "education", icon: "BookOpen", label: "Edukasi" },
+  { id: "cat-career", name: "Career", slug: "career", icon: "Briefcase", label: "Karir" },
+  { id: "cat-biz", name: "Business", slug: "business", icon: "TrendingUp", label: "Bisnis" },
+  { id: "cat-sports", name: "Sports", slug: "sports", icon: "Dumbbell", label: "Olahraga" },
+  { id: "cat-music", name: "Music", slug: "music", icon: "Music", label: "Musik" },
+  { id: "cat-gaming", name: "Gaming", slug: "gaming", icon: "Gamepad2", label: "Gaming" },
+  { id: "cat-creator", name: "Creator", slug: "creator", icon: "Camera", label: "Kreator" },
+  { id: "cat-beauty", name: "Beauty", slug: "beauty", icon: "Sparkles", label: "Kecantikan" },
+  { id: "cat-tech", name: "Technology", slug: "technology", icon: "Monitor", label: "Teknologi" },
+];
