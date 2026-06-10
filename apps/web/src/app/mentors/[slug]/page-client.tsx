@@ -1,10 +1,11 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Users, MapPin, Star, Calendar, CheckCircle } from "lucide-react";
+import { ArrowLeft, Users, MapPin, Star, Calendar, CheckCircle, Heart } from "lucide-react";
 import { Badge, Avatar } from "@beautifio/ui";
+import { ProtectedAction } from "@/components/ProtectedAction";
 import {
   MOCK_MENTORS, ROADMAP_TEMPLATES, STORY_CATEGORIES,
 } from "@beautifio/utils";
@@ -79,6 +80,7 @@ const circleNames: Record<string, string> = {
 export default function MentorProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const mentor = useMemo(() => MOCK_MENTORS.find((m) => m.slug === slug), [slug]);
   const stories = useMemo(
@@ -111,7 +113,7 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
             <ArrowLeft size={18} className="text-white" />
           </button>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4">
             <Avatar initials={mentor.initials} size="xl" />
             <div className="flex-1 min-w-0 text-white">
               <div className="flex items-center gap-2">
@@ -122,6 +124,18 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
                     Tersedia
                   </div>
                 )}
+                <ProtectedAction onAction={() => setIsFollowing(!isFollowing)}>
+                  <button
+                    className={`ml-auto flex items-center gap-1 px-3 py-1.5 rounded-sm text-xs font-medium transition-all cursor-pointer ${
+                      isFollowing
+                        ? "bg-white/20 text-white"
+                        : "bg-white/10 text-white/80 hover:bg-white/20"
+                    }`}
+                  >
+                    <Heart size={13} className={isFollowing ? "fill-white" : ""} />
+                    {isFollowing ? "Mengikuti" : "Ikuti"}
+                  </button>
+                </ProtectedAction>
               </div>
               <p className="text-sm text-white/80 mt-0.5">{mentor.expertise}</p>
               {mentor.company && (

@@ -17,9 +17,11 @@ export function ProtectedAction({
   className = "",
 }: ProtectedActionProps) {
   const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const [open, setOpen] = useState(false);
 
   const handleClick = () => {
+    if (isLoading) return;
     if (user) {
       onAction?.();
     } else {

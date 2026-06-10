@@ -1,11 +1,11 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Calendar, MapPin, Building2, ExternalLink,
-  CheckCircle, ChevronRight, Home, BookOpen, Users, Compass, MapPin as MapPinIcon, User, GraduationCap, Briefcase, DollarSign, Sparkles, Heart, Gamepad2, Trophy,
+  CheckCircle, ChevronRight, Home, BookOpen, Users, Compass, MapPin as MapPinIcon, User, GraduationCap, Briefcase, DollarSign, Sparkles, Heart, Gamepad2, Trophy, Bookmark,
 } from "lucide-react";
 import { Badge, BottomNavigation } from "@beautifio/ui";
 import { MOCK_OPPORTUNITIES, OPP_CATEGORIES } from "@beautifio/utils";
@@ -29,6 +29,7 @@ const tabs = [
 export default function OpportunityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
+  const [isSaved, setIsSaved] = useState(false);
 
   const opp = useMemo(() => MOCK_OPPORTUNITIES.find((o) => o.slug === slug), [slug]);
   const cat = useMemo(() => OPP_CATEGORIES.find((c) => c.value === opp?.category), [opp]);
@@ -131,9 +132,20 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
             </section>
           )}
 
-          <div className="pt-4 space-y-3">
+          <div className="pt-4 flex gap-3">
+            <ProtectedAction onAction={() => setIsSaved(!isSaved)}>
+              <button
+                className={`w-12 h-12 rounded-sm border flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                  isSaved
+                    ? "bg-accent/10 border-accent/30 text-accent"
+                    : "bg-surface border-border text-text-secondary hover:border-primary/30"
+                }`}
+              >
+                <Bookmark size={18} className={isSaved ? "fill-accent" : ""} />
+              </button>
+            </ProtectedAction>
             <ProtectedAction label="Masuk untuk Mendaftar">
-              <button className="w-full h-12 text-sm font-medium rounded-sm bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+              <button className="flex-1 h-12 text-sm font-medium rounded-sm bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
                 <ExternalLink size={16} />
                 Daftar Sekarang
               </button>

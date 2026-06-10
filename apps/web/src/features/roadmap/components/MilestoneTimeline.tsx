@@ -33,12 +33,14 @@ export function MilestoneTimeline({
   const [taskStates, setTaskStates] = useState<Record<string, boolean>>({});
   const [showAuth, setShowAuth] = useState(false);
   const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
 
   useEffect(() => {
     if (slug) setTaskStates(loadTaskStates(slug));
   }, [slug]);
 
   const toggleTask = useCallback((key: string) => {
+    if (isLoading) return;
     if (!user) {
       setShowAuth(true);
       return;
