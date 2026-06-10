@@ -81,8 +81,10 @@ export default function RoadmapListPage() {
 
         <div className="grid grid-cols-1 gap-4">
           {filtered.length > 0 ? (
-            filtered.map((template) => (
-              <RoadmapCard key={template.id} template={template} />
+            filtered.map((template, i) => (
+              <div key={template.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 80}ms` }}>
+                <RoadmapCard template={template} />
+              </div>
             ))
           ) : (
             <div className="text-center py-12">

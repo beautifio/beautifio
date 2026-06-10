@@ -142,7 +142,7 @@ function GreetingHeader() {
     hour < 12 ? "Selamat Pagi" : hour < 17 ? "Selamat Siang" : "Selamat Malam";
 
   return (
-    <div className="flex items-center justify-between pt-2">
+    <div className="flex items-center justify-between pt-2 animate-in fade-in slide-in-from-top-4 duration-500">
       <div className="flex items-center gap-4">
         <Avatar initials="AN" size="lg" />
         <div>
@@ -175,7 +175,7 @@ function GoalProgressCard() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-5">
+        <div className="space-y-5 animate-in fade-in duration-500">
           {goals.map((goal) => (
             <div key={goal.id}>
               <div className="flex items-center justify-between mb-2">
@@ -213,7 +213,7 @@ function WeeklyActionCard() {
   const doneCount = actions.filter((a) => a.done).length;
 
   return (
-    <Card padding="lg">
+    <Card padding="lg" className="animate-in fade-in duration-500 delay-[450ms]">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -263,7 +263,7 @@ function WeeklyActionCard() {
 
 function CircleActivity() {
   return (
-    <Card padding="lg">
+    <Card padding="lg" className="animate-in fade-in duration-500 delay-[600ms]">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -313,7 +313,7 @@ function CircleActivity() {
 function OpportunityPreview() {
   const router = useRouter();
   return (
-    <Card padding="lg">
+    <Card padding="lg" className="animate-in fade-in duration-500 delay-[750ms]">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -370,7 +370,7 @@ function QuickStats() {
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
       {stats.map((stat, i) => {
         const Icon = stat.icon;
         return (

@@ -118,8 +118,8 @@ export default function DiscoverPage() {
       <div className="max-w-content mx-auto px-6 pt-6 pb-24 min-h-screen flex flex-col">
         <StepIndicator current={step} total={DISCOVERY_QUESTIONS.length} />
 
-        <div className="flex-1 flex flex-col">
-          <div className="mb-6">
+        <div className="flex-1 flex flex-col" key={step}>
+          <div className="mb-6 animate-in fade-in duration-500">
             <h1 className="text-2xl font-bold text-text-primary">
               {question.question}
             </h1>

@@ -106,7 +106,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-bg flex flex-col">
       <div className="max-w-content mx-auto w-full px-6 pt-12 pb-8 flex-1 flex flex-col">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="w-16 h-16 rounded-full bg-accent/5 flex items-center justify-center mx-auto mb-4">
             <UserPlus size={28} className="text-accent-foreground" />
           </div>
@@ -116,7 +116,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-5 flex-1 flex flex-col">
+        <form onSubmit={handleRegister} className="space-y-5 flex-1 flex flex-col animate-in fade-in duration-500 delay-150">
           <Input
             label="Nama Lengkap"
             type="text"

@@ -112,9 +112,10 @@ export default function CircleListPage() {
               Circle Saya
             </h2>
             <div className="space-y-3">
-              {myCircles.map((c) => (
-                <Link key={c.id} href={`/circle/${c.id}`}>
-                  <Card padding="md" className="hover:border-primary/30 transition-all cursor-pointer group">
+              {myCircles.map((c, i) => (
+                <div key={c.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 80}ms` }}>
+                  <Link href={`/circle/${c.id}`}>
+                  <Card padding="md" className="hover:border-primary/30 transition-all cursor-pointer group active:scale-[0.98]">
                     <div className="flex items-center gap-3">
                       <Avatar initials={c.name.split(" ").map((w) => w[0]).join("")} size="lg" />
                       <div className="flex-1 min-w-0">
@@ -137,9 +138,10 @@ export default function CircleListPage() {
                     </div>
                   </Card>
                 </Link>
-              ))}
-            </div>
-          </section>
+              </div>
+            ))}
+          </div>
+        </section>
         )}
 
         <section>
@@ -159,8 +161,9 @@ export default function CircleListPage() {
           </div>
 
           <div className="space-y-3">
-            {filteredExplore.map((c) => (
-              <Link key={c.id} href={`/circle/${c.id}`}>
+            {filteredExplore.map((c, i) => (
+              <div key={c.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 60}ms` }}>
+                <Link href={`/circle/${c.id}`}>
                 <Card padding="md" className="hover:border-secondary/30 transition-all cursor-pointer group">
                   <div className="flex items-center gap-3">
                     <Avatar initials={c.name.split(" ").map((w) => w[0]).join("")} size="lg" />
@@ -181,7 +184,8 @@ export default function CircleListPage() {
                   </div>
                 </Card>
               </Link>
-            ))}
+            </div>
+          ))}
           </div>
 
           {filteredExplore.length === 0 && (

@@ -53,8 +53,9 @@ export default function MentorListPage() {
         </div>
 
         <div className="space-y-3">
-          {filtered.map((mentor) => (
-            <Link key={mentor.id} href={`/mentors/${mentor.slug}`}>
+          {filtered.map((mentor, i) => (
+            <div key={mentor.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 60}ms` }}>
+              <Link href={`/mentors/${mentor.slug}`}>
               <div className="p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group">
                 <div className="flex items-start gap-3">
                   <Avatar initials={mentor.initials} size="lg" />
@@ -85,7 +86,8 @@ export default function MentorListPage() {
                 </div>
               </div>
             </Link>
-          ))}
+          </div>
+        ))}
         </div>
 
         {filtered.length === 0 && (

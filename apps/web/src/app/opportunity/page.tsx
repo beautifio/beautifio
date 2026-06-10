@@ -102,8 +102,10 @@ export default function OpportunityListPage() {
             <section>
               <h3 className="text-sm font-bold text-text-primary mb-3">Pilihan</h3>
               <div className="space-y-3">
-                {featured.map((opp) => (
-                  <OpportunityCard key={opp.id} opp={opp} />
+                {featured.map((opp, i) => (
+                  <div key={opp.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 60}ms` }}>
+                    <OpportunityCard opp={opp} />
+                  </div>
                 ))}
               </div>
             </section>
@@ -114,8 +116,10 @@ export default function OpportunityListPage() {
               {featured.length > 0 ? "Lainnya" : "Semua Peluang"}
             </h3>
             <div className="space-y-3">
-              {regular.map((opp) => (
-                <OpportunityCard key={opp.id} opp={opp} />
+              {regular.map((opp, i) => (
+                <div key={opp.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 50}ms` }}>
+                  <OpportunityCard opp={opp} />
+                </div>
               ))}
             </div>
           </section>
@@ -148,7 +152,7 @@ function OpportunityCard({ opp }: { opp: OpportunityConstant & { deadlineDate: D
 
   return (
     <Link href={`/opportunity/${opp.slug}`}>
-      <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group">
+      <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group active:scale-[0.98]">
         <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center flex-shrink-0">
           {Icon && <Icon size={18} className="text-primary" />}
         </div>

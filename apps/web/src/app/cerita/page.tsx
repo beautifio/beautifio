@@ -82,8 +82,10 @@ export default function CeritaPage() {
         <section>
           {filteredStories.length > 0 ? (
             <div className="space-y-4">
-              {filteredStories.map((story) => (
-                <StoryCard key={story.id} story={story} />
+              {filteredStories.map((story, i) => (
+                <div key={story.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 80}ms` }}>
+                  <StoryCard story={story} />
+                </div>
               ))}
             </div>
           ) : (
