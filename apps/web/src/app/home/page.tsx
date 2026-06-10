@@ -13,11 +13,8 @@ import {
   CheckCircle2,
   Circle,
   Zap,
-  Home,
   Users,
   MapPin,
-  Compass,
-  User,
   Clock,
   Heart,
 } from "lucide-react";
@@ -31,16 +28,8 @@ import {
   ProgressBar,
   BottomNavigation,
 } from "@beautifio/ui";
+import { NAV_TABS, navRoute } from "@/lib/navigation";
 import { useMemo, useState } from "react";
-
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
 
 const goals = [
   {
@@ -482,12 +471,11 @@ export default function HomeScreen() {
       </div>
 
       <BottomNavigation
-        items={tabs}
+        items={NAV_TABS}
         activeTab={activeTab}
         onTabChange={(id) => {
           setActiveTab(id);
-          if (id === "home") router.push("/home");
-          else router.push(`/${id}`);
+          router.push(navRoute(id));
         }}
       />
     </div>

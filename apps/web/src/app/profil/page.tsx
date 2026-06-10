@@ -4,9 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Home,
-  Compass,
-  BookOpen,
   Users,
   MapPin,
   User,
@@ -22,6 +19,7 @@ import {
   Heart,
   Star,
   LogIn,
+  BookOpen,
 } from "lucide-react";
 import {
   Card,
@@ -37,14 +35,7 @@ import {
 } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
+import { NAV_TABS, navRoute } from "@/lib/navigation";
 
 const MOCK_USER = {
   name: "Andini Putri",
@@ -476,12 +467,11 @@ export default function ProfileScreen() {
       </div>
 
       <BottomNavigation
-        items={tabs}
+        items={NAV_TABS}
         activeTab={activeTab}
         onTabChange={(id) => {
           setActiveTab(id);
-          if (id === "home") router.push("/home");
-          else router.push(`/${id}`);
+          router.push(navRoute(id));
         }}
       />
     </div>

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Search, Home, BookOpen, Users, MapPin, Compass, User,
+  Search, Users, MapPin, User,
   GraduationCap, Briefcase, Trophy, Heart, DollarSign, Sparkles, Gamepad2, ArrowRight,
 } from "lucide-react";
 import { Badge, BottomNavigation } from "@beautifio/ui";
@@ -17,14 +17,7 @@ const catIcons: Record<string, typeof GraduationCap> = {
   pendanaan: DollarSign, "program-kreator": Sparkles,
 };
 
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
+import { NAV_TABS, navRoute } from "@/lib/navigation";
 
 export default function OpportunityListPage() {
   const [activeTab, setActiveTab] = useState("profil");
@@ -137,9 +130,9 @@ export default function OpportunityListPage() {
       </div>
 
       <BottomNavigation
-        items={tabs}
+        items={NAV_TABS}
         activeTab={activeTab}
-        onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/home"); else router.push(`/${id}`); }}
+        onTabChange={(id) => { setActiveTab(id); router.push(navRoute(id)); }}
       />
     </div>
   );

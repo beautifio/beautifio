@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Calendar, MapPin, Building2, ExternalLink,
-  CheckCircle, ChevronRight, Home, BookOpen, Users, Compass, MapPin as MapPinIcon, User, GraduationCap, Briefcase, DollarSign, Sparkles, Heart, Gamepad2, Trophy, Bookmark,
+  CheckCircle, ChevronRight, Users, User, GraduationCap, Briefcase, DollarSign, Sparkles, Heart, Gamepad2, Trophy, Bookmark,
 } from "lucide-react";
 import { Badge, BottomNavigation } from "@beautifio/ui";
 import { MOCK_OPPORTUNITIES, OPP_CATEGORIES } from "@beautifio/utils";
@@ -17,14 +17,7 @@ const catIcons: Record<string, typeof GraduationCap> = {
   pendanaan: DollarSign, "program-kreator": Sparkles,
 };
 
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPinIcon },
-  { id: "profil", label: "Profil", icon: User },
-];
+import { NAV_TABS, navRoute } from "@/lib/navigation";
 
 export default function OpportunityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -155,9 +148,9 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
       </div>
 
       <BottomNavigation
-        items={tabs}
+        items={NAV_TABS}
         activeTab="profil"
-        onTabChange={(id) => { if (id === "home") router.push("/home"); else router.push(`/${id}`); }}
+        onTabChange={(id) => { router.push(navRoute(id)); }}
       />
     </div>
   );

@@ -2,21 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Home, Users, MapPin, User, Compass } from "lucide-react";
+import { BookOpen, Users, MapPin, User } from "lucide-react";
 import { BottomNavigation } from "@beautifio/ui";
 import { STORY_CATEGORIES } from "@beautifio/utils";
 import type { Story, StoryCategory } from "@beautifio/types";
 import { StoryCard } from "@/features/cerita/components/StoryCard";
 import { CategoryBar } from "@/features/cerita/components/CategoryBar";
-
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
+import { NAV_TABS, navRoute } from "@/lib/navigation";
 
 const cats = STORY_CATEGORIES;
 
@@ -100,7 +92,7 @@ export default function CeritaPage() {
         </section>
       </div>
 
-      <BottomNavigation items={tabs} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/home"); else router.push(`/${id}`); }} />
+      <BottomNavigation items={NAV_TABS} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); router.push(navRoute(id)); }} />
     </div>
   );
 }

@@ -3,18 +3,11 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Users, GraduationCap, Home, BookOpen, MapPin, Compass, User, ArrowRight } from "lucide-react";
+import { Search, Users, GraduationCap, ArrowRight } from "lucide-react";
 import { Badge, Avatar, BottomNavigation } from "@beautifio/ui";
 import { MOCK_MENTORS } from "@beautifio/utils";
 
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
+import { NAV_TABS, navRoute } from "@/lib/navigation";
 
 export default function MentorListPage() {
   const [activeTab, setActiveTab] = useState("profil");
@@ -105,9 +98,9 @@ export default function MentorListPage() {
       </div>
 
       <BottomNavigation
-        items={tabs}
+        items={NAV_TABS}
         activeTab={activeTab}
-        onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/home"); else router.push(`/${id}`); }}
+        onTabChange={(id) => { setActiveTab(id); router.push(navRoute(id)); }}
       />
     </div>
   );

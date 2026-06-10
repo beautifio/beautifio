@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
         destination: "/home",
         permanent: true,
       },
+      {
+        source: "/cerita",
+        destination: "/inspirasi",
+        permanent: true,
+      },
+      {
+        source: "/cerita/:slug",
+        destination: "/inspirasi/:slug",
+        permanent: true,
+      },
     ];
   },
 };

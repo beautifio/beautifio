@@ -2,20 +2,12 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Home, BookOpen, Users, User, Compass } from "lucide-react";
+import { MapPin, Users, User } from "lucide-react";
 import { BottomNavigation, Badge } from "@beautifio/ui";
 import { ROADMAP_TEMPLATES, ROADMAP_CATEGORIES } from "@beautifio/utils";
 import type { RoadmapTemplate } from "@beautifio/types";
 import { RoadmapCard } from "@/features/roadmap/components/RoadmapCard";
-
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
+import { NAV_TABS, navRoute } from "@/lib/navigation";
 
 const mockTemplates: RoadmapTemplate[] = ROADMAP_TEMPLATES.map((t) => ({
   id: t.slug,
@@ -101,7 +93,7 @@ export default function RoadmapListPage() {
         </div>
       </div>
 
-      <BottomNavigation items={tabs} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/home"); else router.push(`/${id}`); }} />
+      <BottomNavigation items={NAV_TABS} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); router.push(navRoute(id)); }} />
     </div>
   );
 }

@@ -2,20 +2,13 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, Users, ChevronRight, Plus, Home, BookOpen, MapPin, Compass, User } from "lucide-react";
+import { Search, Users, ChevronRight, Plus, MapPin, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, Badge, Avatar } from "@beautifio/ui";
 import { BottomNavigation } from "@beautifio/ui";
 import { CIRCLE_CATEGORIES } from "@beautifio/utils";
 
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
+import { NAV_TABS, navRoute } from "@/lib/navigation";
 
 interface CircleItem {
   id: string; name: string; tag: string; category: string; members: number; maxMembers: number;
@@ -204,9 +197,9 @@ export default function CircleListPage() {
       </div>
 
       <BottomNavigation
-        items={tabs}
+        items={NAV_TABS}
         activeTab={activeTab}
-        onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/home"); else router.push(`/${id}`); }}
+        onTabChange={(id) => { setActiveTab(id); router.push(navRoute(id)); }}
       />
     </div>
   );
