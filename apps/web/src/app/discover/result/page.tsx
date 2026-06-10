@@ -239,8 +239,13 @@ export default function DiscoverResultPage() {
         )}
 
         <div className="flex flex-col gap-3 mt-4">
-          <Link href="/">
+          <Link href="/onboarding">
             <button className="w-full h-12 rounded-sm bg-primary text-primary-foreground text-sm font-bold cursor-pointer hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+              <Sparkles size={16} /> Lanjut ke Onboarding
+            </button>
+          </Link>
+          <Link href="/">
+            <button className="w-full h-12 rounded-sm border border-border bg-surface text-sm font-medium text-text-secondary cursor-pointer hover:border-primary/30 hover:text-text-primary transition-colors flex items-center justify-center gap-2">
               <Home size={16} /> Ke Beranda
             </button>
           </Link>
