@@ -23,7 +23,7 @@ const tabs = [
   { id: "cerita", label: "Cerita", icon: BookOpen },
   { id: "circle", label: "Circle", icon: Users },
   { id: "roadmap", label: "Roadmap", icon: MapPinIcon },
-  { id: "profile", label: "Profil", icon: User },
+  { id: "profil", label: "Profil", icon: User },
 ];
 
 export default function OpportunityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -144,7 +144,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
 
       <BottomNavigation
         items={tabs}
-        activeTab="profile"
+        activeTab="profil"
         onTabChange={(id) => { if (id === "home") router.push("/"); else router.push(`/${id}`); }}
       />
     </div>

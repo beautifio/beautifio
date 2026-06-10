@@ -38,7 +38,7 @@ const tabs = [
   { id: "cerita", label: "Cerita", icon: BookOpen },
   { id: "circle", label: "Circle", icon: Users },
   { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profile", label: "Profil", icon: User },
+  { id: "profil", label: "Profil", icon: User },
 ];
 
 const goals = [

@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 const authPages = ["/login", "/register", "/forgot-password", "/auth"];
-const protectedPages = ["/profile"];
+const protectedPages = ["/profil", "/profile"];
 
 function isAuthPage(pathname: string): boolean {
   return authPages.some((p) => pathname === p || pathname.startsWith(`${p}/`));
