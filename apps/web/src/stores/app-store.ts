@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type Tab = "home" | "cerita" | "circle" | "roadmap" | "opportunity" | "profile";
+type Tab = "home" | "discover" | "cerita" | "circle" | "roadmap" | "opportunity" | "profile";
 
 interface AppState {
   activeTab: Tab;

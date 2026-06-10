@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   Target,
   Trophy,
@@ -33,6 +34,7 @@ import { useMemo, useState } from "react";
 
 const tabs = [
   { id: "home", label: "Beranda", icon: Home },
+  { id: "discover", label: "Temukan", icon: Compass },
   { id: "cerita", label: "Cerita", icon: BookOpen },
   { id: "circle", label: "Circle", icon: Users },
   { id: "roadmap", label: "Roadmap", icon: MapPin },
@@ -378,6 +380,7 @@ function QuickStats() {
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("home");
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-bg">
@@ -393,7 +396,11 @@ export default function HomeScreen() {
       <BottomNavigation
         items={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(id) => {
+          setActiveTab(id);
+          if (id === "home") router.push("/");
+          else router.push(`/${id}`);
+        }}
       />
     </div>
   );

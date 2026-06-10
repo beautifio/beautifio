@@ -3,11 +3,13 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Search, Users, ChevronRight, Plus, Home, BookOpen, MapPin, Compass, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Card, Badge, Avatar } from "@beautifio/ui";
 import { BottomNavigation } from "@beautifio/ui";
 
 const tabs = [
   { id: "home", label: "Beranda", icon: Home },
+  { id: "discover", label: "Temukan", icon: Compass },
   { id: "cerita", label: "Cerita", icon: BookOpen },
   { id: "circle", label: "Circle", icon: Users },
   { id: "roadmap", label: "Roadmap", icon: MapPin },
@@ -29,6 +31,7 @@ const exploreCircles = [
 export default function CircleListPage() {
   const [activeTab, setActiveTab] = useState("circle");
   const [search, setSearch] = useState("");
+  const router = useRouter();
 
   const filteredExplore = useMemo(
     () =>
@@ -147,7 +150,7 @@ export default function CircleListPage() {
       <BottomNavigation
         items={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/"); else router.push(`/${id}`); }}
       />
     </div>
   );

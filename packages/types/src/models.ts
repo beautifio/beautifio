@@ -67,3 +67,34 @@ export interface RoadmapTemplateRecommendation {
   resource_description?: string;
   resource_image?: string;
 }
+
+export interface DiscoveryOption {
+  value: string;
+  label: string;
+  emoji: string;
+}
+
+export interface DiscoveryQuestion {
+  id: string;
+  question: string;
+  subtitle: string;
+  icon: string;
+  options: DiscoveryOption[];
+  multi?: boolean;
+  max?: number;
+}
+
+export interface DiscoveryAnswer {
+  questionId: string;
+  question: string;
+  answers: string[];
+  answerLabels: string[];
+}
+
+export interface DiscoveryResult {
+  mainGoal: string;
+  mainGoalEmoji: string;
+  topInterests: string[];
+  recommendedRoadmapSlugs: string[];
+  recommendedCircleIds: string[];
+}

@@ -29,6 +29,125 @@ export const STORY_CATEGORIES: StoryCategoryConstant[] = [
 ];
 
 export interface RoadmapTemplateConstant { slug: string; title: string; description: string; icon: string; color: string; label: string; duration: string; }
+export interface DiscoveryQuestionConstant {
+  id: string;
+  question: string;
+  subtitle: string;
+  icon: string;
+  options: { value: string; label: string; emoji: string }[];
+  multi?: boolean;
+  max?: number;
+}
+
+export const DISCOVERY_QUESTIONS: DiscoveryQuestionConstant[] = [
+  {
+    id: "inspiration",
+    question: "Apa yang menginspirasimu?",
+    subtitle: "Pilih satu yang paling mewakili dirimu",
+    icon: "Sparkles",
+    options: [
+      { value: "tech", label: "Teknologi & Inovasi", emoji: "💻" },
+      { value: "creative", label: "Seni & Kreativitas", emoji: "🎨" },
+      { value: "sports", label: "Olahraga & Kebugaran", emoji: "🏃" },
+      { value: "business", label: "Bisnis & Kewirausahaan", emoji: "💼" },
+      { value: "education", label: "Pendidikan & Pengetahuan", emoji: "📚" },
+      { value: "entertainment", label: "Musik & Hiburan", emoji: "🎵" },
+    ],
+  },
+  {
+    id: "aspiration",
+    question: "Apa yang ingin kamu capai?",
+    subtitle: "Apa versi terbaik dari dirimu di masa depan?",
+    icon: "Target",
+    options: [
+      { value: "expert", label: "Jadi Expert di Bidangku", emoji: "🏆" },
+      { value: "entrepreneur", label: "Bangun Bisnis Sendiri", emoji: "🚀" },
+      { value: "professional", label: "Berkarir di Perusahaan Top", emoji: "💼" },
+      { value: "creator", label: "Jadi Kreator Konten", emoji: "📹" },
+      { value: "athlete", label: "Berprestasi di Olahraga", emoji: "🥇" },
+    ],
+  },
+  {
+    id: "interests",
+    question: "Apa yang paling kamu minati?",
+    subtitle: "Pilih maksimal 2",
+    icon: "Heart",
+    multi: true,
+    max: 2,
+    options: [
+      { value: "programming", label: "Programming & Coding", emoji: "⌨️" },
+      { value: "design", label: "Desain & Visual", emoji: "🎨" },
+      { value: "writing", label: "Menulis & Konten", emoji: "✍️" },
+      { value: "marketing", label: "Marketing & Branding", emoji: "📊" },
+      { value: "fitness", label: "Kebugaran & Olahraga", emoji: "💪" },
+      { value: "music", label: "Musik & Pertunjukan", emoji: "🎵" },
+      { value: "gaming", label: "Gaming & E-sports", emoji: "🎮" },
+      { value: "beauty", label: "Kecantikan & Fashion", emoji: "💄" },
+    ],
+  },
+  {
+    id: "goals",
+    question: "Apa tujuan terbesarmu?",
+    subtitle: "Apa yang paling ingin kamu wujudkan?",
+    icon: "Star",
+    options: [
+      { value: "dreamCareer", label: "Membangun Karir Impian", emoji: "💼" },
+      { value: "socialImpact", label: "Menciptakan Dampak Sosial", emoji: "🌍" },
+      { value: "financialFreedom", label: "Meraih Kebebasan Finansial", emoji: "💰" },
+      { value: "skillMastery", label: "Mengembangkan Skill Terbaik", emoji: "📈" },
+      { value: "bestSelf", label: "Menjadi Versi Terbaik Diri", emoji: "⭐" },
+    ],
+  },
+];
+
+export const DISCOVERY_GOAL_LABELS: Record<string, { label: string; emoji: string }> = {
+  expert: { label: "Menjadi Expert yang Diakui", emoji: "🏆" },
+  entrepreneur: { label: "Membangun Bisnis Sendiri", emoji: "🚀" },
+  professional: { label: "Berkarir Profesional", emoji: "💼" },
+  creator: { label: "Menjadi Kreator Konten", emoji: "📹" },
+  athlete: { label: "Berprestasi di Olahraga", emoji: "🥇" },
+};
+
+export const INTEREST_TO_ROADMAP: Record<string, string[]> = {
+  programming: ["programmer", "digital-marketer"],
+  design: ["content-creator", "beauty-creator"],
+  writing: ["content-creator", "digital-marketer"],
+  marketing: ["digital-marketer", "entrepreneur"],
+  fitness: ["runner", "football-player", "golfer"],
+  music: ["musician", "content-creator"],
+  gaming: ["programmer", "content-creator"],
+  beauty: ["beauty-creator", "content-creator"],
+};
+
+export const INSPIRATION_TO_ROADMAP: Record<string, string[]> = {
+  tech: ["programmer", "digital-marketer"],
+  creative: ["content-creator", "musician", "beauty-creator"],
+  sports: ["runner", "football-player", "golfer"],
+  business: ["entrepreneur", "digital-marketer"],
+  education: ["programmer", "digital-marketer"],
+  entertainment: ["musician", "content-creator"],
+};
+
+export const INSPIRATION_TO_CIRCLES: Record<string, string[]> = {
+  tech: ["5", "1"],
+  creative: ["2", "6"],
+  sports: ["4"],
+  business: ["1", "3"],
+  education: ["5"],
+  entertainment: ["6", "2"],
+};
+
+export const INTEREST_TO_CIRCLES: Record<string, string[]> = {
+  programming: ["5", "1"],
+  design: ["2", "6"],
+  writing: ["2", "6"],
+  marketing: ["1", "3"],
+  fitness: ["4"],
+  music: ["2", "6"],
+  gaming: ["5"],
+  beauty: ["2", "6"],
+};
+
 export const ROADMAP_TEMPLATES: RoadmapTemplateConstant[] = [
   { slug: "doctor", title: "Dokter", description: "Jalur lengkap menjadi dokter profesional", icon: "Stethoscope", color: "from-blue-600 to-cyan-500", label: "Dokter", duration: "8-12 tahun" },
   { slug: "football-player", title: "Pemain Sepak Bola", description: "Roadmap menjadi pemain sepak bola profesional", icon: "Trophy", color: "from-green-600 to-emerald-500", label: "Sepak Bola", duration: "8-15 tahun" },

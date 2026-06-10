@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { BookOpen, Home, Users, MapPin, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BookOpen, Home, Users, MapPin, User, Compass } from "lucide-react";
 import { BottomNavigation } from "@beautifio/ui";
 import { STORY_CATEGORIES } from "@beautifio/utils";
 import type { Story, StoryCategory } from "@beautifio/types";
@@ -10,6 +11,7 @@ import { CategoryBar } from "@/features/cerita/components/CategoryBar";
 
 const tabs = [
   { id: "home", label: "Beranda", icon: Home },
+  { id: "discover", label: "Temukan", icon: Compass },
   { id: "cerita", label: "Cerita", icon: BookOpen },
   { id: "circle", label: "Circle", icon: Users },
   { id: "roadmap", label: "Roadmap", icon: MapPin },
@@ -53,6 +55,7 @@ const MOCK_STORIES: Story[] = [
 export default function CeritaPage() {
   const [activeTab, setActiveTab] = useState("cerita");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const router = useRouter();
 
   const filteredStories = useMemo(
     () =>
@@ -93,7 +96,7 @@ export default function CeritaPage() {
         </section>
       </div>
 
-      <BottomNavigation items={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNavigation items={tabs} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/"); else router.push(`/${id}`); }} />
     </div>
   );
 }
