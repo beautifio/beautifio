@@ -6,3 +6,4 @@ export { Avatar, AvatarGroup } from "./avatar";
 export { ProgressBar, MilestoneCheck } from "./progress-bar";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { BottomNavigation } from "./bottom-nav";
+export { Skeleton } from "./skeleton";

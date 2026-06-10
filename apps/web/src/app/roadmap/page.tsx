@@ -87,7 +87,13 @@ export default function RoadmapListPage() {
           ) : (
             <div className="text-center py-12">
               <MapPin size={32} className="mx-auto text-text-secondary/30 mb-3" />
-              <p className="text-sm text-text-secondary">Tidak ada roadmap ditemukan</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                <MapPin size={28} className="text-text-secondary/40" />
+              </div>
+              <p className="text-sm font-semibold text-text-primary">Tidak ada roadmap ditemukan</p>
+              <p className="text-xs text-text-secondary mt-1">Coba pilih kategori lain</p>
+            </div>
             </div>
           )}
         </div>

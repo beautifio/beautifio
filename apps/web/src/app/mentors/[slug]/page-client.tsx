@@ -272,7 +272,7 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
                   .filter(Boolean);
 
                 if (products.length === 0) {
-                  return <p className="text-xs text-text-secondary">Belum ada rekomendasi produk.</p>;
+                  return <p className="text-xs text-text-secondary px-4 py-8 text-center">Belum ada rekomendasi produk.</p>;
                 }
 
                 return products.map((product) => (

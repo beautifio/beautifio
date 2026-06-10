@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
-import { Button, Input } from "@beautifio/ui";
+import { Button, Input, Skeleton } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -71,8 +71,17 @@ export default function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
+        <div className="max-w-content mx-auto w-full space-y-4">
+          <div className="flex flex-col items-center mb-8">
+            <Skeleton className="w-16 h-16 rounded-full mb-4" />
+            <Skeleton className="w-32 h-6 mb-2" />
+            <Skeleton className="w-48 h-4" />
+          </div>
+          <Skeleton className="w-full h-12" />
+          <Skeleton className="w-full h-12" />
+          <Skeleton className="w-full h-13 mt-auto" />
+        </div>
       </div>
     );
   }

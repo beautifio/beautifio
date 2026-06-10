@@ -7,7 +7,7 @@ import {
   Sparkles, Target, Heart, MapPin, Users, ArrowRight,
   RefreshCw, Home,
 } from "lucide-react";
-import { Card, Badge } from "@beautifio/ui";
+import { Card, Badge, Skeleton } from "@beautifio/ui";
 import {
   DISCOVERY_GOAL_LABELS, ROADMAP_TEMPLATES,
   INTEREST_TO_ROADMAP, INSPIRATION_TO_ROADMAP,
@@ -96,10 +96,23 @@ export default function DiscoverResultPage() {
 
   if (!result) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-text-secondary">Memproses hasil...</p>
+      <div className="min-h-screen bg-bg">
+        <div className="max-w-content mx-auto px-6 pt-8 pb-24 space-y-6">
+          <div className="flex flex-col items-center mb-6">
+            <Skeleton className="w-16 h-16 rounded-full mb-4" />
+            <Skeleton className="w-48 h-6 mb-2" />
+            <Skeleton className="w-64 h-4" />
+          </div>
+          <Skeleton className="w-full h-28 rounded-xl" />
+          <Skeleton className="w-32 h-5 mb-2" />
+          <div className="flex gap-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="w-20 h-8 rounded-lg" />
+            ))}
+          </div>
+          <Skeleton className="w-36 h-5 mb-2" />
+          <Skeleton className="w-full h-20 rounded-xl" />
+          <Skeleton className="w-full h-20 rounded-xl" />
         </div>
       </div>
     );

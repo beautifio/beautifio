@@ -834,17 +834,22 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
               <QuestionCard key={q.id} q={q} />
             ))
           ) : (
-            <div className="text-center py-8">
-              <MessageSquare size={28} className="mx-auto text-text-secondary/30 mb-2" />
-              <p className="text-xs text-text-secondary">Belum ada pertanyaan</p>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
+                <MessageSquare size={24} className="text-text-secondary/40" />
+              </div>
+              <p className="text-sm font-semibold text-text-primary">Belum ada pertanyaan</p>
+              <p className="text-xs text-text-secondary mt-1">Jadilah yang pertama bertanya</p>
             </div>
           )}
         </>
       ) : (
-        <div className="text-center py-12">
-          <GraduationCap size={36} className="mx-auto text-text-secondary/30 mb-3" />
-          <h3 className="text-sm font-bold text-text-primary">Belum Ada Mentor</h3>
-          <p className="text-xs text-text-secondary mt-1">Circle ini belum memiliki mentor. Pantau terus untuk pembaruan.</p>
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
+            <GraduationCap size={24} className="text-text-secondary/40" />
+          </div>
+          <h3 className="text-sm font-semibold text-text-primary">Belum Ada Mentor</h3>
+          <p className="text-xs text-text-secondary mt-1 text-center max-w-xs">Circle ini belum memiliki mentor. Pantau terus untuk pembaruan.</p>
         </div>
       )}
     </div>

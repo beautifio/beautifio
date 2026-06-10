@@ -33,6 +33,7 @@ import {
   ProgressBar,
   BottomNavigation,
   Button,
+  Skeleton,
 } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -417,10 +418,25 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-text-secondary">Memuat profil...</p>
+      <div className="min-h-screen bg-bg">
+        <div className="max-w-content mx-auto px-6 pt-6 pb-24 space-y-6">
+          <div className="flex flex-col items-center pt-4 pb-6">
+            <Skeleton className="w-20 h-20 rounded-full mb-4" />
+            <Skeleton className="w-36 h-6 mb-2" />
+            <Skeleton className="w-56 h-4" />
+            <Skeleton className="w-28 h-4 mt-2" />
+            <div className="flex items-center gap-4 mt-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex flex-col items-center gap-1">
+                  <Skeleton className="w-8 h-6" />
+                  <Skeleton className="w-10 h-3" />
+                </div>
+              ))}
+            </div>
+          </div>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="w-full h-32 rounded-xl" />
+          ))}
         </div>
       </div>
     );
