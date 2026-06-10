@@ -1,0 +1,189 @@
+// Auto-generated Supabase types will go here
+// Run: supabase gen types typescript --local > packages/types/src/database.ts
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export interface Database {
+  public: {
+    Tables: {
+      users: {
+        Row: {
+          id: string;
+          email: string;
+          full_name: string;
+          role: "user" | "mentor" | "admin";
+          avatar_url: string | null;
+          bio: string | null;
+          city: string | null;
+          status: "active" | "suspended" | "banned";
+          is_verified: boolean;
+          last_active_at: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          full_name: string;
+          role?: "user" | "mentor" | "admin";
+          avatar_url?: string | null;
+          bio?: string | null;
+          city?: string | null;
+          status?: "active" | "suspended" | "banned";
+          is_verified?: boolean;
+          last_active_at?: string | null;
+        };
+        Update: {
+          email?: string;
+          full_name?: string;
+          avatar_url?: string | null;
+          bio?: string | null;
+          city?: string | null;
+          status?: "active" | "suspended" | "banned";
+          last_active_at?: string | null;
+        };
+      };
+      stories: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          cover_image: string | null;
+          author_id: string | null;
+          author_name: string;
+          author_avatar: string | null;
+          content: string;
+          category: StoryCategory;
+          reading_time: number;
+          like_count: number;
+          save_count: number;
+          comment_count: number;
+          is_published: boolean;
+          published_at: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          title: string;
+          cover_image?: string | null;
+          author_id?: string | null;
+          author_name: string;
+          author_avatar?: string | null;
+          content: string;
+          category: StoryCategory;
+          reading_time: number;
+          like_count?: number;
+          save_count?: number;
+          comment_count?: number;
+          is_published?: boolean;
+          published_at?: string | null;
+        };
+        Update: {
+          slug?: string;
+          title?: string;
+          cover_image?: string | null;
+          content?: string;
+          category?: StoryCategory;
+          reading_time?: number;
+          like_count?: number;
+          save_count?: number;
+          comment_count?: number;
+          is_published?: boolean;
+          published_at?: string | null;
+        };
+      };
+      story_likes: {
+        Row: {
+          id: string;
+          story_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          story_id: string;
+          user_id: string;
+        };
+        Update: Record<string, never>;
+      };
+      story_saves: {
+        Row: {
+          id: string;
+          story_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          story_id: string;
+          user_id: string;
+        };
+        Update: Record<string, never>;
+      };
+      story_comments: {
+        Row: {
+          id: string;
+          story_id: string;
+          user_id: string;
+          parent_id: string | null;
+          content: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          story_id: string;
+          user_id: string;
+          parent_id?: string | null;
+          content: string;
+        };
+        Update: {
+          content?: string;
+        };
+      };
+      story_recommendations: {
+        Row: {
+          id: string;
+          story_id: string;
+          resource_type: "roadmap" | "circle" | "product";
+          resource_id: string;
+          resource_name: string;
+          resource_description: string | null;
+          resource_image: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          story_id: string;
+          resource_type: "roadmap" | "circle" | "product";
+          resource_id: string;
+          resource_name: string;
+          resource_description?: string | null;
+          resource_image?: string | null;
+        };
+        Update: Record<string, never>;
+      };
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: {
+      user_role: "user" | "mentor" | "admin";
+      user_status: "active" | "suspended" | "banned";
+      goal_category: "karir" | "pendidikan" | "skill" | "bisnis";
+      goal_status: "active" | "completed" | "archived";
+      circle_status: "active" | "full" | "inactive";
+      member_role: "member" | "co-host";
+      message_type: "text" | "image" | "system";
+      milestone_status: "locked" | "available" | "in_progress" | "completed";
+      opp_category: "beasiswa" | "magang" | "kompetisi" | "workshop";
+      notif_type: "message" | "mentor_reply" | "milestone" | "opportunity" | "system";
+      story_category: StoryCategory;
+    };
+  };
+}
+
+export type StoryCategory = "education" | "career" | "business" | "sports" | "music" | "gaming" | "creator" | "beauty" | "technology";
