@@ -11,6 +11,7 @@ import { BottomNavigation, Badge } from "@beautifio/ui";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
 import { CONTENT_TABS, getAllItems } from "@/lib/inspirasi-data";
 import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
+import { SafeSpaceModal, NeedHelpButton } from "@/features/safe-space/SafeSpaceModal";
 
 function renderContent(text: string) {
   const paragraphs = text.split("\n\n");
@@ -47,6 +48,7 @@ export default function InspirasiDetailPage({
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(item?.like_count ?? 0);
   const [saveCount, setSaveCount] = useState(item?.save_count ?? 0);
+  const [showSafeSpace, setShowSafeSpace] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -86,10 +88,6 @@ export default function InspirasiDetailPage({
 
   const handleReport = useCallback(() => {
     alert("Laporan telah dikirim. Terima kasih atas partisipasi Anda.");
-  }, []);
-
-  const handleSafeReport = useCallback(() => {
-    alert("Laporan keamanan telah dikirim. Tim kami akan meninjau konten ini dalam 24 jam.");
   }, []);
 
   if (!item) {
@@ -223,6 +221,14 @@ export default function InspirasiDetailPage({
             {renderContent(item.full_content)}
           </div>
 
+          {/* Need Help Button */}
+          <div className="mb-4">
+            <NeedHelpButton
+              onClick={() => setShowSafeSpace(true)}
+              storyCategory={item.category}
+            />
+          </div>
+
           {/* Action Bar */}
           <div className="flex items-center justify-between py-4 border-t border-b border-gray-100 mb-8">
             <div className="flex items-center gap-4">
@@ -262,12 +268,12 @@ export default function InspirasiDetailPage({
                 <span className="hidden sm:inline">Laporkan</span>
               </button>
               <button
-                onClick={handleSafeReport}
+                onClick={() => setShowSafeSpace(true)}
                 className="flex items-center gap-1 text-xs text-gray-400 hover:text-amber-500 transition-colors"
-                title="Laporan Keamanan"
+                title="Safe Space"
               >
                 <Shield className="w-4 h-4" />
-                <span className="hidden sm:inline">Safe Report</span>
+                <span className="hidden sm:inline">Safe Space</span>
               </button>
             </div>
           </div>
@@ -325,6 +331,12 @@ export default function InspirasiDetailPage({
           )}
         </div>
       </div>
+
+      <SafeSpaceModal
+        open={showSafeSpace}
+        onClose={() => setShowSafeSpace(false)}
+        storyCategory={item.category}
+      />
 
       <BottomNavigation items={NAV_TABS} activeTab="inspirasi" onTabChange={(id) => { router.push(navRoute(id)); }} />
     </div>
