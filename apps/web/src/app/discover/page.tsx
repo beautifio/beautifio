@@ -2,24 +2,12 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft, ArrowRight, Check, Sparkles, Compass,
-  Home, BookOpen, Users, MapPin, User,
-} from "lucide-react";
-import { Button, BottomNavigation } from "@beautifio/ui";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Button } from "@beautifio/ui";
 import { DISCOVERY_QUESTIONS } from "@beautifio/utils";
 import type { DiscoveryAnswer } from "@beautifio/types";
 
 const STORAGE_KEY = "beautifio_discovery_answers";
-
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -186,11 +174,6 @@ export default function DiscoverPage() {
         </p>
       </div>
 
-      <BottomNavigation
-        items={tabs}
-        activeTab="discover"
-        onTabChange={(id) => router.push(id === "home" ? "/" : `/${id}`)}
-      />
     </div>
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Sparkles, Target, Heart, MapPin, Users, ArrowRight,
-  RefreshCw, Home, BookOpen, Compass, User,
+  RefreshCw, Home,
 } from "lucide-react";
-import { Card, Badge, BottomNavigation } from "@beautifio/ui";
+import { Card, Badge } from "@beautifio/ui";
 import {
   DISCOVERY_GOAL_LABELS, ROADMAP_TEMPLATES,
   INTEREST_TO_ROADMAP, INSPIRATION_TO_ROADMAP,
@@ -17,14 +17,7 @@ import type { DiscoveryAnswer } from "@beautifio/types";
 
 const STORAGE_KEY = "beautifio_discovery_answers";
 
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
+
 
 const circleNames: Record<string, { name: string; tag: string; color: string; members: number }> = {
   "1": { name: "Tech Founders", tag: "Kewirausahaan", color: "from-primary to-secondary", members: 8 },
@@ -258,11 +251,6 @@ export default function DiscoverResultPage() {
         </div>
       </div>
 
-      <BottomNavigation
-        items={tabs}
-        activeTab="discover"
-        onTabChange={(id) => router.push(id === "home" ? "/" : `/${id}`)}
-      />
     </div>
   );
 }
