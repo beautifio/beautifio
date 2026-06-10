@@ -1,32 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, Circle, Lock, ChevronDown } from "lucide-react";
 import { ProgressBar } from "@beautifio/ui";
 import type { RoadmapTemplateMilestone, RoadmapTask } from "@beautifio/types";
 
+function loadTaskStates(slug: string): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(`beautifio_roadmap_${slug}`);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveTaskStates(slug: string, states: Record<string, boolean>) {
+  try {
+    localStorage.setItem(`beautifio_roadmap_${slug}`, JSON.stringify(states));
+  } catch {}
+}
+
 export function MilestoneTimeline({
   milestones,
-  progress,
+  slug,
 }: {
   milestones: RoadmapTemplateMilestone[];
-  progress: number;
+  slug?: string;
 }) {
   const [expanded, setExpanded] = useState<string | null>(milestones[0]?.id ?? null);
   const [taskStates, setTaskStates] = useState<Record<string, boolean>>({});
 
-  const activeMilestone = milestones.findIndex((m) => {
-    const tasks = m.tasks as RoadmapTask[];
-    return tasks?.some((t) => !taskStates[`${m.id}-${t.title}`]);
-  });
-  const currentActive = activeMilestone === -1 ? milestones.length - 1 : activeMilestone;
+  useEffect(() => {
+    if (slug) setTaskStates(loadTaskStates(slug));
+  }, [slug]);
+
+  const toggleTask = useCallback((key: string) => {
+    setTaskStates((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (slug) saveTaskStates(slug, next);
+      return next;
+    });
+  }, [slug]);
+
+  const totalTasks = milestones.reduce((sum, m) => sum + (m.tasks as RoadmapTask[]).length, 0);
+  const doneTasks = milestones.reduce((sum, m) =>
+    sum + (m.tasks as RoadmapTask[]).filter((t) => taskStates[`${m.id}-${t.title}`]).length, 0
+  );
+  const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-bold text-text-primary">Milestones</h3>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-text-secondary">Progress</span>
+          <span className="text-xs text-text-secondary">{doneTasks}/{totalTasks} tugas</span>
           <ProgressBar value={progress} size="sm" variant="accent" showLabel />
         </div>
       </div>
@@ -34,9 +61,8 @@ export function MilestoneTimeline({
       <div className="space-y-2">
         {milestones.map((milestone, index) => {
           const tasks = (milestone.tasks as RoadmapTask[]) ?? [];
-          const doneTasks = tasks.filter((t) => taskStates[`${milestone.id}-${t.title}`]).length;
-          const isComplete = doneTasks === tasks.length && tasks.length > 0;
-          const isActive = index === currentActive && !isComplete;
+          const doneInMilestone = tasks.filter((t) => taskStates[`${milestone.id}-${t.title}`]).length;
+          const isComplete = doneInMilestone === tasks.length && tasks.length > 0;
           const isExpanded = expanded === milestone.id;
 
           return (
@@ -45,7 +71,7 @@ export function MilestoneTimeline({
               className={`rounded-sm border transition-all ${
                 isComplete
                   ? "border-success/30 bg-success/5"
-                  : isActive
+                  : isExpanded
                     ? "border-primary/30 bg-primary/5"
                     : "border-border bg-surface"
               }`}
@@ -56,15 +82,13 @@ export function MilestoneTimeline({
               >
                 {isComplete ? (
                   <CheckCircle2 size={20} className="text-success flex-shrink-0" />
-                ) : isActive ? (
-                  <Circle size={20} className="text-primary flex-shrink-0" />
                 ) : (
-                  <Lock size={18} className="text-text-secondary flex-shrink-0" />
+                  <Circle size={20} className={isExpanded ? "text-primary" : "text-text-secondary"} />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={`text-sm font-semibold ${
-                      isComplete ? "text-success" : isActive ? "text-primary" : "text-text-secondary"
+                      isComplete ? "text-success" : "text-text-primary"
                     }`}>
                       {milestone.title}
                     </span>
@@ -76,9 +100,9 @@ export function MilestoneTimeline({
                     <p className="text-xs text-text-secondary mt-0.5 line-clamp-1">{milestone.description}</p>
                   )}
                   <div className="flex items-center gap-2 mt-1.5">
-                    <span className="text-[10px] text-text-secondary">{doneTasks}/{tasks.length} tugas</span>
+                    <span className="text-[10px] text-text-secondary">{doneInMilestone}/{tasks.length} tugas</span>
                     {milestone.estimated_days && (
-                      <span className="text-[10px] text-text-secondary">· {milestone.estimated_days} hari</span>
+                      <span className="text-[10px] text-text-secondary">· estimasi {milestone.estimated_days} hari</span>
                     )}
                   </div>
                 </div>
@@ -98,7 +122,7 @@ export function MilestoneTimeline({
                     return (
                       <button
                         key={taskKey}
-                        onClick={() => setTaskStates((prev) => ({ ...prev, [taskKey]: !done }))}
+                        onClick={() => toggleTask(taskKey)}
                         className={`w-full flex items-center gap-2.5 p-2.5 rounded-sm text-left transition-all cursor-pointer ${
                           done
                             ? "bg-success/5 text-text-secondary"
