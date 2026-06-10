@@ -46,7 +46,7 @@ export default function LoginPage() {
       if (data?.session) {
         setSession(data.session);
         setUser(data.session.user);
-        router.push("/");
+        router.push("/home");
       }
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");

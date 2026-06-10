@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
 
   if (isAuth && isAuthPage(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/home";
     return NextResponse.redirect(url);
   }
 

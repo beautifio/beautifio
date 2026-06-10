@@ -206,7 +206,7 @@ export default function CircleListPage() {
       <BottomNavigation
         items={tabs}
         activeTab={activeTab}
-        onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/"); else router.push(`/${id}`); }}
+        onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/home"); else router.push(`/${id}`); }}
       />
     </div>
   );

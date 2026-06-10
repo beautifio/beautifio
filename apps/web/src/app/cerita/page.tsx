@@ -100,7 +100,7 @@ export default function CeritaPage() {
         </section>
       </div>
 
-      <BottomNavigation items={tabs} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/"); else router.push(`/${id}`); }} />
+      <BottomNavigation items={tabs} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/home"); else router.push(`/${id}`); }} />
     </div>
   );
 }

@@ -250,7 +250,7 @@ export default function DiscoverResultPage() {
               <Sparkles size={16} /> Lanjut ke Onboarding
             </button>
           </Link>
-          <Link href="/">
+          <Link href="/home">
             <button className="w-full h-13 rounded-xl border border-border bg-surface text-sm font-medium text-text-secondary cursor-pointer hover:border-primary/30 hover:text-text-primary hover:bg-muted/50 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
               <Home size={16} /> Ke Beranda
             </button>

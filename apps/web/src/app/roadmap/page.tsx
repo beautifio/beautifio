@@ -101,7 +101,7 @@ export default function RoadmapListPage() {
         </div>
       </div>
 
-      <BottomNavigation items={tabs} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/"); else router.push(`/${id}`); }} />
+      <BottomNavigation items={tabs} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); if (id === "home") router.push("/home"); else router.push(`/${id}`); }} />
     </div>
   );
 }

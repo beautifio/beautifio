@@ -157,7 +157,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
       <BottomNavigation
         items={tabs}
         activeTab="profil"
-        onTabChange={(id) => { if (id === "home") router.push("/"); else router.push(`/${id}`); }}
+        onTabChange={(id) => { if (id === "home") router.push("/home"); else router.push(`/${id}`); }}
       />
     </div>
   );

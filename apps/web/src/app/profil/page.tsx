@@ -480,7 +480,7 @@ export default function ProfileScreen() {
         activeTab={activeTab}
         onTabChange={(id) => {
           setActiveTab(id);
-          if (id === "home") router.push("/");
+          if (id === "home") router.push("/home");
           else router.push(`/${id}`);
         }}
       />

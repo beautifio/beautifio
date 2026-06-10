@@ -15,7 +15,7 @@ export default function NotFound() {
           Halaman yang kamu cari mungkin telah dipindahkan atau tidak tersedia.
         </p>
         <Link
-          href="/"
+          href="/home"
           className="inline-flex h-13 px-8 rounded-xl bg-primary text-primary-foreground text-sm font-bold items-center justify-center hover:bg-primary/90 active:scale-[0.98] transition-all shadow-lg shadow-primary/25"
         >
           Kembali ke Beranda

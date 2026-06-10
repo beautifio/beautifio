@@ -1,419 +1,185 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Target,
-  Trophy,
-  MessageCircle,
-  Briefcase,
-  BookOpen,
-  ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  Circle,
-  Zap,
-  Home,
-  Users,
-  MapPin,
-  Compass,
-  User,
-  Clock,
-} from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  Badge,
-  Avatar,
-  AvatarGroup,
-  ProgressBar,
-  BottomNavigation,
-} from "@beautifio/ui";
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
-const tabs = [
-  { id: "home", label: "Beranda", icon: Home },
-  { id: "discover", label: "Temukan", icon: Compass },
-  { id: "cerita", label: "Cerita", icon: BookOpen },
-  { id: "circle", label: "Circle", icon: Users },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
-  { id: "profil", label: "Profil", icon: User },
-];
+export default function SplashScreen() {
+  const router = useRouter();
+  const [logoVisible, setLogoVisible] = useState(false);
+  const [contentVisible, setContentVisible] = useState(false);
+  const [ctaVisible, setCtaVisible] = useState(false);
 
-const goals = [
-  {
-    id: "1",
-    name: "Jadi Frontend Developer",
-    category: "Karir",
-    progress: 62,
-    milestones: { done: 5, total: 8 },
-  },
-  {
-    id: "2",
-    name: "Toefl 600+",
-    category: "Skill",
-    progress: 30,
-    milestones: { done: 2, total: 6 },
-  },
-];
-
-const actions = [
-  {
-    id: "1",
-    title: "Selesaikan Modul JavaScript Dasar",
-    due: "Besok",
-    done: false,
-  },
-  {
-    id: "2",
-    title: "Ikuti Mentor Session Circle Tech",
-    due: "Jumat, 14 Jun",
-    done: true,
-  },
-  {
-    id: "3",
-    title: "Submit Portofolio ke Opportunity Hub",
-    due: "Minggu, 16 Jun",
-    done: false,
-  },
-];
-
-const activities = [
-  {
-    id: "1",
-    name: "Rina Amalia",
-    initials: "RA",
-    role: "Mentor",
-    message: "Jangan lupa selesaikan milestone React minggu ini ya!",
-    time: "2 jam lalu",
-    circle: "Tech Founders",
-  },
-  {
-    id: "2",
-    name: "Dimas Pratama",
-    initials: "DP",
-    role: "Anggota",
-    message: "Ada yang udah coba challenge algoritma kemarin?",
-    time: "5 jam lalu",
-    circle: "Tech Founders",
-  },
-  {
-    id: "3",
-    name: "Sari Indah",
-    initials: "SI",
-    role: "Anggota",
-    message: "Gua nemu beasiswa menarik nih, cek opportunity hub!",
-    time: "1 hari lalu",
-    circle: "Creative Lab",
-  },
-];
-
-const opportunities = [
-  {
-    id: "1",
-    title: "Beasiswa Prestasi 2026",
-    org: "Yayasan Nusantara Cerdas",
-    type: "Beasiswa",
-    slug: "beasiswa-prestasi-nusantara",
-    deadline: "30 Jun 2026",
-  },
-  {
-    id: "2",
-    title: "Program Magang Frontend",
-    org: "TechStart Indonesia",
-    type: "Magang",
-    slug: "magang-frontend-techstart",
-    deadline: "15 Jul 2026",
-  },
-  {
-    id: "3",
-    title: "Hibah Startup Tahap Awal",
-    org: "Baparekraf",
-    type: "Pendanaan",
-    slug: "pendanaan-startup-awal",
-    deadline: "30 Agu 2026",
-  },
-];
-
-function GreetingHeader() {
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Selamat Pagi" : hour < 17 ? "Selamat Siang" : "Selamat Malam";
+  useEffect(() => {
+    const t1 = setTimeout(() => setLogoVisible(true), 300);
+    const t2 = setTimeout(() => setContentVisible(true), 800);
+    const t3 = setTimeout(() => setCtaVisible(true), 1300);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
 
   return (
-    <div className="flex items-center justify-between pt-2 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="flex items-center gap-4">
-        <Avatar initials="AN" size="lg" />
-        <div>
-          <h1 className="text-lg font-bold text-text-primary leading-tight">
-            Hai, Andini!
-          </h1>
-          <p className="text-sm text-text-secondary mt-0.5">{greeting}</p>
-        </div>
-      </div>
-      <button className="relative p-2 text-text-secondary hover:text-primary transition-colors cursor-pointer">
-        <Sparkles size={20} />
-        <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
-      </button>
-    </div>
-  );
-}
-
-function GoalProgressCard() {
-  return (
-    <Card padding="lg">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target size={18} className="text-primary" />
-            <CardTitle>Goal Aktif</CardTitle>
+    <div className="min-h-screen bg-gradient-to-b from-[#084463] to-[#68B9D4] flex flex-col items-center justify-between px-6 py-16 overflow-hidden">
+      {/* Logo */}
+      <div
+        className={`transition-all duration-1000 ease-out ${
+          logoVisible
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-4"
+        }`}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <path d="M16 2L20 12L30 14L22 22L24 32L16 26L8 32L10 22L2 14L12 12L16 2Z" fill="white" />
+            </svg>
           </div>
-          <button className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
-            Lihat Semua
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-5 animate-in fade-in duration-500">
-          {goals.map((goal) => (
-            <div key={goal.id}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
-                  <span className="text-sm font-semibold text-text-primary truncate">
-                    {goal.name}
-                  </span>
-                </div>
-                <Badge variant="secondary" className="flex-shrink-0 ml-2">
-                  {goal.category}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <ProgressBar
-                    value={goal.progress}
-                    size="sm"
-                    variant="accent"
-                  />
-                </div>
-                <span className="text-xs font-medium text-text-secondary tabular-nums flex-shrink-0">
-                  {goal.milestones.done}/{goal.milestones.total}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function WeeklyActionCard() {
-  const doneCount = actions.filter((a) => a.done).length;
-
-  return (
-    <Card padding="lg" className="animate-in fade-in duration-500 delay-[450ms]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Zap size={18} className="text-accent" />
-            <CardTitle>Aksi Minggu Ini</CardTitle>
-          </div>
-          <span className="text-xs font-medium text-text-secondary">
-            {doneCount}/{actions.length} selesai
+          <span className="text-white/90 text-xl font-bold tracking-wide">
+            Beautifio
           </span>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {actions.map((action, i) => (
-            <div
-              key={action.id}
-              className={`flex items-start gap-4 p-4 rounded-xl transition-colors ${
-                i < actions.length - 1 ? "border-b border-border" : ""
-              }`}
-            >
-              {action.done ? (
-                <CheckCircle2 size={20} className="text-success flex-shrink-0 mt-0.5" />
-              ) : (
-                <Circle size={20} className="text-border flex-shrink-0 mt-0.5" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p
-                  className={`text-sm font-medium leading-snug ${
-                    action.done
-                      ? "line-through text-text-secondary"
-                      : "text-text-primary"
-                  }`}
-                >
-                  {action.title}
-                </p>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  {action.due}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CircleActivity() {
-  return (
-    <Card padding="lg" className="animate-in fade-in duration-500 delay-[600ms]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageCircle size={18} className="text-secondary" />
-            <CardTitle>Aktivitas Circle</CardTitle>
-          </div>
-          <button className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
-            Lihat Semua
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {activities.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-start gap-4 cursor-pointer group"
-            >
-              <Avatar initials={item.initials} size="sm" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-text-primary">
-                    {item.name}
-                  </span>
-                  <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none">
-                    {item.role}
-                  </Badge>
-                <span className="text-xs text-text-secondary ml-auto flex-shrink-0 tabular-nums">
-                  {item.time}
-                  </span>
-                </div>
-                <p className="text-sm text-text-secondary mt-0.5 line-clamp-2 leading-snug">
-                  {item.message}
-                </p>
-                <span className="text-xs text-secondary font-medium mt-1 inline-block">
-                  #{item.circle}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function OpportunityPreview() {
-  const router = useRouter();
-  return (
-    <Card padding="lg" className="animate-in fade-in duration-500 delay-[750ms]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Briefcase size={18} className="text-accent" />
-            <CardTitle>Peluang Menarik</CardTitle>
-          </div>
-          <button onClick={() => router.push("/opportunity")} className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
-            Lihat Semua
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {opportunities.map((opp) => (
-            <div
-              key={opp.id}
-              onClick={() => router.push(`/opportunity/${opp.slug}`)}
-              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-secondary/30 hover:bg-muted/30 transition-all cursor-pointer group"
-            >
-              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                <Briefcase size={18} className="text-accent" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <Badge variant="accent" className="mb-1">
-                  {opp.type}
-                </Badge>
-                <h4 className="text-sm font-semibold text-text-primary truncate">
-                  {opp.title}
-                </h4>
-                <p className="text-xs text-text-secondary mt-0.5">{opp.org}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                <ArrowRight
-                  size={16}
-                  className="text-text-secondary group-hover:text-accent group-hover:translate-x-1 transition-all"
-                />
-                <span className="text-[10px] text-text-secondary">
-                  {opp.deadline}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function QuickStats() {
-  const stats = [
-    { icon: Trophy, label: "Milestone", value: "7 selesai", color: "text-accent" },
-    { icon: BookOpen, label: "Circle", value: "3 aktif", color: "text-secondary" },
-    { icon: Clock, label: "Streak", value: "5 hari", color: "text-primary" },
-  ];
-
-  return (
-    <div className="grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
-      {stats.map((stat, i) => {
-        const Icon = stat.icon;
-        return (
-          <div
-            key={i}
-            className="flex flex-col items-center gap-2 p-3 bg-surface rounded-lg border border-border shadow-sm"
-          >
-            <Icon size={18} className={stat.color} />
-            <span className="text-xs text-text-secondary">{stat.label}</span>
-            <span className="text-sm font-bold text-text-primary">
-              {stat.value}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-export default function HomeScreen() {
-  const [activeTab, setActiveTab] = useState("home");
-  const router = useRouter();
-
-  return (
-    <div className="min-h-screen bg-bg">
-      <div className="max-w-content mx-auto px-6 pt-6 pb-24 space-y-8">
-        <GreetingHeader />
-        <QuickStats />
-        <GoalProgressCard />
-        <WeeklyActionCard />
-        <CircleActivity />
-        <OpportunityPreview />
       </div>
 
-      <BottomNavigation
-        items={tabs}
-        activeTab={activeTab}
-        onTabChange={(id) => {
-          setActiveTab(id);
-          if (id === "home") router.push("/");
-          else router.push(`/${id}`);
-        }}
-      />
+      {/* Content */}
+      <div className="flex flex-col items-center text-center -mt-8">
+        <h1
+          className={`text-3xl font-bold text-white leading-tight max-w-[320px] transition-all duration-1000 ease-out delay-200 ${
+            contentVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-6"
+          }`}
+        >
+          Masa Depan{" "}
+          <span className="text-[#FFC64F]">Dimulai Hari Ini</span>
+        </h1>
+        <p
+          className={`text-sm text-white/80 mt-4 max-w-[300px] leading-relaxed transition-all duration-1000 ease-out delay-300 ${
+            contentVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-6"
+          }`}
+        >
+          Temukan arah, lingkungan, dan peluang untuk masa depan yang lebih baik.
+        </p>
+
+        {/* Illustration */}
+        <div
+          className={`mt-10 transition-all duration-1000 ease-out delay-500 ${
+            contentVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-8"
+          }`}
+        >
+          <svg
+            width="240"
+            height="240"
+            viewBox="0 0 240 240"
+            className="drop-shadow-2xl"
+            style={{
+              animation: contentVisible ? "float 3s ease-in-out infinite" : "none",
+            }}
+          >
+            <defs>
+              <linearGradient id="skyGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFC64F" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#FFC64F" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+
+            {/* Glow */}
+            <circle cx="160" cy="80" r="60" fill="url(#skyGlow)" />
+
+            {/* Sun / Future horizon */}
+            <circle cx="170" cy="90" r="20" fill="#FFC64F" opacity="0.6" />
+            <circle cx="170" cy="90" r="14" fill="#FFC64F" opacity="0.9" />
+            <circle cx="170" cy="90" r="8" fill="#FFF7E0" />
+
+            {/* Mountains / Landscape */}
+            <path d="M0 220 L40 160 L80 190 L120 140 L160 180 L200 130 L240 170 L240 240 L0 240Z" fill="#084463" opacity="0.5" />
+            <path d="M0 240 L60 180 L110 210 L150 170 L200 200 L240 160 L240 240Z" fill="#084463" opacity="0.7" />
+
+            {/* Person - standing, looking toward the sun */}
+            <g transform="translate(80, 120)">
+              {/* Body */}
+              <circle cx="20" cy="10" r="14" fill="white" opacity="0.95" />
+              {/* Neck */}
+              <rect x="17" y="23" width="6" height="6" rx="3" fill="white" />
+              {/* Upper body */}
+              <path d="M6 50 L6 30 Q6 25 10 24 L30 24 Q34 25 34 30 L34 50Z" fill="white" opacity="0.95" />
+              {/* Arms */}
+              <path d="M6 32 Q-4 28 -8 22" stroke="white" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.9" />
+              <path d="M34 32 Q44 28 48 22" stroke="white" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.9" />
+              {/* Legs */}
+              <path d="M12 50 L10 78" stroke="white" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.9" />
+              <path d="M28 50 L30 78" stroke="white" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.9" />
+              {/* Hair */}
+              <path d="M6 10 Q6 -4 20 -6 Q34 -4 34 10" fill="#2D1810" />
+              <path d="M8 8 Q12 0 20 -2 Q28 0 32 8" fill="#3D2810" opacity="0.5" />
+              {/* Cape / flowing cloth */}
+              <path d="M6 36 Q-10 44 -12 60 Q0 54 6 48Z" fill="white" opacity="0.3" />
+              <path d="M34 36 Q50 44 52 60 Q40 54 34 48Z" fill="white" opacity="0.3" />
+              {/* Direction lines */}
+              <g opacity="0.4">
+                <path d="M130 70 Q145 65 160 70" stroke="#FFC64F" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                <path d="M135 78 Q150 73 165 78" stroke="#FFC64F" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                <path d="M140 86 Q152 81 162 86" stroke="#FFC64F" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+              </g>
+            </g>
+
+            {/* Stars / Sparkles */}
+            <g opacity="0.6">
+              <circle cx="40" cy="40" r="2" fill="white" />
+              <circle cx="200" cy="30" r="1.5" fill="white" />
+              <circle cx="60" cy="60" r="1" fill="white" />
+              <circle cx="220" cy="60" r="1.5" fill="white" />
+              <circle cx="30" cy="90" r="1" fill="white" />
+              <circle cx="210" cy="110" r="1" fill="white" />
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      {/* CTA Group */}
+      <div
+        className={`w-full max-w-[320px] space-y-3 transition-all duration-1000 ease-out ${
+          ctaVisible
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-10"
+        }`}
+      >
+        <Link
+          href="/welcome"
+          className="flex items-center justify-center w-full h-14 rounded-full bg-[#FFC64F] text-[#084463] font-bold text-sm shadow-lg hover:bg-[#FFC64F]/90 active:scale-[0.98] transition-all cursor-pointer gap-2"
+        >
+          Mulai Perjalananmu
+          <ArrowRight size={18} />
+        </Link>
+
+        <Link
+          href="/login"
+          className="flex items-center justify-center w-full h-14 rounded-full border-2 border-white/30 text-white font-semibold text-sm hover:bg-white/10 active:scale-[0.98] transition-all cursor-pointer"
+        >
+          Masuk
+        </Link>
+
+        <Link
+          href="/home"
+          className="block w-full text-center text-white/70 text-sm py-2 hover:text-white transition-colors cursor-pointer"
+        >
+          Lewati Dulu
+        </Link>
+      </div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+        }
+      `}</style>
     </div>
   );
 }

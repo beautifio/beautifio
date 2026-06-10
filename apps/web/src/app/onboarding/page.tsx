@@ -279,7 +279,7 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = () => {
-    router.push("/");
+    router.push("/home");
   };
 
   if (showMatching) {
