@@ -13,6 +13,18 @@ export const OPP_CATEGORIES = [
 ] as const;
 
 export const CIRCLE_STATUS = { active: "Aktif", full: "Penuh", inactive: "Tidak Aktif" } as const;
+
+export const CIRCLE_CATEGORIES = [
+  { value: "sports", label: "Olahraga", emoji: "🏃" },
+  { value: "music", label: "Musik", emoji: "🎵" },
+  { value: "gaming", label: "Gaming", emoji: "🎮" },
+  { value: "beauty", label: "Kecantikan", emoji: "💄" },
+  { value: "business", label: "Bisnis", emoji: "💼" },
+  { value: "creator", label: "Kreator", emoji: "📹" },
+  { value: "technology", label: "Teknologi", emoji: "💻" },
+  { value: "education", label: "Pendidikan", emoji: "📚" },
+  { value: "career", label: "Karir", emoji: "📈" },
+] as const;
 export const MILESTONE_STATUS_LABEL = { locked: "Terkunci", available: "Tersedia", in_progress: "Sedang Dikerjakan", completed: "Selesai" } as const;
 
 export interface StoryCategoryConstant { id: string; name: string; slug: string; icon: string; label: string; }

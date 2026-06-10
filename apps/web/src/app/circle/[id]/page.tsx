@@ -152,6 +152,138 @@ const circleData: Record<string, {
       { id: "u43", name: "Rara Kirana", initials: "RK", role: "Member" },
     ],
   },
+  "7": {
+    id: "7",
+    name: "Sports Arena",
+    tag: "Olahraga",
+    desc: "Komunitas olahraga dan kebugaran untuk atlet muda dan pecinta fitness. Lari, gym, basket, futsal, dan berbagai cabang olahraga.",
+    memberCount: 11,
+    maxMembers: 12,
+    hasMentor: true,
+    mentor: { name: "Fajar Hidayat", initials: "FH", expertise: "Personal Trainer & Atlet Nasional" },
+    coverColor: "from-orange-500 to-red-500",
+    members: [
+      { id: "u1", name: "Andini Putri", initials: "AP", role: "Member" },
+      { id: "u44", name: "Rizky Pratama", initials: "RP", role: "Co-Host" },
+      { id: "u45", name: "Sinta Wahyuni", initials: "SW", role: "Member" },
+      { id: "u46", name: "Tommy Gunawan", initials: "TG", role: "Member" },
+      { id: "u47", name: "Ujang Komarudin", initials: "UK", role: "Member" },
+      { id: "u48", name: "Vera Anggraini", initials: "VA", role: "Member" },
+      { id: "u49", name: "Wawan Setiawan", initials: "WS", role: "Member" },
+      { id: "u50", name: "Xena Mariana", initials: "XM", role: "Member" },
+      { id: "u51", name: "Yoga Prasetya", initials: "YP", role: "Member" },
+      { id: "u52", name: "Zara Amelia", initials: "ZA", role: "Member" },
+      { id: "u53", name: "Adi Nugroho", initials: "AN", role: "Member" },
+    ],
+  },
+  "8": {
+    id: "8",
+    name: "Music Collective",
+    tag: "Musik",
+    desc: "Berkarya, kolaborasi, dan tumbuh bareng sesama musisi dan pecinta musik. Dari teori hingga produksi dan performa.",
+    memberCount: 8,
+    maxMembers: 12,
+    hasMentor: true,
+    mentor: { name: "Kevin Alexander", initials: "KA", expertise: "Produser Musik & Gitaris Profesional" },
+    coverColor: "from-purple-600 to-pink-500",
+    members: [
+      { id: "u54", name: "Bella Sakina", initials: "BS", role: "Co-Host" },
+      { id: "u55", name: "Citra Lestari", initials: "CL", role: "Member" },
+      { id: "u56", name: "Dani Permana", initials: "DP", role: "Member" },
+      { id: "u57", name: "Erik Tohir", initials: "ET", role: "Member" },
+      { id: "u58", name: "Fina Kurnia", initials: "FK", role: "Member" },
+      { id: "u59", name: "Gilang Pratama", initials: "GP", role: "Member" },
+      { id: "u60", name: "Hana Sofiana", initials: "HS", role: "Member" },
+      { id: "u61", name: "Irfan Maulana", initials: "IM", role: "Member" },
+    ],
+  },
+  "9": {
+    id: "9",
+    name: "Game Dev Guild",
+    tag: "Gaming",
+    desc: "Komunitas developer game dan esports. Diskusi tentang game design, programming, art, dan kompetisi esports.",
+    memberCount: 10,
+    maxMembers: 12,
+    hasMentor: false,
+    coverColor: "from-green-600 to-teal-400",
+    members: [
+      { id: "u62", name: "Joko Susanto", initials: "JS", role: "Co-Host" },
+      { id: "u63", name: "Kiki Rizki", initials: "KR", role: "Member" },
+      { id: "u64", name: "Lia Marlina", initials: "LM", role: "Member" },
+      { id: "u65", name: "Miko Wardana", initials: "MW", role: "Member" },
+      { id: "u66", name: "Nina Safitri", initials: "NS", role: "Member" },
+      { id: "u67", name: "Oscar Pradana", initials: "OP", role: "Member" },
+      { id: "u68", name: "Putri Aulia", initials: "PA", role: "Member" },
+      { id: "u69", name: "Qory Febrina", initials: "QF", role: "Member" },
+      { id: "u70", name: "Rangga Wiraguna", initials: "RW", role: "Member" },
+      { id: "u71", name: "Siska Dewi", initials: "SD", role: "Member" },
+    ],
+  },
+  "10": {
+    id: "10",
+    name: "Beauty Circle",
+    tag: "Kecantikan",
+    desc: "Sharing tips skincare, makeup, dan tren kecantikan terkini. Review produk, tutorial, dan diskusi rutin.",
+    memberCount: 9,
+    maxMembers: 12,
+    hasMentor: false,
+    coverColor: "from-rose-500 to-pink-400",
+    members: [
+      { id: "u72", name: "Tasya Kirana", initials: "TK", role: "Co-Host" },
+      { id: "u73", name: "Ulan Sari", initials: "US", role: "Member" },
+      { id: "u74", name: "Vivi Mariana", initials: "VM", role: "Member" },
+      { id: "u75", name: "Wida Ningsih", initials: "WN", role: "Member" },
+      { id: "u76", name: "Yuni Astuti", initials: "YA", role: "Member" },
+      { id: "u77", name: "Zahra Aulia", initials: "ZA", role: "Member" },
+      { id: "u78", name: "Ayu Permatasari", initials: "AP", role: "Member" },
+      { id: "u79", name: "Bunga Citra", initials: "BC", role: "Member" },
+      { id: "u80", name: "Cinta Laura", initials: "CL", role: "Member" },
+    ],
+  },
+  "11": {
+    id: "11",
+    name: "Study Hub",
+    tag: "Pendidikan",
+    desc: "Belajar bareng, diskusi akademik, dan persiapan ujian masuk. Grup belajar intensif untuk SNBT, UTBK, dan ujian internasional.",
+    memberCount: 12,
+    maxMembers: 12,
+    hasMentor: true,
+    mentor: { name: "Bu Sari", initials: "SS", expertise: "Guru & Konsultan Pendidikan" },
+    coverColor: "from-blue-500 to-indigo-600",
+    members: [
+      { id: "u81", name: "Dinda Permata", initials: "DP", role: "Co-Host" },
+      { id: "u82", name: "Endah Lestari", initials: "EL", role: "Member", isMentor: true },
+      { id: "u83", name: "Farhan Hidayat", initials: "FH", role: "Member" },
+      { id: "u84", name: "Gita Puspita", initials: "GP", role: "Member" },
+      { id: "u85", name: "Hendra Gunawan", initials: "HG", role: "Member" },
+      { id: "u86", name: "Intan Permata", initials: "IP", role: "Member" },
+      { id: "u87", name: "Juli Arifin", initials: "JA", role: "Member" },
+      { id: "u88", name: "Kartika Sari", initials: "KS", role: "Member" },
+      { id: "u89", name: "Lukman Hakim", initials: "LH", role: "Member" },
+      { id: "u90", name: "Mira Yuliana", initials: "MY", role: "Member" },
+      { id: "u91", name: "Nanda Putra", initials: "NP", role: "Member" },
+      { id: "u92", name: "Ocha Ramadhani", initials: "OR", role: "Member" },
+    ],
+  },
+  "12": {
+    id: "12",
+    name: "Career Boost",
+    tag: "Karir",
+    desc: "Persiapan karir, coaching CV, simulasi interview, dan networking profesional. Dapatkan bimbingan dari praktisi HR.",
+    memberCount: 6,
+    maxMembers: 12,
+    hasMentor: true,
+    mentor: { name: "Pak Budi", initials: "BB", expertise: "HR Director 15+ tahun" },
+    coverColor: "from-primary to-secondary",
+    members: [
+      { id: "u93", name: "Rina Marlina", initials: "RM", role: "Co-Host" },
+      { id: "u94", name: "Sabarudin", initials: "SA", role: "Member" },
+      { id: "u95", name: "Tari Lestari", initials: "TL", role: "Member" },
+      { id: "u96", name: "Umar Khayam", initials: "UK", role: "Member" },
+      { id: "u97", name: "Vina Panduwinata", initials: "VP", role: "Member" },
+      { id: "u98", name: "Willy Salim", initials: "WS", role: "Member" },
+    ],
+  },
 };
 
 const MOCK_MESSAGES: Record<string, {
@@ -165,6 +297,36 @@ const MOCK_MESSAGES: Record<string, {
     { id: "m5", senderId: "u1", senderName: "Andini Putri", senderInitials: "AP", text: "Setuju! Aku kenal beberapa teman yang mungkin juga tertarik", time: "09:40", isToday: true },
     { id: "m6", senderId: "u4", senderName: "Dimas Prakoso", senderInitials: "DP", text: "Gue in! udah cari partner nih", time: "09:42", isToday: true },
   ],
+  "7": [
+    { id: "m7", senderId: "u44", senderName: "Rizky Pratama", senderInitials: "RP", text: "Ada yang mau ikut lari pagi bareng akhir pekan ini?", time: "08:15", isToday: true },
+    { id: "m8", senderId: "u1", senderName: "Andini Putri", senderInitials: "AP", text: "Aku mau! Biasanya lari di GBK, kamu di mana?", time: "08:18", isToday: true },
+    { id: "m9", senderId: "u46", senderName: "Tommy Gunawan", senderInitials: "TG", text: "Gw join! Siapa tau bisa sekalian latihan sprint", time: "08:20", isToday: true },
+  ],
+  "8": [
+    { id: "m10", senderId: "u54", senderName: "Bella Sakina", senderInitials: "BS", text: "Weekend ini ada open mic di kafe, siapa mau perform?", time: "10:30", isToday: true },
+    { id: "m11", senderId: "u56", senderName: "Dani Permana", senderInitials: "DP", text: "Gue mau! Lagi siapin original song nih", time: "10:35", isToday: true },
+    { id: "m12", senderId: "u58", senderName: "Fina Kurnia", senderInitials: "FK", text: "Seru! Aku bisa main keyboard kalo butuh additional", time: "10:40", isToday: true },
+  ],
+  "9": [
+    { id: "m13", senderId: "u62", senderName: "Joko Susanto", senderInitials: "JS", text: "Ada yang tertarik bikin game jam bareng bulan depan?", time: "14:00", isToday: true },
+    { id: "m14", senderId: "u65", senderName: "Miko Wardana", senderInitials: "MW", text: "Gue in! Udah punya konsep game puzzle edukasi", time: "14:05", isToday: true },
+    { id: "m15", senderId: "u63", senderName: "Kiki Rizki", senderInitials: "KR", text: "Aku bisa bantu dari sisi art dan animasi", time: "14:10", isToday: true },
+  ],
+  "10": [
+    { id: "m16", senderId: "u72", senderName: "Tasya Kirana", senderInitials: "TK", text: "Rekomendasi sunscreen buat kulit berminyak dong!", time: "11:20", isToday: true },
+    { id: "m17", senderId: "u76", senderName: "Yuni Astuti", senderInitials: "YA", text: "Aku pake Skin Aqua UV, ringan dan nggak lengket", time: "11:25", isToday: true },
+    { id: "m18", senderId: "u77", senderName: "Zahra Aulia", senderInitials: "ZA", text: "Setuju! Atau coba Azarine oil-free sunscreen", time: "11:30", isToday: true },
+  ],
+  "11": [
+    { id: "m19", senderId: "u81", senderName: "Dinda Permata", senderInitials: "DP", text: "Ada yang udah daftar SNBT? Yuk sharing pengalaman!", time: "19:00", isToday: true },
+    { id: "m20", senderId: "u83", senderName: "Farhan Hidayat", senderInitials: "FH", text: "Baru daftar kemarin. Yang paling susah itu soal penalaran matematika", time: "19:05", isToday: true },
+    { id: "m21", senderId: "u85", senderName: "Hendra Gunawan", senderInitials: "HG", text: "Bikin grup belajar yuk, lesehan di perpus bareng", time: "19:10", isToday: true },
+  ],
+  "12": [
+    { id: "m22", senderId: "u93", senderName: "Rina Marlina", senderInitials: "RM", text: "Siapa yang mau ikut simulasi interview besok?", time: "15:00", isToday: true },
+    { id: "m23", senderId: "u95", senderName: "Tari Lestari", senderInitials: "TL", text: "Aku mau! Sekalian minta feedback CV aku dong", time: "15:05", isToday: true },
+    { id: "m24", senderId: "u94", senderName: "Sabarudin", senderInitials: "SA", text: "Count me in! Butuh banget latihan interview bahasa Inggris", time: "15:10", isToday: true },
+  ],
 };
 
 const MOCK_QUESTIONS: Record<string, { id: string; user: string; initials: string; title: string; content: string; answers: number; time: string }[]> = {
@@ -176,6 +338,21 @@ const MOCK_QUESTIONS: Record<string, { id: string; user: string; initials: strin
   "2": [
     { id: "q4", user: "Indah Wulandari", initials: "IW", title: "Tips mulai portfolio sebagai desainer", content: "Baru lulus DKV, mau bangun portfolio dari nol. Mulai dari mana ya?", answers: 0, time: "3 hari lalu" },
   ],
+  "7": [
+    { id: "q5", user: "Vera Anggraini", initials: "VA", title: "Cara mulai lari untuk pemula?", content: "Saya belum pernah lari rutin. Mulai dari jarak berapa dan seberapa sering?", answers: 2, time: "1 hari lalu" },
+  ],
+  "8": [
+    { id: "q6", user: "Erik Tohir", initials: "ET", title: "Rekomendasi DAW gratis untuk produksi musik?", content: "Mau mulai produksi musik sendiri tapi budget terbatas. Ada rekomendasi DAW?", answers: 1, time: "2 hari lalu" },
+  ],
+  "10": [
+    { id: "q7", user: "Wida Ningsih", initials: "WN", title: "Skincare routine untuk kulit kombinasi?", content: "Kulit aku T-zone berminyak tapi pipi kering. Produk apa yang cocok?", answers: 3, time: "4 hari lalu" },
+  ],
+  "11": [
+    { id: "q8", user: "Gita Puspita", initials: "GP", title: "Tips lolos SNBT 2026?", content: "Bingung cara belajar efektif buat SNBT. Ada tips dari kakak kelas?", answers: 2, time: "5 hari lalu" },
+  ],
+  "12": [
+    { id: "q9", user: "Tari Lestari", initials: "TL", title: "CV gap year gimana cara jelasinnya?", content: "Aku gap setahun abis lulus. Gimana cara ngejelasin di CV biar tetap profesional?", answers: 0, time: "2 hari lalu" },
+  ],
 };
 
 const MOCK_SESSIONS: Record<string, { id: string; title: string; desc: string; date: string; time: string; status: string; mentor: string; slots: number }[]> = {
@@ -185,6 +362,19 @@ const MOCK_SESSIONS: Record<string, { id: string; title: string; desc: string; d
   ],
   "2": [
     { id: "s3", title: "Workshop: Canva untuk Pemula", desc: "Belajar desain grafis dengan Canva dari dasar.", date: "10 Juni 2026", time: "14:00 - 16:00 WIB", status: "completed", mentor: "Eksternal", slots: 0 },
+  ],
+  "7": [
+    { id: "s4", title: "Lari Pagi Bareng Komunitas", desc: "Lari 5K santai keliling kota. Semua level diterima, dari pemula sampai mahir.", date: "14 Juni 2026", time: "06:00 - 08:00 WIB", status: "upcoming", mentor: "Fajar Hidayat", slots: 20 },
+    { id: "s5", title: "Futsal Cup Antar Circle", desc: "Turnamen futsal antar circle di Beautifio. Bawa tim terbaikmu!", date: "21 Juni 2026", time: "09:00 - 15:00 WIB", status: "upcoming", mentor: "Fajar Hidayat", slots: 8 },
+  ],
+  "8": [
+    { id: "s6", title: "Open Mic Night", desc: "Tampilkan bakat musikmu di open mic malam minggu. Solo, duo, atau band.", date: "13 Juni 2026", time: "19:00 - 22:00 WIB", status: "upcoming", mentor: "Kevin Alexander", slots: 10 },
+  ],
+  "11": [
+    { id: "s7", title: "Try Out SNBT 2026", desc: "Simulasi ujian SNBT gratis dengan soal-soal prediksi terbaru.", date: "20 Juni 2026", time: "08:00 - 12:00 WIB", status: "upcoming", mentor: "Bu Sari", slots: 25 },
+  ],
+  "12": [
+    { id: "s8", title: "CV & Interview Workshop", desc: "Sesi coaching CV dan simulasi interview bersama HR profesional.", date: "18 Juni 2026", time: "14:00 - 17:00 WIB", status: "upcoming", mentor: "Pak Budi", slots: 15 },
   ],
 };
 
