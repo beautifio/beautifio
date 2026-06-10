@@ -117,8 +117,8 @@ function RecommendedSection({ recommendations }: { recommendations: StoryRecomme
           const c = config[rec.resource_type];
           const Icon = c.icon;
           return (
-            <div key={rec.id} className="flex items-center gap-3 p-4 rounded-sm border border-border hover:border-secondary/30 transition-all cursor-pointer group">
-              <div className={`w-10 h-10 rounded-sm ${c.bg} flex items-center justify-center flex-shrink-0`}>
+            <div key={rec.id} className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-secondary/30 hover:bg-muted/30 transition-all cursor-pointer group">
+              <div className={`w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center flex-shrink-0`}>
                 <Icon size={18} className={c.color} />
               </div>
               <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
           <div className="relative aspect-[16/9]">
             <img src={story.cover_image} alt={story.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <button onClick={() => router.push("/cerita")} className="absolute top-4 left-4 w-8 h-8 rounded-sm bg-black/30 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors">
+            <button onClick={() => router.push("/cerita")} className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:bg-black/50 transition-all active:scale-90">
               <ArrowLeft size={18} className="text-white" />
             </button>
           </div>
@@ -176,7 +176,7 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
 
         <article className="px-6 pt-5 pb-24">
           {!story.cover_image && (
-            <button onClick={() => router.push("/cerita")} className="w-8 h-8 rounded-sm bg-surface border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-colors mb-4">
+            <button onClick={() => router.push("/cerita")} className="w-9 h-9 rounded-xl bg-surface border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-all active:scale-90 mb-4">
               <ArrowLeft size={18} className="text-text-secondary" />
             </button>
           )}
@@ -185,9 +185,9 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
             {story.category?.name ?? "General"}
           </Badge>
 
-          <h1 className="text-xl font-bold text-text-primary leading-tight">{story.title}</h1>
+          <h1 className="text-xl font-bold text-text-primary leading-snug">{story.title}</h1>
 
-          <div className="flex items-center gap-3 mt-3">
+          <div className="flex items-center gap-4 mt-4">
             <Avatar initials={story.author_name.split(" ").map((w) => w[0]).join("").slice(0, 2)} size="sm" />
             <div>
               <span className="text-sm font-semibold text-text-primary">{story.author_name}</span>
@@ -204,10 +204,10 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
             dangerouslySetInnerHTML={{ __html: story.content }}
           />
 
-          <div className="flex items-center gap-3 mt-8 py-4 border-y border-border">
+          <div className="flex items-center gap-4 mt-8 py-4 border-y border-border">
             <button
               onClick={() => { setIsLiked(!isLiked); setLikeCount((c) => isLiked ? c - 1 : c + 1); }}
-              className={`flex items-center gap-1.5 h-9 px-4 rounded-sm border text-sm font-medium transition-all cursor-pointer ${isLiked ? "bg-destructive/10 border-destructive/30 text-destructive" : "bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-text-primary"}`}
+              className={`flex items-center gap-1.5 h-10 px-5 rounded-lg border text-sm font-medium transition-all cursor-pointer active:scale-[0.97] ${isLiked ? "bg-destructive/10 border-destructive/30 text-destructive" : "bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"}`}
             >
               <Heart size={16} className={isLiked ? "fill-destructive text-destructive" : ""} />
               {likeCount}
@@ -216,7 +216,7 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
             <ProtectedAction label="Masuk untuk Menyimpan Cerita">
               <button
                 onClick={() => setIsSaved(!isSaved)}
-                className={`flex items-center gap-1.5 h-9 px-4 rounded-sm border text-sm font-medium transition-all cursor-pointer ${isSaved ? "bg-accent/10 border-accent/30 text-accent-foreground" : "bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-text-primary"}`}
+                className={`flex items-center gap-1.5 h-10 px-5 rounded-lg border text-sm font-medium transition-all cursor-pointer active:scale-[0.97] ${isSaved ? "bg-accent/10 border-accent/30 text-accent-foreground" : "bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"}`}
               >
                 <Bookmark size={16} className={isSaved ? "fill-accent text-accent" : ""} />
                 {isSaved ? "Tersimpan" : "Simpan"}
@@ -234,12 +234,12 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
                     setTimeout(() => setShowShareTooltip(false), 2000);
                   }
                 }}
-                className="flex items-center gap-1.5 h-9 px-4 rounded-sm border border-border bg-surface text-sm font-medium text-text-secondary hover:border-primary/30 hover:text-text-primary transition-all cursor-pointer"
+                className="flex items-center gap-1.5 h-10 px-5 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:border-primary/30 hover:text-text-primary hover:bg-muted/30 transition-all cursor-pointer active:scale-[0.97]"
               >
                 <Share2 size={16} /> Bagikan
               </button>
               {showShareTooltip && (
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-primary text-white text-[10px] px-2 py-1 rounded-sm whitespace-nowrap">Link tersalin!</div>
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-primary text-white text-[10px] px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg animate-in fade-in">Link tersalin!</div>
               )}
             </div>
           </div>

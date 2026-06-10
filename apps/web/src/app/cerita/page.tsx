@@ -78,10 +78,10 @@ export default function CeritaPage() {
         <section className="mb-6">
           <CategoryBar selected={selectedCategory} onSelect={setSelectedCategory} />
         </section>
-
+        
         <section>
           {filteredStories.length > 0 ? (
-            <div className="space-y-5">
+            <div className="space-y-4">
               {filteredStories.map((story) => (
                 <StoryCard key={story.id} story={story} />
               ))}

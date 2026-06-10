@@ -106,7 +106,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-4 flex-1 flex flex-col">
+        <form onSubmit={handleRegister} className="space-y-5 flex-1 flex flex-col">
           <Input
             label="Nama Lengkap"
             type="text"
@@ -150,7 +150,7 @@ export default function RegisterPage() {
             {passwordChecks.map((check) => (
               <div key={check.label} className="flex items-center gap-2">
                 <div
-                  className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors ${
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                     check.passed
                       ? "bg-success border-success"
                       : "border-border"
@@ -162,7 +162,7 @@ export default function RegisterPage() {
                     </svg>
                   )}
                 </div>
-                <span className={`text-[11px] ${check.passed ? "text-success" : "text-text-secondary"}`}>
+                <span className={`text-xs ${check.passed ? "text-success font-medium" : "text-text-secondary"}`}>
                   {check.label}
                 </span>
               </div>
@@ -196,7 +196,7 @@ export default function RegisterPage() {
 
         <button
           onClick={handleGoogleRegister}
-          className="w-full h-12 flex items-center justify-center gap-3 rounded-sm border border-border bg-surface text-sm font-medium text-text-primary hover:border-primary/30 hover:bg-muted/50 transition-all cursor-pointer"
+          className="w-full h-13 flex items-center justify-center gap-3 rounded-xl border border-border bg-surface text-sm font-medium text-text-primary hover:border-primary/30 hover:bg-muted/50 transition-all cursor-pointer active:scale-[0.98]"
         >
           <svg width="18" height="18" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>

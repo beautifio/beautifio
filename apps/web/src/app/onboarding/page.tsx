@@ -88,10 +88,10 @@ function SelectGrid({
           <button
             key={opt}
             onClick={() => toggle(opt)}
-            className={`flex items-center justify-center p-4 rounded-sm border-2 text-sm font-medium transition-all cursor-pointer ${
+            className={`flex items-center justify-center p-4 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
               active
                 ? "border-primary bg-primary/5 text-primary"
-                : "border-border text-text-secondary hover:border-primary/30 hover:text-text-primary"
+                : "border-border text-text-secondary hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"
             } ${multi && active && max && selected.length >= max ? "ring-2 ring-accent/30" : ""}`}
           >
             {opt}
@@ -159,8 +159,8 @@ function MatchingScreen({
           return (
             <div
               key={c.id}
-              className={`p-5 rounded-sm border-2 transition-all ${
-                isJoined ? "border-primary bg-primary/5" : "border-border"
+              className={`p-5 rounded-xl border-2 transition-all ${
+                isJoined ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
               }`}
             >
               <div className="flex items-start justify-between gap-3 mb-3">
@@ -179,9 +179,9 @@ function MatchingScreen({
               </p>
               <button
                 onClick={() => toggleJoin(c.id)}
-                className={`w-full py-3 rounded-sm text-sm font-semibold transition-all cursor-pointer ${
+                className={`w-full py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                   isJoined
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-muted text-text-primary hover:bg-primary/10"
                 }`}
               >
@@ -308,7 +308,7 @@ export default function OnboardingPage() {
 
           <div className="flex-1">
             <div className="mb-8">
-              <div className="w-12 h-12 rounded-sm bg-primary/10 flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <Icon size={22} className="text-primary" />
               </div>
               <h1 className="text-2xl font-bold text-text-primary">
@@ -328,7 +328,7 @@ export default function OnboardingPage() {
                 value={(data.city as string) || ""}
                 onChange={(e) => update("city", [e.target.value])}
                 onKeyDown={(e) => e.key === "Enter" && canProceed && handleNext()}
-                className="w-full h-12 px-4 rounded-sm border border-border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+                className="w-full h-13 px-4 rounded-xl border border-border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
               />
             ) : (
               <SelectGrid

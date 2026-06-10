@@ -74,7 +74,7 @@ export default function CircleListPage() {
               Temukan dan bergabung dengan komunitas
             </p>
           </div>
-          <button className="w-10 h-10 rounded-sm bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors">
+          <button className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 active:scale-[0.97] transition-all">
             <Plus size={20} />
           </button>
         </div>
@@ -82,10 +82,10 @@ export default function CircleListPage() {
         <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-none">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-sm text-xs font-medium border transition-all cursor-pointer ${
+            className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
               !selectedCategory
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-surface text-text-secondary border-border hover:border-primary/30"
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-surface text-text-secondary border-border hover:border-primary/30 hover:text-text-primary"
             }`}
           >
             Semua
@@ -94,10 +94,10 @@ export default function CircleListPage() {
             <button
               key={cat.value}
               onClick={() => setSelectedCategory(cat.value)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-sm text-xs font-medium border transition-all cursor-pointer flex items-center gap-1 ${
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1 ${
                 selectedCategory === cat.value
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-surface text-text-secondary border-border hover:border-primary/30"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-surface text-text-secondary border-border hover:border-primary/30 hover:text-text-primary"
               }`}
             >
               <span>{cat.emoji}</span>
@@ -154,7 +154,7 @@ export default function CircleListPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari circle..."
-              className="w-full h-10 pl-9 pr-4 rounded-sm border border-border bg-surface text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+              className="w-full h-10 pl-9 pr-4 rounded-lg border border-border bg-surface text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
             />
           </div>
 

@@ -11,7 +11,7 @@ export function StoryCard({ story }: { story: Story }) {
 
   return (
     <Link href={`/cerita/${story.slug}`} className="block">
-      <div className="bg-card border border-border rounded-md shadow-card overflow-hidden hover:border-primary/30 transition-all group">
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden hover:border-primary/30 hover:shadow-md transition-all group">
         {story.cover_image && (
           <div className="aspect-[16/9] overflow-hidden">
             <img
@@ -21,7 +21,7 @@ export function StoryCard({ story }: { story: Story }) {
             />
           </div>
         )}
-        <div className="p-5">
+        <div className="p-6">
           <Badge variant="secondary" className="mb-2">
             {categoryName}
           </Badge>
@@ -31,7 +31,7 @@ export function StoryCard({ story }: { story: Story }) {
           <p className="text-xs text-text-secondary mt-2 line-clamp-2">
             {story.content.replace(/<[^>]*>/g, "").slice(0, 120)}...
           </p>
-          <div className="flex items-center gap-3 mt-3 text-[11px] text-text-secondary">
+          <div className="flex items-center gap-4 mt-4 text-[11px] text-text-secondary">
             <span className="flex items-center gap-1">
               <Clock size={12} />
               {story.reading_time} menit
@@ -45,7 +45,7 @@ export function StoryCard({ story }: { story: Story }) {
               {story.comment_count}
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center text-[8px] font-bold text-white">
               {story.author_name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
             </div>

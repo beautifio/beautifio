@@ -55,10 +55,10 @@ export default function RoadmapListPage() {
         <div className="flex gap-2 overflow-x-auto pb-3 mb-5 scrollbar-none">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-sm text-xs font-medium border transition-all cursor-pointer ${
+            className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
               !selectedCategory
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-surface text-text-secondary border-border hover:border-primary/30"
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-surface text-text-secondary border-border hover:border-primary/30 hover:text-text-primary"
             }`}
           >
             Semua
@@ -67,10 +67,10 @@ export default function RoadmapListPage() {
             <button
               key={cat.slug}
               onClick={() => setSelectedCategory(cat.slug)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-sm text-xs font-medium border transition-all cursor-pointer flex items-center gap-1 ${
+              className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1 ${
                 selectedCategory === cat.slug
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-surface text-text-secondary border-border hover:border-primary/30"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-surface text-text-secondary border-border hover:border-primary/30 hover:text-text-primary"
               }`}
             >
               <span>{cat.emoji}</span>

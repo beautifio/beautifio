@@ -33,7 +33,7 @@ export function AuthModal({ open, onClose, onSuccess }: AuthModalProps) {
             </h3>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-sm flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-muted transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-muted transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -239,7 +239,7 @@ function GoogleButton() {
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="w-full h-12 flex items-center justify-center gap-3 rounded-sm border border-border bg-surface text-sm font-medium text-text-primary hover:border-primary/30 hover:bg-muted/50 transition-all cursor-pointer disabled:opacity-40"
+        className="w-full h-13 flex items-center justify-center gap-3 rounded-xl border border-border bg-surface text-sm font-medium text-text-primary hover:border-primary/30 hover:bg-muted/50 transition-all cursor-pointer disabled:opacity-40 active:scale-[0.98]"
       >
         {loading ? (
           <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />

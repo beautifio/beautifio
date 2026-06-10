@@ -135,7 +135,7 @@ export default function DiscoverResultPage() {
           </div>
           <Card padding="lg" className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
             <div className="flex items-center gap-4">
-              <span className="text-3xl">{result.mainGoalEmoji}</span>
+              <span className="text-4xl">{result.mainGoalEmoji}</span>
               <div>
                 <p className="text-sm text-text-secondary">Tujuan terbesarmu</p>
                 <p className="text-lg font-bold text-text-primary">{result.mainGoal}</p>
@@ -151,7 +151,7 @@ export default function DiscoverResultPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             {result.topInterests.map((interest) => (
-              <Badge key={interest} variant="accent" className="px-3 py-1.5 text-sm">
+              <Badge key={interest} variant="accent" className="px-4 py-2 text-sm rounded-lg">
                 {interest}
               </Badge>
             ))}
@@ -177,7 +177,7 @@ export default function DiscoverResultPage() {
                 <Link key={t.slug} href={`/roadmap/${t.slug}`}>
                   <Card padding="md" className="hover:border-secondary/30 transition-all cursor-pointer group">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-sm bg-gradient-to-br ${t.color} flex items-center justify-center flex-shrink-0`}>
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${t.color} flex items-center justify-center flex-shrink-0`}>
                         <MapPin size={16} className="text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -212,7 +212,7 @@ export default function DiscoverResultPage() {
                 <Link key={c.id} href={`/circle/${c.id}`}>
                   <Card padding="md" className="hover:border-primary/30 transition-all cursor-pointer group">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-sm bg-gradient-to-br ${c.color} flex items-center justify-center flex-shrink-0`}>
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center flex-shrink-0`}>
                         <Users size={16} className="text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -231,20 +231,20 @@ export default function DiscoverResultPage() {
           </section>
         )}
 
-        <div className="flex flex-col gap-3 mt-4">
+        <div className="flex flex-col gap-4 mt-4">
           <Link href="/onboarding">
-            <button className="w-full h-12 rounded-sm bg-primary text-primary-foreground text-sm font-bold cursor-pointer hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+            <button className="w-full h-13 rounded-xl bg-primary text-primary-foreground text-sm font-bold cursor-pointer hover:bg-primary/90 transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
               <Sparkles size={16} /> Lanjut ke Onboarding
             </button>
           </Link>
           <Link href="/">
-            <button className="w-full h-12 rounded-sm border border-border bg-surface text-sm font-medium text-text-secondary cursor-pointer hover:border-primary/30 hover:text-text-primary transition-colors flex items-center justify-center gap-2">
+            <button className="w-full h-13 rounded-xl border border-border bg-surface text-sm font-medium text-text-secondary cursor-pointer hover:border-primary/30 hover:text-text-primary hover:bg-muted/50 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
               <Home size={16} /> Ke Beranda
             </button>
           </Link>
           <button
             onClick={handleRedo}
-            className="w-full h-12 rounded-sm border border-border bg-surface text-sm font-medium text-text-secondary cursor-pointer hover:border-primary/30 hover:text-text-primary transition-colors flex items-center justify-center gap-2"
+            className="w-full h-13 rounded-xl border border-border bg-surface text-sm font-medium text-text-secondary cursor-pointer hover:border-primary/30 hover:text-text-primary hover:bg-muted/50 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
           >
             <RefreshCw size={16} /> Ulang Tes
           </button>

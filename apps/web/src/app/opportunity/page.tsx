@@ -67,15 +67,15 @@ export default function OpportunityListPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari peluang..."
-            className="w-full h-10 pl-9 pr-4 rounded-sm border border-border bg-surface text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+            className="w-full h-10 pl-9 pr-4 rounded-lg border border-border bg-surface text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
           />
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-none">
           <button
             onClick={() => setActiveCat(null)}
-            className={`flex-shrink-0 px-3.5 py-1.5 rounded-sm text-xs font-medium transition-colors cursor-pointer ${
-              activeCat === null ? "bg-primary text-primary-foreground" : "bg-surface text-text-secondary border border-border hover:border-primary/30"
+            className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              activeCat === null ? "bg-primary text-primary-foreground shadow-sm" : "bg-surface text-text-secondary border border-border hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"
             }`}
           >
             Semua
@@ -86,8 +86,8 @@ export default function OpportunityListPage() {
               <button
                 key={cat.value}
                 onClick={() => setActiveCat(activeCat === cat.value ? null : cat.value)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm text-xs font-medium transition-colors cursor-pointer ${
-                  activeCat === cat.value ? "bg-primary text-primary-foreground" : "bg-surface text-text-secondary border border-border hover:border-primary/30"
+                className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  activeCat === cat.value ? "bg-primary text-primary-foreground shadow-sm" : "bg-surface text-text-secondary border border-border hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"
                 }`}
               >
                 {Icon && <Icon size={14} />}
@@ -145,8 +145,8 @@ function OpportunityCard({ opp }: { opp: OpportunityConstant & { deadlineDate: D
 
   return (
     <Link href={`/opportunity/${opp.slug}`}>
-      <div className="flex items-start gap-3 p-4 rounded-sm border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group">
-        <div className="w-10 h-10 rounded-sm bg-primary/5 flex items-center justify-center flex-shrink-0">
+      <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group">
+        <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center flex-shrink-0">
           {Icon && <Icon size={18} className="text-primary" />}
         </div>
         <div className="flex-1 min-w-0">

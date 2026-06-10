@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
       <div className="max-w-content mx-auto w-full px-6 pt-12 pb-8 flex-1 flex flex-col">
         <Link
           href="/login"
-          className="w-8 h-8 rounded-sm bg-surface border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-colors mb-8"
+          className="w-9 h-9 rounded-xl bg-surface border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-all active:scale-90 mb-8"
         >
           <ArrowLeft size={18} className="text-text-secondary" />
         </Link>

@@ -58,11 +58,11 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto">
         <div className="bg-gradient-to-br from-primary to-secondary px-6 pt-12 pb-8">
-          <button onClick={() => router.back()} className="w-8 h-8 rounded-sm bg-white/20 flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors mb-4">
+          <button onClick={() => router.back()} className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:bg-white/30 transition-all active:scale-90 mb-4">
             <ArrowLeft size={18} className="text-white" />
           </button>
           <div className="flex items-center gap-3 text-white">
-            <div className="w-12 h-12 rounded-sm bg-white/15 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center">
               {Icon && <Icon size={24} />}
             </div>
             <div className="flex-1 min-w-0">
@@ -75,7 +75,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
 
         <div className="px-6 pt-6 pb-24 space-y-6">
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2.5 p-3 rounded-sm bg-surface border border-border">
+            <div className="flex items-center gap-2.5 p-4 rounded-xl bg-surface border border-border">
               <Calendar size={16} className="text-primary flex-shrink-0" />
               <div>
                 <p className="text-[10px] text-text-secondary">Tenggat</p>
@@ -86,7 +86,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
               </div>
             </div>
             {opp.location && (
-              <div className="flex items-center gap-2.5 p-3 rounded-sm bg-surface border border-border">
+            <div className="flex items-center gap-2.5 p-4 rounded-xl bg-surface border border-border">
                 <MapPin size={16} className="text-secondary flex-shrink-0" />
                 <div>
                   <p className="text-[10px] text-text-secondary">Lokasi</p>
@@ -104,7 +104,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
           {opp.benefit && (
             <section>
               <h3 className="text-sm font-bold text-text-primary mb-2">Benefit</h3>
-              <div className="flex items-start gap-2.5 p-3 rounded-sm bg-accent/5 border border-accent/20">
+              <div className="flex items-start gap-2.5 p-4 rounded-xl bg-accent/5 border border-accent/20">
                 <DollarSign size={16} className="text-accent flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-text-primary">{opp.benefit}</p>
               </div>
@@ -114,7 +114,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
           {opp.eligibility && (
             <section>
               <h3 className="text-sm font-bold text-text-primary mb-2">Persyaratan</h3>
-              <div className="flex items-start gap-2.5 p-3 rounded-sm bg-surface border border-border">
+              <div className="flex items-start gap-2.5 p-4 rounded-xl bg-surface border border-border">
                 <CheckCircle size={16} className="text-success flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-text-primary">{opp.eligibility}</p>
               </div>
@@ -135,7 +135,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
           <div className="pt-4 flex gap-3">
             <ProtectedAction onAction={() => setIsSaved(!isSaved)}>
               <button
-                className={`w-12 h-12 rounded-sm border flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                className={`w-12 h-12 rounded-xl border flex items-center justify-center cursor-pointer transition-all flex-shrink-0 active:scale-[0.97] ${
                   isSaved
                     ? "bg-accent/10 border-accent/30 text-accent"
                     : "bg-surface border-border text-text-secondary hover:border-primary/30"
@@ -145,7 +145,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
               </button>
             </ProtectedAction>
             <ProtectedAction label="Masuk untuk Mendaftar">
-              <button className="flex-1 h-12 text-sm font-medium rounded-sm bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+              <button className="flex-1 h-13 text-sm font-medium rounded-xl bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
                 <ExternalLink size={16} />
                 Daftar Sekarang
               </button>

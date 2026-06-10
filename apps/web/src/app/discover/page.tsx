@@ -11,7 +11,7 @@ const STORAGE_KEY = "beautifio_discovery_answers";
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
-    <div className="flex items-center gap-1.5 mb-8">
+    <div className="flex items-center gap-1 mb-6">
       {Array.from({ length: total }).map((_, i) => (
         <div
           key={i}
@@ -51,17 +51,17 @@ function OptionGrid({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-3">
+    <div className="grid grid-cols-1 gap-2">
       {options.map((opt) => {
         const active = selected.includes(opt.value);
         return (
           <button
             key={opt.value}
             onClick={() => toggle(opt.value)}
-            className={`flex items-center gap-4 p-5 rounded-sm border-2 text-left transition-all cursor-pointer ${
+            className={`flex items-center gap-4 p-6 rounded-xl border-2 text-left transition-all cursor-pointer ${
               active
                 ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/30"
+                : "border-border hover:border-primary/30 hover:bg-muted/30"
             }`}
           >
             <span className="text-2xl flex-shrink-0">{opt.emoji}</span>
@@ -119,7 +119,7 @@ export default function DiscoverPage() {
         <StepIndicator current={step} total={DISCOVERY_QUESTIONS.length} />
 
         <div className="flex-1 flex flex-col">
-          <div className="mb-8">
+          <div className="mb-6">
             <h1 className="text-2xl font-bold text-text-primary">
               {question.question}
             </h1>
@@ -137,13 +137,13 @@ export default function DiscoverPage() {
               max={question.max}
             />
             {isMulti && question.max && (
-              <p className="text-xs text-text-secondary mt-3 text-center">
+              <p className="text-xs text-text-secondary mt-2 text-center">
                 Pilih maksimal {question.max}
               </p>
             )}
           </div>
 
-          <div className="flex items-center gap-3 mt-6 pt-6 border-t border-border">
+          <div className="flex items-center gap-4 mt-6 pt-6 border-t border-border">
             {step > 0 && (
               <Button
                 variant="ghost"

@@ -142,13 +142,13 @@ function GoalSection({ goals }: { goals: string[] }) {
         {goals.map((goal, i) => (
           <div
             key={i}
-            className="flex items-center gap-3 p-3 rounded-sm border border-border hover:bg-muted/30 transition-colors cursor-pointer"
+            className="flex items-center gap-4 p-4 rounded-xl border border-border hover:bg-muted/30 hover:border-primary/20 transition-all cursor-pointer group"
           >
-            <div className="w-8 h-8 rounded-sm bg-accent/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
               <Star size={14} className="text-accent" />
             </div>
             <span className="text-sm font-medium text-text-primary flex-1">{goal}</span>
-            <ChevronRight size={16} className="text-text-secondary/30" />
+            <ChevronRight size={16} className="text-text-secondary/30 group-hover:text-accent transition-colors" />
           </div>
         ))}
       </CardContent>
@@ -211,9 +211,9 @@ function CircleListSection({ circles }: { circles: typeof MOCK_USER.circles }) {
         {circles.map((circle, i) => (
           <div
             key={i}
-            className="flex items-center gap-3 p-3 rounded-sm hover:bg-muted/30 transition-colors cursor-pointer"
+            className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-sm bg-primary/5 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center flex-shrink-0">
               <Circle size={16} className="text-primary/40" />
             </div>
             <div className="flex-1 min-w-0">
@@ -247,9 +247,9 @@ function SavedStoriesSection({ stories }: { stories: typeof MOCK_USER.savedStori
           <div
             key={i}
             onClick={() => router.push(`/cerita/${story.slug}`)}
-            className="flex items-center gap-3 p-3 rounded-sm hover:bg-muted/30 transition-colors cursor-pointer"
+            className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-sm bg-accent/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
               <BookOpen size={16} className="text-accent" />
             </div>
             <span className="text-sm font-medium text-text-primary flex-1 truncate">
@@ -276,9 +276,9 @@ function SavedOpportunitiesSection({ opportunities }: { opportunities: typeof MO
         {opportunities.map((opp, i) => (
           <div
             key={i}
-            className="flex items-center gap-3 p-3 rounded-sm hover:bg-muted/30 transition-colors cursor-pointer"
+            className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-sm bg-secondary/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0">
               <Briefcase size={16} className="text-secondary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -317,7 +317,7 @@ function MentorFollowingSection({ mentors }: { mentors: typeof MOCK_USER.mentors
         {mentors.map((mentor, i) => (
           <div
             key={i}
-            className="flex items-center gap-3 p-3 rounded-sm hover:bg-muted/30 transition-colors cursor-pointer"
+            className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer"
           >
             <Avatar initials={mentor.initials} size="sm" />
             <div className="flex-1 min-w-0">
@@ -359,7 +359,7 @@ function SettingsSection() {
             <div
               key={i}
               onClick={item.action}
-              className={`flex items-center gap-3 p-3 rounded-sm hover:bg-muted/30 transition-colors cursor-pointer ${
+              className={`flex items-center gap-3 p-4 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer ${
                 i < menuItems.length - 1 ? "border-b border-border" : ""
               }`}
             >

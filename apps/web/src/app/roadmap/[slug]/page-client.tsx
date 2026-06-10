@@ -37,7 +37,7 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto">
         <div className={`bg-gradient-to-r ${template.color} px-6 pt-12 pb-8 text-white`}>
-          <button onClick={() => router.push("/roadmap")} className="w-8 h-8 rounded-sm bg-white/20 flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors mb-4">
+          <button onClick={() => router.push("/roadmap")} className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:bg-white/30 transition-all active:scale-90 mb-4">
             <ArrowLeft size={18} />
           </button>
 

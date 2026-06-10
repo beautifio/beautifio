@@ -48,14 +48,14 @@ export default function MentorListPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari mentor..."
-            className="w-full h-10 pl-9 pr-4 rounded-sm border border-border bg-surface text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+            className="w-full h-10 pl-9 pr-4 rounded-lg border border-border bg-surface text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
           />
         </div>
 
         <div className="space-y-3">
           {filtered.map((mentor) => (
             <Link key={mentor.id} href={`/mentors/${mentor.slug}`}>
-              <div className="p-4 rounded-sm border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group">
+              <div className="p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group">
                 <div className="flex items-start gap-3">
                   <Avatar initials={mentor.initials} size="lg" />
                   <div className="flex-1 min-w-0">
