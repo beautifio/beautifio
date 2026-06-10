@@ -169,3 +169,26 @@ export async function addComment(storyId: string, userId: string, content: strin
   const client = requireClient();
   return client.from("story_comments").insert({ story_id: storyId, user_id: userId, content, parent_id: parentId || null }).select().single();
 }
+
+// === ROADMAP TEMPLATES ===
+export async function getRoadmapTemplates() {
+  const client = requireClient();
+  return client.from("roadmap_templates").select("*").order("title", { ascending: true });
+}
+
+export async function getRoadmapTemplateBySlug(slug: string) {
+  const client = requireClient();
+  return client.from("roadmap_templates").select("*").eq("slug", slug).single();
+}
+
+export async function getRoadmapTemplateMilestones(templateId: string) {
+  const client = requireClient();
+  return client.from("roadmap_template_milestones").select("*").eq("template_id", templateId).order("order_index", { ascending: true });
+}
+
+export async function getRoadmapTemplateRecommendations(templateId: string, milestoneId?: string) {
+  const client = requireClient();
+  let query = client.from("roadmap_template_recommendations").select("*").eq("template_id", templateId);
+  if (milestoneId) query = query.eq("milestone_id", milestoneId);
+  return query;
+}
