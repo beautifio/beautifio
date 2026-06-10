@@ -79,7 +79,7 @@ export function MilestoneTimeline({
           return (
             <div
               key={milestone.id}
-              className={`rounded-sm border transition-all ${
+              className={`rounded-xl border transition-all ${
                 isComplete
                   ? "border-success/30 bg-success/5"
                   : isExpanded
@@ -134,14 +134,14 @@ export function MilestoneTimeline({
                       <button
                         key={taskKey}
                         onClick={() => toggleTask(taskKey)}
-                        className={`w-full flex items-center gap-2.5 p-2.5 rounded-sm text-left transition-all cursor-pointer ${
+                        className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg text-left transition-all cursor-pointer ${
                           done
                             ? "bg-success/5 text-text-secondary"
                             : "hover:bg-muted/50 text-text-primary"
                         }`}
                       >
                         <div
-                          className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 transition-all ${
+                          className={`w-4 h-4 rounded-md border flex items-center justify-center flex-shrink-0 transition-all ${
                             done
                               ? "bg-success border-success"
                               : "border-border"

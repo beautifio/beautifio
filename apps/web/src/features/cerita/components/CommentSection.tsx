@@ -67,13 +67,13 @@ export function CommentSection({ storyId }: { storyId: string }) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
             placeholder="Tulis komentar..."
-            className="flex-1 h-10 px-3 rounded-sm border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+            className="flex-1 h-10 px-3 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
           />
           <ProtectedAction label="Masuk untuk Berkomentar">
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="w-10 h-10 rounded-sm bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 active:scale-[0.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Send size={16} />
             </button>
@@ -151,14 +151,14 @@ function CommentItem({
               onChange={(e) => setReplyInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") onReply(comment.id); }}
               placeholder="Tulis balasan..."
-              className="flex-1 h-8 px-3 rounded-sm border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+              className="flex-1 h-8 px-3 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
               autoFocus
             />
             <ProtectedAction label="Masuk untuk Membalas">
               <button
                 onClick={() => onReply(comment.id)}
                 disabled={!replyInput.trim()}
-                className="h-8 px-3 rounded-sm bg-primary text-primary-foreground text-xs font-medium cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40"
+                className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium cursor-pointer hover:bg-primary/90 active:scale-[0.97] transition-all disabled:opacity-40"
               >
                 Kirim
               </button>

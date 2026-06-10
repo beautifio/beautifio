@@ -46,9 +46,9 @@ export function RoadmapRecommendations({
                 {items.map((rec) => (
                   <div
                     key={rec.id}
-                    className="flex items-center gap-3 p-3.5 rounded-sm border border-border hover:border-primary/30 hover:bg-surface transition-all cursor-pointer group"
+                    className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-surface transition-all cursor-pointer group"
                   >
-                    <div className={`w-9 h-9 rounded-sm ${c.bg} flex items-center justify-center flex-shrink-0`}>
+                    <div className={`w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center flex-shrink-0`}>
                       <Icon size={16} className={c.color} />
                     </div>
                     <div className="flex-1 min-w-0">

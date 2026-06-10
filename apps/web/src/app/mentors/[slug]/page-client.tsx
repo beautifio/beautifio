@@ -109,7 +109,7 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto">
         <div className="bg-gradient-to-br from-primary to-secondary px-6 pt-12 pb-8">
-          <button onClick={() => router.back()} className="w-8 h-8 rounded-sm bg-white/20 flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors mb-4">
+          <button onClick={() => router.back()} className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:bg-white/30 transition-all active:scale-90 mb-4">
             <ArrowLeft size={18} className="text-white" />
           </button>
 
@@ -119,14 +119,14 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold">{mentor.name}</h1>
                 {mentor.isAvailable && (
-                  <div className="flex items-center gap-1 text-[10px] bg-success/30 px-1.5 py-0.5 rounded-sm">
+                  <div className="flex items-center gap-1 text-[10px] bg-success/30 px-1.5 py-0.5 rounded-md">
                     <div className="w-1.5 h-1.5 rounded-full bg-success" />
                     Tersedia
                   </div>
                 )}
                 <ProtectedAction onAction={() => setIsFollowing(!isFollowing)}>
                   <button
-                    className={`ml-auto flex items-center gap-1 px-3 py-1.5 rounded-sm text-xs font-medium transition-all cursor-pointer ${
+                    className={`ml-auto flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                       isFollowing
                         ? "bg-white/20 text-white"
                         : "bg-white/10 text-white/80 hover:bg-white/20"
@@ -175,7 +175,7 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
               ].map((s) => {
                 const Icon = s.icon;
                 return (
-                  <div key={s.label} className="text-center p-3 rounded-sm bg-surface border border-border">
+                  <div key={s.label} className="text-center p-4 rounded-xl bg-surface border border-border">
                     <Icon size={16} className="mx-auto text-primary mb-1" />
                     <p className="text-lg font-bold text-text-primary">{s.value}</p>
                     <p className="text-[10px] text-text-secondary">{s.label}</p>
@@ -191,7 +191,7 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
               <div className="space-y-2">
                 {mentor.circleIds.map((cid) => (
                   <Link key={cid} href={`/circle/${cid}`}>
-                    <div className="flex items-center gap-3 p-3 rounded-sm border border-border hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-primary/30 transition-all">
                       <Users size={16} className="text-secondary flex-shrink-0" />
                       <span className="text-sm font-medium text-text-primary">{circleNames[cid]}</span>
                     </div>
@@ -207,7 +207,7 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
               <div className="flex flex-wrap gap-2">
                 {roadmaps.map((r) => (
                   <Link key={r.slug} href={`/roadmap/${r.slug}`}>
-                    <div className={`px-3 py-1.5 rounded-sm text-xs font-medium text-white bg-gradient-to-r ${r.color}`}>
+                    <div className={`px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-gradient-to-r ${r.color}`}>
                       {r.title}
                     </div>
                   </Link>
@@ -278,9 +278,9 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
                 return products.map((product) => (
                   <div
                     key={product!.id}
-                    className="flex items-center gap-3 p-4 rounded-sm border border-border hover:border-secondary/30 transition-all cursor-pointer group"
+                    className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-secondary/30 hover:bg-muted/30 transition-all cursor-pointer group"
                   >
-                    <div className="w-10 h-10 rounded-sm bg-primary/5 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center flex-shrink-0">
                       <Package size={18} className="text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">

@@ -9,7 +9,7 @@ export function MentorSessionCard({ session }: { session: MentorSession }) {
   const isUpcoming = session.status === "upcoming";
 
   return (
-    <div className={`p-4 rounded-sm border transition-all ${isUpcoming ? "border-primary/20 bg-primary/[0.02]" : "border-border opacity-70"}`}>
+    <div className={`p-4 rounded-xl border transition-all ${isUpcoming ? "border-primary/20 bg-primary/[0.02]" : "border-border opacity-70"}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -35,7 +35,7 @@ export function MentorSessionCard({ session }: { session: MentorSession }) {
       </div>
       {isUpcoming && (
         <ProtectedAction label="Masuk untuk Mendaftar Sesi">
-          <button className="mt-3 w-full h-8 text-xs font-medium rounded-sm bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors">
+          <button className="mt-3 w-full h-9 text-xs font-medium rounded-lg bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 active:scale-[0.97] transition-all">
             Daftar Sesi
           </button>
         </ProtectedAction>

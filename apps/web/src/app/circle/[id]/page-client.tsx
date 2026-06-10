@@ -409,7 +409,7 @@ function ChatBubble({ msg, isOwn }: { msg: typeof MOCK_MESSAGES["1"][0]; isOwn: 
           </span>
         )}
         <div
-          className={`rounded-sm px-3 py-2 text-sm leading-relaxed ${
+          className={`rounded-xl px-3 py-2 text-sm leading-relaxed ${
             isOwn
               ? "bg-primary text-primary-foreground"
               : "bg-surface border border-border text-text-primary"
@@ -460,7 +460,7 @@ function SessionCard({ session }: { session: typeof MOCK_SESSIONS["1"][0] }) {
     <Card padding="md" className={isUpcoming ? "border-primary/20" : "opacity-70"}>
       <div className="flex items-start gap-3">
         <div
-          className={`w-10 h-10 rounded-sm flex items-center justify-center flex-shrink-0 ${
+          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
             isUpcoming ? "bg-primary/10 text-primary" : "bg-surface text-text-secondary"
           }`}
         >
@@ -487,7 +487,7 @@ function SessionCard({ session }: { session: typeof MOCK_SESSIONS["1"][0] }) {
           </div>
           {isUpcoming && (
             <ProtectedAction label="Masuk untuk Mendaftar Sesi">
-              <button className="mt-3 w-full h-9 text-sm font-medium rounded-sm bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors">
+              <button className="mt-3 w-full h-9 text-sm font-medium rounded-lg bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 active:scale-[0.97] transition-all">
                 Daftar Sesi
               </button>
             </ProtectedAction>
@@ -530,9 +530,9 @@ function CircleProductRecommendations({ circleId }: { circleId: string }) {
         {products.map((product) => (
           <div
             key={product!.id}
-            className="flex items-center gap-3 p-4 rounded-sm border border-border hover:border-secondary/30 transition-all cursor-pointer group"
+            className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-secondary/30 hover:bg-muted/30 transition-all cursor-pointer group"
           >
-            <div className="w-10 h-10 rounded-sm bg-primary/5 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center flex-shrink-0">
               <Package size={18} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -650,7 +650,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
     >
       <button
         onClick={() => router.push("/circle")}
-        className="w-8 h-8 rounded-sm bg-white/20 flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors mb-4"
+        className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:bg-white/30 transition-all active:scale-90 mb-4"
       >
         <ArrowLeft size={18} />
       </button>
@@ -687,7 +687,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
             <button
               onClick={handleJoin}
               disabled={isFull}
-              className="h-9 px-4 rounded-sm bg-white text-primary text-sm font-bold cursor-pointer hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              className="h-10 px-5 rounded-lg bg-white text-primary text-sm font-bold cursor-pointer hover:bg-white/90 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               <UserPlus size={16} />
               {isFull ? "Penuh" : "Gabung"}
@@ -701,7 +701,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       {circle.hasMentor && circle.mentor && (
-        <div className="mt-4 p-3 rounded-sm bg-white/10 backdrop-blur-sm flex items-center gap-3">
+        <div className="mt-4 p-4 rounded-xl bg-white/10 backdrop-blur-sm flex items-center gap-3">
           <Avatar initials={circle.mentor.initials} size="md" />
           <div>
             <p className="text-xs font-bold">Mentor: {circle.mentor.name}</p>
@@ -761,13 +761,13 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
             placeholder="Tulis pesan..."
-            className="flex-1 h-10 px-3 rounded-sm border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+            className="flex-1 h-10 px-3 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
           />
           <ProtectedAction label="Masuk untuk Mengirim Pesan">
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="w-10 h-10 rounded-sm bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 active:scale-[0.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Send size={16} />
             </button>
@@ -800,19 +800,19 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
                 value={questionTitle}
                 onChange={(e) => setQuestionTitle(e.target.value)}
                 placeholder="Judul pertanyaan..."
-                className="w-full h-10 px-3 rounded-sm border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+                className="w-full h-10 px-3 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
               />
               <textarea
                 value={questionContent}
                 onChange={(e) => setQuestionContent(e.target.value)}
                 placeholder="Detail pertanyaan..."
                 rows={3}
-                className="w-full mt-2 px-3 py-2 rounded-sm border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20 resize-none"
+                className="w-full mt-2 px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20 resize-none"
               />
               <div className="flex justify-end gap-2 mt-2">
                 <button
                   onClick={() => setShowAskForm(false)}
-                  className="h-8 px-3 rounded-sm text-xs font-medium text-text-secondary border border-border cursor-pointer hover:bg-surface transition-colors"
+                  className="h-8 px-3 rounded-lg text-xs font-medium text-text-secondary border border-border cursor-pointer hover:bg-surface transition-colors"
                 >
                   Batal
                 </button>
@@ -820,7 +820,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
                   <button
                     onClick={handleAskMentor}
                     disabled={!questionTitle.trim() || !questionContent.trim()}
-                    className="h-8 px-3 rounded-sm bg-primary text-primary-foreground text-xs font-medium cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium cursor-pointer hover:bg-primary/90 active:scale-[0.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Kirim
                   </button>
@@ -870,7 +870,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
         {circle.members.map((m) => (
           <div
             key={m.id}
-            className="flex items-center gap-3 p-2.5 rounded-sm hover:bg-surface/50 transition-colors"
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface/50 transition-colors"
           >
             <Avatar initials={m.initials} size="md" />
             <div className="flex-1 min-w-0">
@@ -895,7 +895,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       {circle.maxMembers - circle.memberCount > 0 && (
-        <div className="mt-4 p-3 rounded-sm border border-dashed border-border text-center">
+        <div className="mt-4 p-4 rounded-xl border border-dashed border-border text-center">
           <p className="text-xs text-text-secondary">
             {circle.maxMembers - circle.memberCount} slot tersedia
           </p>

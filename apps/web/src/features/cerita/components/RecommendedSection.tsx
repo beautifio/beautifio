@@ -27,10 +27,10 @@ export function RecommendedSection({
           return (
             <div
               key={rec.id}
-              className="flex items-center gap-3 p-4 rounded-sm border border-border hover:border-secondary/30 transition-all cursor-pointer group"
+              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-secondary/30 hover:bg-muted/30 transition-all cursor-pointer group"
             >
               <div
-                className={`w-10 h-10 rounded-sm ${config.bg} flex items-center justify-center flex-shrink-0`}
+                className={`w-10 h-10 rounded-xl ${config.bg} flex items-center justify-center flex-shrink-0`}
               >
                 <Icon size={18} className={config.color} />
               </div>

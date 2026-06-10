@@ -20,7 +20,7 @@ const colorMap = {
 export function MentorBadge({ badge }: { badge: MentorBadgeType }) {
   const Icon = iconMap[badge.type];
   return (
-    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-medium ${colorMap[badge.type]}`}>
+    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium ${colorMap[badge.type]}`}>
       <Icon size={12} />
       <span>{badge.label}</span>
     </div>

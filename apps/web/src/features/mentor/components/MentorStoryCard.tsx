@@ -11,8 +11,8 @@ export function MentorStoryCard({
 }) {
   return (
     <Link href={`/cerita/${slug}`} className="block">
-      <div className="flex items-start gap-3 p-3.5 rounded-sm border border-border hover:border-secondary/30 hover:bg-surface/50 transition-all group">
-        <div className="w-9 h-9 rounded-sm bg-secondary/10 flex items-center justify-center flex-shrink-0">
+      <div className="flex items-start gap-4 p-4 rounded-xl border border-border hover:border-secondary/30 hover:bg-surface/50 transition-all group">
+        <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0">
           <BookOpen size={16} className="text-secondary" />
         </div>
         <div className="flex-1 min-w-0">

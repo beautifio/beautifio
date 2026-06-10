@@ -24,7 +24,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
-          className={`h-12 px-4 rounded-sm border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20 ${
+          className={`h-12 px-4 rounded-md border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20 ${
             error ? "border-destructive" : "border-border"
           } ${className}`}
           {...props}
@@ -64,7 +64,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           id={inputId}
-          className={`min-h-[100px] px-4 py-3 rounded-sm border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 resize-y focus:border-primary focus:ring-2 focus:ring-ring/20 ${
+          className={`min-h-[100px] px-4 py-3 rounded-md border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 resize-y focus:border-primary focus:ring-2 focus:ring-ring/20 ${
             error ? "border-destructive" : "border-border"
           } ${className}`}
           {...props}
