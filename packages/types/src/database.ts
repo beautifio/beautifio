@@ -49,7 +49,7 @@ export interface Database {
       member_role: "member" | "co-host";
       message_type: "text" | "image" | "system";
       milestone_status: "locked" | "available" | "in_progress" | "completed";
-      opp_category: "beasiswa" | "magang" | "kompetisi" | "workshop";
+      opp_category: "beasiswa" | "magang" | "pekerjaan" | "turnamen" | "kompetisi" | "relawan" | "pendanaan" | "program-kreator";
       notif_type: "message" | "mentor_reply" | "milestone" | "opportunity" | "system";
     };
   };

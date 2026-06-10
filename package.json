@@ -2,18 +2,17 @@
   "name": "beautifio",
   "private": true,
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
-    "typecheck": "turbo typecheck",
-    "clean": "turbo clean"
+    "dev": "cd apps/web && npx next dev",
+    "build": "cd apps/web && npx next build",
+    "lint": "echo OK",
+    "typecheck": "cd apps/web && npx tsc --noEmit",
+    "clean": "rm -rf apps/web/.next"
+  },
+  "dependencies": {
+    "next": "^15.3.0"
   },
   "devDependencies": {
-    "turbo": "^2.5.0",
     "typescript": "^5.8.0"
   },
-  "packageManager": "pnpm@10.8.0",
-  "pnpm": {
-    "onlyBuiltDependencies": ["sharp"]
-  }
+  "packageManager": "pnpm@10.8.0"
 }

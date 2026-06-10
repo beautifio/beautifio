@@ -1,21 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-const publicPaths = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/auth",
-  "/cerita",
-  "/discover",
-  "/circle",
-  "/opportunity",
-];
+const authPages = ["/login", "/register", "/forgot-password", "/auth"];
+const protectedPages = ["/profile"];
 
-function isPublicPath(pathname: string): boolean {
-  return publicPaths.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
+function isAuthPage(pathname: string): boolean {
+  return authPages.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+function isProtectedPage(pathname: string): boolean {
+  return protectedPages.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 export async function middleware(request: NextRequest) {
@@ -49,15 +43,14 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAuth = !!user;
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/forgot-password");
 
-  if (isAuth && isAuthPage) {
+  if (isAuth && isAuthPage(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  if (!isAuth && !isPublicPath(pathname)) {
+  if (!isAuth && isProtectedPage(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);

@@ -5,6 +5,8 @@ import { MessageSquare, Send } from "lucide-react";
 import { Avatar } from "@beautifio/ui";
 import type { StoryComment } from "@beautifio/types";
 
+import { ProtectedAction } from "@/components/ProtectedAction";
+
 export function CommentSection({ storyId }: { storyId: string }) {
   const [comments, setComments] = useState<StoryComment[]>([]);
   const [input, setInput] = useState("");
@@ -67,13 +69,15 @@ export function CommentSection({ storyId }: { storyId: string }) {
             placeholder="Tulis komentar..."
             className="flex-1 h-10 px-3 rounded-sm border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
           />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim()}
-            className="w-10 h-10 rounded-sm bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Send size={16} />
-          </button>
+          <ProtectedAction label="Masuk untuk Berkomentar">
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="w-10 h-10 rounded-sm bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send size={16} />
+            </button>
+          </ProtectedAction>
         </div>
       </div>
 
@@ -150,13 +154,15 @@ function CommentItem({
               className="flex-1 h-8 px-3 rounded-sm border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
               autoFocus
             />
-            <button
-              onClick={() => onReply(comment.id)}
-              disabled={!replyInput.trim()}
-              className="h-8 px-3 rounded-sm bg-primary text-primary-foreground text-xs font-medium cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40"
-            >
-              Kirim
-            </button>
+            <ProtectedAction label="Masuk untuk Membalas">
+              <button
+                onClick={() => onReply(comment.id)}
+                disabled={!replyInput.trim()}
+                className="h-8 px-3 rounded-sm bg-primary text-primary-foreground text-xs font-medium cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40"
+              >
+                Kirim
+              </button>
+            </ProtectedAction>
           </div>
         )}
 

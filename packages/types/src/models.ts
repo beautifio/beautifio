@@ -8,7 +8,7 @@ export type CircleStatus = "active" | "full" | "inactive";
 export type MemberRole = "member" | "co-host";
 export type MessageType = "text" | "image" | "system";
 export type MilestoneStatus = "locked" | "available" | "in_progress" | "completed";
-export type OppCategory = "beasiswa" | "magang" | "kompetisi" | "workshop";
+export type OppCategory = "beasiswa" | "magang" | "pekerjaan" | "turnamen" | "kompetisi" | "relawan" | "pendanaan" | "program-kreator";
 export type NotifType = "message" | "mentor_reply" | "milestone" | "opportunity" | "system";
 export type StoryResourceType = "roadmap" | "circle" | "product";
 export type RoadmapResourceType = "circle" | "mentor" | "opportunity";
@@ -97,4 +97,45 @@ export interface DiscoveryResult {
   topInterests: string[];
   recommendedRoadmapSlugs: string[];
   recommendedCircleIds: string[];
+}
+
+export interface MentorBadge {
+  type: "education" | "certification" | "experience" | "achievement";
+  label: string;
+  icon?: string;
+}
+
+export interface MentorProfile {
+  id: string;
+  slug: string;
+  name: string;
+  initials: string;
+  avatar?: string;
+  expertise: string;
+  bio: string;
+  company?: string;
+  position?: string;
+  yearsExperience: number;
+  badges: MentorBadge[];
+  circleIds: string[];
+  storySlugs: string[];
+  roadmapSlugs: string[];
+  isAvailable: boolean;
+  sessionCount: number;
+  menteeCount: number;
+  rating: number;
+}
+
+export interface MentorSession {
+  id: string;
+  mentorId: string;
+  circleId: string;
+  circleName: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  status: "upcoming" | "completed" | "cancelled";
+  slots: number;
+  registered: number;
 }

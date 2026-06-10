@@ -115,6 +115,7 @@ const opportunities = [
     title: "Beasiswa Prestasi 2026",
     org: "Yayasan Nusantara Cerdas",
     type: "Beasiswa",
+    slug: "beasiswa-prestasi-nusantara",
     deadline: "30 Jun 2026",
   },
   {
@@ -122,7 +123,16 @@ const opportunities = [
     title: "Program Magang Frontend",
     org: "TechStart Indonesia",
     type: "Magang",
+    slug: "magang-frontend-techstart",
     deadline: "15 Jul 2026",
+  },
+  {
+    id: "3",
+    title: "Hibah Startup Tahap Awal",
+    org: "Baparekraf",
+    type: "Pendanaan",
+    slug: "pendanaan-startup-awal",
+    deadline: "30 Agu 2026",
   },
 ];
 
@@ -301,6 +311,7 @@ function CircleActivity() {
 }
 
 function OpportunityPreview() {
+  const router = useRouter();
   return (
     <Card padding="lg">
       <CardHeader>
@@ -309,7 +320,7 @@ function OpportunityPreview() {
             <Briefcase size={18} className="text-accent" />
             <CardTitle>Peluang Menarik</CardTitle>
           </div>
-          <button className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
+          <button onClick={() => router.push("/opportunity")} className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
             Lihat Semua
           </button>
         </div>
@@ -319,6 +330,7 @@ function OpportunityPreview() {
           {opportunities.map((opp) => (
             <div
               key={opp.id}
+              onClick={() => router.push(`/opportunity/${opp.slug}`)}
               className="flex items-center gap-4 p-4 rounded-sm border border-border hover:border-secondary/30 hover:bg-muted/30 transition-all cursor-pointer group"
             >
               <div className="w-10 h-10 rounded-sm bg-accent/10 flex items-center justify-center flex-shrink-0">

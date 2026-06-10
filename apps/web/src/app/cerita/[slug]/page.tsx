@@ -10,6 +10,7 @@ import { Badge, Avatar } from "@beautifio/ui";
 import { STORY_CATEGORIES } from "@beautifio/utils";
 import type { Story, StoryRecommendation } from "@beautifio/types";
 import { CommentSection } from "@/features/cerita/components/CommentSection";
+import { ProtectedAction } from "@/components/ProtectedAction";
 
 const cats = STORY_CATEGORIES;
 
@@ -202,13 +203,15 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
               {likeCount}
             </button>
 
-            <button
-              onClick={() => setIsSaved(!isSaved)}
-              className={`flex items-center gap-1.5 h-9 px-4 rounded-sm border text-sm font-medium transition-all cursor-pointer ${isSaved ? "bg-accent/10 border-accent/30 text-accent-foreground" : "bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-text-primary"}`}
-            >
-              <Bookmark size={16} className={isSaved ? "fill-accent text-accent" : ""} />
-              {isSaved ? "Tersimpan" : "Simpan"}
-            </button>
+            <ProtectedAction label="Masuk untuk Menyimpan Cerita">
+              <button
+                onClick={() => setIsSaved(!isSaved)}
+                className={`flex items-center gap-1.5 h-9 px-4 rounded-sm border text-sm font-medium transition-all cursor-pointer ${isSaved ? "bg-accent/10 border-accent/30 text-accent-foreground" : "bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-text-primary"}`}
+              >
+                <Bookmark size={16} className={isSaved ? "fill-accent text-accent" : ""} />
+                {isSaved ? "Tersimpan" : "Simpan"}
+              </button>
+            </ProtectedAction>
 
             <div className="relative">
               <button

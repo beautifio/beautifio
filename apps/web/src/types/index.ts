@@ -7,7 +7,7 @@ export type CircleStatus = "active" | "full" | "inactive";
 export type MemberRole = "member" | "co-host";
 export type MessageType = "text" | "image" | "system";
 export type MilestoneStatus = "locked" | "available" | "in_progress" | "completed";
-export type OppCategory = "beasiswa" | "magang" | "kompetisi" | "workshop";
+export type OppCategory = "beasiswa" | "magang" | "pekerjaan" | "turnamen" | "kompetisi" | "relawan" | "pendanaan" | "program-kreator";
 export type NotifType = "message" | "mentor_reply" | "milestone" | "opportunity" | "system";
 
 // === MODELS ===

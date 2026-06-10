@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { Avatar, Badge, Card } from "@beautifio/ui";
+import { ProtectedAction } from "@/components/ProtectedAction";
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 
@@ -483,9 +484,11 @@ function SessionCard({ session }: { session: typeof MOCK_SESSIONS["1"][0] }) {
             )}
           </div>
           {isUpcoming && (
-            <button className="mt-3 w-full h-9 text-sm font-medium rounded-sm bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors">
-              Daftar Sesi
-            </button>
+            <ProtectedAction label="Masuk untuk Mendaftar Sesi">
+              <button className="mt-3 w-full h-9 text-sm font-medium rounded-sm bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors">
+                Daftar Sesi
+              </button>
+            </ProtectedAction>
           )}
         </div>
       </div>
@@ -629,14 +632,16 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
         </div>
 
         {!isJoined ? (
-          <button
-            onClick={handleJoin}
-            disabled={isFull}
-            className="h-9 px-4 rounded-sm bg-white text-primary text-sm font-bold cursor-pointer hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-          >
-            <UserPlus size={16} />
-            {isFull ? "Penuh" : "Gabung"}
-          </button>
+          <ProtectedAction label="Masuk untuk Bergabung Circle">
+            <button
+              onClick={handleJoin}
+              disabled={isFull}
+              className="h-9 px-4 rounded-sm bg-white text-primary text-sm font-bold cursor-pointer hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            >
+              <UserPlus size={16} />
+              {isFull ? "Penuh" : "Gabung"}
+            </button>
+          </ProtectedAction>
         ) : (
           <Badge variant="secondary" className="bg-white/20 text-white border-white/20">
             <Check size={12} className="mr-1" /> Anggota
@@ -707,13 +712,15 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
             placeholder="Tulis pesan..."
             className="flex-1 h-10 px-3 rounded-sm border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
           />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim()}
-            className="w-10 h-10 rounded-sm bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Send size={16} />
-          </button>
+          <ProtectedAction label="Masuk untuk Mengirim Pesan">
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="w-10 h-10 rounded-sm bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send size={16} />
+            </button>
+          </ProtectedAction>
         </div>
       </div>
     </div>
@@ -758,13 +765,15 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
                 >
                   Batal
                 </button>
-                <button
-                  onClick={handleAskMentor}
-                  disabled={!questionTitle.trim() || !questionContent.trim()}
-                  className="h-8 px-3 rounded-sm bg-primary text-primary-foreground text-xs font-medium cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Kirim
-                </button>
+                <ProtectedAction label="Masuk untuk Bertanya ke Mentor">
+                  <button
+                    onClick={handleAskMentor}
+                    disabled={!questionTitle.trim() || !questionContent.trim()}
+                    className="h-8 px-3 rounded-sm bg-primary text-primary-foreground text-xs font-medium cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Kirim
+                  </button>
+                </ProtectedAction>
               </div>
             </Card>
           )}
