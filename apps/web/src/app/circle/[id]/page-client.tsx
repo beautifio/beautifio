@@ -948,7 +948,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto">
+      <div className="max-w-content mx-auto">
         {header}
         {tabBar}
 

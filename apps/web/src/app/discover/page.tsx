@@ -115,7 +115,7 @@ export default function DiscoverPage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto px-6 pt-6 pb-24 min-h-screen flex flex-col">
+      <div className="max-w-content mx-auto px-6 pt-6 pb-24 min-h-screen flex flex-col">
         <StepIndicator current={step} total={DISCOVERY_QUESTIONS.length} />
 
         <div className="flex-1 flex flex-col">

@@ -8,8 +8,8 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 const paddingStyles = {
   none: "p-0",
   sm: "p-4",
-  md: "p-5",
-  lg: "p-6",
+  md: "p-6",
+  lg: "p-8",
 };
 
 export function Card({
@@ -20,7 +20,7 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={`bg-card text-card-foreground border border-border rounded-md shadow-card ${paddingStyles[padding]} ${className}`}
+      className={`bg-card text-card-foreground border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow ${paddingStyles[padding]} ${className}`}
       {...props}
     >
       {children}
@@ -47,7 +47,7 @@ export function CardTitle({
 }: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={`text-lg font-semibold text-text-primary ${className}`}
+      className={`text-base font-bold text-text-primary ${className}`}
       {...props}
     >
       {children}

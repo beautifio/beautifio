@@ -437,7 +437,7 @@ export default function ProfileScreen() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto px-6 pt-6 pb-24 space-y-6">
+      <div className="max-w-content mx-auto px-6 pt-6 pb-24 space-y-6">
         {isLoggedIn ? (
           <>
             <ProfileHeader

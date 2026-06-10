@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center px-6">
-      <div className="max-w-[390px] mx-auto text-center">
+      <div className="max-w-content mx-auto text-center">
         <div className="w-24 h-24 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-6">
           <span className="text-5xl font-bold text-primary">?</span>
         </div>

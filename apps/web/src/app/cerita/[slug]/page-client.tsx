@@ -163,7 +163,7 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto">
+      <div className="max-w-content mx-auto">
         {story.cover_image && (
           <div className="relative aspect-[16/9]">
             <img src={story.cover_image} alt={story.title} className="w-full h-full object-cover" />

@@ -30,7 +30,7 @@ export function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-sm ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-md ${variantStyles[variant]} ${className}`}
       {...props}
     >
       {children}

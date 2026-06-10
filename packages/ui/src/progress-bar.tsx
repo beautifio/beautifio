@@ -8,8 +8,8 @@ interface ProgressBarProps {
 }
 
 const sizeStyles = {
-  sm: "h-1.5",
-  md: "h-2.5",
+  sm: "h-2",
+  md: "h-3",
 };
 
 const variantStyles = {
@@ -33,7 +33,7 @@ export function ProgressBar({
         className={`flex-1 bg-muted rounded-full overflow-hidden ${sizeStyles[size]}`}
       >
         <div
-          className={`h-full rounded-full transition-all duration-500 ${variantStyles[variant]}`}
+          className={`h-full rounded-full transition-all duration-700 ease-out ${variantStyles[variant]}`}
           style={{ width: `${percentage}%` }}
         />
       </div>

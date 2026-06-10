@@ -56,7 +56,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto">
+      <div className="max-w-content mx-auto">
         <div className="bg-gradient-to-br from-primary to-secondary px-6 pt-12 pb-8">
           <button onClick={() => router.back()} className="w-8 h-8 rounded-sm bg-white/20 flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors mb-4">
             <ArrowLeft size={18} className="text-white" />

@@ -115,7 +115,7 @@ export default function DiscoverResultPage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto px-6 pt-8 pb-24">
+      <div className="max-w-content mx-auto px-6 pt-8 pb-24">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
             <Sparkles size={28} className="text-accent" />

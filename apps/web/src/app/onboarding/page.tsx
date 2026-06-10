@@ -285,7 +285,7 @@ export default function OnboardingPage() {
   if (showMatching) {
     return (
       <div className="min-h-screen bg-bg">
-        <div className="max-w-[390px] mx-auto px-6 pt-12 pb-8">
+        <div className="max-w-content mx-auto px-6 pt-12 pb-8">
           <MatchingScreen onComplete={handleComplete} />
         </div>
       </div>
@@ -302,7 +302,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto px-6 pt-8 pb-8 min-h-screen flex flex-col">
+      <div className="max-w-content mx-auto px-6 pt-8 pb-8 min-h-screen flex flex-col">
         <div className="flex-1 flex flex-col">
           <StepIndicator current={step} total={steps.length} />
 

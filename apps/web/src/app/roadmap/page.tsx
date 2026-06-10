@@ -44,7 +44,7 @@ export default function RoadmapListPage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto px-6 pt-6 pb-24">
+      <div className="max-w-content mx-auto px-6 pt-6 pb-24">
         <div className="mb-5">
           <h1 className="text-2xl font-bold text-text-primary">Roadmap</h1>
           <p className="text-sm text-text-secondary mt-1">

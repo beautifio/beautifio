@@ -53,7 +53,7 @@ export default function OpportunityListPage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto px-6 pt-6 pb-24">
+      <div className="max-w-content mx-auto px-6 pt-6 pb-24">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-text-primary">Peluang</h1>

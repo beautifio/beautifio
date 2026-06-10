@@ -22,7 +22,7 @@ export function AuthModal({ open, onClose, onSuccess }: AuthModalProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[390px] bg-surface rounded-t-xl sm:rounded-xl max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-content bg-surface rounded-t-xl sm:rounded-xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-surface z-10 pt-4 pb-2 px-6 border-b border-border">

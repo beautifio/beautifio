@@ -143,7 +143,7 @@ function GreetingHeader() {
 
   return (
     <div className="flex items-center justify-between pt-2">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <Avatar initials="AN" size="lg" />
         <div>
           <h1 className="text-lg font-bold text-text-primary leading-tight">
@@ -226,11 +226,11 @@ function WeeklyActionCard() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {actions.map((action, i) => (
             <div
               key={action.id}
-              className={`flex items-start gap-3 p-3 rounded-sm transition-colors ${
+              className={`flex items-start gap-4 p-4 rounded-xl transition-colors ${
                 i < actions.length - 1 ? "border-b border-border" : ""
               }`}
             >
@@ -280,7 +280,7 @@ function CircleActivity() {
           {activities.map((item) => (
             <div
               key={item.id}
-              className="flex items-start gap-3 cursor-pointer group"
+              className="flex items-start gap-4 cursor-pointer group"
             >
               <Avatar initials={item.initials} size="sm" />
               <div className="flex-1 min-w-0">
@@ -291,8 +291,8 @@ function CircleActivity() {
                   <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none">
                     {item.role}
                   </Badge>
-                  <span className="text-xs text-text-secondary ml-auto flex-shrink-0">
-                    {item.time}
+                <span className="text-xs text-text-secondary ml-auto flex-shrink-0 tabular-nums">
+                  {item.time}
                   </span>
                 </div>
                 <p className="text-sm text-text-secondary mt-0.5 line-clamp-2 leading-snug">
@@ -326,14 +326,14 @@ function OpportunityPreview() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {opportunities.map((opp) => (
             <div
               key={opp.id}
               onClick={() => router.push(`/opportunity/${opp.slug}`)}
-              className="flex items-center gap-4 p-4 rounded-sm border border-border hover:border-secondary/30 hover:bg-muted/30 transition-all cursor-pointer group"
+              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-secondary/30 hover:bg-muted/30 transition-all cursor-pointer group"
             >
-              <div className="w-10 h-10 rounded-sm bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
                 <Briefcase size={18} className="text-accent" />
               </div>
               <div className="flex-1 min-w-0">
@@ -370,13 +370,13 @@ function QuickStats() {
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-3 gap-2">
       {stats.map((stat, i) => {
         const Icon = stat.icon;
         return (
           <div
             key={i}
-            className="flex flex-col items-center gap-1.5 p-4 bg-surface rounded-sm border border-border shadow-card"
+            className="flex flex-col items-center gap-2 p-3 bg-surface rounded-lg border border-border shadow-sm"
           >
             <Icon size={18} className={stat.color} />
             <span className="text-xs text-text-secondary">{stat.label}</span>
@@ -396,7 +396,7 @@ export default function HomeScreen() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-[390px] mx-auto px-6 pt-6 pb-24 space-y-8">
+      <div className="max-w-content mx-auto px-6 pt-6 pb-24 space-y-8">
         <GreetingHeader />
         <QuickStats />
         <GoalProgressCard />
