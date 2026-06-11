@@ -61,6 +61,10 @@ export {
   rewardAfterFailure,
   getCapitalOverview,
 } from "./life-engine";
+export { DREAM_TEMPLATES, getDreamTemplate, getAllDreamTemplates, buildDreamTemplates } from "./dream-templates";
+export { generateDailyActivities } from "./daily-activity-generator";
+export type { GenerateDailyOptions } from "./daily-activity-generator";
+
 export {
   generateDailyCoachFocus, generateInsights, analyzeZone,
   getCapitalAdvice, navigateDream, matchOpportunities,

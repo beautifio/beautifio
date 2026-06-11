@@ -4,3 +4,4 @@
 export * from "./database";
 export * from "./models";
 export * from "./life-engine";
+export * from "./dream-journey";

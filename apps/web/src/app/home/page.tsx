@@ -12,7 +12,7 @@ import { Card, CardHeader, CardTitle, CardContent, Badge, Avatar, BottomNavigati
 import { NAV_TABS, navRoute } from "@/lib/navigation";
 import { useMemo, useState, useEffect } from "react";
 import { FAMILIA_EVENT_BENEFITS, FAMILIA_MERCHANTS, FAMILIA_ACHIEVEMENT_REWARDS, getVoucherSessions, getLifeProfile, ZONE_INFO, STAGE_INFO, updateZone, generateDailyWins } from "@beautifio/utils";
-import type { GrowthZoneRecommendation } from "@beautifio/types";
+import type { GrowthZoneRecommendation, DreamJourney, JourneyProgress } from "@beautifio/types";
 import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
 import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
 import { useAuth } from "@/hooks/use-auth";
@@ -288,48 +288,104 @@ function StoriesForYou() {
 
 function ContinueYourJourney() {
   const router = useRouter();
-  const goal = goals[0];
+  const { user } = useAuth();
+  const [journey, setJourney] = useState<DreamJourney | null>(null);
+  const [progress, setProgress] = useState<JourneyProgress | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const { getActiveJourney, getJourneyProgress } = await import("@/lib/journey-queries");
+        const j = await getActiveJourney(user.id);
+        setJourney(j);
+        if (j) {
+          const p = await getJourneyProgress(user.id, j.id);
+          setProgress(p);
+        }
+      } catch {}
+    })();
+  }, [user]);
+
+  if (!journey) {
+    return (
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+            <Compass size={16} className="text-accent" />
+            Mulai Perjalanan
+          </h2>
+        </div>
+        <button
+          onClick={() => router.push("/journey")}
+          className="w-full p-5 rounded-2xl border-2 border-dashed border-accent/30 hover:border-accent/60 hover:bg-accent/5 transition-all text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+              <Sparkles size={24} className="text-accent" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-text-primary">Pilih Mimpimu</p>
+              <p className="text-xs text-text-secondary mt-0.5">Mulai perjalanan menuju masa depanmu</p>
+            </div>
+          </div>
+        </button>
+      </section>
+    );
+  }
+
+  const completedToday = progress?.completed_activities_today || 0;
+  const totalToday = progress?.total_activities_today || 6;
 
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
           <Compass size={16} className="text-accent" />
-          Lanjutkan Perjalanan
+          Perjalananku
         </h2>
-        <button onClick={() => router.push("/roadmap")} className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors cursor-pointer">
-          Buka Roadmap
+        <button
+          onClick={() => router.push(`/journey/${journey.id}`)}
+          className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors cursor-pointer"
+        >
+          Buka
         </button>
       </div>
 
-      {/* Active Goal */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-accent/5 to-secondary/5 border border-accent/10 mb-3">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <Target size={14} className="text-accent" />
-            <span className="text-xs font-semibold text-text-primary">{goal.name}</span>
-          </div>
-          <Badge variant="accent" className="text-[10px]">{goal.category}</Badge>
-        </div>
-        <ProgressBar value={goal.progress} size="sm" variant="accent" showLabel />
-        <div className="flex items-center justify-between mt-2 text-[10px] text-text-secondary">
-          <span>{goal.milestones.done} dari {goal.milestones.total} milestone selesai</span>
-          <div className="flex items-center gap-1">
-            <Trophy size={12} className="text-accent" />
-            <span className="text-xs font-semibold text-accent">{goal.progress}%</span>
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-accent/5 to-secondary/5 border border-accent/10">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-3xl">{journey.emoji}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-text-primary">{journey.title}</p>
+            {progress?.current_big_win && (
+              <p className="text-xs text-text-secondary">🏆 {progress.current_big_win.title}</p>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Quick actions */}
-      <div className="flex gap-2">
-        <button onClick={() => router.push("/jurnal/buat")} className="flex-1 flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-all text-left cursor-pointer">
-          <BookOpen size={16} className="text-primary" />
-          <span className="text-[11px] font-medium text-text-primary">Catat Jurnal</span>
-        </button>
-        <button onClick={() => router.push("/discover")} className="flex-1 flex items-center gap-2 p-3 rounded-xl bg-secondary/5 border border-secondary/10 hover:bg-secondary/10 transition-all text-left cursor-pointer">
-          <Sparkles size={16} className="text-secondary" />
-          <span className="text-[11px] font-medium text-text-primary">Ikut Discovery</span>
+        <div className="flex items-center gap-2 mb-3">
+          <Flame size={14} className="text-accent" />
+          <span className="text-xs text-text-secondary">
+            {completedToday}/{totalToday} aktivitas hari ini
+          </span>
+        </div>
+
+        <div className="flex gap-1.5 mb-4">
+          {Array.from({ length: totalToday }).map((_, i) => (
+            <div
+              key={i}
+              className={`flex-1 h-1.5 rounded-full ${
+                i < completedToday ? "bg-primary" : "bg-border"
+              }`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={() => router.push(`/journey/${journey.id}`)}
+          className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer"
+        >
+          Lanjutkan <ArrowRight size={14} className="inline ml-1" />
         </button>
       </div>
     </section>
