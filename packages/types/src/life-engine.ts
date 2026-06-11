@@ -19,6 +19,49 @@ export type SpiritualPreference =
   | "agnostic"
   | "other";
 
+export type LifeLevel = "seed" | "explorer" | "builder" | "achiever" | "leader" | "mentor" | "legacy";
+
+export type CapitalSourceType =
+  | "read_story"
+  | "complete_lesson"
+  | "vault_add"
+  | "masterclass_read"
+  | "write_reflection"
+  | "daily_win_complete"
+  | "small_win_complete"
+  | "milestone_achieve"
+  | "practice_log"
+  | "physical_activity"
+  | "recovery_habit"
+  | "sleep_track"
+  | "healthy_routine"
+  | "circle_participate"
+  | "circle_help"
+  | "mentor_interact"
+  | "event_attend"
+  | "streak_milestone"
+  | "difficult_goal"
+  | "return_after_failure"
+  | "help_others"
+  | "gratitude_journal"
+  | "purpose_exercise"
+  | "faith_practice"
+  | "consistency";
+
+export type CapitalMissionStatus = "active" | "completed" | "expired";
+
+export type UnlockableFeature =
+  | "advanced_roadmaps"
+  | "community_leader"
+  | "ambassador_program"
+  | "mentor_access"
+  | "circle_create"
+  | "event_host"
+  | "familia_gym_discount"
+  | "familia_scholarship"
+  | "familia_premium_deals"
+  | "familia_vip_rewards";
+
 export interface LifeCapital {
   knowledge: number;
   skill: number;
@@ -26,6 +69,61 @@ export interface LifeCapital {
   relationship: number;
   character: number;
   spiritual: number;
+}
+
+export interface CapitalTrend {
+  weekly: number;
+  monthly: number;
+  history: number[];
+}
+
+export interface CapitalSource {
+  source: CapitalSourceType;
+  label: string;
+  emoji: string;
+  capitalKey: keyof LifeCapital;
+  points: number;
+}
+
+export interface CapitalMission {
+  id: string;
+  capitalKey: keyof LifeCapital;
+  title: string;
+  description: string;
+  emoji: string;
+  points: number;
+  progress: number;
+  target: number;
+  status: CapitalMissionStatus;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface LifeLevelInfo {
+  level: LifeLevel;
+  label: string;
+  emoji: string;
+  minCapital: number;
+  maxCapital: number;
+  description: string;
+}
+
+export interface UnlockRequirement {
+  feature: UnlockableFeature;
+  label: string;
+  description: string;
+  emoji: string;
+  requirements: Partial<LifeCapital>;
+  unlocked: boolean;
+}
+
+export interface CapitalBalanceTip {
+  capitalKey: keyof LifeCapital;
+  label: string;
+  emoji: string;
+  value: number;
+  tip: string;
+  missionTitle: string;
 }
 
 export interface GrowthWin {
@@ -57,6 +155,14 @@ export interface UserLifeProfile {
   failureReflections: FailureReflection[];
   onboardingCompleted: boolean;
   updatedAt: string;
+  // Phase 15.2 additions
+  capitalTrends: Record<keyof LifeCapital, CapitalTrend>;
+  missions: CapitalMission[];
+  completedMissions: string[];
+  unlocks: UnlockableFeature[];
+  resilienceScore: number;
+  failureRecoveryCount: number;
+  weeklyActivityLog: Record<string, number>;
 }
 
 export interface StageInfo {

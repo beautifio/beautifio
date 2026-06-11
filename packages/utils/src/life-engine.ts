@@ -10,6 +10,15 @@ import type {
   DailyWinSuggestion,
   GrowthWin,
   FailureReflection,
+  CapitalSourceType,
+  CapitalSource,
+  CapitalMission,
+  CapitalMissionStatus,
+  CapitalBalanceTip,
+  CapitalTrend,
+  LifeLevelInfo,
+  UnlockRequirement,
+  UnlockableFeature,
 } from "@beautifio/types";
 import { STAGE_INFO, ZONE_INFO, SPIRITUAL_PRACTICES, DEFAULT_LIFE_CAPITAL } from "./life-engine-seed";
 import { ROADMAP_V3_SEED } from "./roadmap-v3-seed";
@@ -22,6 +31,7 @@ const STORAGE_KEY = "beautifio_life_profile";
    ────────────────────────────────────────── */
 
 function createDefaultProfile(): UserLifeProfile {
+  const now = new Date().toISOString();
   return {
     currentStage: "smp",
     currentZone: "comfort",
@@ -32,7 +42,21 @@ function createDefaultProfile(): UserLifeProfile {
     growthWins: [],
     failureReflections: [],
     onboardingCompleted: false,
-    updatedAt: new Date().toISOString(),
+    updatedAt: now,
+    capitalTrends: {
+      knowledge: { weekly: 0, monthly: 0, history: [] },
+      skill: { weekly: 0, monthly: 0, history: [] },
+      health: { weekly: 0, monthly: 0, history: [] },
+      relationship: { weekly: 0, monthly: 0, history: [] },
+      character: { weekly: 0, monthly: 0, history: [] },
+      spiritual: { weekly: 0, monthly: 0, history: [] },
+    },
+    missions: [],
+    completedMissions: [],
+    unlocks: [],
+    resilienceScore: 0,
+    failureRecoveryCount: 0,
+    weeklyActivityLog: {},
   };
 }
 
@@ -495,4 +519,421 @@ function getTotalVaultItems(): number {
   } catch {
     return 0;
   }
+}
+
+/* ══════════════════════════════════════════
+   PHASE 15.2 — LIFE CAPITAL ECONOMY
+   ══════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────
+   LIFE LEVEL SYSTEM
+   ────────────────────────────────────────── */
+
+export const LIFE_LEVELS: LifeLevelInfo[] = [
+  { level: "seed", label: "Seed", emoji: "🌱", minCapital: 0, maxCapital: 99, description: "Kamu baru memulai perjalanan pertumbuhan. Setiap langkah kecil adalah awal dari sesuatu yang besar." },
+  { level: "explorer", label: "Explorer", emoji: "🔍", minCapital: 100, maxCapital: 249, description: "Kamu mulai menjelajahi potensi dirimu. Rasa ingin tahu adalah kompas terbaik." },
+  { level: "builder", label: "Builder", emoji: "🏗️", minCapital: 250, maxCapital: 399, description: "Kamu membangun fondasi kehidupan yang kuat. Konsistensi adalah superpower-mu." },
+  { level: "achiever", label: "Achiever", emoji: "🏆", minCapital: 400, maxCapital: 549, description: "Kamu mencapai hal-hal yang berarti. Tapi ingat — ini bukan akhir, ini panggung berikutnya." },
+  { level: "leader", label: "Leader", emoji: "👑", minCapital: 550, maxCapital: 699, description: "Kamu memimpin dengan contoh. Orang-orang di sekitarmu terinspirasi oleh perjalananmu." },
+  { level: "mentor", label: "Mentor", emoji: "🌟", minCapital: 700, maxCapital: 849, description: "Sekarang giliranmu untuk membimbing. Wariskan apa yang telah kamu pelajari." },
+  { level: "legacy", label: "Legacy", emoji: "💎", minCapital: 850, maxCapital: 600, description: "Kamu telah mencapai tingkat pertumbuhan yang langka. Hidupmu adalah legacy yang menginspirasi generasi." },
+];
+
+export function getLifeLevel(totalCapital: number): LifeLevelInfo {
+  for (const l of LIFE_LEVELS) {
+    if (totalCapital >= l.minCapital && totalCapital <= l.maxCapital) return l;
+  }
+  return LIFE_LEVELS[LIFE_LEVELS.length - 1];
+}
+
+export function getLifeLevelProgress(totalCapital: number): { current: LifeLevelInfo; next: LifeLevelInfo | null; progress: number } {
+  const current = getLifeLevel(totalCapital);
+  const idx = LIFE_LEVELS.indexOf(current);
+  const next = idx < LIFE_LEVELS.length - 1 ? LIFE_LEVELS[idx + 1] : null;
+  const range = next ? next.minCapital - current.minCapital : 1;
+  const progress = next ? Math.min(100, Math.round(((totalCapital - current.minCapital) / range) * 100)) : 100;
+  return { current, next, progress };
+}
+
+/* ──────────────────────────────────────────
+   CAPITAL SOURCES
+   ────────────────────────────────────────── */
+
+export const CAPITAL_SOURCES: CapitalSource[] = [
+  { source: "read_story", label: "Baca cerita", emoji: "📖", capitalKey: "knowledge", points: 2 },
+  { source: "complete_lesson", label: "Selesaikan pelajaran roadmap", emoji: "✅", capitalKey: "knowledge", points: 3 },
+  { source: "vault_add", label: "Simpan ke Learning Vault", emoji: "📦", capitalKey: "knowledge", points: 1 },
+  { source: "masterclass_read", label: "Baca masterclass", emoji: "🎓", capitalKey: "knowledge", points: 4 },
+  { source: "write_reflection", label: "Tulis refleksi", emoji: "✍️", capitalKey: "knowledge", points: 2 },
+  { source: "daily_win_complete", label: "Selesaikan Daily Win", emoji: "☀️", capitalKey: "skill", points: 2 },
+  { source: "small_win_complete", label: "Capai Small Win", emoji: "⚡", capitalKey: "skill", points: 4 },
+  { source: "milestone_achieve", label: "Capai milestone", emoji: "🏁", capitalKey: "skill", points: 6 },
+  { source: "practice_log", label: "Catat praktik", emoji: "📝", capitalKey: "skill", points: 2 },
+  { source: "physical_activity", label: "Aktivitas fisik", emoji: "🏃", capitalKey: "health", points: 3 },
+  { source: "recovery_habit", label: "Kebiasaan pemulihan", emoji: "🛌", capitalKey: "health", points: 2 },
+  { source: "sleep_track", label: "Lacak tidur", emoji: "😴", capitalKey: "health", points: 2 },
+  { source: "healthy_routine", label: "Rutinitas sehat", emoji: "🥗", capitalKey: "health", points: 2 },
+  { source: "circle_participate", label: "Partisipasi circle", emoji: "👥", capitalKey: "relationship", points: 3 },
+  { source: "circle_help", label: "Bantu anggota circle", emoji: "🤝", capitalKey: "relationship", points: 4 },
+  { source: "mentor_interact", label: "Interaksi mentor", emoji: "🎯", capitalKey: "relationship", points: 3 },
+  { source: "event_attend", label: "Hadiri event", emoji: "📅", capitalKey: "relationship", points: 3 },
+  { source: "streak_milestone", label: "Capai streak", emoji: "🔥", capitalKey: "character", points: 3 },
+  { source: "difficult_goal", label: "Selesaikan goal sulit", emoji: "🎯", capitalKey: "character", points: 5 },
+  { source: "return_after_failure", label: "Kembali setelah gagal", emoji: "💪", capitalKey: "character", points: 6 },
+  { source: "help_others", label: "Bantu orang lain", emoji: "❤️", capitalKey: "character", points: 3 },
+  { source: "gratitude_journal", label: "Jurnal syukur", emoji: "🙏", capitalKey: "spiritual", points: 3 },
+  { source: "purpose_exercise", label: "Latihan purpose", emoji: "🎯", capitalKey: "spiritual", points: 3 },
+  { source: "faith_practice", label: "Praktik keyakinan", emoji: "🕊️", capitalKey: "spiritual", points: 2 },
+  { source: "consistency", label: "Konsistensi harian", emoji: "📊", capitalKey: "character", points: 2 },
+];
+
+export function earnCapital(sourceType: CapitalSourceType): LifeCapital {
+  const source = CAPITAL_SOURCES.find((s) => s.source === sourceType);
+  if (!source) return { knowledge: 0, skill: 0, health: 0, relationship: 0, character: 0, spiritual: 0 };
+
+  const profile = getLifeProfile();
+  const capital = profile.lifeCapital;
+  const change: CapitalChange = { knowledge: 0, skill: 0, health: 0, relationship: 0, character: 0, spiritual: 0 };
+  change[source.capitalKey] = source.points;
+
+  const newCapital: LifeCapital = {
+    knowledge: clampCapital(capital.knowledge + change.knowledge),
+    skill: clampCapital(capital.skill + change.skill),
+    health: clampCapital(capital.health + change.health),
+    relationship: clampCapital(capital.relationship + change.relationship),
+    character: clampCapital(capital.character + change.character),
+    spiritual: clampCapital(capital.spiritual + change.spiritual),
+  };
+
+  const trends = { ...profile.capitalTrends };
+  const sourceKey = sourceType;
+  const today = new Date().toISOString().slice(0, 10);
+  const log = { ...profile.weeklyActivityLog };
+  log[`${today}_${sourceKey}`] = (log[`${today}_${sourceKey}`] || 0) + 1;
+
+  for (const key of Object.keys(newCapital) as (keyof LifeCapital)[]) {
+    const oldVal = capital[key];
+    const diff = newCapital[key] - oldVal;
+    if (diff !== 0) {
+      trends[key] = {
+        weekly: trends[key].weekly + diff,
+        monthly: trends[key].monthly + diff,
+        history: [...trends[key].history.slice(-89), diff],
+      };
+    }
+  }
+
+  unlockLifeCapital(newCapital);
+
+  updateLifeProfile({ lifeCapital: newCapital, capitalTrends: trends, weeklyActivityLog: log });
+  return newCapital;
+}
+
+export function earnMultipleCapital(sources: CapitalSourceType[]): LifeCapital {
+  let total: CapitalChange = { knowledge: 0, skill: 0, health: 0, relationship: 0, character: 0, spiritual: 0 };
+  for (const s of sources) {
+    const src = CAPITAL_SOURCES.find((cs) => cs.source === s);
+    if (src) total[src.capitalKey] += src.points;
+  }
+  const profile = getLifeProfile();
+  const newCapital: LifeCapital = {
+    knowledge: clampCapital(profile.lifeCapital.knowledge + total.knowledge),
+    skill: clampCapital(profile.lifeCapital.skill + total.skill),
+    health: clampCapital(profile.lifeCapital.health + total.health),
+    relationship: clampCapital(profile.lifeCapital.relationship + total.relationship),
+    character: clampCapital(profile.lifeCapital.character + total.character),
+    spiritual: clampCapital(profile.lifeCapital.spiritual + total.spiritual),
+  };
+
+  const trends = { ...profile.capitalTrends };
+  for (const key of Object.keys(newCapital) as (keyof LifeCapital)[]) {
+    const diff = newCapital[key] - profile.lifeCapital[key];
+    if (diff !== 0) {
+      trends[key] = {
+        weekly: trends[key].weekly + diff,
+        monthly: trends[key].monthly + diff,
+        history: [...trends[key].history.slice(-89), diff],
+      };
+    }
+  }
+
+  unlockLifeCapital(newCapital);
+  updateLifeProfile({ lifeCapital: newCapital, capitalTrends: trends });
+  return newCapital;
+}
+
+/* ──────────────────────────────────────────
+   BALANCE ENGINE
+   ────────────────────────────────────────── */
+
+export function getCapitalBalanceTips(): CapitalBalanceTip[] {
+  const profile = getLifeProfile();
+  const capital = profile.lifeCapital;
+
+  const sorted = (Object.entries(capital) as [keyof LifeCapital, number][])
+    .sort((a, b) => a[1] - b[1]);
+
+  const tips: Record<keyof LifeCapital, { tip: string; missionTitle: string }> = {
+    knowledge: { tip: "Baca cerita atau artikel baru hari ini.", missionTitle: "Baca 3 artikel dalam seminggu" },
+    skill: { tip: "Praktik skill selama 20 menit setiap hari.", missionTitle: "Praktik skill 5 hari berturut-turut" },
+    health: { tip: "Fokus pada aktivitas fisik dan istirahat cukup.", missionTitle: "Olahraga 30 menit selama 5 hari" },
+    relationship: { tip: "Luangkan waktu untuk terhubung dengan orang lain.", missionTitle: "Bantu 1 anggota circle minggu ini" },
+    character: { tip: "Konsistensi adalah kunci. Jangan lewatkan streak.", missionTitle: "Pertahankan streak selama 7 hari" },
+    spiritual: { tip: "Luangkan waktu untuk refleksi dan bersyukur.", missionTitle: "Tulis jurnal syukur setiap hari selama 5 hari" },
+  };
+
+  return sorted.map(([key, value]) => ({
+    capitalKey: key,
+    label: key.charAt(0).toUpperCase() + key.slice(1),
+    emoji: CAPITAL_SOURCES.find((s) => s.capitalKey === key)?.emoji ?? "📊",
+    value,
+    tip: tips[key].tip,
+    missionTitle: tips[key].missionTitle,
+  }));
+}
+
+export function getStrongestCapital(): keyof LifeCapital {
+  const capital = getLifeProfile().lifeCapital;
+  return (Object.entries(capital) as [keyof LifeCapital, number][]).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+export function getWeakestCapital(): keyof LifeCapital {
+  const capital = getLifeProfile().lifeCapital;
+  return (Object.entries(capital) as [keyof LifeCapital, number][]).sort((a, b) => a[1] - b[1])[0][0];
+}
+
+export function getCapitalGap(): number {
+  const capital = getLifeProfile().lifeCapital;
+  const vals = Object.values(capital);
+  return Math.max(...vals) - Math.min(...vals);
+}
+
+/* ──────────────────────────────────────────
+   CAPITAL MISSIONS
+   ────────────────────────────────────────── */
+
+export function generateDailyMissions(): CapitalMission[] {
+  const profile = getLifeProfile();
+  const balanceTips = getCapitalBalanceTips();
+  const weakest = balanceTips[0];
+
+  const missions: CapitalMission[] = [];
+  const now = new Date().toISOString();
+
+  missions.push({
+    id: `cap-mission-${Date.now()}-1`,
+    capitalKey: weakest.capitalKey,
+    title: `Tingkatkan ${weakest.label}`,
+    description: weakest.missionTitle,
+    emoji: weakest.emoji,
+    points: 5,
+    progress: 0,
+    target: 100,
+    status: "active",
+    createdAt: now,
+  });
+
+  if (profile.currentDreamSlug) {
+    missions.push({
+      id: `cap-mission-${Date.now()}-2`,
+      capitalKey: "skill",
+      title: "Progress Dream",
+      description: `Selesaikan 1 daily habit untuk ${profile.currentDreamSlug}`,
+      emoji: "🎯",
+      points: 3,
+      progress: 0,
+      target: 100,
+      status: "active",
+      createdAt: now,
+    });
+  }
+
+  const allCaps: [keyof LifeCapital, string, string][] = [
+    ["knowledge", "Baca & Simpan", "Baca 1 cerita dan simpan 1 catatan ke vault"],
+    ["relationship", "Sosial", "Interaksi dengan 1 circle atau mentor"],
+    ["spiritual", "Refleksi", "Tulis jurnal syukur atau praktik spiritual"],
+    ["health", "Sehat", "Lakukan 1 aktivitas fisik"],
+    ["character", "Konsisten", "Selesaikan streak hari ini"],
+  ];
+
+  for (const [key, title, desc] of allCaps) {
+    if (!missions.some((m) => m.capitalKey === key)) {
+      missions.push({
+        id: `cap-mission-${Date.now()}-${key}`,
+        capitalKey: key,
+        title,
+        description: desc,
+        emoji: CAPITAL_SOURCES.find((s) => s.capitalKey === key)?.emoji ?? "📊",
+        points: 2,
+        progress: 0,
+        target: 100,
+        status: "active",
+        createdAt: now,
+      });
+    }
+  }
+
+  return missions.slice(0, 4);
+}
+
+export function completeMission(missionId: string): void {
+  const profile = getLifeProfile();
+  const mission = profile.missions.find((m) => m.id === missionId);
+  if (!mission) return;
+
+  const updatedMissions = profile.missions.map((m) =>
+    m.id === missionId ? { ...m, status: "completed" as CapitalMissionStatus, completedAt: new Date().toISOString(), progress: 100 } : m,
+  );
+
+  const completedMissions = [...profile.completedMissions, missionId];
+
+  earnCapital(getCapitalKeyForMission(mission.capitalKey));
+
+  updateLifeProfile({
+    missions: updatedMissions,
+    completedMissions,
+  });
+}
+
+function getCapitalKeyForMission(capitalKey: keyof LifeCapital): CapitalSourceType {
+  const map: Record<keyof LifeCapital, CapitalSourceType> = {
+    knowledge: "read_story",
+    skill: "daily_win_complete",
+    health: "physical_activity",
+    relationship: "circle_participate",
+    character: "consistency",
+    spiritual: "gratitude_journal",
+  };
+  return map[capitalKey];
+}
+
+/* ──────────────────────────────────────────
+   UNLOCK SYSTEM
+   ────────────────────────────────────────── */
+
+export const UNLOCK_REQUIREMENTS: UnlockRequirement[] = [
+  { feature: "advanced_roadmaps", label: "Advanced Roadmaps", description: "Akses roadmap tingkat lanjut", emoji: "🗺️", requirements: { knowledge: 50 }, unlocked: false },
+  { feature: "community_leader", label: "Community Leader", description: "Jalur kepemimpinan komunitas", emoji: "👑", requirements: { relationship: 50 }, unlocked: false },
+  { feature: "ambassador_program", label: "Ambassador Program", description: "Program duta Beautifio", emoji: "🌟", requirements: { character: 70 }, unlocked: false },
+  { feature: "mentor_access", label: "Mentor Access", description: "Akses penuh ke mentor", emoji: "🎯", requirements: { knowledge: 40, character: 40 }, unlocked: false },
+  { feature: "circle_create", label: "Buat Circle", description: "Bisa membuat circle sendiri", emoji: "🔄", requirements: { relationship: 30, character: 25 }, unlocked: false },
+  { feature: "event_host", label: "Host Event", description: "Bisa mengadakan event", emoji: "📅", requirements: { relationship: 45, character: 35 }, unlocked: false },
+  { feature: "familia_gym_discount", label: "Gym Partner Discount", description: "Diskon mitra gym", emoji: "💪", requirements: { health: 60 }, unlocked: false },
+  { feature: "familia_scholarship", label: "Scholarship Opportunities", description: "Akses informasi beasiswa", emoji: "🎓", requirements: { knowledge: 80 }, unlocked: false },
+  { feature: "familia_premium_deals", label: "Premium Deals", description: "Penawaran premium Familia", emoji: "💎", requirements: { skill: 50, health: 40 }, unlocked: false },
+  { feature: "familia_vip_rewards", label: "VIP Rewards", description: "Rewards eksklusif VIP", emoji: "🏆", requirements: { character: 60, spiritual: 50 }, unlocked: false },
+];
+
+export function unlockLifeCapital(capital: LifeCapital): UnlockableFeature[] {
+  const profile = getLifeProfile();
+  const newUnlocks: UnlockableFeature[] = [];
+
+  for (const req of UNLOCK_REQUIREMENTS) {
+    if (profile.unlocks.includes(req.feature)) continue;
+    const meetsReqs = (Object.entries(req.requirements) as [keyof LifeCapital, number][]).every(
+      ([key, val]) => capital[key] >= val,
+    );
+    if (meetsReqs) {
+      newUnlocks.push(req.feature);
+    }
+  }
+
+  if (newUnlocks.length > 0) {
+    updateLifeProfile({ unlocks: [...profile.unlocks, ...newUnlocks] });
+  }
+
+  return newUnlocks;
+}
+
+export function getUnlockedFeatures(): UnlockableFeature[] {
+  return getLifeProfile().unlocks;
+}
+
+export function getAvailableUnlocks(): UnlockRequirement[] {
+  const profile = getLifeProfile();
+  return UNLOCK_REQUIREMENTS.filter((req) => !profile.unlocks.includes(req.feature))
+    .map((req) => ({
+      ...req,
+      unlocked: (Object.entries(req.requirements) as [keyof LifeCapital, number][]).every(
+        ([key, val]) => profile.lifeCapital[key] >= val,
+      ),
+    }));
+}
+
+/* ──────────────────────────────────────────
+   FAILURE REWARD SYSTEM
+   ────────────────────────────────────────── */
+
+export function rewardAfterFailure(): { characterGain: number; resilienceScore: number; growthWin: GrowthWin } {
+  const profile = getLifeProfile();
+
+  const characterGain = 6 + Math.floor(profile.failureRecoveryCount / 3) * 2;
+  const newResilience = profile.resilienceScore + 5;
+
+  const growthWin: GrowthWin = {
+    id: `gw-failure-${Date.now()}`,
+    title: `Bangkit kembali #${profile.failureRecoveryCount + 1}`,
+    description: "Kegagalan bukan akhir — ini adalah bahan bakar untuk tumbuh lebih kuat.",
+    unlockedAt: new Date().toISOString(),
+    category: "character",
+  };
+
+  const capital = profile.lifeCapital;
+  const newCapital: LifeCapital = {
+    ...capital,
+    character: clampCapital(capital.character + characterGain),
+    knowledge: clampCapital(capital.knowledge + 3),
+  };
+
+  updateLifeProfile({
+    lifeCapital: newCapital,
+    resilienceScore: newResilience,
+    failureRecoveryCount: profile.failureRecoveryCount + 1,
+    growthWins: [...profile.growthWins, growthWin],
+  });
+
+  return { characterGain, resilienceScore: newResilience, growthWin };
+}
+
+/* ──────────────────────────────────────────
+   TREND CALCULATOR
+   ────────────────────────────────────────── */
+
+export function getCapitalOverview(): {
+  total: number;
+  average: number;
+  level: LifeLevelInfo;
+  levelProgress: number;
+  nextLevel: LifeLevelInfo | null;
+  trends: Record<keyof LifeCapital, { value: number; weekly: number; monthly: number }>;
+  strongest: keyof LifeCapital;
+  weakest: keyof LifeCapital;
+  gap: number;
+} {
+  const profile = getLifeProfile();
+  const capital = profile.lifeCapital;
+  const total = Object.values(capital).reduce((a, b) => a + b, 0);
+  const average = Math.round(total / 6);
+  const { current, next, progress } = getLifeLevelProgress(total);
+
+  const trends = {} as Record<keyof LifeCapital, { value: number; weekly: number; monthly: number }>;
+  for (const key of Object.keys(capital) as (keyof LifeCapital)[]) {
+    trends[key] = {
+      value: capital[key],
+      weekly: profile.capitalTrends[key]?.weekly ?? 0,
+      monthly: profile.capitalTrends[key]?.monthly ?? 0,
+    };
+  }
+
+  return {
+    total,
+    average,
+    level: current,
+    levelProgress: progress,
+    nextLevel: next,
+    trends,
+    strongest: getStrongestCapital(),
+    weakest: getWeakestCapital(),
+    gap: getCapitalGap(),
+  };
 }

@@ -52,5 +52,13 @@ export {
   generateDailyWins, executePivot,
   recordFailure, unlockGrowthWin, getAllGrowthWins,
   getStageProgression,
+  // Phase 15.2
+  LIFE_LEVELS, getLifeLevel, getLifeLevelProgress,
+  CAPITAL_SOURCES, earnCapital, earnMultipleCapital,
+  getCapitalBalanceTips, getStrongestCapital, getWeakestCapital, getCapitalGap,
+  generateDailyMissions, completeMission,
+  UNLOCK_REQUIREMENTS, unlockLifeCapital, getUnlockedFeatures, getAvailableUnlocks,
+  rewardAfterFailure,
+  getCapitalOverview,
 } from "./life-engine";
 
