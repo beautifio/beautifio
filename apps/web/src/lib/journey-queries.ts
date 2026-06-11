@@ -10,7 +10,7 @@ import type {
   JourneyProgress,
   DreamTemplate,
 } from "@beautifio/types";
-import { generateDailyActivities } from "@beautifio/utils";
+import { generateDailyActivities, getAgeGroupedContent } from "@beautifio/utils";
 
 function db() {
   if (!supabase) throw new Error("Supabase client not initialized");
@@ -36,14 +36,9 @@ export async function createJourney(
   templateSlug: string,
   title: string,
   emoji: string,
-  category: string
+  category: string,
+  userAge?: number | null
 ): Promise<DreamJourney | null> {
-  const { data: template } = await db()
-    .from("dream_templates")
-    .select("big_wins, small_wins")
-    .eq("slug", templateSlug)
-    .maybeSingle<{ big_wins: any[]; small_wins: any[] }>();
-
   const { data: journey, error } = await db()
     .from("dream_journeys")
     .insert({
@@ -52,50 +47,69 @@ export async function createJourney(
       title,
       emoji,
       category,
+      user_age: userAge ?? null,
     })
     .select()
     .single();
 
   if (error || !journey) return null;
 
-  if (template) {
-    const bigWins = template.big_wins.sort((a, b) => a.order - b.order);
-    for (const bw of bigWins) {
-      const { data: bigWin } = await db()
-        .from("big_wins")
-        .insert({
-          journey_id: journey.id,
-          title: bw.title,
-          description: bw.description,
-          why_it_matters: bw.why_it_matters || "",
-          alternative_path: bw.alternative_path || "",
-          order_index: bw.order,
-        })
-        .select()
-        .single();
+  let bigWinsData: any[] = [];
+  let smallWinsData: any[] = [];
 
-      if (bigWin) {
-        const smallWinsForBig = template.small_wins.filter(
-          (sw: any) => sw.big_win_title === bw.title
-        );
-        for (const sw of smallWinsForBig) {
-          await db().from("small_wins").insert({
-            big_win_id: bigWin.id,
-            title: sw.title,
-            description: sw.description,
-            order_index: sw.order,
-          });
-        }
+  const ageContent = userAge ? getAgeGroupedContent(templateSlug, userAge) : null;
+
+  if (ageContent && ageContent.bigWins.length > 0) {
+    bigWinsData = ageContent.bigWins;
+    smallWinsData = ageContent.smallWins;
+  } else {
+    const { data: template } = await db()
+      .from("dream_templates")
+      .select("big_wins, small_wins")
+      .eq("slug", templateSlug)
+      .maybeSingle<{ big_wins: any[]; small_wins: any[] }>();
+
+    if (template) {
+      bigWinsData = template.big_wins.sort((a, b) => a.order - b.order);
+      smallWinsData = template.small_wins;
+    }
+  }
+
+  for (const bw of bigWinsData) {
+    const { data: bigWin } = await db()
+      .from("big_wins")
+      .insert({
+        journey_id: journey.id,
+        title: bw.title,
+        description: bw.description,
+        why_it_matters: bw.why_it_matters || "",
+        alternative_path: bw.alternative_path || "",
+        order_index: bw.order,
+      })
+      .select()
+      .single();
+
+    if (bigWin) {
+      const smallWinsForBig = smallWinsData.filter(
+        (sw: any) => sw.big_win_title === bw.title
+      );
+      for (const sw of smallWinsForBig) {
+        await db().from("small_wins").insert({
+          big_win_id: bigWin.id,
+          title: sw.title,
+          description: sw.description,
+          order_index: sw.order,
+        });
       }
     }
+  }
 
-    const activities = generateDailyActivities({
-      journey,
-      spiritualPref: null,
-    });
-    if (activities.length > 0) {
-      await db().from("daily_activities").insert(activities);
-    }
+  const activities = generateDailyActivities({
+    journey,
+    spiritualPref: null,
+  });
+  if (activities.length > 0) {
+    await db().from("daily_activities").insert(activities);
   }
 
   return journey;
@@ -213,6 +227,26 @@ export async function completeActivity(id: string): Promise<void> {
       is_completed: true,
       completed_at: new Date().toISOString(),
     })
+    .eq("id", id);
+}
+
+export async function saveActivityNote(
+  id: string,
+  notes: string
+): Promise<void> {
+  await db()
+    .from("daily_activities")
+    .update({ notes })
+    .eq("id", id);
+}
+
+export async function saveSmallWinReflection(
+  id: string,
+  reflection: string
+): Promise<void> {
+  await db()
+    .from("small_wins")
+    .update({ reflection })
     .eq("id", id);
 }
 

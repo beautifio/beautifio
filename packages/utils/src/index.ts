@@ -56,6 +56,12 @@ export {
 export { DREAM_TEMPLATES, getDreamTemplate, getAllDreamTemplates, buildDreamTemplates } from "./dream-templates";
 export { generateDailyActivities } from "./daily-activity-generator";
 export type { GenerateDailyOptions } from "./daily-activity-generator";
+export {
+  getAgeGroup, getAgeGroupLabel, getAgeRangeLabel,
+  getStageForAge, getAgeGroupedContent,
+  getAlternativeFuturesForTemplate, getDreamMeaning, getCareerOptions,
+} from "./age-journey-engine";
+export type { AgeGroup, AgeGroupedBigWin, AgeGroupedSmallWin } from "./age-journey-engine";
 
 export {
   generateDailyCoachFocus, generateInsights, analyzeZone,

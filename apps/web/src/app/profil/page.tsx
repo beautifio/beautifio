@@ -15,7 +15,7 @@ import {
 } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
-import type { DreamJourney, JourneyProgress, DailyActivity } from "@beautifio/types";
+import type { DreamJourney, JourneyProgress, DailyActivity, GrowthTimelineEvent } from "@beautifio/types";
 
 /* ─── PROFILE HERO ─── */
 
@@ -62,7 +62,12 @@ function ProfileHero({ journey, progress }: { journey: DreamJourney | null; prog
 
 /* ─── PERJALANAN HIDUP SAYA ─── */
 
-function MyJourneySection({ journey, progress }: { journey: DreamJourney | null; progress: JourneyProgress | null }) {
+function MyJourneySection({ journey, progress, activities, timeline }: {
+  journey: DreamJourney | null;
+  progress: JourneyProgress | null;
+  activities: DailyActivity[];
+  timeline: GrowthTimelineEvent[];
+}) {
   const router = useRouter();
 
   if (!journey) {
@@ -144,6 +149,35 @@ function MyJourneySection({ journey, progress }: { journey: DreamJourney | null;
               />
             ))}
           </div>
+
+          {activities.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {activities.slice(0, 4).map((a) => (
+                <div key={a.id} className="flex items-center gap-2 text-xs text-text-secondary">
+                  {a.is_completed ? (
+                    <CheckCircle2 size={10} className="text-success" />
+                  ) : (
+                    <Circle size={10} className="text-text-secondary/30" />
+                  )}
+                  <span className={a.is_completed ? "line-through opacity-60" : ""}>
+                    {a.title}
+                  </span>
+                </div>
+              ))}
+              {activities.length > 4 && (
+                <p className="text-[10px] text-text-secondary/60">+{activities.length - 4} lainnya</p>
+              )}
+            </div>
+          )}
+
+          {timeline.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-border/30">
+              <p className="text-[11px] font-medium text-text-primary mb-1">Cerita Terbaru</p>
+              <p className="text-xs text-text-secondary italic">
+                "{timeline[0].title}"
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -298,17 +332,28 @@ export default function ProfileScreen() {
 
   const [journey, setJourney] = useState<DreamJourney | null>(null);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
+  const [activities, setActivities] = useState<DailyActivity[]>([]);
+  const [timeline, setTimeline] = useState<GrowthTimelineEvent[]>([]);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const { getActiveJourney, getJourneyProgress } = await import("@/lib/journey-queries");
+        const {
+          getActiveJourney, getJourneyProgress,
+          getTodayActivities, getTimeline,
+        } = await import("@/lib/journey-queries");
         const j = await getActiveJourney(user.id);
         setJourney(j);
         if (j) {
-          const p = await getJourneyProgress(user.id, j.id);
+          const [p, a, t] = await Promise.all([
+            getJourneyProgress(user.id, j.id),
+            getTodayActivities(user.id),
+            getTimeline(user.id, j.id, 3),
+          ]);
           setProgress(p);
+          setActivities(a);
+          setTimeline(t);
         }
       } catch (e) {
         console.error("Failed to load journey", e);
@@ -339,7 +384,7 @@ export default function ProfileScreen() {
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto pb-24 space-y-5">
         <ProfileHero journey={journey} progress={progress} />
-        <MyJourneySection journey={journey} progress={progress} />
+        <MyJourneySection journey={journey} progress={progress} activities={activities} timeline={timeline} />
         <RecentReflections journey={journey} progress={progress} />
         <SupportSystem />
         <SettingsSection />

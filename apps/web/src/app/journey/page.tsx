@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, ArrowRight, Heart } from "lucide-react";
 import { Button, Card, CardContent, Skeleton, BottomNavigation } from "@beautifio/ui";
-import { getAllDreamTemplates } from "@beautifio/utils";
+import { getAllDreamTemplates, getAgeGroupLabel } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
@@ -20,6 +20,7 @@ export default function JourneyPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [userAge, setUserAge] = useState<number | null>(null);
   const [navTab, setNavTab] = useState("journey");
 
   useEffect(() => {
@@ -30,6 +31,21 @@ export default function JourneyPage() {
         setActiveJourney(active);
         const all = await getAllJourneys(user.id);
         setPreviousJourneys(all.filter((j) => j.status !== "active"));
+        const { supabase } = await import("@/lib/supabase/client");
+        if (supabase) {
+          const { data } = await supabase
+            .from("user_profiles")
+            .select("birth_date")
+            .eq("id", user.id)
+            .maybeSingle<{ birth_date: string }>();
+          if (data?.birth_date) {
+            const age = Math.floor(
+              (Date.now() - new Date(data.birth_date).getTime()) /
+                (365.25 * 24 * 60 * 60 * 1000)
+            );
+            setUserAge(age);
+          }
+        }
       } catch (e) {
         console.error("Gagal memuat perjalanan", e);
       } finally {
@@ -47,7 +63,8 @@ export default function JourneyPage() {
       template.slug,
       template.title,
       template.emoji,
-      template.category
+      template.category,
+      userAge
     );
     setCreating(false);
     if (journey) {
@@ -143,9 +160,7 @@ export default function JourneyPage() {
                   <div className="flex items-center gap-2 mt-3">
                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
                     <span className="text-[11px] text-text-secondary">{t.duration}</span>
-                    {t.min_age !== undefined && t.min_age > 0 && (
-                      <span className="text-[11px] text-text-secondary/60">Usia {t.min_age}+</span>
-                    )}
+                    {userAge && <span className="text-[11px] text-text-secondary/60">{getAgeGroupLabel(userAge as any)}</span>}
                   </div>
                 </div>
               </div>

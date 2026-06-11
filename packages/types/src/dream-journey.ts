@@ -89,6 +89,7 @@ export interface DreamJourney {
   emoji: string;
   category: string;
   status: DreamJourneyStatus;
+  user_age: number | null;
   started_at: string;
   ended_at: string | null;
   created_at: string;
@@ -171,6 +172,7 @@ export interface DailyActivity {
   completed_at: string | null;
   activity_date: string;
   is_custom: boolean;
+  notes: string | null;
 }
 
 /* ─── Daily Reflections ─── */

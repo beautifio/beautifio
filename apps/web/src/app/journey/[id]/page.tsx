@@ -15,6 +15,7 @@ import {
   completeActivity, completeSmallWin, saveDailyReflection,
   updateBigWin, completeBigWin, failBigWin, saveBigWinReflection,
   generateAndInsertActivities, getSpiritualPreferences,
+  saveActivityNote,
 } from "@/lib/journey-queries";
 import type {
   DreamJourney, BigWin, SmallWin, DailyActivity,
@@ -29,6 +30,10 @@ import { JourneyStory } from "@/features/journey/journey-story";
 import { FailureModal } from "@/features/journey/failure-modal";
 import { BigWinCelebration } from "@/features/journey/big-win-celebration";
 import type { DreamTemplate } from "@beautifio/types";
+import {
+  getAgeGroup, getAgeGroupLabel, getAgeRangeLabel,
+  getAlternativeFuturesForTemplate, getDreamMeaning,
+} from "@beautifio/utils";
 
 const DIMENSION_LABELS: Record<string, { label: string; emoji: string }> = {
   spiritual: { label: "Spiritual", emoji: "🕊️" },
@@ -51,6 +56,9 @@ export default function JourneyDetailPage() {
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [spiritualPref, setSpiritualPref] = useState<SpiritualPreferences | null>(null);
   const [templateInfo, setTemplateInfo] = useState<DreamTemplate | null>(null);
+  const [alternativeFutures, setAlternativeFutures] = useState<{ title: string; description: string; skills: string[] }[]>([]);
+  const [dreamMeaning, setDreamMeaning] = useState("");
+  const [ageGroup, setAgeGroup] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReflection, setShowReflection] = useState(false);
   const [failureBigWin, setFailureBigWin] = useState<BigWin | null>(null);
@@ -101,6 +109,15 @@ export default function JourneyDetailPage() {
     const tInfo = getDreamTemplate(j.template_slug) || null;
     setTemplateInfo(tInfo);
 
+    const meaning = getDreamMeaning(j.template_slug);
+    setDreamMeaning(meaning);
+    const futures = getAlternativeFuturesForTemplate(j.template_slug);
+    setAlternativeFutures(futures);
+    if (j.user_age) {
+      const group = getAgeGroup(j.user_age);
+      if (group) setAgeGroup(getAgeGroupLabel(group));
+    }
+
     setLoading(false);
   }, [user, id, router]);
 
@@ -118,12 +135,20 @@ export default function JourneyDetailPage() {
       )
     );
 
-    const completedAll = activities.every(
-      (a) => a.id === activityId || a.is_completed
+    const updatedActivities = activities.map((a) =>
+      a.id === activityId ? { ...a, is_completed: true } : a
     );
+    const completedAll = updatedActivities.every((a) => a.is_completed);
     if (completedAll) {
       setShowReflection(true);
     }
+  };
+
+  const handleSaveNote = async (activityId: string, notes: string) => {
+    await saveActivityNote(activityId, notes);
+    setActivities((prev) =>
+      prev.map((a) => (a.id === activityId ? { ...a, notes } : a))
+    );
   };
 
   const handleSaveReflection = async (data: {
@@ -220,35 +245,39 @@ export default function JourneyDetailPage() {
           </div>
         </div>
 
-        {/* Dream Context */}
-        {templateInfo && sectionTab !== "story" && (
-          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/10">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                <Sparkles size={16} className="text-accent" />
+        {/* Dream Context — always visible */}
+        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/10">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <Sparkles size={16} className="text-accent" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-accent uppercase tracking-wide">Mengapa Mimpi Ini?</p>
+              <p className="text-sm text-text-primary mt-1 leading-relaxed">
+                {templateInfo?.description || journey.title}
+              </p>
+            </div>
+          </div>
+          {dreamMeaning && (
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Heart size={16} className="text-primary" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-accent uppercase tracking-wide">Mengapa Mimpi Ini?</p>
+                <p className="text-xs font-semibold text-primary uppercase tracking-wide">Makna Mimpi Ini</p>
                 <p className="text-sm text-text-primary mt-1 leading-relaxed">
-                  {templateInfo.description}
+                  {dreamMeaning}
                 </p>
               </div>
             </div>
-            {templateInfo.why_matters && (
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Heart size={16} className="text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-primary uppercase tracking-wide">Apa yang Aku Dapat?</p>
-                  <p className="text-sm text-text-primary mt-1 leading-relaxed">
-                    {templateInfo.why_matters}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+          {ageGroup && (
+            <div className="mt-3 pt-3 border-t border-border/50 flex items-center gap-2 text-xs text-text-secondary">
+              <span className="px-2 py-0.5 rounded-full bg-muted">{ageGroup}</span>
+              {journey.user_age && <span>Usia {journey.user_age} tahun</span>}
+            </div>
+          )}
+        </div>
 
         {/* Current Focus */}
         {currentBigWin && (
@@ -338,6 +367,7 @@ export default function JourneyDetailPage() {
                       dimensionLabel={dim.label}
                       dimensionEmoji={dim.emoji}
                       onComplete={handleCompleteActivity}
+                      onSaveNote={handleSaveNote}
                     />
                   );
                 })}
@@ -417,6 +447,36 @@ export default function JourneyDetailPage() {
           <div>
             <h2 className="text-base font-bold text-text-primary mb-4">Riwayat Perjalanan</h2>
             <JourneyTimeline events={timeline} />
+          </div>
+        )}
+
+        {/* Alternative Futures — always visible at bottom */}
+        {alternativeFutures.length > 0 && (
+          <div className="mt-8 p-4 rounded-2xl bg-muted/20 border border-border/50">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap size={16} className="text-accent" />
+              <h3 className="text-sm font-bold text-text-primary">Jalan Lain, Skill Sama</h3>
+            </div>
+            <p className="text-xs text-text-secondary mb-3">
+              Jika suatu saat kamu mengambil jalan berbeda, kemampuan yang kamu pelajari di sini tetap berguna.
+            </p>
+            <div className="space-y-2">
+              {alternativeFutures.slice(0, 4).map((f, i) => (
+                <div key={i} className="p-3 rounded-xl bg-bg border border-border/30">
+                  <p className="text-sm font-semibold text-text-primary">{f.title}</p>
+                  <p className="text-xs text-text-secondary mt-0.5">{f.description}</p>
+                  {f.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {f.skills.slice(0, 3).map((s, j) => (
+                        <span key={j} className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
