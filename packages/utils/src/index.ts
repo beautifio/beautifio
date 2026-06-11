@@ -67,6 +67,7 @@ export {
   generateMotivation, generateWeeklyReport,
   generateFailureCoach, generatePivotCoach,
   analyzeReflection, getCoachPanelData,
+  getDreamCompanionVoice,
 } from "./ai-coach";
 export type {
   CoachPanelData, DailyCoachFocus, PersonalizedInsight,

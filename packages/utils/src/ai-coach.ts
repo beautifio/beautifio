@@ -454,6 +454,29 @@ export function matchOpportunities(): OpportunityMatch[] {
   return matches;
 }
 
+/* ─── DREAM COMPANION VOICE ─── */
+
+export function getDreamCompanionVoice(dreamSlug: string | null): string {
+  const voices: Record<string, string> = {
+    "football-player": "Lapangan masih menunggumu hari ini. Setiap tendangan mendekatkanmu pada mimpimu.",
+    doctor: "Satu halaman yang kamu baca hari ini bisa menyelamatkan nyawa seseorang di masa depan.",
+    entrepreneur: "Setiap bisnis besar pernah dimulai dari satu ide sederhana. Hari ini, rawat ide itu.",
+    programmer: "Baris kode yang kamu tulis hari ini bisa menjadi solusi untuk jutaan orang.",
+    musician: "Setiap nada yang kamu latih hari ini adalah langkah menuju panggung impianmu.",
+    "content-creator": "Satu konten hari ini bisa menginspirasi ribuan orang yang belum pernah kamu temui.",
+    "digital-marketer": "Strategi yang kamu pahami hari ini bisa mengubah cara orang melihat brand.",
+    runner: "Setiap langkah hari ini adalah bukti bahwa kamu lebih kuat dari kemarin.",
+    athlete: "Latihan hari ini adalah investasi untuk kemenangan di masa depan.",
+    "beauty-creator": "Kreativitasmu hari ini bisa membuat seseorang merasa percaya diri.",
+    golfer: "Setiap ayunan hari ini mendekatkanmu pada pukulan sempurna.",
+  };
+
+  if (!dreamSlug || !voices[dreamSlug]) {
+    return "Mimpimu berharga. Teruslah melangkah, meskipun satu langkah kecil hari ini.";
+  }
+  return voices[dreamSlug];
+}
+
 /* ─── MOTIVATION ENGINE ─── */
 
 export function generateMotivation(): MotivationMessage {
