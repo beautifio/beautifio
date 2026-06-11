@@ -21,6 +21,7 @@ export default function JourneyPage() {
   const [creating, setCreating] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [userAge, setUserAge] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [navTab, setNavTab] = useState("journey");
 
   useEffect(() => {
@@ -57,18 +58,26 @@ export default function JourneyPage() {
   const handleStartJourney = async (template: DreamTemplate) => {
     if (!user || creating) return;
     setCreating(true);
+    setError(null);
     setSelectedTemplate(template.slug);
-    const journey = await createJourney(
-      user.id,
-      template.slug,
-      template.title,
-      template.emoji,
-      template.category,
-      userAge
-    );
-    setCreating(false);
-    if (journey) {
-      router.push(`/journey/${journey.id}`);
+    try {
+      const journey = await createJourney(
+        user.id,
+        template.slug,
+        template.title,
+        template.emoji,
+        template.category,
+        userAge
+      );
+      if (journey) {
+        router.push(`/journey/${journey.id}`);
+      } else {
+        setError("Gagal membuat perjalanan. Coba lagi.");
+        setCreating(false);
+      }
+    } catch (e: any) {
+      setError(e?.message || "Terjadi kesalahan. Coba lagi.");
+      setCreating(false);
     }
   };
 
@@ -148,6 +157,12 @@ export default function JourneyPage() {
           <p className="text-base text-text-secondary">Kamu belum memulai perjalanan.</p>
           <p className="text-sm text-text-secondary/60 mt-1">Pilih mimpi yang paling menarik untukmu.</p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive text-center">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4">
           {templates.map((t) => (
