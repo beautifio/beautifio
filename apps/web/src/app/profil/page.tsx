@@ -20,6 +20,7 @@ import { NAV_TABS, navRoute } from "@/lib/navigation";
 import {
   MOCK_JOURNALS, FAMILIA_ACHIEVEMENT_REWARDS, FAMILIA_MERCHANTS,
   getVoucherSessions, VOUCHER_TYPE_EMOJIS, VOUCHER_TYPE_LABELS,
+  getLifeProfile,
 } from "@beautifio/utils";
 import { RESOURCES, EMERGENCY_CONTACTS } from "@/lib/safe-space-data";
 import type { Journal, FamiliaAchievementReward } from "@beautifio/types";
@@ -610,6 +611,65 @@ function SafeSpaceSection() {
   );
 }
 
+const CAPITAL_CFG = [
+  { key: "knowledge" as const, label: "Pengetahuan", emoji: "📚", color: "from-blue-500 to-blue-600" },
+  { key: "skill" as const, label: "Skill", emoji: "⚡", color: "from-amber-500 to-orange-500" },
+  { key: "health" as const, label: "Kesehatan", emoji: "💪", color: "from-green-500 to-emerald-600" },
+  { key: "relationship" as const, label: "Relasi", emoji: "👥", color: "from-pink-500 to-rose-500" },
+  { key: "character" as const, label: "Karakter", emoji: "⭐", color: "from-purple-500 to-violet-600" },
+  { key: "spiritual" as const, label: "Spiritual", emoji: "🕊️", color: "from-indigo-500 to-blue-600" },
+];
+
+function LifeCapitalSection() {
+  const profile = getLifeProfile();
+  const capital = profile.lifeCapital;
+  const avg = Math.round(Object.values(capital).reduce((a, b) => a + b, 0) / 6);
+  const router = useRouter();
+  return (
+    <Card padding="lg">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Heart size={18} className="text-rose-500" />
+            <CardTitle>Life Capital</CardTitle>
+          </div>
+          <button onClick={() => router.push("/life")} className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors cursor-pointer">
+            Detail
+          </button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-100">
+          <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
+            <Heart size={20} className="text-rose-500" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-text-primary">Life Capital Score</p>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-rose-400 to-rose-600 rounded-full" style={{ width: `${avg}%` }} />
+              </div>
+              <span className="text-sm font-bold text-rose-600">{avg}%</span>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {CAPITAL_CFG.map((c) => (
+            <div key={c.key} className="flex items-center gap-3">
+              <span className="text-sm w-5 text-center">{c.emoji}</span>
+              <span className="text-[10px] font-medium text-text-secondary w-20 flex-shrink-0">{c.label}</span>
+              <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
+                <div className={`h-full rounded-full bg-gradient-to-r ${c.color}`} style={{ width: `${capital[c.key]}%` }} />
+              </div>
+              <span className="text-[11px] font-bold text-text-primary w-8 text-right">{capital[c.key]}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function GrowthTrackerSection() {
   return (
     <Card padding="lg">
@@ -839,6 +899,7 @@ export default function ProfileScreen() {
           <CirclesSection />
           <MentorsSection />
           <OpportunitiesSection />
+          <LifeCapitalSection />
           <FamiliaProfileSection />
           <SafeSpaceSection />
           <GrowthTrackerSection />

@@ -10,8 +10,9 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, Badge, Avatar, BottomNavigation, ProgressBar } from "@beautifio/ui";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
-import { useMemo, useState } from "react";
-import { FAMILIA_EVENT_BENEFITS, FAMILIA_MERCHANTS, FAMILIA_ACHIEVEMENT_REWARDS, getVoucherSessions, getLifeProfile, ZONE_INFO, STAGE_INFO } from "@beautifio/utils";
+import { useMemo, useState, useEffect } from "react";
+import { FAMILIA_EVENT_BENEFITS, FAMILIA_MERCHANTS, FAMILIA_ACHIEVEMENT_REWARDS, getVoucherSessions, getLifeProfile, ZONE_INFO, STAGE_INFO, updateZone, generateDailyWins } from "@beautifio/utils";
+import type { GrowthZoneRecommendation } from "@beautifio/types";
 import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
 import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
 
@@ -42,10 +43,15 @@ const mentors = [
 /* ─── COMPONENTS ─── */
 
 function WelcomeHero() {
+  const router = useRouter();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Selamat Pagi" : hour < 17 ? "Selamat Siang" : "Selamat Malam";
   const GreetIcon = hour < 12 ? Sunrise : hour < 17 ? Sun : Moon;
   const message = "Setiap langkah kecil membawamu lebih dekat ke impianmu. Hari ini adalah kesempatan baru untuk tumbuh.";
+  const profile = getLifeProfile();
+  const zoneInfo = profile?.onboardingCompleted ? ZONE_INFO[profile.currentZone] : null;
+  const stageInfo = profile?.onboardingCompleted ? STAGE_INFO[profile.currentStage] : null;
+  const capAvg = profile?.onboardingCompleted ? Math.round(Object.values(profile.lifeCapital).reduce((a, b) => a + b, 0) / 6) : 0;
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-secondary px-6 pt-8 pb-7 text-white">
@@ -58,14 +64,25 @@ function WelcomeHero() {
             <div>
               <h1 className="text-lg font-bold leading-tight">{greeting}, Andini!</h1>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <Flame size={12} className="text-orange-200" />
-                <span className="text-[11px] text-white/80">12 hari streak · Level Gold</span>
+                {profile?.onboardingCompleted ? (
+                  <>
+                    <span>{zoneInfo?.emoji}</span>
+                    <span className="text-[11px] text-white/80">{zoneInfo?.label} · {stageInfo?.emoji} {stageInfo?.label}</span>
+                  </>
+                ) : (
+                  <>
+                    <Flame size={12} className="text-orange-200" />
+                    <span className="text-[11px] text-white/80">12 hari streak · Level Gold</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
-          <button className="relative p-2 bg-white/15 rounded-xl hover:bg-white/25 transition-all cursor-pointer active:scale-90">
+          <button onClick={() => router.push("/life")} className="relative p-2 bg-white/15 rounded-xl hover:bg-white/25 transition-all cursor-pointer active:scale-90">
             <Sparkles size={18} />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-amber-300 rounded-full" />
+            {profile?.onboardingCompleted && (
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-300 rounded-full" />
+            )}
           </button>
         </div>
 
@@ -75,18 +92,37 @@ function WelcomeHero() {
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-4">
-          <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
-            <p className="text-lg font-bold">62%</p>
-            <p className="text-[10px] text-white/70">Progress Goal</p>
-          </div>
-          <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
-            <p className="text-lg font-bold">5</p>
-            <p className="text-[10px] text-white/70">Milestone</p>
-          </div>
-          <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
-            <p className="text-lg font-bold">3</p>
-            <p className="text-[10px] text-white/70">Circle Aktif</p>
-          </div>
+          {profile?.onboardingCompleted ? (
+            <>
+              <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+                <p className="text-lg font-bold">{capAvg}%</p>
+                <p className="text-[10px] text-white/70">Life Capital</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+                <p className="text-lg font-bold">{stageInfo?.emoji}</p>
+                <p className="text-[10px] text-white/70">{stageInfo?.label}</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+                <p className="text-lg font-bold">{profile.currentDreamSlug ? "🎯" : "💭"}</p>
+                <p className="text-[10px] text-white/70">{profile.currentDreamSlug ? "Dream" : "Explore"}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+                <p className="text-lg font-bold">62%</p>
+                <p className="text-[10px] text-white/70">Progress Goal</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+                <p className="text-lg font-bold">5</p>
+                <p className="text-[10px] text-white/70">Milestone</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+                <p className="text-lg font-bold">3</p>
+                <p className="text-[10px] text-white/70">Circle Aktif</p>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -96,6 +132,17 @@ function WelcomeHero() {
 function LifeEngineCard() {
   const router = useRouter();
   const profile = getLifeProfile();
+  const [zone, setZone] = useState(profile.currentZone);
+  const [rec, setRec] = useState<GrowthZoneRecommendation | null>(null);
+
+  useEffect(() => {
+    if (profile.onboardingCompleted) {
+      const currentZone = updateZone();
+      setZone(currentZone);
+      setRec(generateDailyWins(profile.currentStage, currentZone, profile.currentDreamSlug));
+    }
+  }, []);
+
   if (!profile.onboardingCompleted) {
     return (
       <button onClick={() => router.push("/life/start")}
@@ -112,43 +159,63 @@ function LifeEngineCard() {
       </button>
     );
   }
-  const zoneInfo = ZONE_INFO[profile.currentZone];
+
+  const zoneInfo = ZONE_INFO[zone];
   const stageInfo = STAGE_INFO[profile.currentStage];
-  const total = Object.values(profile.lifeCapital).reduce((a, b) => a + b, 0);
-  const avg = Math.round(total / 6);
+  const capital = profile.lifeCapital;
+  const avg = Math.round(Object.values(capital).reduce((a, b) => a + b, 0) / 6);
+
   return (
     <button onClick={() => router.push("/life")}
       className="w-full p-4 rounded-2xl bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/10 hover:from-primary/10 hover:to-secondary/10 transition-all text-left cursor-pointer active:scale-[0.98]"
     >
+      {/* Today's Zone */}
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Compass size={20} className="text-primary" />
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+          zone === "growth" ? "bg-purple-100" : zone === "learning" ? "bg-green-100" : zone === "fear" ? "bg-amber-100" : "bg-blue-100"
+        }`}>
+          <Compass size={20} className={
+            zone === "growth" ? "text-purple-600" : zone === "learning" ? "text-green-600" : zone === "fear" ? "text-amber-600" : "text-blue-600"
+          } />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-base">{zoneInfo?.emoji}</span>
+            <span className="text-lg">{zoneInfo?.emoji}</span>
             <span className="text-sm font-bold text-text-primary">{zoneInfo?.label}</span>
+            <span className="text-[9px] text-text-secondary">· {stageInfo?.emoji} {stageInfo?.label}</span>
           </div>
-          <p className="text-[10px] text-text-secondary">{stageInfo?.emoji} {stageInfo?.label} · {profile.currentDreamSlug ? "Dream set" : "No dream yet"}</p>
+          <p className="text-[10px] text-text-secondary">{profile.currentDreamSlug ? "Dream aktif · " : ""}Life Capital {avg}%</p>
         </div>
         <ChevronRight size={16} className="text-text-secondary/30" />
       </div>
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style={{ width: `${avg}%` }} />
-        </div>
-        <span className="text-xs font-bold text-primary">{avg}%</span>
-      </div>
-      <div className="grid grid-cols-6 gap-1 mt-2">
-        {Object.entries(profile.lifeCapital).map(([key, val]) => (
+
+      {/* Life Capital mini bars */}
+      <div className="grid grid-cols-6 gap-1 mb-3">
+        {Object.entries(capital).map(([key, val]) => (
           <div key={key} className="text-center">
-            <div className="h-1 rounded-full bg-border overflow-hidden">
+            <div className="h-1.5 rounded-full bg-border overflow-hidden">
               <div className="h-full bg-primary/60 rounded-full" style={{ width: `${val}%` }} />
             </div>
             <p className="text-[7px] text-text-secondary mt-0.5 uppercase tracking-wider">{key.slice(0, 3)}</p>
           </div>
         ))}
       </div>
+
+      {/* Recommended Action */}
+      {rec && (
+        <div className="p-3 rounded-xl bg-accent/5 border border-accent/10">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Target size={12} className="text-accent" />
+            <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">Recommended Action</span>
+          </div>
+          <p className="text-[11px] text-text-secondary leading-relaxed">{rec.weeklyFocus}</p>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            {rec.dailyWins.slice(0, 3).map((dw, i) => (
+              <span key={i} className="text-[18px]" title={dw.category}>{dw.emoji}</span>
+            ))}
+          </div>
+        </div>
+      )}
     </button>
   );
 }

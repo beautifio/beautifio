@@ -1,15 +1,18 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, MapPin, Clock, Users, BookOpen, Sparkles, Zap, Trophy,
+  ArrowLeft, ArrowRight, MapPin, Clock, Users, BookOpen, Sparkles, Zap, Trophy,
   Star, Sun, Library, Target, GraduationCap, Heart, Compass,
+  RefreshCw, TrendingUp, Quote,
 } from "lucide-react";
-import { Badge, Button } from "@beautifio/ui";
+import { Badge, Button, ProgressBar } from "@beautifio/ui";
 import {
   ROADMAP_TEMPLATES, ROADMAP_SEED_MILESTONES, ROADMAP_SEED_RECOMMENDATIONS,
   ROADMAP_CATEGORIES, getStoredJournals, MOCK_JOURNALS, getRoadmapV3,
+  getLifeProfile, ZONE_INFO, STAGE_INFO, updateZone,
+  generateDailyWins, isOnboardingComplete, executePivot,
 } from "@beautifio/utils";
 import type { RoadmapTask } from "@beautifio/types";
 import { MilestoneTimeline } from "@/features/roadmap/components/MilestoneTimeline";
@@ -26,6 +29,8 @@ import { RoadmapV3DailyReflections } from "@/features/roadmap/components/Roadmap
 import { RoadmapV3MasterclassSection } from "@/features/roadmap/components/RoadmapV3MasterclassSection";
 import { RoadmapV3LifePillarsSection } from "@/features/roadmap/components/RoadmapV3LifePillarsSection";
 import { RoadmapV3AlternativeFuturesSection } from "@/features/roadmap/components/RoadmapV3AlternativeFuturesSection";
+import { GrowthReflectionSection } from "@/features/roadmap/components/GrowthReflectionSection";
+import { StageAdaptedContent } from "@/features/roadmap/components/StageAdaptedContent";
 
 const V3_TABS = [
   { key: "dream", label: "Dream", icon: Star },
@@ -45,6 +50,31 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
   const { slug } = use(params);
   const router = useRouter();
   const [v3Tab, setV3Tab] = useState("dream");
+  const [showPivot, setShowPivot] = useState(false);
+  const [pivotTarget, setPivotTarget] = useState("");
+
+  const ALL_DREAMS = [
+    { slug: "football-player", title: "Pemain Bola", emoji: "⚽" },
+    { slug: "doctor", title: "Dokter", emoji: "🩺" },
+    { slug: "entrepreneur", title: "Pengusaha", emoji: "💼" },
+    { slug: "programmer", title: "Programmer", emoji: "💻" },
+    { slug: "musician", title: "Musisi", emoji: "🎵" },
+    { slug: "content-creator", title: "Content Creator", emoji: "🎬" },
+    { slug: "digital-marketer", title: "Digital Marketer", emoji: "📱" },
+    { slug: "runner", title: "Runner", emoji: "🏃" },
+    { slug: "athlete", title: "Atlet", emoji: "🏅" },
+    { slug: "beauty-creator", title: "Beauty Creator", emoji: "💄" },
+    { slug: "golfer", title: "Pegolf", emoji: "⛳" },
+  ];
+  const dreamTitle = (s: string) => ALL_DREAMS.find((d) => d.slug === s)?.title ?? s;
+  const dreamEmoji = (s: string) => ALL_DREAMS.find((d) => d.slug === s)?.emoji ?? "🎯";
+
+  const handlePivot = () => {
+    if (!pivotTarget) return;
+    executePivot(pivotTarget);
+    setShowPivot(false);
+    router.push(`/roadmap/${pivotTarget}`);
+  };
 
   const v3Roadmap = useMemo(() => getRoadmapV3(slug), [slug]);
   const template = useMemo(() => ROADMAP_TEMPLATES.find((t) => t.slug === slug), [slug]);
@@ -69,6 +99,15 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
     const color = v3Roadmap.color || "from-primary to-secondary";
     const totalHabits = v3Roadmap.dailyWins.reduce((s, c) => s + c.habits.length, 0);
     const totalSkills = v3Roadmap.smallWins.reduce((s, c) => s + c.skills.length, 0);
+
+    const lifeProfile = getLifeProfile();
+    const zoneInfo = lifeProfile ? ZONE_INFO[lifeProfile.currentZone] : null;
+    const stageInfo = lifeProfile ? STAGE_INFO[lifeProfile.currentStage] : null;
+    const lifeEngineReady = lifeProfile?.onboardingCompleted;
+
+    const avgCapital = lifeProfile
+      ? Math.round(Object.values(lifeProfile.lifeCapital).reduce((a, b) => a + b, 0) / 6)
+      : 0;
 
     const ecosystemGroups = [
       {
@@ -106,7 +145,64 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
             </div>
           </div>
 
-          <div className="px-4 mt-4">
+          {/* Life Engine Banner */}
+          {lifeEngineReady ? (
+            <div className="px-4 mt-3">
+              <button onClick={() => router.push("/life")}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-all cursor-pointer text-left"
+              >
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp size={16} className="text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-text-primary">
+                    <span>{zoneInfo?.emoji} {zoneInfo?.label}</span>
+                    <span className="text-text-secondary">·</span>
+                    <span>{stageInfo?.emoji} {stageInfo?.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 h-1 bg-border rounded-full overflow-hidden max-w-[120px]">
+                      <div className="h-full bg-primary rounded-full" style={{ width: `${avgCapital}%` }} />
+                    </div>
+                    <span className="text-[10px] font-bold text-primary">{avgCapital}% Life Capital</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-primary font-semibold">
+                  <span>Buka</span>
+                  <ArrowLeft size={12} className="rotate-180" />
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="px-4 mt-3">
+              <button onClick={() => router.push("/life/start")}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-all cursor-pointer text-left"
+              >
+                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                  <Sparkles size={16} className="text-accent" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-text-primary">Aktifkan Life Engine</p>
+                  <p className="text-[10px] text-text-secondary">Dapatkan rekomendasi yang sesuai dengan tahap hidupmu</p>
+                </div>
+                <ArrowRight size={14} className="text-text-secondary/30 flex-shrink-0" />
+              </button>
+            </div>
+          )}
+
+          {/* Pivot / Change Dream */}
+          {lifeEngineReady && lifeProfile.currentDreamSlug !== slug && (
+            <div className="px-4 mt-2">
+              <button onClick={() => setShowPivot(true)}
+                className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 hover:bg-amber-50 transition-all cursor-pointer text-left"
+              >
+                <RefreshCw size={14} className="text-amber-600 flex-shrink-0" />
+                <span className="text-[11px] font-medium text-amber-700">Beralih mimpi? Klik untuk ganti dream</span>
+              </button>
+            </div>
+          )}
+
+          <div className="px-4 mt-3">
             <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               {V3_TABS.map((tab) => {
                 const Icon = tab.icon;
@@ -129,11 +225,97 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
             </div>
           </div>
 
+          {/* Pivot Modal */}
+          {showPivot && (
+            <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-4" onClick={() => setShowPivot(false)}>
+              <div className="w-full max-w-sm bg-white dark:bg-surface rounded-2xl p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+                <div className="text-center">
+                  <RefreshCw size={28} className="mx-auto text-amber-500 mb-2" />
+                  <h3 className="text-base font-bold text-text-primary">Ganti Dream</h3>
+                  <p className="text-xs text-text-secondary mt-1">Modal hidupmu akan tetap tersimpan dan dialihkan.</p>
+                </div>
+
+                {lifeProfile?.previousDreams?.includes(slug) && (
+                  <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 flex items-center gap-2">
+                    <TrendingUp size={14} className="text-primary" />
+                    <p className="text-[10px] text-text-secondary">Kamu pernah menjalani ini sebelumnya. Modal hidup tetap utuh.</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {ALL_DREAMS.filter((d) => d.slug !== slug).map((d) => (
+                    <button key={d.slug} onClick={() => setPivotTarget(d.slug)}
+                      className={`flex items-center gap-2 p-3 rounded-xl border-2 text-xs font-medium transition-all cursor-pointer ${
+                        pivotTarget === d.slug
+                          ? "border-accent bg-accent/5 text-accent"
+                          : "border-border text-text-secondary hover:border-accent/30"
+                      }`}
+                    >
+                      <span>{d.emoji}</span>
+                      <span>{d.title}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {pivotTarget && (
+                  <div className="p-3 rounded-xl bg-success/5 border border-success/20 space-y-1.5">
+                    <p className="text-xs font-bold text-success flex items-center gap-1.5">
+                      <Sparkles size={12} /> Transferable Skills
+                    </p>
+                    <ul className="space-y-0.5">
+                      {["Kedisiplinan & konsistensi", "Kemampuan belajar mandiri", "Manajemen waktu", "Adaptabilitas", "Problem solving"].map((s) => (
+                        <li key={s} className="text-[10px] text-text-secondary flex items-center gap-1.5">
+                          <span className="w-1 h-1 rounded-full bg-success" />
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-[10px] text-text-secondary mt-1">
+                      Life Capital: <span className="font-bold text-accent">{avgCapital}%</span> akan dipertahankan.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button onClick={() => { setShowPivot(false); setPivotTarget(""); }}
+                    className="flex-1 py-3 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-muted transition-all cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button onClick={handlePivot} disabled={!pivotTarget}
+                    className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                      pivotTarget
+                        ? "bg-accent text-white hover:bg-accent/90"
+                        : "bg-muted text-text-secondary/50 cursor-not-allowed"
+                    }`}
+                  >
+                    Ganti ke {dreamTitle(pivotTarget)}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="px-6 pt-6 pb-24 space-y-8">
-            {v3Tab === "dream" && <RoadmapV3DreamSection dream={v3Roadmap.dream} color={color} />}
+            {v3Tab === "dream" && (
+              <>
+                <RoadmapV3DreamSection dream={v3Roadmap.dream} color={color} />
+                {lifeEngineReady && <StageAdaptedContent stage={lifeProfile.currentStage} dreamTitle={v3Roadmap.title} />}
+              </>
+            )}
             {v3Tab === "daily" && <RoadmapV3DailyWinsSection categories={v3Roadmap.dailyWins} roadmapSlug={slug} />}
             {v3Tab === "skills" && <RoadmapV3SmallWinsSection categories={v3Roadmap.smallWins} />}
-            {v3Tab === "milestones" && <RoadmapV3BigWinsSection bigWins={v3Roadmap.bigWins} roadmapSlug={slug} />}
+            {v3Tab === "milestones" && (
+              <>
+                <RoadmapV3BigWinsSection bigWins={v3Roadmap.bigWins} roadmapSlug={slug} />
+                <GrowthReflectionSection
+                  dreamSlug={slug}
+                  dreamTitle={v3Roadmap.title}
+                  totalDone={0}
+                  totalTarget={v3Roadmap.bigWins.length}
+                />
+              </>
+            )}
             {v3Tab === "blueprint" && <RoadmapV3BlueprintSection blueprint={v3Roadmap.blueprint} />}
             {v3Tab === "life" && <RoadmapV3LifePillarsSection pillars={v3Roadmap.lifePillars} />}
             {v3Tab === "altfutures" && <RoadmapV3AlternativeFuturesSection futures={v3Roadmap.alternativeFutures} mainTitle={v3Roadmap.title} />}
