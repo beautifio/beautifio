@@ -1,4 +1,4 @@
-import { Home, BookHeart, MapPin, Users, User, BookOpen, Compass, type LucideIcon } from "lucide-react";
+import { Home, Users, User, Compass, type LucideIcon } from "lucide-react";
 
 export interface NavTab {
   id: string;
@@ -9,7 +9,6 @@ export interface NavTab {
 export const NAV_TABS: NavTab[] = [
   { id: "home", label: "Beranda", icon: Home },
   { id: "journey", label: "Journey", icon: Compass },
-  { id: "roadmap", label: "Roadmap", icon: MapPin },
   { id: "circle", label: "Circle", icon: Users },
   { id: "profil", label: "Profil", icon: User },
 ];
