@@ -5,11 +5,15 @@ const authPages = ["/login", "/register", "/forgot-password", "/auth"];
 
 const protectedPages = [
   "/profil",
-  "/life",
   "/familia",
   "/jurnal/buat",
   "/inspirasi/post",
 ];
+
+const deprecatedPages: Record<string, string> = {
+  "/life": "/journey",
+  "/life/start": "/journey",
+};
 
 function isAuthPage(pathname: string): boolean {
   return authPages.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -66,6 +70,13 @@ export async function middleware(request: NextRequest) {
   if (!isAuth && isProtectedPage(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect deprecated pages to new Journey system
+  if (isAuth && deprecatedPages[pathname]) {
+    const url = request.nextUrl.clone();
+    url.pathname = deprecatedPages[pathname];
     return NextResponse.redirect(url);
   }
 

@@ -575,7 +575,7 @@ function MyGrowth() {
               {showDetails ? <EyeOff size={14} /> : <Eye size={14} />}
               <span>{showDetails ? "Sembunyikan" : "Detail"}</span>
             </button>
-            <button onClick={() => router.push("/life")} className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors cursor-pointer">
+            <button onClick={() => router.push("/journey")} className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors cursor-pointer">
               Buka
             </button>
           </div>

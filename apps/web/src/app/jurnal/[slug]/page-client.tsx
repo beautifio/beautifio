@@ -73,6 +73,18 @@ export default function JournalDetailPage({ params }: { params: Promise<{ slug: 
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto pb-24">
+        {/* Deprecation banner */}
+        <div className="px-4 pt-4">
+          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50 flex items-start gap-2">
+            <BookOpen size={16} className="text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+            <div className="text-xs text-amber-800 dark:text-amber-300">
+              <p className="font-medium">Fitur ini akan dipindahkan</p>
+              <p className="mt-0.5 text-amber-700 dark:text-amber-400">
+                Catat perjalanan mimpimu di <button onClick={() => router.push("/journey")} className="underline font-medium cursor-pointer">Journey</button> — pengalaman baru yang lebih seru.
+              </p>
+            </div>
+          </div>
+        </div>
         {/* Header */}
         <div className="relative h-48 overflow-hidden">
           {journal.cover_image ? (

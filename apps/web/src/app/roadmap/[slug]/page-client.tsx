@@ -145,10 +145,10 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
             </div>
           </div>
 
-          {/* Life Engine Banner */}
+          {/* Journey Banner */}
           {lifeEngineReady ? (
             <div className="px-4 mt-3">
-              <button onClick={() => router.push("/life")}
+              <button onClick={() => router.push("/journey")}
                 className="w-full flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-all cursor-pointer text-left"
               >
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -175,17 +175,20 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
             </div>
           ) : (
             <div className="px-4 mt-3">
-              <button onClick={() => router.push("/life/start")}
+              <button onClick={() => router.push("/journey")}
                 className="w-full flex items-center gap-3 p-3 rounded-xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-all cursor-pointer text-left"
               >
                 <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
                   <Sparkles size={16} className="text-accent" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-text-primary">Aktifkan Life Engine</p>
-                  <p className="text-[10px] text-text-secondary">Dapatkan rekomendasi yang sesuai dengan tahap hidupmu</p>
+                  <p className="text-xs font-semibold text-text-primary">Mulai Journey-mu</p>
+                  <p className="text-[11px] text-text-secondary mt-0.5">Temukan zona dan stage hidupmu, lalu lacak progres mimpimu</p>
                 </div>
-                <ArrowRight size={14} className="text-text-secondary/30 flex-shrink-0" />
+                <div className="flex items-center gap-1 text-[10px] font-semibold">
+                  <span className="text-primary">Mulai</span>
+                  <ArrowLeft size={12} className="rotate-180 text-primary" />
+                </div>
               </button>
             </div>
           )}
@@ -383,6 +386,18 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
                 <span className="flex items-center gap-1"><MapPin size={12} />{totalMilestones} milestones</span>
                 <span className="flex items-center gap-1"><Users size={12} />{totalTasks} tugas</span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 pt-4">
+          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50 flex items-start gap-2">
+            <Zap size={16} className="text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+            <div className="text-xs text-amber-800 dark:text-amber-300">
+              <p className="font-medium">Fitur ini akan dipindahkan</p>
+              <p className="mt-0.5 text-amber-700 dark:text-amber-400">
+                Kelola mimpimu di <button onClick={() => router.push("/journey")} className="underline font-medium cursor-pointer">Journey</button> — pengalaman baru yang lebih seru dan terpadu.
+              </p>
             </div>
           </div>
         </div>

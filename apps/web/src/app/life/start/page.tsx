@@ -63,7 +63,7 @@ export default function LifeEngineStart() {
     setSaving(true);
     completeOnboarding(stage!, dreamSlug, zone!, spiritualPref!);
     await new Promise((r) => setTimeout(r, 600));
-    router.push("/life");
+    router.push("/journey");
   };
 
   function StepIndicator({ current, total }: { current: number; total: number }) {
