@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, ArrowRight, Heart } from "lucide-react";
-import { Button, Card, CardContent, Skeleton } from "@beautifio/ui";
+import { Button, Card, CardContent, Skeleton, BottomNavigation } from "@beautifio/ui";
 import { getAllDreamTemplates } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
+import { NAV_TABS, navRoute } from "@/lib/navigation";
 import { getActiveJourney, getAllJourneys, createJourney } from "@/lib/journey-queries";
 
 export default function JourneyPage() {
@@ -19,6 +20,7 @@ export default function JourneyPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [navTab, setNavTab] = useState("journey");
 
   useEffect(() => {
     if (!user) return;
@@ -66,7 +68,7 @@ export default function JourneyPage() {
   if (activeJourney) {
     return (
       <div className="min-h-screen bg-bg">
-        <div className="max-w-content mx-auto px-6 pt-8 pb-24">
+        <div className="max-w-content mx-auto px-6 pt-8 pb-28">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-text-primary">Perjalanan Mimpiku</h1>
             <p className="text-sm text-text-secondary mt-1">Lanjutkan perjalananmu</p>
@@ -116,13 +118,15 @@ export default function JourneyPage() {
             </Button>
           </Link>
         </div>
+
+        <BottomNavigation items={NAV_TABS} activeTab={navTab} onTabChange={(id) => { setNavTab(id); router.push(navRoute(id)); }} />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-content mx-auto px-6 pt-8 pb-24">
+      <div className="max-w-content mx-auto px-6 pt-8 pb-28">
         <div className="text-center mb-6">
           <p className="text-base text-text-secondary">Kamu belum memulai perjalanan.</p>
           <p className="text-sm text-text-secondary/60 mt-1">Pilih mimpi yang paling menarik untukmu.</p>
@@ -159,6 +163,8 @@ export default function JourneyPage() {
           ))}
         </div>
       </div>
+
+      <BottomNavigation items={NAV_TABS} activeTab={navTab} onTabChange={(id) => { setNavTab(id); router.push(navRoute(id)); }} />
     </div>
   );
 }
