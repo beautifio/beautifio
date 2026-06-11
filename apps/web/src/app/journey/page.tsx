@@ -23,11 +23,16 @@ export default function JourneyPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const active = await getActiveJourney(user.id);
-      setActiveJourney(active);
-      const all = await getAllJourneys(user.id);
-      setPreviousJourneys(all.filter((j) => j.status !== "active"));
-      setLoading(false);
+      try {
+        const active = await getActiveJourney(user.id);
+        setActiveJourney(active);
+        const all = await getAllJourneys(user.id);
+        setPreviousJourneys(all.filter((j) => j.status !== "active"));
+      } catch (e) {
+        console.error("Gagal memuat perjalanan", e);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [user]);
 
@@ -118,14 +123,9 @@ export default function JourneyPage() {
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-6 pt-8 pb-24">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-            <Sparkles size={28} className="text-accent" />
-          </div>
-          <h1 className="text-2xl font-bold text-text-primary">Mulai Perjalananmu</h1>
-          <p className="text-sm text-text-secondary mt-2 max-w-md mx-auto">
-            Pilih mimpi yang paling menarik untukmu. Kamu bisa ganti kapan saja.
-          </p>
+        <div className="text-center mb-6">
+          <p className="text-base text-text-secondary">Kamu belum memulai perjalanan.</p>
+          <p className="text-sm text-text-secondary/60 mt-1">Pilih mimpi yang paling menarik untukmu.</p>
         </div>
 
         <div className="grid grid-cols-1 gap-4">

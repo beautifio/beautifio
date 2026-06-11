@@ -27,7 +27,7 @@ export async function getActiveJourney(
     .select("*")
     .eq("user_id", userId)
     .eq("status", "active")
-    .single();
+    .maybeSingle();
   return data;
 }
 
@@ -42,7 +42,7 @@ export async function createJourney(
     .from("dream_templates")
     .select("big_wins, small_wins")
     .eq("slug", templateSlug)
-    .single<{ big_wins: any[]; small_wins: any[] }>();
+    .maybeSingle<{ big_wins: any[]; small_wins: any[] }>();
 
   const { data: journey, error } = await db()
     .from("dream_journeys")
@@ -240,7 +240,7 @@ export async function getTodayReflection(
     .select("*")
     .eq("user_id", userId)
     .eq("date", today)
-    .single();
+    .maybeSingle();
   return data;
 }
 
@@ -276,7 +276,7 @@ export async function getSpiritualPreferences(
     .from("spiritual_preferences")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
   return data;
 }
 

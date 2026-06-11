@@ -250,17 +250,16 @@ function NoJourney() {
   const router = useRouter();
   return (
     <section>
-      <h2 className="text-base font-bold text-text-primary mb-3">Mulai Perjalanan</h2>
-      <button
-        onClick={() => router.push("/journey")}
-        className="w-full p-6 rounded-2xl border-2 border-dashed border-accent/30 hover:border-accent/60 hover:bg-accent/5 transition-all text-center cursor-pointer"
-      >
-        <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-3">
-          <Sparkles size={28} className="text-accent" />
-        </div>
-        <p className="text-sm font-bold text-text-primary">Pilih Mimpimu</p>
-        <p className="text-xs text-text-secondary mt-1">Tentukan mimpi besar dan mulai perjalananmu</p>
-      </button>
+      <div className="p-6 rounded-2xl bg-surface border border-border text-center">
+        <p className="text-sm text-text-secondary">Kamu belum memulai perjalanan.</p>
+        <button
+          onClick={() => router.push("/journey")}
+          className="mt-4 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer"
+        >
+          <Sparkles size={16} />
+          Pilih Mimpi Pertamamu
+        </button>
+      </div>
     </section>
   );
 }
