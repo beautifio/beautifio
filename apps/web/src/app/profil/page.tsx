@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -25,53 +25,6 @@ import {
 import { RESOURCES, EMERGENCY_CONTACTS } from "@/lib/safe-space-data";
 import type { Journal, FamiliaAchievementReward } from "@beautifio/types";
 import { GrowthTracker } from "@/features/roadmap/components/GrowthTracker";
-
-const MOCK_USER = {
-  name: "Andini Putri",
-  initials: "AP",
-  email: "andini.putri@email.com",
-  city: "Sleman, Yogyakarta",
-  bio: "Frontend Developer | UI/UX Enthusiast | Lifelong Learner",
-  interests: ["Frontend Dev", "UI/UX Design", "Data Science"],
-  currentGoal: "Jadi Frontend Developer",
-  growthScore: 2450,
-  streak: 12,
-  badges: [
-    { id: "b1", label: "Early Adopter", icon: Star, color: "text-amber-500" },
-    { id: "b2", label: "Journal Keeper", icon: BookOpen, color: "text-blue-500" },
-    { id: "b3", label: "Circle Social", icon: Users, color: "text-green-500" },
-    { id: "b4", label: "Story Seeker", icon: BookHeart, color: "text-purple-500" },
-  ],
-  goals: ["Jadi Frontend Developer", "Toefl 600+"],
-  roadmap: { title: "Programmer", progress: 62, milestones: { done: 5, total: 8 } },
-  discovery: { completed: true, mainGoal: "Frontend Developer", emoji: "💻" },
-  circles: [
-    { name: "Tech Founders", members: 8, role: "Anggota", activity: "Diskusi React Hooks" },
-    { name: "Creative Lab", members: 6, role: "Anggota", activity: "Challenge Design" },
-    { name: "Data Science ID", members: 9, role: "Anggota", activity: "Study Group" },
-  ],
-  savedStories: [
-    { title: "Cara Belajar Efektif di Era Digital", slug: "cara-belajar-efektif-di-era-digital" },
-    { title: "Panduan Membangun Karir di Industri Teknologi", slug: "panduan-membangun-karir-di-teknologi" },
-  ],
-  createdStories: [
-    { title: "Perjalanan Belajar React", slug: "perjalanan-belajar-react", likes: 24, comments: 8 },
-  ],
-  likedStories: [
-    { title: "Tips Produktivitas untuk Developer", slug: "tips-produktivitas-developer" },
-  ],
-  mentors: [
-    { name: "Pak Rudi", initials: "RR", expertise: "Tech Entrepreneur", lastInteraction: "2 hari lalu" },
-    { name: "Bu Sari", initials: "SS", expertise: "Leadership Coach", lastInteraction: "1 minggu lalu" },
-  ],
-  savedOpportunities: [
-    { title: "Beasiswa Prestasi 2026", org: "Yayasan Nusantara Cerdas", type: "Beasiswa" },
-    { title: "Program Magang Frontend", org: "TechStart Indonesia", type: "Magang" },
-  ],
-  appliedOpportunities: [
-    { title: "Program Magang Frontend", org: "TechStart Indonesia", type: "Magang", status: "Pending" },
-  ],
-};
 
 function getInitials(name: string): string {
   return name.split(" ").filter(Boolean).map((n) => n[0]).join("").toUpperCase().slice(0, 2);
@@ -108,11 +61,11 @@ function getAnonPosts() {
 function IdentityHeader({ name, initials, bio, city, interests, currentGoal, growthScore, streak, badges, onEdit }: {
   name: string; initials: string; bio?: string; city?: string;
   interests: string[]; currentGoal: string;
-  growthScore: number; streak: number; badges: typeof MOCK_USER.badges;
+  growthScore: number; streak: number; badges: { id: string; label: string; icon: any; color: string }[];
   onEdit: () => void;
 }) {
   const scoreLevel = growthScore >= 5000 ? "Diamond" : growthScore >= 2000 ? "Gold" : growthScore >= 500 ? "Silver" : "Bronze";
-  const scoreColors = { Diamond: "from-cyan-400 to-blue-500", Gold: "from-amber-400 to-orange-500", Silver: "from-gray-300 to-gray-400", Bronze: "from-amber-700 to-amber-800" };
+  const scoreColors: Record<string, string> = { Diamond: "from-cyan-400 to-blue-500", Gold: "from-amber-400 to-orange-500", Silver: "from-gray-300 to-gray-400", Bronze: "from-amber-700 to-amber-800" };
 
   return (
     <div className="bg-gradient-to-b from-bg to-surface">
@@ -121,9 +74,11 @@ function IdentityHeader({ name, initials, bio, city, interests, currentGoal, gro
           <div className="flex flex-col items-center">
             <div className="relative">
               <Avatar initials={initials} size="xl" />
-              <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-r ${scoreColors[scoreLevel]} flex items-center justify-center text-[10px] text-white font-bold shadow-md`}>
-                <Award className="w-3.5 h-3.5" />
-              </div>
+              {growthScore > 0 && (
+                <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-r ${scoreColors[scoreLevel]} flex items-center justify-center text-[10px] text-white font-bold shadow-md`}>
+                  <Award className="w-3.5 h-3.5" />
+                </div>
+              )}
             </div>
             <h1 className="text-xl font-bold text-text-primary mt-4">{name}</h1>
             {bio && <p className="text-sm text-text-secondary mt-1 text-center max-w-xs">{bio}</p>}
@@ -134,22 +89,26 @@ function IdentityHeader({ name, initials, bio, city, interests, currentGoal, gro
               </div>
             )}
 
-            <div className="flex flex-wrap justify-center gap-1.5 mt-3">
-              {interests.map((i) => (
-                <Badge key={i} variant="accent" className="text-[10px]">{i}</Badge>
-              ))}
-            </div>
-
-            <div className="mt-4 w-full max-w-xs">
-              <div className="p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center gap-3">
-                <Target size={18} className="text-accent flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-medium text-accent/70 uppercase tracking-wider">Current Goal</p>
-                  <p className="text-sm font-semibold text-text-primary truncate">{currentGoal}</p>
-                </div>
-                <ChevronRight size={16} className="text-text-secondary/30 flex-shrink-0" />
+            {interests.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-1.5 mt-3">
+                {interests.map((i) => (
+                  <Badge key={i} variant="accent" className="text-[10px]">{i}</Badge>
+                ))}
               </div>
-            </div>
+            )}
+
+            {currentGoal && (
+              <div className="mt-4 w-full max-w-xs">
+                <div className="p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-center gap-3">
+                  <Target size={18} className="text-accent flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-medium text-accent/70 uppercase tracking-wider">Current Goal</p>
+                    <p className="text-sm font-semibold text-text-primary truncate">{currentGoal}</p>
+                  </div>
+                  <ChevronRight size={16} className="text-text-secondary/30 flex-shrink-0" />
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-4 gap-3 mt-5 w-full max-w-sm">
               <div className="flex flex-col items-center">
@@ -205,7 +164,6 @@ function JourneySection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Discovery */}
         {discovery.completed ? (
           <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -213,7 +171,7 @@ function JourneySection() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-text-primary">Discovery Selesai</p>
-              <p className="text-[10px] text-text-secondary">{discovery.answerCount} jawaban · {MOCK_USER.discovery.emoji} {MOCK_USER.discovery.mainGoal}</p>
+              <p className="text-[10px] text-text-secondary">{discovery.answerCount} jawaban</p>
             </div>
           </div>
         ) : (
@@ -229,34 +187,24 @@ function JourneySection() {
           </button>
         )}
 
-        {/* Active Goal */}
         <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/5 border border-accent/10">
           <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center">
             <Target size={18} className="text-accent" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-text-primary">Goal Aktif</p>
-            <p className="text-[10px] text-text-secondary">{MOCK_USER.goals[0]}</p>
+            <p className="text-[10px] text-text-secondary">Belum ada goal yang ditetapkan</p>
           </div>
         </div>
 
-        {/* Main Roadmap */}
         <div className="p-3 rounded-xl border border-border hover:border-primary/20 transition-colors">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <GraduationCap size={16} className="text-secondary" />
-              <span className="text-xs font-semibold text-text-primary">{MOCK_USER.roadmap.title}</span>
-            </div>
-            <Badge variant="secondary">Aktif</Badge>
-          </div>
-          <ProgressBar value={MOCK_USER.roadmap.progress} size="sm" variant="accent" showLabel />
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-[10px] text-text-secondary">{MOCK_USER.roadmap.milestones.done} dari {MOCK_USER.roadmap.milestones.total} milestone</span>
-            <div className="flex items-center gap-1">
-              <Trophy size={12} className="text-accent" />
-              <span className="text-[10px] font-semibold text-accent">{MOCK_USER.roadmap.progress}%</span>
+              <span className="text-xs font-semibold text-text-secondary">Roadmap Aktif</span>
             </div>
           </div>
+          <p className="text-[10px] text-text-secondary">Mulai roadmap untuk melacak progres</p>
         </div>
       </CardContent>
     </Card>
@@ -266,7 +214,6 @@ function JourneySection() {
 function StoriesSection() {
   const router = useRouter();
   const anonPosts = getAnonPosts();
-  const totalCreated = anonPosts.length + MOCK_USER.createdStories.length;
 
   return (
     <Card padding="lg">
@@ -284,33 +231,18 @@ function StoriesSection() {
       <CardContent className="space-y-3">
         <div className="grid grid-cols-3 gap-2">
           <div className="flex flex-col items-center p-3 rounded-xl bg-primary/5 border border-primary/10">
-            <span className="text-lg font-bold text-text-primary">{totalCreated}</span>
+            <span className="text-lg font-bold text-text-primary">{anonPosts.length}</span>
             <span className="text-[10px] text-text-secondary">Dibuat</span>
           </div>
           <div className="flex flex-col items-center p-3 rounded-xl bg-accent/5 border border-accent/10">
-            <span className="text-lg font-bold text-text-primary">{MOCK_USER.savedStories.length}</span>
+            <span className="text-lg font-bold text-text-primary">0</span>
             <span className="text-[10px] text-text-secondary">Tersimpan</span>
           </div>
           <div className="flex flex-col items-center p-3 rounded-xl bg-secondary/5 border border-secondary/10">
-            <span className="text-lg font-bold text-text-primary">{MOCK_USER.likedStories.length}</span>
+            <span className="text-lg font-bold text-text-primary">0</span>
             <span className="text-[10px] text-text-secondary">Disukai</span>
           </div>
         </div>
-
-        {MOCK_USER.savedStories.length > 0 && (
-          <div>
-            <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-2">Tersimpan</p>
-            <div className="space-y-1">
-              {MOCK_USER.savedStories.map((story, i) => (
-                <button key={i} onClick={() => router.push(`/cerita/${story.slug}`)} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/30 transition-colors text-left cursor-pointer">
-                  <Bookmark size={14} className="text-text-secondary/40 flex-shrink-0" />
-                  <span className="text-xs text-text-primary truncate flex-1">{story.title}</span>
-                  <ChevronRight size={14} className="text-text-secondary/20 flex-shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
@@ -394,19 +326,8 @@ function CirclesSection() {
           </button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {MOCK_USER.circles.map((circle, i) => (
-          <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer border border-border">
-            <div className="w-9 h-9 rounded-lg bg-secondary/10 flex items-center justify-center">
-              <Circle size={16} className="text-secondary/50" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-text-primary truncate">{circle.name}</p>
-              <p className="text-[10px] text-text-secondary">{circle.members} anggota · {circle.activity}</p>
-            </div>
-            <Badge variant="default">{circle.role}</Badge>
-          </div>
-        ))}
+      <CardContent>
+        <p className="text-xs text-text-secondary text-center py-4">Belum bergabung dengan circle. Temukan circle yang sesuai dengan minatmu.</p>
       </CardContent>
     </Card>
   );
@@ -427,17 +348,8 @@ function MentorsSection() {
           </button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {MOCK_USER.mentors.map((mentor, i) => (
-          <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer border border-border">
-            <Avatar initials={mentor.initials} size="sm" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-text-primary">{mentor.name}</p>
-              <p className="text-[10px] text-text-secondary">{mentor.expertise}</p>
-            </div>
-            <span className="text-[10px] text-text-secondary">{mentor.lastInteraction}</span>
-          </div>
-        ))}
+      <CardContent>
+        <p className="text-xs text-text-secondary text-center py-4">Belum memiliki mentor. Cari mentor yang sesuai dengan tujuanmu.</p>
       </CardContent>
     </Card>
   );
@@ -458,44 +370,8 @@ function OpportunitiesSection() {
           </button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge variant="accent" className="text-[10px]">
-            Disimpan ({MOCK_USER.savedOpportunities.length})
-          </Badge>
-          <Badge variant="success" className="text-[10px]">
-            Dilamar ({MOCK_USER.appliedOpportunities.length})
-          </Badge>
-        </div>
-        {MOCK_USER.savedOpportunities.map((opp, i) => (
-          <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer border border-border">
-            <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center">
-              <Briefcase size={16} className="text-accent" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-text-primary truncate">{opp.title}</p>
-              <p className="text-[10px] text-text-secondary">{opp.org}</p>
-            </div>
-            <Badge variant="accent" className="text-[10px]">{opp.type}</Badge>
-          </div>
-        ))}
-        {MOCK_USER.appliedOpportunities.length > 0 && (
-          <div>
-            <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mt-3 mb-1">Dilamar</p>
-            {MOCK_USER.appliedOpportunities.map((opp, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-success/5 border border-success/20">
-                <div className="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center">
-                  <CheckCircle2 size={16} className="text-success" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-text-primary truncate">{opp.title}</p>
-                  <p className="text-[10px] text-text-secondary">{opp.org}</p>
-                </div>
-                <Badge variant="success" className="text-[10px]">{opp.status}</Badge>
-              </div>
-            ))}
-          </div>
-        )}
+      <CardContent>
+        <p className="text-xs text-text-secondary text-center py-4">Belum ada peluang yang disimpan. Jelajahi peluang yang tersedia.</p>
       </CardContent>
     </Card>
   );
@@ -687,12 +563,8 @@ function GrowthTrackerSection() {
 }
 
 function GamificationSection() {
-  const streakDays = MOCK_USER.streak;
-  const maxStreak = 30;
-  const streakPct = Math.min(100, (streakDays / maxStreak) * 100);
-
   const achievements = FAMILIA_ACHIEVEMENT_REWARDS;
-  const unlockedPct = Math.min(100, Math.round((2 / achievements.length) * 100));
+  const unlockedPct = Math.min(100, Math.round((0 / achievements.length) * 100));
 
   return (
     <Card padding="lg">
@@ -703,71 +575,55 @@ function GamificationSection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Growth Score */}
         <div className="flex items-center gap-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100">
           <div className="relative w-14 h-14 flex items-center justify-center">
             <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
               <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" className="text-amber-200/50" />
-              <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray={`${(MOCK_USER.growthScore / 5000) * 150.8} 150.8`} strokeLinecap="round" className="text-amber-500" />
+              <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="0 150.8" strokeLinecap="round" className="text-amber-500" />
             </svg>
-            <span className="absolute text-xs font-bold text-text-primary">{Math.round((MOCK_USER.growthScore / 5000) * 100)}%</span>
+            <span className="absolute text-xs font-bold text-text-primary">0%</span>
           </div>
           <div>
-            <p className="text-xs font-bold text-text-primary">{MOCK_USER.growthScore.toLocaleString()} / 5.000</p>
-            <p className="text-[10px] text-text-secondary">Growth Score — Level {MOCK_USER.growthScore >= 5000 ? "Diamond" : MOCK_USER.growthScore >= 2000 ? "Gold" : MOCK_USER.growthScore >= 500 ? "Silver" : "Bronze"}</p>
+            <p className="text-xs font-bold text-text-primary">0 / 5.000</p>
+            <p className="text-[10px] text-text-secondary">Growth Score — Bronze</p>
           </div>
         </div>
 
-        {/* Streak */}
         <div className="p-3 rounded-xl border border-border">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Flame size={16} className="text-orange-500" />
               <span className="text-xs font-semibold text-text-primary">Streak</span>
             </div>
-            <span className="text-xs font-bold text-text-primary">{streakDays} hari</span>
+            <span className="text-xs font-bold text-text-primary">0 hari</span>
           </div>
-          <ProgressBar value={streakPct} size="sm" variant="accent" />
-          <p className="text-[10px] text-text-secondary mt-1.5">{maxStreak - streakDays} hari lagi menuju 30 hari</p>
+          <ProgressBar value={0} size="sm" variant="accent" />
+          <p className="text-[10px] text-text-secondary mt-1.5">30 hari lagi menuju 30 hari</p>
         </div>
 
-        {/* Achievements */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Achievements</span>
             <span className="text-[10px] text-text-secondary">{unlockedPct}%</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            {achievements.slice(0, 4).map((ar) => {
-              const isUnlocked = ["discovery_complete", "mentor_program"].includes(ar.trigger_type);
-              return (
-                <div key={ar.id} className={`flex items-center gap-2 p-2.5 rounded-xl border ${isUnlocked ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200" : "bg-muted/30 border-border opacity-60"}`}>
-                  <div className={`w-7 h-7 rounded-lg ${isUnlocked ? `bg-gradient-to-r ${ar.color || "from-emerald-500 to-teal-500"}` : "bg-muted"} flex items-center justify-center`}>
-                    <Trophy size={12} className={isUnlocked ? "text-white" : "text-text-secondary"} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-[10px] font-semibold ${isUnlocked ? "text-text-primary" : "text-text-secondary"} truncate`}>{ar.title}</p>
-                    <p className="text-[8px] text-text-secondary">{isUnlocked ? "Unlocked" : "Locked"}</p>
-                  </div>
+            {achievements.slice(0, 4).map((ar) => (
+              <div key={ar.id} className="flex items-center gap-2 p-2.5 rounded-xl border bg-muted/30 border-border opacity-60">
+                <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                  <Trophy size={12} className="text-text-secondary" />
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Badges */}
-        <div>
-          <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-2">Badges</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {MOCK_USER.badges.map((b) => (
-              <div key={b.id} className="flex flex-col items-center gap-1 min-w-[64px]">
-                <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-100 flex items-center justify-center">
-                  <b.icon size={18} className={b.color} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-semibold text-text-secondary truncate">{ar.title}</p>
+                  <p className="text-[8px] text-text-secondary">Locked</p>
                 </div>
-                <span className="text-[9px] text-text-secondary text-center leading-tight">{b.label}</span>
               </div>
             ))}
           </div>
+        </div>
+
+        <div>
+          <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-2">Badges</p>
+          <p className="text-xs text-text-secondary text-center py-4">Selesaikan misi untuk membuka badge</p>
         </div>
       </CardContent>
     </Card>
@@ -779,9 +635,8 @@ function SettingsSection() {
   const menuItems = [
     { icon: User, label: "Edit Profil" },
     { icon: Settings, label: "Pengaturan Akun" },
-    { icon: Circle, label: "Notifikasi" },
     { icon: BookOpen, label: "Kebijakan Privasi" },
-    { icon: LogOut, label: "Keluar", danger: true, action: signOut },
+    { icon: LogOut, label: "Keluar", danger: true, action: async () => { await signOut(); window.location.href = "/"; } },
   ];
 
   return (
@@ -883,12 +738,12 @@ export default function ProfileScreen() {
           name={displayName}
           initials={displayInitials}
           bio={user?.email || ""}
-          city={MOCK_USER.city}
-          interests={MOCK_USER.interests}
-          currentGoal={MOCK_USER.currentGoal}
-          growthScore={MOCK_USER.growthScore}
-          streak={MOCK_USER.streak}
-          badges={MOCK_USER.badges}
+          city=""
+          interests={[]}
+          currentGoal=""
+          growthScore={0}
+          streak={0}
+          badges={[]}
           onEdit={() => {}}
         />
 

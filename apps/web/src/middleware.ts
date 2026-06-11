@@ -2,14 +2,23 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 const authPages = ["/login", "/register", "/forgot-password", "/auth"];
-const protectedPages: string[] = [];
+
+const protectedPages = [
+  "/profil",
+  "/life",
+  "/familia",
+  "/jurnal/buat",
+  "/inspirasi/post",
+];
 
 function isAuthPage(pathname: string): boolean {
   return authPages.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 function isProtectedPage(pathname: string): boolean {
-  return protectedPages.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  return protectedPages.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
 }
 
 export async function middleware(request: NextRequest) {
@@ -25,7 +34,9 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+        setAll(
+          cookiesToSet: { name: string; value: string; options: CookieOptions }[]
+        ) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
@@ -44,9 +55,17 @@ export async function middleware(request: NextRequest) {
 
   const isAuth = !!user;
 
+  // Redirect authenticated users away from auth pages
   if (isAuth && isAuthPage(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/home";
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect unauthenticated users away from protected pages
+  if (!isAuth && isProtectedPage(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 

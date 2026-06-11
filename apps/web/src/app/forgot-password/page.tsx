@@ -54,14 +54,20 @@ export default function ForgotPasswordPage() {
             <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
               <Mail size={28} className="text-success" />
             </div>
-            <h1 className="text-xl font-bold text-text-primary">Cek Email Kamu</h1>
+            <h1 className="text-xl font-bold text-text-primary">
+              Cek Email Kamu
+            </h1>
             <p className="text-sm text-text-secondary mt-2 leading-relaxed">
-              Kami telah mengirim tautan reset password ke <strong className="text-text-primary">{email}</strong>
+              Kami telah mengirim tautan reset password ke{" "}
+              <strong className="text-text-primary">{email}</strong>
             </p>
             <p className="text-xs text-text-secondary mt-4">
               Tidak menerima email?{" "}
               <button
-                onClick={() => { setSent(false); setSubmitting(false); }}
+                onClick={() => {
+                  setSent(false);
+                  setSubmitting(false);
+                }}
                 className="text-primary font-medium hover:underline cursor-pointer"
               >
                 Kirim ulang
@@ -77,13 +83,18 @@ export default function ForgotPasswordPage() {
         ) : (
           <>
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-text-primary">Lupa Password</h1>
+              <h1 className="text-2xl font-bold text-text-primary">
+                Lupa Password
+              </h1>
               <p className="text-sm text-text-secondary mt-2">
                 Masukkan email terdaftar, kami akan kirim tautan reset password
               </p>
             </div>
 
-            <form onSubmit={handleReset} className="space-y-4 flex-1 flex flex-col">
+            <form
+              onSubmit={handleReset}
+              className="space-y-4 flex-1 flex flex-col"
+            >
               <Input
                 label="Email"
                 type="email"
@@ -95,7 +106,9 @@ export default function ForgotPasswordPage() {
               />
 
               {error && (
-                <p className="text-xs text-destructive font-medium">{error}</p>
+                <p className="text-xs text-destructive font-medium" role="alert">
+                  {error}
+                </p>
               )}
 
               <Button

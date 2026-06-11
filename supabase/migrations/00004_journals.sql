@@ -19,6 +19,17 @@ CREATE TABLE journals (
   deleted_at TIMESTAMPTZ
 );
 
+-- Journal milestones (created first; referenced by journal_entries)
+CREATE TABLE journal_milestones (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  journal_id UUID NOT NULL REFERENCES journals(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  is_achieved BOOLEAN NOT NULL DEFAULT false,
+  achieved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Journal entries (daily updates)
 CREATE TABLE journal_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -30,17 +41,6 @@ CREATE TABLE journal_entries (
   milestone_id UUID REFERENCES journal_milestones(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Journal milestones
-CREATE TABLE journal_milestones (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  journal_id UUID NOT NULL REFERENCES journals(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT,
-  is_achieved BOOLEAN NOT NULL DEFAULT false,
-  achieved_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Journal followers

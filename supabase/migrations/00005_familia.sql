@@ -129,12 +129,10 @@ ALTER TABLE familia_event_benefits ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies
 CREATE POLICY "Merchants are public" ON familia_merchants FOR SELECT USING (true);
-CREATE POLICY "Admins can manage merchants" ON familia_merchants FOR ALL USING (auth.uid() IN (SELECT id FROM users WHERE role = 'admin'));
 CREATE POLICY "Deals are public" ON familia_affiliate_deals FOR SELECT USING (is_active = true);
 CREATE POLICY "Achievements are public" ON familia_achievement_rewards FOR SELECT USING (is_active = true);
 CREATE POLICY "Users can view own voucher sessions" ON familia_voucher_sessions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own voucher sessions" ON familia_voucher_sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Admins can view all sessions" ON familia_voucher_sessions FOR ALL USING (auth.uid() IN (SELECT id FROM users WHERE role = 'admin'));
 CREATE POLICY "Users can view own redemption log" ON familia_redemption_log FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can view own achievements" ON familia_user_achievements FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Event benefits are public" ON familia_event_benefits FOR SELECT USING (is_active = true);
@@ -150,15 +148,15 @@ INSERT INTO familia_merchants (name, slug, category, description, merchant_code,
 -- Seed data: affiliate deals
 INSERT INTO familia_affiliate_deals (title, slug, description, image_url, category, partner_name, partner_url, platform, goal_category, is_featured) VALUES
   ('Sepatu Lari Terbaik 2026', 'sepatu-lari', 'Dapatkan diskon eksklusif sepatu lari dari brand ternama', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80', 'olahraga', 'SportsDirect', 'https://www.tokopedia.com', 'tokopedia', 'kesehatan', true),
-  ('Buku Panduan Masuk Fakultas Kedokteran', 'buku-kedokteran', 'Buku persiapan masuk FK dengan tips dari dokter senior', 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&q=80', 'pendidikan', 'Gramedia', 'https://www.tokopedia.com', 'pendidikan', true),
-  ('Paket Canva Pro 6 Bulan', 'canva-pro', 'Canva Pro untuk konten kreator dengan harga spesial', 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&q=80', 'kreator', 'Canva', 'https://www.tokopedia.com', 'skill', true),
-  ('Mikrofon USB Profesional', 'mikrofon-usb', 'Mikrofon berkualitas untuk content creator pemula', 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&q=80', 'kreator', 'Shopee', 'https://shopee.co.id', 'skill', true),
-  ('Perlengkapan Futsal', 'perlengkapan-futsal', 'Sepatu, jersey, dan bola futsal dengan harga afiliasi', 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=400&q=80', 'olahraga', 'SportsStation', 'https://www.tokopedia.com', 'kesehatan', false),
-  ('Set Peralatan Golf Pemula', 'peralatan-golf', 'Set stick golf dan aksesoris untuk pegolf pemula', 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400&q=80', 'olahraga', 'Shopee', 'https://shopee.co.id', 'kesehatan', false),
-  ('Skincare Routine Set', 'skincare-set', 'Paket skincare lengkap untuk kulit sehat bercahaya', 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&q=80', 'kecantikan', 'Tokopedia', 'https://www.tokopedia.com', 'bisnis', true),
-  ('Kursus Public Speaking Online', 'public-speaking', 'Belajar public speaking dari mentor berpengalaman', 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400&q=80', 'pendidikan', 'TikTok Shop', 'https://www.tiktok.com', 'pendidikan', false),
-  ('Keyboard Mechanical untuk Coding', 'keyboard-mekanikal', 'Keyboard nyaman untuk programmer dan produktivitas', 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&q=80', 'teknologi', 'Tokopedia', 'https://www.tokopedia.com', 'skill', true),
-  ('Laptop Ringan untuk Mahasiswa', 'laptop-mahasiswa', 'Laptop ringan dan bertenaga untuk kebutuhan belajar', 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&q=80', 'teknologi', 'Shopee', 'https://shopee.co.id', 'pendidikan', false);
+  ('Buku Panduan Masuk Fakultas Kedokteran', 'buku-kedokteran', 'Buku persiapan masuk FK dengan tips dari dokter senior', 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&q=80', 'pendidikan', 'Gramedia', 'https://www.tokopedia.com', 'tokopedia', 'pendidikan', true),
+  ('Paket Canva Pro 6 Bulan', 'canva-pro', 'Canva Pro untuk konten kreator dengan harga spesial', 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&q=80', 'kreator', 'Canva', 'https://www.tokopedia.com', 'tokopedia', 'skill', true),
+  ('Mikrofon USB Profesional', 'mikrofon-usb', 'Mikrofon berkualitas untuk content creator pemula', 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&q=80', 'kreator', 'Shopee', 'https://shopee.co.id', 'shopee', 'skill', true),
+  ('Perlengkapan Futsal', 'perlengkapan-futsal', 'Sepatu, jersey, dan bola futsal dengan harga afiliasi', 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=400&q=80', 'olahraga', 'SportsStation', 'https://www.tokopedia.com', 'tokopedia', 'kesehatan', false),
+  ('Set Peralatan Golf Pemula', 'peralatan-golf', 'Set stick golf dan aksesoris untuk pegolf pemula', 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400&q=80', 'olahraga', 'Shopee', 'https://shopee.co.id', 'shopee', 'kesehatan', false),
+  ('Skincare Routine Set', 'skincare-set', 'Paket skincare lengkap untuk kulit sehat bercahaya', 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&q=80', 'kecantikan', 'Tokopedia', 'https://www.tokopedia.com', 'tokopedia', 'bisnis', true),
+  ('Kursus Public Speaking Online', 'public-speaking', 'Belajar public speaking dari mentor berpengalaman', 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=400&q=80', 'pendidikan', 'TikTok Shop', 'https://www.tiktok.com', 'tiktok', 'pendidikan', false),
+  ('Keyboard Mechanical untuk Coding', 'keyboard-mekanikal', 'Keyboard nyaman untuk programmer dan produktivitas', 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&q=80', 'teknologi', 'Tokopedia', 'https://www.tokopedia.com', 'tokopedia', 'skill', true),
+  ('Laptop Ringan untuk Mahasiswa', 'laptop-mahasiswa', 'Laptop ringan dan bertenaga untuk kebutuhan belajar', 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&q=80', 'teknologi', 'Shopee', 'https://shopee.co.id', 'shopee', 'pendidikan', false);
 
 -- Seed data: achievement rewards
 INSERT INTO familia_achievement_rewards (title, description, trigger_type, trigger_value, reward_type, reward_description, icon, color, is_active) VALUES

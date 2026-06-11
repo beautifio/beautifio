@@ -15,6 +15,7 @@ import { FAMILIA_EVENT_BENEFITS, FAMILIA_MERCHANTS, FAMILIA_ACHIEVEMENT_REWARDS,
 import type { GrowthZoneRecommendation } from "@beautifio/types";
 import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
 import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
+import { useAuth } from "@/hooks/use-auth";
 
 const goals = [
   { id: "1", name: "Jadi Frontend Developer", category: "Karir", progress: 62, milestones: { done: 5, total: 8 } },
@@ -42,7 +43,7 @@ const mentors = [
 
 /* ─── COMPONENTS ─── */
 
-function WelcomeHero() {
+function WelcomeHero({ userName = "Sobat" }: { userName?: string }) {
   const router = useRouter();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Selamat Pagi" : hour < 17 ? "Selamat Siang" : "Selamat Malam";
@@ -52,6 +53,8 @@ function WelcomeHero() {
   const zoneInfo = profile?.onboardingCompleted ? ZONE_INFO[profile.currentZone] : null;
   const stageInfo = profile?.onboardingCompleted ? STAGE_INFO[profile.currentStage] : null;
   const capAvg = profile?.onboardingCompleted ? Math.round(Object.values(profile.lifeCapital).reduce((a, b) => a + b, 0) / 6) : 0;
+  const displayName = userName || "Sobat";
+  const initials = displayName.split(" ").filter(Boolean).map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U";
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-secondary px-6 pt-8 pb-7 text-white">
@@ -60,9 +63,9 @@ function WelcomeHero() {
       <div className="relative">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <Avatar initials="AN" size="lg" />
+            <Avatar initials={initials} size="lg" />
             <div>
-              <h1 className="text-lg font-bold leading-tight">{greeting}, Andini!</h1>
+              <h1 className="text-lg font-bold leading-tight">{greeting}, {displayName}!</h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 {profile?.onboardingCompleted ? (
                   <>
@@ -499,6 +502,12 @@ function UpcomingEvents() {
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("home");
   const router = useRouter();
+  const { user } = useAuth();
+
+  const userName =
+    user?.user_metadata?.full_name ||
+    user?.email?.split("@")[0] ||
+    "Sobat";
 
   const ecosystemGroups: { title: string; items: EcosystemItem[] }[] = [
     { title: "Jelajahi Ekosistem", items: [
@@ -511,7 +520,7 @@ export default function HomeScreen() {
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-5 pt-5 pb-24 space-y-7">
-        <WelcomeHero />
+        <WelcomeHero userName={userName} />
         <LifeEngineCard />
         <StoriesForYou />
         <ContinueYourJourney />

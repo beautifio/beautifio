@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function useAuth() {
-  const { user, session, isLoading, setUser, setSession, setLoading, reset } =
+  const { user, session, isLoading, setUser, setSession, setLoading, signOut } =
     useAuthStore();
 
   useEffect(() => {
@@ -30,5 +30,5 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [setUser, setSession, setLoading]);
 
-  return { user, session, isLoading, signOut: reset };
+  return { user, session, isLoading, signOut };
 }
