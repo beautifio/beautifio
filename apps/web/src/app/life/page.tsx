@@ -20,6 +20,7 @@ import {
   earnCapital,
 } from "@beautifio/utils";
 import type { LifeCapital, GrowthWin, CapitalMission, UnlockRequirement, CapitalBalanceTip } from "@beautifio/types";
+import { LifeCoachPanel } from "@/features/coach/LifeCoachPanel";
 
 const CAPITAL_CONFIG: { key: keyof LifeCapital; label: string; emoji: string; color: string }[] = [
   { key: "knowledge", label: "Pengetahuan", emoji: "📚", color: "from-blue-500 to-blue-600" },
@@ -271,6 +272,14 @@ export default function LifeDashboard() {
             </button>
           </div>
         </div>
+
+        {/* Life Coach AI */}
+        <LifeCoachPanel onRefresh={() => {
+          setOverview(getCapitalOverview());
+          setBalanceTips(getCapitalBalanceTips());
+          setMissions(generateDailyMissions());
+          setUnlocks(getAvailableUnlocks());
+        }} />
 
         {/* Life Level */}
         <LifeLevelCard total={overview.total} />

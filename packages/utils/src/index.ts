@@ -61,4 +61,18 @@ export {
   rewardAfterFailure,
   getCapitalOverview,
 } from "./life-engine";
+export {
+  generateDailyCoachFocus, generateInsights, analyzeZone,
+  getCapitalAdvice, navigateDream, matchOpportunities,
+  generateMotivation, generateWeeklyReport,
+  generateFailureCoach, generatePivotCoach,
+  analyzeReflection, getCoachPanelData,
+} from "./ai-coach";
+export type {
+  CoachPanelData, DailyCoachFocus, PersonalizedInsight,
+  ZoneAnalysis, CapitalAdvice, DreamNavigation,
+  MotivationMessage, OpportunityMatch, WeeklyGrowthReport,
+  FailureCoachResponse, PivotCoachAnalysis, ReflectionInsight,
+  CoachFocusArea,
+} from "./ai-coach";
 
