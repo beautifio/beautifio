@@ -11,7 +11,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent, Badge, Avatar, BottomNavigation, ProgressBar } from "@beautifio/ui";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
 import { useMemo, useState } from "react";
-import { FAMILIA_EVENT_BENEFITS, FAMILIA_MERCHANTS, FAMILIA_ACHIEVEMENT_REWARDS, getVoucherSessions } from "@beautifio/utils";
+import { FAMILIA_EVENT_BENEFITS, FAMILIA_MERCHANTS, FAMILIA_ACHIEVEMENT_REWARDS, getVoucherSessions, getLifeProfile, ZONE_INFO, STAGE_INFO } from "@beautifio/utils";
 import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
 import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
 
@@ -90,6 +90,66 @@ function WelcomeHero() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LifeEngineCard() {
+  const router = useRouter();
+  const profile = getLifeProfile();
+  if (!profile.onboardingCompleted) {
+    return (
+      <button onClick={() => router.push("/life/start")}
+        className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 hover:from-primary/15 hover:to-secondary/15 transition-all text-left cursor-pointer active:scale-[0.98]"
+      >
+        <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+          <Compass size={24} className="text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-text-primary">Mulai Life Engine</p>
+          <p className="text-[10px] text-text-secondary mt-0.5">Cari tahu tahap hidup, zona pertumbuhan, dan life capital-mu</p>
+        </div>
+        <ArrowRight size={16} className="text-text-secondary/30 flex-shrink-0" />
+      </button>
+    );
+  }
+  const zoneInfo = ZONE_INFO[profile.currentZone];
+  const stageInfo = STAGE_INFO[profile.currentStage];
+  const total = Object.values(profile.lifeCapital).reduce((a, b) => a + b, 0);
+  const avg = Math.round(total / 6);
+  return (
+    <button onClick={() => router.push("/life")}
+      className="w-full p-4 rounded-2xl bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/10 hover:from-primary/10 hover:to-secondary/10 transition-all text-left cursor-pointer active:scale-[0.98]"
+    >
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Compass size={20} className="text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-base">{zoneInfo?.emoji}</span>
+            <span className="text-sm font-bold text-text-primary">{zoneInfo?.label}</span>
+          </div>
+          <p className="text-[10px] text-text-secondary">{stageInfo?.emoji} {stageInfo?.label} · {profile.currentDreamSlug ? "Dream set" : "No dream yet"}</p>
+        </div>
+        <ChevronRight size={16} className="text-text-secondary/30" />
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style={{ width: `${avg}%` }} />
+        </div>
+        <span className="text-xs font-bold text-primary">{avg}%</span>
+      </div>
+      <div className="grid grid-cols-6 gap-1 mt-2">
+        {Object.entries(profile.lifeCapital).map(([key, val]) => (
+          <div key={key} className="text-center">
+            <div className="h-1 rounded-full bg-border overflow-hidden">
+              <div className="h-full bg-primary/60 rounded-full" style={{ width: `${val}%` }} />
+            </div>
+            <p className="text-[7px] text-text-secondary mt-0.5 uppercase tracking-wider">{key.slice(0, 3)}</p>
+          </div>
+        ))}
+      </div>
+    </button>
   );
 }
 
@@ -385,6 +445,7 @@ export default function HomeScreen() {
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-5 pt-5 pb-24 space-y-7">
         <WelcomeHero />
+        <LifeEngineCard />
         <StoriesForYou />
         <ContinueYourJourney />
         <CircleActivityHome />

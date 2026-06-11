@@ -43,4 +43,14 @@ export {
   toggleDailyHabit, getDoneHabits, getStreak, updateStreak,
 } from "./roadmap-v3-seed";
 export { getLifePillars, getAlternativeFutures } from "./roadmap-life-pillars-seed";
+export { STAGE_INFO, ZONE_INFO, SPIRITUAL_PRACTICES, DEFAULT_LIFE_CAPITAL } from "./life-engine-seed";
+export {
+  getLifeProfile, saveLifeProfile, updateLifeProfile,
+  isOnboardingComplete, completeOnboarding,
+  calculateCapitalChange, applyCapitalDecay, applyCapitalChanges,
+  detectGrowthZone, updateZone,
+  generateDailyWins, executePivot,
+  recordFailure, unlockGrowthWin, getAllGrowthWins,
+  getStageProgression,
+} from "./life-engine";
 
