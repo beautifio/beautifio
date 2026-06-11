@@ -13,8 +13,8 @@ import {
   getActiveJourney, getBigWins, getTodayActivities,
   getTodayReflection, getJourneyProgress, getTimeline,
   completeActivity, completeSmallWin, saveDailyReflection,
-  updateBigWin, failBigWin, generateAndInsertActivities,
-  getSpiritualPreferences,
+  updateBigWin, completeBigWin, failBigWin, saveBigWinReflection,
+  generateAndInsertActivities, getSpiritualPreferences,
 } from "@/lib/journey-queries";
 import type {
   DreamJourney, BigWin, SmallWin, DailyActivity,
@@ -26,6 +26,7 @@ import { BigWinCard } from "@/features/journey/big-win-card";
 import { ReflectionModal } from "@/features/journey/reflection-modal";
 import { JourneyTimeline } from "@/features/journey/journey-timeline";
 import { FailureModal } from "@/features/journey/failure-modal";
+import { BigWinCelebration } from "@/features/journey/big-win-celebration";
 
 const DIMENSION_LABELS: Record<string, { label: string; emoji: string }> = {
   spiritual: { label: "Spiritual", emoji: "🕊️" },
@@ -50,6 +51,7 @@ export default function JourneyDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showReflection, setShowReflection] = useState(false);
   const [failureBigWin, setFailureBigWin] = useState<BigWin | null>(null);
+  const [celebrationBigWin, setCelebrationBigWin] = useState<BigWin | null>(null);
   const [navTab, setNavTab] = useState("home");
   const [sectionTab, setSectionTab] = useState<"today" | "wins" | "timeline">("today");
 
@@ -135,8 +137,33 @@ export default function JourneyDetailPage() {
     reflection?: string
   ) => {
     await completeSmallWin(smallWinId, reflection);
-    const bw = await getBigWins(id);
-    setBigWins(bw);
+    const updated = await getBigWins(id);
+    setBigWins(updated);
+
+    const justCompleted = updated.find(
+      (bw) =>
+        !bw.is_completed &&
+        !bw.is_failed &&
+        (bw.small_wins || []).length > 0 &&
+        (bw.small_wins || []).every((sw) => sw.is_completed)
+    );
+    if (justCompleted) {
+      await completeBigWin(justCompleted.id);
+      const final = await getBigWins(id);
+      setBigWins(final);
+      setCelebrationBigWin(justCompleted);
+    }
+  };
+
+  const handleSaveCelebration = async (reflection: {
+    most_memorable_moment: string;
+    who_helped: string;
+    biggest_lesson: string;
+    next_steps: string;
+  }) => {
+    if (!celebrationBigWin) return;
+    await saveBigWinReflection(celebrationBigWin.id, reflection);
+    setCelebrationBigWin(null);
   };
 
   const handleFailBigWin = async (bigWinId: string) => {
@@ -353,6 +380,14 @@ export default function JourneyDetailPage() {
           bigWin={failureBigWin}
           onConfirm={() => handleFailBigWin(failureBigWin.id)}
           onClose={() => setFailureBigWin(null)}
+        />
+      )}
+
+      {celebrationBigWin && (
+        <BigWinCelebration
+          bigWin={celebrationBigWin}
+          onSave={handleSaveCelebration}
+          onClose={() => setCelebrationBigWin(null)}
         />
       )}
     </div>

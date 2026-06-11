@@ -109,13 +109,24 @@ export function BigWinCard({ bigWin, onCompleteSmallWin, onFail }: BigWinCardPro
           </div>
 
           {!bigWin.is_completed && !bigWin.is_failed && (
-            <button
-              onClick={onFail}
-              className="flex items-center gap-1.5 text-xs text-danger/70 hover:text-danger mt-4 cursor-pointer transition-colors"
-            >
-              <AlertTriangle size={12} />
-              Tidak tercapai?
-            </button>
+            <>
+              <div className="mt-4">
+                <textarea
+                  value={newReflection}
+                  onChange={(e) => setNewReflection(e.target.value)}
+                  placeholder="Catatan refleksi (opsional) — apa yang kamu pelajari?"
+                  className="w-full p-3 rounded-xl border border-border bg-surface text-sm text-text-primary placeholder:text-text-secondary/40 resize-none focus:outline-none focus:border-primary/50 transition-colors"
+                  rows={2}
+                />
+              </div>
+              <button
+                onClick={onFail}
+                className="flex items-center gap-1.5 text-xs text-danger/70 hover:text-danger mt-3 cursor-pointer transition-colors"
+              >
+                <AlertTriangle size={12} />
+                Tidak tercapai?
+              </button>
+            </>
           )}
         </div>
       )}

@@ -13,6 +13,10 @@ const protectedPages = [
 const deprecatedPages: Record<string, string> = {
   "/life": "/journey",
   "/life/start": "/journey",
+  "/roadmap": "/journey",
+  "/discover": "/journey",
+  "/onboarding": "/journey",
+  "/welcome": "/journey",
 };
 
 function isAuthPage(pathname: string): boolean {
@@ -73,10 +77,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect deprecated pages to new Journey system
-  if (isAuth && deprecatedPages[pathname]) {
+  // Redirect deprecated pages (and sub-paths) to new Journey system
+  const deprecatedMatch = Object.entries(deprecatedPages).find(
+    ([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+  if (isAuth && deprecatedMatch) {
     const url = request.nextUrl.clone();
-    url.pathname = deprecatedPages[pathname];
+    url.pathname = deprecatedMatch[1];
     return NextResponse.redirect(url);
   }
 

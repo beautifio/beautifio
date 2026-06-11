@@ -130,6 +130,13 @@ export async function updateBigWin(
   await db().from("big_wins").update(updates).eq("id", id);
 }
 
+export async function completeBigWin(id: string): Promise<void> {
+  await db()
+    .from("big_wins")
+    .update({ is_completed: true, completed_at: new Date().toISOString() })
+    .eq("id", id);
+}
+
 export async function failBigWin(
   id: string,
   lessonsLearned?: string
@@ -138,6 +145,21 @@ export async function failBigWin(
     .from("big_wins")
     .update({ is_failed: true, is_completed: false })
     .eq("id", id);
+}
+
+export async function saveBigWinReflection(
+  bigWinId: string,
+  reflection: {
+    most_memorable_moment: string;
+    who_helped: string;
+    biggest_lesson: string;
+    next_steps: string;
+  }
+): Promise<void> {
+  await db().from("big_win_reflections").insert({
+    big_win_id: bigWinId,
+    ...reflection,
+  });
 }
 
 /* ─── Small Wins ─── */
