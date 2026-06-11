@@ -20,8 +20,6 @@ const SPIRIT_PREFS: { value: SpiritualPreference; label: string; emoji: string }
   { value: "hindu", label: "Hindu", emoji: "🕉️" },
   { value: "buddha", label: "Buddha", emoji: "☸️" },
   { value: "konghucu", label: "Konghucu", emoji: "🏮" },
-  { value: "agnostic", label: "Agnostik", emoji: "🌿" },
-  { value: "other", label: "Lainnya", emoji: "💭" },
 ];
 
 const DREAMS = [
