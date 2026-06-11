@@ -1,6 +1,81 @@
 import type { DreamTemplate } from "@beautifio/types";
 import { ROADMAP_V3_SEED } from "./roadmap-v3-seed";
 
+const CATEGORY_AGES: Record<string, { min: number; max: number }> = {
+  sports: { min: 8, max: 99 },
+  business: { min: 14, max: 99 },
+  tech: { min: 12, max: 99 },
+  creative: { min: 8, max: 99 },
+  health: { min: 14, max: 99 },
+};
+
+function guessAgeRange(category: string): { min: number; max: number } {
+  const cat = category.toLowerCase();
+  for (const [key, range] of Object.entries(CATEGORY_AGES)) {
+    if (cat.includes(key)) return range;
+  }
+  return { min: 10, max: 99 };
+}
+
+function buildAgeDescription(
+  roadmap: (typeof ROADMAP_V3_SEED)[string],
+  ageRange: { min: number; max: number }
+): string {
+  if (ageRange.min >= 18) {
+    return roadmap.dream.description + " Perjalanan ini cocok untuk usia 18+.";
+  }
+  if (ageRange.min >= 14) {
+    return roadmap.dream.description + " Perjalanan ini cocok untuk usia 14+.";
+  }
+  return roadmap.dream.description;
+}
+
+function buildDailySpiritual(title: string): string[] {
+  return [
+    "Luangkan waktu refleksi diri 10 menit",
+    "Bersyukur atas perjalanan menjadi " + title,
+    "Doa sebelum memulai aktivitas",
+  ];
+}
+
+function buildDailyPhysical(title: string, category: string): string[] {
+  const byCategory: Record<string, string[]> = {
+    sports: ["Latihan fisik 20 menit", "Stretching 10 menit", "Istirahat cukup"],
+    tech: ["Jalan 10 menit jauhkan layar", "Tegakkan postur duduk", "Minum air putih"],
+    business: ["Jalan kaki 10 menit", "Minum air putih cukup", "Tidur cukup"],
+    creative: ["Regangkan tangan dan jari", "Jalan sebentar cari inspirasi", "Minum air putih"],
+    health: ["Jalan santai 15 menit", "Latihan pernapasan", "Istirahat cukup"],
+  };
+  for (const [key, acts] of Object.entries(byCategory)) {
+    if (category.toLowerCase().includes(key)) return acts;
+  }
+  return ["Jalan 10 menit", "Minum air putih", "Stretching"];
+}
+
+function buildDailyKnowledge(title: string): string[] {
+  return [
+    "Baca artikel tentang " + title,
+    "Tonton video edukasi terkait " + title,
+    "Pelajari satu hal baru tentang " + title,
+  ];
+}
+
+function buildDailySocial(title: string): string[] {
+  return [
+    "Sapa teman yang juga tertarik " + title,
+    "Bagikan progres " + title + " hari ini",
+    "Tanya pendapat orang tentang " + title,
+  ];
+}
+
+function buildDailyCharacter(title: string): string[] {
+  return [
+    "Selesaikan satu tugas kecil terkait " + title,
+    "Catat satu kemajuan hari ini",
+    "Tulis satu hal yang disyukuri",
+  ];
+}
+
 export function buildDreamTemplates(): Record<string, DreamTemplate> {
   const templates: Record<string, DreamTemplate> = {};
 
@@ -29,6 +104,8 @@ export function buildDreamTemplates(): Record<string, DreamTemplate> {
     const habits = roadmap.dailyWins.flatMap((c) => c.habits);
     const dreamSkillActivities = habits.map((h) => h.title);
 
+    const ageRange = guessAgeRange(roadmap.category);
+
     templates[slug] = {
       slug,
       title: roadmap.title,
@@ -36,7 +113,7 @@ export function buildDreamTemplates(): Record<string, DreamTemplate> {
       color: roadmap.color,
       category: roadmap.category,
       duration: roadmap.duration,
-      description: roadmap.dream.description,
+      description: buildAgeDescription(roadmap, ageRange),
       why_matters: roadmap.dream.whyMatters,
       career_options: roadmap.dream.careerPossibilities,
       success_examples: roadmap.dream.successExamples.map((ex) => {
@@ -46,11 +123,11 @@ export function buildDreamTemplates(): Record<string, DreamTemplate> {
       big_wins: bigWins,
       small_wins: smallWins,
       daily_activities: {
-        spiritual: [],
-        physical: ["Jalan 10 menit", "Minum air putih", "Stretching"],
-        knowledge: ["Baca artikel tentang " + roadmap.title, "Tonton video edukasi"],
-        social: ["Sapa teman", "Chat di komunitas"],
-        character: ["Selesaikan satu tugas hari ini", "Tulis satu hal yang disyukuri"],
+        spiritual: buildDailySpiritual(roadmap.title),
+        physical: buildDailyPhysical(roadmap.title, roadmap.category),
+        knowledge: buildDailyKnowledge(roadmap.title),
+        social: buildDailySocial(roadmap.title),
+        character: buildDailyCharacter(roadmap.title),
         dream_skill: dreamSkillActivities,
       },
       alternative_futures: roadmap.alternativeFutures.map((af) => ({
@@ -58,6 +135,8 @@ export function buildDreamTemplates(): Record<string, DreamTemplate> {
         description: af.description,
         skills: af.skills,
       })),
+      min_age: ageRange.min,
+      max_age: ageRange.max,
     };
   }
 
@@ -72,4 +151,10 @@ export function getDreamTemplate(slug: string): DreamTemplate | undefined {
 
 export function getAllDreamTemplates(): DreamTemplate[] {
   return Object.values(DREAM_TEMPLATES);
+}
+
+export function getTemplatesForAge(age: number): DreamTemplate[] {
+  return Object.values(DREAM_TEMPLATES).filter(
+    (t) => (t.min_age ?? 0) <= age && (t.max_age ?? 99) >= age
+  );
 }

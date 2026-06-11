@@ -139,6 +139,9 @@ export default function JourneyPage() {
                   <div className="flex items-center gap-2 mt-3">
                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
                     <span className="text-[11px] text-text-secondary">{t.duration}</span>
+                    {t.min_age !== undefined && t.min_age > 0 && (
+                      <span className="text-[11px] text-text-secondary/60">Usia {t.min_age}+</span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -45,6 +45,8 @@ export interface DreamTemplate {
   small_wins: DreamTemplateSmallWin[];
   daily_activities: DreamTemplateDaily | null;
   alternative_futures: DreamTemplateAlternativeFuture[];
+  min_age?: number;
+  max_age?: number;
 }
 
 export interface DreamTemplateBigWin {

@@ -25,8 +25,10 @@ import { DailyActivityCard } from "@/features/journey/daily-activity-card";
 import { BigWinCard } from "@/features/journey/big-win-card";
 import { ReflectionModal } from "@/features/journey/reflection-modal";
 import { JourneyTimeline } from "@/features/journey/journey-timeline";
+import { JourneyStory } from "@/features/journey/journey-story";
 import { FailureModal } from "@/features/journey/failure-modal";
 import { BigWinCelebration } from "@/features/journey/big-win-celebration";
+import type { DreamTemplate } from "@beautifio/types";
 
 const DIMENSION_LABELS: Record<string, { label: string; emoji: string }> = {
   spiritual: { label: "Spiritual", emoji: "🕊️" },
@@ -48,12 +50,13 @@ export default function JourneyDetailPage() {
   const [timeline, setTimeline] = useState<GrowthTimelineEvent[]>([]);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [spiritualPref, setSpiritualPref] = useState<SpiritualPreferences | null>(null);
+  const [templateInfo, setTemplateInfo] = useState<DreamTemplate | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReflection, setShowReflection] = useState(false);
   const [failureBigWin, setFailureBigWin] = useState<BigWin | null>(null);
   const [celebrationBigWin, setCelebrationBigWin] = useState<BigWin | null>(null);
   const [navTab, setNavTab] = useState("home");
-  const [sectionTab, setSectionTab] = useState<"today" | "wins" | "timeline">("today");
+  const [sectionTab, setSectionTab] = useState<"today" | "wins" | "timeline" | "story">("today");
 
   const loadData = useCallback(async () => {
     if (!user || !id) return;
@@ -94,6 +97,10 @@ export default function JourneyDetailPage() {
     setProgress(prog);
     setTimeline(tl);
     setSpiritualPref(sp);
+    const { getDreamTemplate } = await import("@beautifio/utils");
+    const tInfo = getDreamTemplate(j.template_slug) || null;
+    setTemplateInfo(tInfo);
+
     setLoading(false);
   }, [user, id, router]);
 
@@ -213,6 +220,36 @@ export default function JourneyDetailPage() {
           </div>
         </div>
 
+        {/* Dream Context */}
+        {templateInfo && sectionTab !== "story" && (
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/10">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                <Sparkles size={16} className="text-accent" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-accent uppercase tracking-wide">Mengapa Mimpi Ini?</p>
+                <p className="text-sm text-text-primary mt-1 leading-relaxed">
+                  {templateInfo.description}
+                </p>
+              </div>
+            </div>
+            {templateInfo.why_matters && (
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Heart size={16} className="text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wide">Apa yang Aku Dapat?</p>
+                  <p className="text-sm text-text-primary mt-1 leading-relaxed">
+                    {templateInfo.why_matters}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Current Focus */}
         {currentBigWin && (
           <Card className="p-4 mb-6 border-accent/30 bg-accent/5">
@@ -252,6 +289,16 @@ export default function JourneyDetailPage() {
             }`}
           >
             Pencapaian
+          </button>
+          <button
+            onClick={() => setSectionTab("story")}
+            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
+              sectionTab === "story"
+                ? "bg-bg text-text-primary shadow-sm"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            Cerita
           </button>
           <button
             onClick={() => setSectionTab("timeline")}
@@ -354,6 +401,14 @@ export default function JourneyDetailPage() {
                 onFail={() => setFailureBigWin(bw)}
               />
             ))}
+          </div>
+        )}
+
+        {/* Tab: Story */}
+        {sectionTab === "story" && (
+          <div>
+            <h2 className="text-base font-bold text-text-primary mb-4">Cerita Perjalananku</h2>
+            <JourneyStory userId={user!.id} journeyId={journey.id} />
           </div>
         )}
 
