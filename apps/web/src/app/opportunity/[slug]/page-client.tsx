@@ -8,8 +8,10 @@ import {
   CheckCircle, ChevronRight, Users, User, GraduationCap, Briefcase, DollarSign, Sparkles, Heart, Gamepad2, Trophy, Bookmark,
 } from "lucide-react";
 import { Badge, BottomNavigation } from "@beautifio/ui";
-import { MOCK_OPPORTUNITIES, OPP_CATEGORIES } from "@beautifio/utils";
+import { MOCK_OPPORTUNITIES, OPP_CATEGORIES, MOCK_MENTORS, ROADMAP_TEMPLATES } from "@beautifio/utils";
 import { ProtectedAction } from "@/components/ProtectedAction";
+import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
+import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
 
 const catIcons: Record<string, typeof GraduationCap> = {
   beasiswa: GraduationCap, magang: Briefcase, pekerjaan: Briefcase,
@@ -27,6 +29,33 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
   const opp = useMemo(() => MOCK_OPPORTUNITIES.find((o) => o.slug === slug), [slug]);
   const cat = useMemo(() => OPP_CATEGORIES.find((c) => c.value === opp?.category), [opp]);
   const Icon = cat ? catIcons[cat.value] : Briefcase;
+
+  const ecosystemGroups = useMemo(() => {
+    if (!opp) return [];
+    const tags = opp.tags ?? [];
+    const tagStr = tags.join(" ").toLowerCase();
+
+    const relatedStories: EcosystemItem[] = [
+      { id: `os-story-${slug}`, type: "story" as const, title: "Cerita Inspiratif", subtitle: "Temukan cerita yang sesuai dengan minatmu", href: "/cerita" },
+    ];
+
+    const relatedRoadmaps: EcosystemItem[] = ROADMAP_TEMPLATES
+      .filter((r) => tagStr.includes(r.category) || tags.some((t) => r.title.toLowerCase().includes(t.toLowerCase())))
+      .slice(0, 2)
+      .map((r) => ({ id: `or-${r.slug}`, type: "roadmap" as const, title: r.title, subtitle: r.description, href: `/roadmap/${r.slug}` }));
+
+    const relatedMentors: EcosystemItem[] = MOCK_MENTORS
+      .filter((m) => tags.some((t) => m.expertise.toLowerCase().includes(t.toLowerCase())) || m.roadmapSlugs?.some((rs) => tags.includes(rs)))
+      .slice(0, 2)
+      .map((m) => ({ id: m.id, type: "mentor" as const, title: m.name, subtitle: m.expertise, href: `/mentors/${m.slug}` }));
+
+    const groups: { title: string; items: EcosystemItem[] }[] = [];
+    groups.push({ title: "Cerita Terkait", items: relatedStories });
+    if (relatedRoadmaps.length) groups.push({ title: "Roadmap Terkait", items: relatedRoadmaps });
+    if (relatedMentors.length) groups.push({ title: "Mentor Terkait", items: relatedMentors });
+    groups.push({ title: "Circle Terkait", items: [{ id: `oc-${slug}`, type: "circle" as const, title: "Gabung Circle", subtitle: "Diskusikan peluang ini dengan komunitas", href: "/circle" }] });
+    return groups;
+  }, [opp, slug]);
 
   if (!opp) {
     return (
@@ -144,6 +173,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
               </button>
             </ProtectedAction>
           </div>
+          <EcosystemLinks groups={ecosystemGroups} />
         </div>
       </div>
 

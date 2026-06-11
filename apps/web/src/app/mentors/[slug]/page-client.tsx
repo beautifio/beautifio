@@ -7,9 +7,11 @@ import { ArrowLeft, Users, MapPin, Star, Calendar, CheckCircle, Heart, Package }
 import { Badge, Avatar } from "@beautifio/ui";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import {
-  MOCK_MENTORS, ROADMAP_TEMPLATES, STORY_CATEGORIES, MOCK_PRODUCTS,
+  MOCK_MENTORS, ROADMAP_TEMPLATES, STORY_CATEGORIES, MOCK_PRODUCTS, MOCK_OPPORTUNITIES,
 } from "@beautifio/utils";
 import type { Story, MentorSession } from "@beautifio/types";
+import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
+import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
 import { MentorBadge } from "@/features/mentor/components/MentorBadge";
 import { MentorStoryCard } from "@/features/mentor/components/MentorStoryCard";
 import { MentorSessionCard } from "@/features/mentor/components/MentorSessionCard";
@@ -83,6 +85,19 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
   const [isFollowing, setIsFollowing] = useState(false);
 
   const mentor = useMemo(() => MOCK_MENTORS.find((m) => m.slug === slug), [slug]);
+
+  const ecosystemGroups = useMemo(() => {
+    if (!mentor) return [];
+    const tag = mentor.expertise.toLowerCase();
+    const relatedOpps: EcosystemItem[] = MOCK_OPPORTUNITIES
+      .filter((o) => mentor.roadmapSlugs?.some((r: string) => o.tags?.includes(r) || o.category === r) || o.tags?.some((t) => tag.includes(t)))
+      .slice(0, 3)
+      .map((o) => ({ id: o.id, type: "opportunity" as const, title: o.title, subtitle: o.organization, href: `/opportunity/${o.slug}` }));
+    const groups: { title: string; items: EcosystemItem[] }[] = [];
+    if (relatedOpps.length) groups.push({ title: "Peluang Terkait", items: relatedOpps });
+    return groups;
+  }, [mentor]);
+
   const stories = useMemo(
     () => mentor?.storySlugs.map((s) => MOCK_STORIES[s]).filter(Boolean) ?? [],
     [mentor]
@@ -293,6 +308,7 @@ export default function MentorProfilePage({ params }: { params: Promise<{ slug: 
               })()}
             </div>
           </section>
+          <EcosystemLinks groups={ecosystemGroups} />
         </div>
       </div>
     </div>

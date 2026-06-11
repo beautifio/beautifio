@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef, use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -18,8 +18,10 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { Avatar, Badge, Card } from "@beautifio/ui";
-import { MOCK_PRODUCTS } from "@beautifio/utils";
+import { MOCK_PRODUCTS, MOCK_MENTORS, FAMILIA_EVENT_BENEFITS } from "@beautifio/utils";
 import { ProtectedAction } from "@/components/ProtectedAction";
+import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
+import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 
@@ -949,6 +951,34 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
     </div>
   );
 
+  // ─── Ecosystem Links ────────────────────────────────────────────────────
+
+  const ecosystemGroups = useMemo(() => {
+    if (!circle) return [];
+    const tag = circle.tag.toLowerCase();
+    const tagMap: Record<string, string> = {
+      kewirausahaan: "Bisnis", kreatif: "Kreator", kepemimpinan: "Karir",
+      teknologi: "Teknologi", olahraga: "Olahraga", musik: "Musik",
+      gaming: "Gaming", kecantikan: "Kecantikan", pendidikan: "Pendidikan",
+    };
+    const mappedCategory = tagMap[tag] ?? "";
+
+    const mentorItems: EcosystemItem[] = circle.hasMentor && circle.mentor
+      ? [{ id: `c-mentor-${id}`, type: "mentor" as const, title: circle.mentor.name, subtitle: circle.mentor.expertise, href: `/mentors/${circle.mentor.name.toLowerCase().replace(/\s+/g, "-")}` }]
+      : MOCK_MENTORS.filter((m) => m.expertise.toLowerCase().includes(tag) || m.circleIds?.includes(id)).slice(0, 2)
+        .map((m) => ({ id: m.id, type: "mentor" as const, title: m.name, subtitle: m.expertise, href: `/mentors/${m.slug}` }));
+
+    const eventItems: EcosystemItem[] = FAMILIA_EVENT_BENEFITS.slice(0, 2).map((ev) => ({
+      id: `ce-${ev.id}`, type: "event" as const, title: ev.title, subtitle: ev.discount_value, href: "/familia",
+    }));
+
+    const groups: { title: string; items: EcosystemItem[] }[] = [];
+    groups.push({ title: "Cerita Terkait", items: [{ id: `cs-${id}`, type: "story" as const, title: "Jelajahi Cerita", subtitle: `Temukan cerita tentang ${circle.tag}`, href: "/cerita" }] });
+    if (mentorItems.length) groups.push({ title: "Mentor Terkait", items: mentorItems });
+    groups.push({ title: "Event & Benefit", items: eventItems.length ? eventItems : [{ id: `ce-${id}`, type: "familia-reward" as const, title: "Benefit Familia", subtitle: "Lihat semua benefit anggota", href: "/familia" }] });
+    return groups;
+  }, [circle, id]);
+
   // ─── Render ────────────────────────────────────────────────────────────
 
   return (
@@ -963,6 +993,9 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
         {activeTab === "sessions" && sessionsTab}
 
         <CircleProductRecommendations circleId={id} />
+        <div className="px-6">
+          <EcosystemLinks groups={ecosystemGroups} />
+        </div>
       </div>
     </div>
   );

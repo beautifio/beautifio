@@ -182,6 +182,91 @@ export interface JournalMilestone {
   created_at: string;
 }
 
+export type VoucherType = "free_drink" | "bogof" | "discount" | "free_addon" | "buy1get1";
+export type DealPlatform = "tokopedia" | "shopee" | "tiktok" | "website";
+export type AchievementTrigger = "discovery_complete" | "roadmap_milestones" | "circle_days" | "mentor_program" | "journal_entries" | "story_posted";
+export type RewardType = "voucher" | "discount" | "special_benefit";
+export type VoucherStatus = "active" | "redeemed" | "expired";
+export type DiscountType = "percentage" | "nominal" | "free";
+
+export interface FamiliaMerchant {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  description?: string;
+  logo_url?: string;
+  cover_url?: string;
+  merchant_code: string;
+  daily_pin: string;
+  monthly_quota: number;
+  voucher_types: VoucherType[];
+  is_active: boolean;
+  total_vouchers: number;
+  total_redeemed: number;
+  total_expired: number;
+  created_at: string;
+}
+
+export interface FamiliaAffiliateDeal {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  image_url?: string;
+  category: string;
+  partner_name: string;
+  partner_url: string;
+  platform: DealPlatform;
+  goal_category?: string;
+  is_featured: boolean;
+  click_count: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface FamiliaAchievementReward {
+  id: string;
+  title: string;
+  description?: string;
+  trigger_type: AchievementTrigger;
+  trigger_value: number;
+  reward_type: RewardType;
+  reward_description?: string;
+  reward_merchant_id?: string;
+  icon?: string;
+  color?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface FamiliaVoucherSession {
+  id: string;
+  user_id: string;
+  merchant_id: string;
+  voucher_code: string;
+  status: VoucherStatus;
+  pin_required: string;
+  activated_at: string;
+  expires_at: string;
+  redeemed_at?: string;
+  created_at: string;
+  merchant?: FamiliaMerchant;
+}
+
+export interface FamiliaEventBenefit {
+  id: string;
+  title: string;
+  description?: string;
+  image_url?: string;
+  event_date?: string;
+  discount_type: DiscountType;
+  discount_value: string;
+  code?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface MentorSession {
   id: string;
   mentorId: string;
@@ -194,4 +279,146 @@ export interface MentorSession {
   status: "upcoming" | "completed" | "cancelled";
   slots: number;
   registered: number;
+}
+
+/* ─── Roadmap 3.0 Types ─── */
+
+export interface RoadmapV3 {
+  slug: string;
+  title: string;
+  description: string;
+  emoji: string;
+  color: string;
+  duration: string;
+  category: string;
+  dream: RoadmapDream;
+  dailyWins: RoadmapDailyWinCategory[];
+  smallWins: RoadmapSmallWinCategory[];
+  bigWins: RoadmapBigWin[];
+  blueprint: RoadmapBlueprint;
+  agePath: AgePathStage[];
+  timeline: TimelinePhase[];
+  realityCheck: RealityCheck;
+  alternativePaths: AlternativePath[];
+  masterclassLessons: MasterclassLesson[];
+}
+
+export interface RoadmapDream {
+  title: string;
+  description: string;
+  whyMatters: string;
+  estimatedJourney: string;
+  careerPossibilities: string[];
+  successExamples: string[];
+}
+
+export interface RoadmapDailyWinCategory {
+  category: string;
+  emoji: string;
+  habits: RoadmapDailyHabit[];
+}
+
+export interface RoadmapDailyHabit {
+  id: string;
+  title: string;
+  description?: string;
+  icon: string;
+}
+
+export interface RoadmapSmallWinCategory {
+  category: string;
+  emoji: string;
+  skills: RoadmapSkill[];
+}
+
+export interface RoadmapSkill {
+  id: string;
+  name: string;
+  description: string;
+  levels: SkillLevel[];
+}
+
+export interface SkillLevel {
+  label: string;
+  target: string;
+  description: string;
+}
+
+export interface RoadmapBigWin {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+  isEssential: boolean;
+  stage: "beginner" | "intermediate" | "advanced" | "professional";
+}
+
+export interface RoadmapBlueprint {
+  skills: string[];
+  habits: string[];
+  mindset: string[];
+  tools: string[];
+  commonMistakes: string[];
+  successFactors: string[];
+}
+
+export interface DailyReflection {
+  id: string;
+  roadmapSlug: string;
+  date: string;
+  learned: string;
+  improved: string;
+  tomorrow: string;
+  challenge: string;
+  grateful: string;
+}
+
+export interface AgePathStage {
+  ageRange: string;
+  title: string;
+  description: string;
+  milestones: string[];
+}
+
+export interface TimelinePhase {
+  period: string;
+  title: string;
+  description: string;
+  keyActions: string[];
+}
+
+export interface RealityCheck {
+  hardTruths: string[];
+  silverLinings: string[];
+  transferableSkills: string[];
+}
+
+export interface AlternativePath {
+  scenario: string;
+  steps: AlternativePathStep[];
+}
+
+export interface AlternativePathStep {
+  transition: string;
+  role: string;
+  description: string;
+}
+
+export interface MasterclassLesson {
+  person: string;
+  role: string;
+  lesson: string;
+  story: string;
+  keyInsight: string;
+  actionItem: string;
+}
+
+export interface LearningVaultItem {
+  id: string;
+  roadmapSlug: string;
+  type: "story" | "article" | "video" | "note" | "mentor_insight";
+  title: string;
+  url?: string;
+  notes?: string;
+  savedAt: string;
 }

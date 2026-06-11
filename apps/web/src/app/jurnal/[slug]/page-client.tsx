@@ -7,7 +7,9 @@ import {
   Clock, MapPin, MoreHorizontal, Globe, Lock,
 } from "lucide-react";
 import { Badge, Button, BottomNavigation } from "@beautifio/ui";
-import { getJournalBySlug, getAllEntries, getAllMilestones, JOURNAL_CATEGORIES } from "@beautifio/utils";
+import { getJournalBySlug, getAllEntries, getAllMilestones, JOURNAL_CATEGORIES, MOCK_MENTORS, MOCK_OPPORTUNITIES } from "@beautifio/utils";
+import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
+import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
 import { JournalTimeline } from "@/features/journal/components/JournalTimeline";
 import { JournalMilestoneList } from "@/features/journal/components/JournalMilestoneList";
 import { JournalEntryForm } from "@/features/journal/components/JournalEntryForm";
@@ -25,6 +27,31 @@ export default function JournalDetailPage({ params }: { params: Promise<{ slug: 
   const milestones = useMemo(() => getAllMilestones(slug), [slug]);
 
   const catInfo = JOURNAL_CATEGORIES.find((c) => c.value === journal?.goal_category);
+
+  const ecosystemGroups = useMemo(() => {
+    if (!journal) return [];
+    const goal = journal.goal_category ?? "";
+    const catLabel = catInfo?.label ?? "";
+
+    const relatedStories: EcosystemItem[] = [
+      { id: "js-all", type: "story" as const, title: "Jelajahi Cerita Inspiratif", subtitle: "Temukan cerita sesuai minatmu", href: "/cerita" },
+    ];
+
+    const relatedCircles: EcosystemItem[] = [
+      { id: "jc-all", type: "circle" as const, title: "Gabung Circle", subtitle: "Diskusi dan kolaborasi dengan sesama pejalan", href: "/circle" },
+    ];
+
+    const relatedMentors: EcosystemItem[] = MOCK_MENTORS
+      .filter((m) => m.roadmapSlugs?.includes(journal.roadmap_slug ?? "") || m.expertise.toLowerCase().includes(goal))
+      .slice(0, 2)
+      .map((m) => ({ id: m.id, type: "mentor" as const, title: m.name, subtitle: m.expertise, href: `/mentors/${m.slug}` }));
+
+    const groups: { title: string; items: EcosystemItem[] }[] = [];
+    groups.push({ title: "Cerita Terkait", items: relatedStories });
+    groups.push({ title: "Circle Terkait", items: relatedCircles });
+    if (relatedMentors.length) groups.push({ title: "Mentor Terkait", items: relatedMentors });
+    return groups;
+  }, [journal, catInfo]);
 
   const displayedEntries = showAllEntries ? entries : entries.slice(0, 5);
   const nextDay = entries.length > 0 ? Math.max(...entries.map((e) => e.day_number)) + 1 : 1;
@@ -154,6 +181,8 @@ export default function JournalDetailPage({ params }: { params: Promise<{ slug: 
             </div>
             <JournalTimeline entries={displayedEntries} />
           </div>
+
+          <EcosystemLinks groups={ecosystemGroups} />
         </div>
       </div>
 

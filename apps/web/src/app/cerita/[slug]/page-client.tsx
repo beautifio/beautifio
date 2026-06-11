@@ -7,10 +7,12 @@ import {
   MapPin, Users, Package,
 } from "lucide-react";
 import { Badge, Avatar } from "@beautifio/ui";
-import { STORY_CATEGORIES } from "@beautifio/utils";
+import { STORY_CATEGORIES, MOCK_MENTORS, MOCK_OPPORTUNITIES, ROADMAP_TEMPLATES } from "@beautifio/utils";
 import type { Story, StoryRecommendation } from "@beautifio/types";
 import { CommentSection } from "@/features/cerita/components/CommentSection";
 import { ProtectedAction } from "@/components/ProtectedAction";
+import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
+import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
 
 const cats = STORY_CATEGORIES;
 
@@ -145,6 +147,34 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
 
   const recommendations = useMemo(() => MOCK_RECOMMENDATIONS[slug] ?? [], [slug]);
 
+  const ecosystemGroups = useMemo(() => {
+    if (!story) return [];
+
+    const catSlug = story.category?.slug ?? "";
+
+    const relatedMentors: EcosystemItem[] = MOCK_MENTORS
+      .filter((m) => m.storySlugs?.includes(slug) || m.roadmapSlugs?.some((r: string) => r === catSlug))
+      .slice(0, 3)
+      .map((m) => ({ id: m.id, type: "mentor" as const, title: m.name, subtitle: m.expertise, href: `/mentors/${m.slug}` }));
+
+    const relatedOpps: EcosystemItem[] = MOCK_OPPORTUNITIES
+      .filter((o) => o.category === catSlug || o.tags?.some((t) => t.toLowerCase().includes(catSlug)))
+      .slice(0, 3)
+      .map((o) => ({ id: o.id, type: "opportunity" as const, title: o.title, subtitle: o.organization, href: `/opportunity/${o.slug}` }));
+
+    const relatedFamilia: EcosystemItem[] = [
+      { id: "fv1", type: "familia-voucher" as const, title: "Voucher Merchant Partner", subtitle: "Klaim voucher dari berbagai merchant", href: "/familia/vouchers" },
+      { id: "fd1", type: "familia-deal" as const, title: "Affiliate Deals", subtitle: "Penawaran spesial anggota Familia", href: "/familia/deals" },
+      { id: "fr1", type: "familia-reward" as const, title: "Achievement Rewards", subtitle: "Dapatkan reward dengan menyelesaikan aktivitas", href: "/familia/rewards" },
+    ];
+
+    const groups: { title: string; items: EcosystemItem[] }[] = [];
+    if (relatedMentors.length) groups.push({ title: "Mentor Terkait", items: relatedMentors });
+    if (relatedOpps.length) groups.push({ title: "Peluang Terkait", items: relatedOpps });
+    groups.push({ title: "Benefit Familia", items: relatedFamilia });
+    return groups;
+  }, [story, slug]);
+
   const publishedDate = story?.published_at
     ? new Date(story.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
     : "";
@@ -245,6 +275,7 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
           </div>
 
           <div className="mt-8"><RecommendedSection recommendations={recommendations} /></div>
+          <EcosystemLinks groups={ecosystemGroups} />
           <div className="mt-8"><CommentSection storyId={story.id} /></div>
         </article>
       </div>

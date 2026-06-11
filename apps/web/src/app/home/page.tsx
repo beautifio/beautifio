@@ -3,533 +3,398 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Target,
-  Trophy,
-  MessageCircle,
-  Briefcase,
-  BookOpen,
-  ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  Circle,
-  ChevronRight,
-  Zap,
-  Users,
-  MapPin,
-  Clock,
-  Heart,
+  Target, Trophy, MessageCircle, Briefcase, BookOpen, ArrowRight,
+  Sparkles, CheckCircle2, Circle, ChevronRight, Zap, Users, MapPin,
+  Clock, Heart, Star, Ticket, ShoppingBag, GraduationCap, Flame,
+  Sun, Moon, Sunrise, BookHeart, Gift, Calendar, Compass, Quote,
 } from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  Badge,
-  Avatar,
-  ProgressBar,
-  BottomNavigation,
-} from "@beautifio/ui";
+import { Card, CardHeader, CardTitle, CardContent, Badge, Avatar, BottomNavigation, ProgressBar } from "@beautifio/ui";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
 import { useMemo, useState } from "react";
+import { FAMILIA_EVENT_BENEFITS, FAMILIA_MERCHANTS, FAMILIA_ACHIEVEMENT_REWARDS, getVoucherSessions } from "@beautifio/utils";
+import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
+import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
 
 const goals = [
-  {
-    id: "1",
-    name: "Jadi Frontend Developer",
-    category: "Karir",
-    progress: 62,
-    milestones: { done: 5, total: 8 },
-  },
-  {
-    id: "2",
-    name: "Toefl 600+",
-    category: "Skill",
-    progress: 30,
-    milestones: { done: 2, total: 6 },
-  },
-];
-
-const actions = [
-  {
-    id: "1",
-    title: "Selesaikan Modul JavaScript Dasar",
-    due: "Besok",
-    done: false,
-  },
-  {
-    id: "2",
-    title: "Ikuti Mentor Session Circle Tech",
-    due: "Jumat, 14 Jun",
-    done: true,
-  },
-  {
-    id: "3",
-    title: "Submit Portofolio ke Opportunity Hub",
-    due: "Minggu, 16 Jun",
-    done: false,
-  },
+  { id: "1", name: "Jadi Frontend Developer", category: "Karir", progress: 62, milestones: { done: 5, total: 8 } },
+  { id: "2", name: "Toefl 600+", category: "Skill", progress: 30, milestones: { done: 2, total: 6 } },
 ];
 
 const activities = [
-  {
-    id: "1",
-    name: "Rina Amalia",
-    initials: "RA",
-    role: "Mentor",
-    message: "Jangan lupa selesaikan milestone React minggu ini ya!",
-    time: "2 jam lalu",
-    circle: "Tech Founders",
-  },
-  {
-    id: "2",
-    name: "Dimas Pratama",
-    initials: "DP",
-    role: "Anggota",
-    message: "Ada yang udah coba challenge algoritma kemarin?",
-    time: "5 jam lalu",
-    circle: "Tech Founders",
-  },
-  {
-    id: "3",
-    name: "Sari Indah",
-    initials: "SI",
-    role: "Anggota",
-    message: "Gua nemu beasiswa menarik nih, cek opportunity hub!",
-    time: "1 hari lalu",
-    circle: "Creative Lab",
-  },
-];
-
-const opportunities = [
-  {
-    id: "1",
-    title: "Beasiswa Prestasi 2026",
-    org: "Yayasan Nusantara Cerdas",
-    type: "Beasiswa",
-    slug: "beasiswa-prestasi-nusantara",
-    deadline: "30 Jun 2026",
-  },
-  {
-    id: "2",
-    title: "Program Magang Frontend",
-    org: "TechStart Indonesia",
-    type: "Magang",
-    slug: "magang-frontend-techstart",
-    deadline: "15 Jul 2026",
-  },
-  {
-    id: "3",
-    title: "Hibah Startup Tahap Awal",
-    org: "Baparekraf",
-    type: "Pendanaan",
-    slug: "pendanaan-startup-awal",
-    deadline: "30 Agu 2026",
-  },
+  { id: "1", name: "Rina Amalia", initials: "RA", role: "Mentor", message: "Jangan lupa selesaikan milestone React minggu ini ya!", time: "2 jam lalu", circle: "Tech Founders" },
+  { id: "2", name: "Dimas Pratama", initials: "DP", role: "Anggota", message: "Ada yang udah coba challenge algoritma kemarin?", time: "5 jam lalu", circle: "Tech Founders" },
+  { id: "3", name: "Sari Indah", initials: "SI", role: "Anggota", message: "Gua nemu beasiswa menarik nih, cek opportunity hub!", time: "1 hari lalu", circle: "Creative Lab" },
 ];
 
 const featuredStories = [
-  {
-    id: "s19", slug: "pengenalan-ai-untuk-pemula",
-    title: "Pengenalan Artificial Intelligence untuk Pemula",
-    author: "Pak Anton", likes: 61, readingTime: 6,
-    category: "Teknologi",
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80",
-  },
-  {
-    id: "s4", slug: "panduan-membangun-karir-di-teknologi",
-    title: "Panduan Membangun Karir di Industri Teknologi",
-    author: "Dimas Pratama", likes: 56, readingTime: 6,
-    category: "Karir",
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80",
-  },
-  {
-    id: "s16", slug: "strategi-konten-viral-tiktok-2026",
-    title: "Strategi Konten Viral di TikTok 2026",
-    author: "Nando Prabowo", likes: 52, readingTime: 4,
-    category: "Kreator",
-    image: "https://images.unsplash.com/photo-1611605698335-8b1569810432?w=800&q=80",
-  },
+  { id: "s19", slug: "pengenalan-ai-untuk-pemula", title: "Pengenalan Artificial Intelligence untuk Pemula", author: "Pak Anton", likes: 61, readingTime: 6, category: "Teknologi", image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80" },
+  { id: "s4", slug: "panduan-membangun-karir-di-teknologi", title: "Panduan Membangun Karir di Industri Teknologi", author: "Dimas Pratama", likes: 56, readingTime: 6, category: "Karir", image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80" },
+  { id: "s16", slug: "strategi-konten-viral-tiktok-2026", title: "Strategi Konten Viral di TikTok 2026", author: "Nando Prabowo", likes: 52, readingTime: 4, category: "Kreator", image: "https://images.unsplash.com/photo-1611605698335-8b1569810432?w=800&q=80" },
+  { id: "s7", slug: "ide-bisnis-online-modal-kecil", title: "7 Ide Bisnis Online Modal Kecil untuk Mahasiswa", author: "Andini Putri", likes: 48, readingTime: 6, category: "Bisnis", image: "https://images.unsplash.com/photo-1559526324-593bc073d938?w=800&q=80" },
 ];
 
-function GreetingHeader() {
+const mentors = [
+  { name: "Pak Rudi", initials: "RR", expertise: "Tech Entrepreneur", insight: "Fokus pada 1 skill dulu, jangan serba bisa di awal." },
+  { name: "Bu Sari", initials: "SS", expertise: "Leadership Coach", insight: "Konsistensi > Intensitas. Lebih baik 30 menit tiap hari daripada 5 jam seminggu sekali." },
+  { name: "Pak Anton", initials: "AA", expertise: "Data Scientist", insight: "AI bukan pengganti manusia, tapi alat. Yang bisa AI dan domain expertise akan jadi raja." },
+];
+
+/* ─── COMPONENTS ─── */
+
+function WelcomeHero() {
   const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Selamat Pagi" : hour < 17 ? "Selamat Siang" : "Selamat Malam";
+  const greeting = hour < 12 ? "Selamat Pagi" : hour < 17 ? "Selamat Siang" : "Selamat Malam";
+  const GreetIcon = hour < 12 ? Sunrise : hour < 17 ? Sun : Moon;
+  const message = "Setiap langkah kecil membawamu lebih dekat ke impianmu. Hari ini adalah kesempatan baru untuk tumbuh.";
 
   return (
-    <div className="flex items-center justify-between pt-2 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="flex items-center gap-4">
-        <Avatar initials="AN" size="lg" />
-        <div>
-          <h1 className="text-lg font-bold text-text-primary leading-tight">
-            Hai, Andini!
-          </h1>
-          <p className="text-sm text-text-secondary mt-0.5">{greeting}</p>
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-secondary px-6 pt-8 pb-7 text-white">
+      <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4" />
+      <div className="relative">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <Avatar initials="AN" size="lg" />
+            <div>
+              <h1 className="text-lg font-bold leading-tight">{greeting}, Andini!</h1>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Flame size={12} className="text-orange-200" />
+                <span className="text-[11px] text-white/80">12 hari streak · Level Gold</span>
+              </div>
+            </div>
+          </div>
+          <button className="relative p-2 bg-white/15 rounded-xl hover:bg-white/25 transition-all cursor-pointer active:scale-90">
+            <Sparkles size={18} />
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-amber-300 rounded-full" />
+          </button>
+        </div>
+
+        <div className="mt-4 flex items-start gap-2 bg-white/10 rounded-xl p-3.5 backdrop-blur-sm">
+          <Quote size={14} className="text-white/60 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-white/90 leading-relaxed">{message}</p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+            <p className="text-lg font-bold">62%</p>
+            <p className="text-[10px] text-white/70">Progress Goal</p>
+          </div>
+          <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+            <p className="text-lg font-bold">5</p>
+            <p className="text-[10px] text-white/70">Milestone</p>
+          </div>
+          <div className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+            <p className="text-lg font-bold">3</p>
+            <p className="text-[10px] text-white/70">Circle Aktif</p>
+          </div>
         </div>
       </div>
-      <button className="relative p-2 text-text-secondary hover:text-primary transition-colors cursor-pointer">
-        <Sparkles size={20} />
-        <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
-      </button>
     </div>
   );
 }
 
-function GoalProgressCard() {
-  return (
-    <Card padding="lg">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target size={18} className="text-primary" />
-            <CardTitle>Goal Aktif</CardTitle>
-          </div>
-          <button className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
-            Lihat Semua
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-5 animate-in fade-in duration-500">
-          {goals.map((goal) => (
-            <div key={goal.id}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
-                  <span className="text-sm font-semibold text-text-primary truncate">
-                    {goal.name}
-                  </span>
-                </div>
-                <Badge variant="secondary" className="flex-shrink-0 ml-2">
-                  {goal.category}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <ProgressBar
-                    value={goal.progress}
-                    size="sm"
-                    variant="accent"
-                  />
-                </div>
-                <span className="text-xs font-medium text-text-secondary tabular-nums flex-shrink-0">
-                  {goal.milestones.done}/{goal.milestones.total}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function JournalJourneyCard() {
+function StoriesForYou() {
   const router = useRouter();
-  const journal = (() => {
-    try {
-      const stored = typeof window !== "undefined" ? localStorage.getItem("beautifio_journals") : null;
-      const userJ = stored ? JSON.parse(stored) : [];
-      return userJ.length > 0 ? userJ[0] : null;
-    } catch { return null; }
-  })();
-
-  if (!journal) return null;
+  const [heroIdx, setHeroIdx] = useState(0);
+  const hero = featuredStories[heroIdx];
+  const rest = featuredStories.filter((_, i) => i !== heroIdx);
 
   return (
-    <Card padding="lg" className="animate-in fade-in duration-500 delay-[300ms]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen size={18} className="text-primary" />
-            <CardTitle>Jurnal Perjalanan</CardTitle>
-          </div>
-          <button onClick={() => router.push("/jurnal")} className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer">
-            Buka
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div
-          onClick={() => router.push(`/jurnal/${journal.slug}`)}
-          className="flex items-center gap-4 p-4 rounded-xl bg-primary/[0.03] border border-primary/10 hover:bg-primary/[0.06] transition-colors cursor-pointer"
-        >
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <BookOpen size={18} className="text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-text-primary truncate">{journal.title}</p>
-            <p className="text-xs text-text-secondary mt-0.5">{journal.entry_count} entri · {journal.follower_count} pengikut</p>
-          </div>
-          <ChevronRight size={16} className="text-text-secondary/40 flex-shrink-0" />
-        </div>
-        <button
-          onClick={() => router.push(`/jurnal/${journal.slug}`)}
-          className="mt-3 w-full text-center text-xs font-medium text-primary hover:underline cursor-pointer"
-        >
-          + Tambah entri baru
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+          <BookHeart size={16} className="text-rose-500" />
+          Cerita Untukmu
+        </h2>
+        <button onClick={() => router.push("/cerita")} className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer">
+          Lihat Semua
         </button>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Hero Story */}
+      <Link href={`/cerita/${hero.slug}`} className="block relative rounded-2xl overflow-hidden aspect-[2/1] mb-3 group cursor-pointer">
+        <img src={hero.image} alt={hero.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <Badge variant="secondary" className="bg-white/20 text-white border-white/20 text-[10px] mb-1.5">{hero.category}</Badge>
+          <h3 className="text-sm font-bold text-white leading-snug">{hero.title}</h3>
+          <div className="flex items-center gap-3 mt-1.5 text-[11px] text-white/70">
+            <span>{hero.author}</span>
+            <span className="flex items-center gap-1"><Heart size={10} />{hero.likes}</span>
+            <span>{hero.readingTime} mnt</span>
+          </div>
+        </div>
+      </Link>
+
+      {/* Story dots indicator */}
+      <div className="flex justify-center gap-1.5 mb-3">
+        {featuredStories.map((_, i) => (
+          <button key={i} onClick={() => setHeroIdx(i)} className={`w-1.5 h-1.5 rounded-full transition-all cursor-pointer ${i === heroIdx ? "w-5 bg-primary" : "bg-border"}`} />
+        ))}
+      </div>
+
+      {/* Rest of stories */}
+      <div className="space-y-2">
+        {rest.slice(0, 2).map((story) => (
+          <Link key={story.id} href={`/cerita/${story.slug}`} className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border hover:border-primary/20 hover:bg-muted/30 transition-all group">
+            <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
+              <img src={story.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 leading-none mb-1">{story.category}</Badge>
+              <p className="text-xs font-semibold text-text-primary leading-snug line-clamp-2">{story.title}</p>
+              <div className="flex items-center gap-2 mt-1 text-[10px] text-text-secondary">
+                <span>{story.author}</span>
+                <span>·</span>
+                <span>{story.readingTime} mnt</span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function WeeklyActionCard() {
-  const doneCount = actions.filter((a) => a.done).length;
+function ContinueYourJourney() {
+  const router = useRouter();
+  const goal = goals[0];
 
   return (
-    <Card padding="lg" className="animate-in fade-in duration-500 delay-[450ms]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+          <Compass size={16} className="text-accent" />
+          Lanjutkan Perjalanan
+        </h2>
+        <button onClick={() => router.push("/roadmap")} className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors cursor-pointer">
+          Buka Roadmap
+        </button>
+      </div>
+
+      {/* Active Goal */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-accent/5 to-secondary/5 border border-accent/10 mb-3">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <Zap size={18} className="text-accent" />
-            <CardTitle>Aksi Minggu Ini</CardTitle>
+            <Target size={14} className="text-accent" />
+            <span className="text-xs font-semibold text-text-primary">{goal.name}</span>
           </div>
-          <span className="text-xs font-medium text-text-secondary">
-            {doneCount}/{actions.length} selesai
-          </span>
+          <Badge variant="accent" className="text-[10px]">{goal.category}</Badge>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {actions.map((action, i) => (
-            <div
-              key={action.id}
-              className={`flex items-start gap-4 p-4 rounded-xl transition-colors ${
-                i < actions.length - 1 ? "border-b border-border" : ""
-              }`}
-            >
-              {action.done ? (
-                <CheckCircle2 size={20} className="text-success flex-shrink-0 mt-0.5" />
-              ) : (
-                <Circle size={20} className="text-border flex-shrink-0 mt-0.5" />
+        <ProgressBar value={goal.progress} size="sm" variant="accent" showLabel />
+        <div className="flex items-center justify-between mt-2 text-[10px] text-text-secondary">
+          <span>{goal.milestones.done} dari {goal.milestones.total} milestone selesai</span>
+          <div className="flex items-center gap-1">
+            <Trophy size={12} className="text-accent" />
+            <span className="text-xs font-semibold text-accent">{goal.progress}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick actions */}
+      <div className="flex gap-2">
+        <button onClick={() => router.push("/jurnal/buat")} className="flex-1 flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-all text-left cursor-pointer">
+          <BookOpen size={16} className="text-primary" />
+          <span className="text-[11px] font-medium text-text-primary">Catat Jurnal</span>
+        </button>
+        <button onClick={() => router.push("/discover")} className="flex-1 flex items-center gap-2 p-3 rounded-xl bg-secondary/5 border border-secondary/10 hover:bg-secondary/10 transition-all text-left cursor-pointer">
+          <Sparkles size={16} className="text-secondary" />
+          <span className="text-[11px] font-medium text-text-primary">Ikut Discovery</span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function CircleActivityHome() {
+  const router = useRouter();
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+          <Users size={16} className="text-secondary" />
+          Aktivitas Circle
+        </h2>
+        <button onClick={() => router.push("/circle")} className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
+          Lihat Semua
+        </button>
+      </div>
+      <div className="space-y-2">
+        {activities.slice(0, 2).map((item) => (
+          <div key={item.id} className="flex items-start gap-3 p-3.5 rounded-xl bg-surface border border-border hover:bg-muted/30 transition-all cursor-pointer">
+            <Avatar initials={item.initials} size="sm" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-text-primary">{item.name}</span>
+                <Badge variant="default" className="text-[9px] px-1 py-0 leading-none">{item.role}</Badge>
+                <span className="text-[10px] text-text-secondary ml-auto flex-shrink-0">{item.time}</span>
+              </div>
+              <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{item.message}</p>
+              <span className="text-[10px] text-secondary font-medium mt-1 inline-block">#{item.circle}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MentorInsights() {
+  const router = useRouter();
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+          <Star size={16} className="text-amber-500" />
+          Mentor Insights
+        </h2>
+        <button onClick={() => router.push("/mentors")} className="text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors cursor-pointer">
+          Lihat Mentor
+        </button>
+      </div>
+      <div className="space-y-2">
+        {mentors.slice(0, 2).map((m, i) => (
+          <div key={i} className="p-3.5 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
+            <div className="flex items-center gap-3 mb-2">
+              <Avatar initials={m.initials} size="sm" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-text-primary">{m.name}</p>
+                <p className="text-[10px] text-text-secondary">{m.expertise}</p>
+              </div>
+              <button onClick={() => router.push(`/mentors/${m.name.toLowerCase().replace(/\s+/g, "-")}`)} className="text-[10px] font-medium text-amber-600 hover:underline cursor-pointer">
+                Ikuti
+              </button>
+            </div>
+            <div className="flex items-start gap-2">
+              <Quote size={12} className="text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-text-secondary leading-relaxed italic">"{m.insight}"</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FamiliaHub() {
+  const router = useRouter();
+  const sessions = getVoucherSessions();
+  const activeVouchers = sessions.filter((s) => s.status === "active").length;
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+          <Gift size={16} className="text-amber-500" />
+          Beautifio Familia
+        </h2>
+        <button onClick={() => router.push("/familia")} className="text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors cursor-pointer">
+          Lihat Semua
+        </button>
+      </div>
+
+      {activeVouchers > 0 && (
+        <div className="mb-3 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+            <Ticket size={16} className="text-green-600" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-green-800">{activeVouchers} Voucher Aktif</p>
+            <p className="text-[10px] text-green-600">Segera gunakan sebelum kedaluwarsa</p>
+          </div>
+          <button onClick={() => router.push("/familia/vouchers")} className="ml-auto text-[10px] font-medium text-green-700 hover:underline cursor-pointer">Klaim</button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-2">
+        <button onClick={() => router.push("/familia/vouchers")} className="flex flex-col items-center gap-1.5 p-3.5 rounded-xl bg-amber-50 border border-amber-100 hover:border-amber-300 hover:bg-amber-100/50 transition-all cursor-pointer active:scale-95">
+          <Ticket size={18} className="text-amber-600" />
+          <span className="text-[10px] font-medium text-amber-700">Voucher</span>
+          <span className="text-[9px] text-amber-500">{FAMILIA_MERCHANTS.length} Merchant</span>
+        </button>
+        <button onClick={() => router.push("/familia/deals")} className="flex flex-col items-center gap-1.5 p-3.5 rounded-xl bg-blue-50 border border-blue-100 hover:border-blue-300 hover:bg-blue-100/50 transition-all cursor-pointer active:scale-95">
+          <ShoppingBag size={18} className="text-blue-600" />
+          <span className="text-[10px] font-medium text-blue-700">Deals</span>
+          <span className="text-[9px] text-blue-500">Penawaran</span>
+        </button>
+        <button onClick={() => router.push("/familia/rewards")} className="flex flex-col items-center gap-1.5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-100 hover:border-emerald-300 hover:bg-emerald-100/50 transition-all cursor-pointer active:scale-95">
+          <Trophy size={18} className="text-emerald-600" />
+          <span className="text-[10px] font-medium text-emerald-700">Rewards</span>
+          <span className="text-[9px] text-emerald-500">{FAMILIA_ACHIEVEMENT_REWARDS.length} Reward</span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function UpcomingEvents() {
+  const router = useRouter();
+  const events = FAMILIA_EVENT_BENEFITS;
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+          <Calendar size={16} className="text-purple-500" />
+          Event Mendatang
+        </h2>
+        <button onClick={() => router.push("/circle")} className="text-xs font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer">
+          Lihat Semua
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        {events.map((ev) => (
+          <div key={ev.id} className="flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/10 dark:to-pink-900/10 border border-purple-100 dark:border-purple-900/20">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+              <Calendar size={18} className="text-purple-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-text-primary">{ev.title}</p>
+              <p className="text-[10px] text-text-secondary mt-0.5">{ev.description}</p>
+              {ev.code && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="accent" className="text-[9px]">{ev.discount_value}</Badge>
+                  <span className="text-[9px] font-mono text-purple-600 font-semibold">Kode: {ev.code}</span>
+                </div>
               )}
-              <div className="flex-1 min-w-0">
-                <p
-                  className={`text-sm font-medium leading-snug ${
-                    action.done
-                      ? "line-through text-text-secondary"
-                      : "text-text-primary"
-                  }`}
-                >
-                  {action.title}
-                </p>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  {action.due}
-                </p>
-              </div>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CircleActivity() {
-  return (
-    <Card padding="lg" className="animate-in fade-in duration-500 delay-[600ms]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageCircle size={18} className="text-secondary" />
-            <CardTitle>Aktivitas Circle</CardTitle>
+            <ChevronRight size={14} className="text-text-secondary/30 flex-shrink-0" />
           </div>
-          <button className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
-            Lihat Semua
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {activities.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-start gap-4 cursor-pointer group"
-            >
-              <Avatar initials={item.initials} size="sm" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-text-primary">
-                    {item.name}
-                  </span>
-                  <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none">
-                    {item.role}
-                  </Badge>
-                <span className="text-xs text-text-secondary ml-auto flex-shrink-0 tabular-nums">
-                  {item.time}
-                  </span>
-                </div>
-                <p className="text-sm text-text-secondary mt-0.5 line-clamp-2 leading-snug">
-                  {item.message}
-                </p>
-                <span className="text-xs text-secondary font-medium mt-1 inline-block">
-                  #{item.circle}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function StoryPreview() {
-  const router = useRouter();
-  return (
-    <Card padding="lg" className="animate-in fade-in duration-500 delay-[750ms]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen size={18} className="text-primary" />
-            <CardTitle>Cerita Populer</CardTitle>
-          </div>
-          <button onClick={() => router.push("/cerita")} className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
-            Lihat Semua
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {featuredStories.map((story, i) => (
-            <Link
-              key={story.id}
-              href={`/cerita/${story.slug}`}
-              className="flex items-start gap-4 group"
-            >
-              <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
-                <img src={story.image} alt={story.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              </div>
-              <div className="flex-1 min-w-0 pt-0.5">
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-none mb-1">
-                  {story.category}
-                </Badge>
-                <h4 className="text-sm font-semibold text-text-primary leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                  {story.title}
-                </h4>
-                <div className="flex items-center gap-3 mt-1.5 text-[11px] text-text-secondary">
-                  <span>{story.author}</span>
-                  <span className="flex items-center gap-1">
-                    <Heart size={10} />
-                    {story.likes}
-                  </span>
-                  <span>{story.readingTime} mnt</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function OpportunityPreview() {
-  const router = useRouter();
-  return (
-    <Card padding="lg" className="animate-in fade-in duration-500 delay-[900ms]">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Briefcase size={18} className="text-accent" />
-            <CardTitle>Peluang Menarik</CardTitle>
-          </div>
-          <button onClick={() => router.push("/opportunity")} className="text-xs font-semibold text-secondary hover:text-secondary/80 transition-colors cursor-pointer">
-            Lihat Semua
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {opportunities.map((opp) => (
-            <div
-              key={opp.id}
-              onClick={() => router.push(`/opportunity/${opp.slug}`)}
-              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-secondary/30 hover:bg-muted/30 transition-all cursor-pointer group"
-            >
-              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                <Briefcase size={18} className="text-accent" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <Badge variant="accent" className="mb-1">
-                  {opp.type}
-                </Badge>
-                <h4 className="text-sm font-semibold text-text-primary truncate">
-                  {opp.title}
-                </h4>
-                <p className="text-xs text-text-secondary mt-0.5">{opp.org}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                <ArrowRight
-                  size={16}
-                  className="text-text-secondary group-hover:text-accent group-hover:translate-x-1 transition-all"
-                />
-                <span className="text-[10px] text-text-secondary">
-                  {opp.deadline}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function QuickStats() {
-  const stats = [
-    { icon: Trophy, label: "Milestone", value: "7 selesai", color: "text-accent" },
-    { icon: BookOpen, label: "Circle", value: "3 aktif", color: "text-secondary" },
-    { icon: Clock, label: "Streak", value: "5 hari", color: "text-primary" },
-  ];
-
-  return (
-    <div className="grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
-      {stats.map((stat, i) => {
-        const Icon = stat.icon;
-        return (
-          <div
-            key={i}
-            className="flex flex-col items-center gap-2 p-3 bg-surface rounded-lg border border-border shadow-sm"
-          >
-            <Icon size={18} className={stat.color} />
-            <span className="text-xs text-text-secondary">{stat.label}</span>
-            <span className="text-sm font-bold text-text-primary">
-              {stat.value}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+/* ─── MAIN ─── */
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState("home");
   const router = useRouter();
 
+  const ecosystemGroups: { title: string; items: EcosystemItem[] }[] = [
+    { title: "Jelajahi Ekosistem", items: [
+      { id: "h-opp", type: "opportunity", title: "Peluang Menarik", subtitle: "Beasiswa, magang, dan lowongan", href: "/opportunity" },
+      { id: "h-circle", type: "circle", title: "Gabung Circle", subtitle: "Temukan komunitas yang sesuai", href: "/circle" },
+      { id: "h-mentor", type: "mentor", title: "Temui Mentor", subtitle: "Dapatkan bimbingan dari ahli", href: "/mentors" },
+    ]},
+  ];
+
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-content mx-auto px-6 pt-6 pb-24 space-y-8">
-        <GreetingHeader />
-        <QuickStats />
-        <GoalProgressCard />
-        <JournalJourneyCard />
-        <WeeklyActionCard />
-        <CircleActivity />
-        <StoryPreview />
-        <OpportunityPreview />
+      <div className="max-w-content mx-auto px-5 pt-5 pb-24 space-y-7">
+        <WelcomeHero />
+        <StoriesForYou />
+        <ContinueYourJourney />
+        <CircleActivityHome />
+        <MentorInsights />
+        <FamiliaHub />
+        <UpcomingEvents />
+        <EcosystemLinks groups={ecosystemGroups} />
       </div>
 
-      <BottomNavigation
-        items={NAV_TABS}
-        activeTab={activeTab}
-        onTabChange={(id) => {
-          setActiveTab(id);
-          router.push(navRoute(id));
-        }}
-      />
+      <BottomNavigation items={NAV_TABS} activeTab={activeTab} onTabChange={(id) => { setActiveTab(id); router.push(navRoute(id)); }} />
     </div>
   );
 }
