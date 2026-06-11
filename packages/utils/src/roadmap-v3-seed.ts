@@ -3,11 +3,16 @@ import type {
   RoadmapDailyWinCategory, RoadmapSmallWinCategory, RoadmapBigWin,
   RoadmapBlueprint, RoadmapDream,
 } from "@beautifio/types";
+import { getLifePillars, getAlternativeFutures } from "./roadmap-life-pillars-seed";
 
 export const ROADMAP_V3_SEED: Record<string, RoadmapV3> = {};
 
-function r(slug: string, data: RoadmapV3) {
-  ROADMAP_V3_SEED[slug] = data;
+function r(slug: string, data: Omit<RoadmapV3, "lifePillars" | "alternativeFutures">) {
+  ROADMAP_V3_SEED[slug] = {
+    ...data,
+    lifePillars: getLifePillars(),
+    alternativeFutures: getAlternativeFutures(slug),
+  };
 }
 
 r("football-player", {

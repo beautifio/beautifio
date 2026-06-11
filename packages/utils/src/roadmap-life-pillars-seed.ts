@@ -1,0 +1,196 @@
+import type { LifePillar, AlternativeFuture } from "@beautifio/types";
+
+const PILLARS: LifePillar[] = [
+  {
+    name: "Spiritual & Purpose",
+    emoji: "\uD83D\uDD4A\uFE0F",
+    description: "Temukan makna dan tujuan hidup yang lebih besar dari karir atau profesi.",
+    habits: [
+      "Luangkan waktu untuk refleksi diri setiap hari — journaling, meditasi, atau doa",
+      "Tulis 'why statement' pribadi: mengapa kamu melakukan apa yang kamu lakukan",
+      "Baca buku atau dengarkan podcast tentang makna hidup dan pengembangan spiritual",
+      "Praktikkan gratitude — catat 3 hal yang kamu syukuri setiap hari",
+      "Luangkan waktu di alam tanpa distraksi digital minimal seminggu sekali",
+    ],
+  },
+  {
+    name: "Fisik & Kesehatan",
+    emoji: "\uD83D\uDCAA",
+    description: "Jaga tubuh sebagai aset utama — kesehatan fisik mendukung performa di bidang apapun.",
+    habits: [
+      "Olahraga minimal 30 menit setiap hari — apapun jenisnya, yang penting konsisten",
+      "Prioritaskan tidur 7-9 jam per malam — ini bukan kemewahan, tapi kebutuhan",
+      "Makan makanan utuh (whole foods) — minimalkan processed food dan gula tambahan",
+      "Minum air putih minimal 2 liter sehari — dehidrasi mempengaruhi fokus dan mood",
+      "Dengarkan sinyal tubuhmu — istirahat saat lelah, jangan paksa terus",
+    ],
+  },
+  {
+    name: "Mental & Emosional",
+    emoji: "\uD83E\uDDE0",
+    description: "Bangun ketahanan mental dan kecerdasan emosional untuk menghadapi tekanan hidup.",
+    habits: [
+      "Praktikkan mindfulness atau meditasi 10 menit setiap hari",
+      "Belajar mengenali dan mengelola emosi — journaling emosi harian membantu",
+      "Bangun growth mindset — kegagalan adalah data, bukan vonis",
+      "Tetapkan batasan (boundaries) yang sehat antara kerja dan kehidupan pribadi",
+      "Jangan ragu mencari bantuan profesional (psikolog, konselor) saat merasa perlu",
+    ],
+  },
+  {
+    name: "Pengetahuan & Wawasan",
+    emoji: "\uD83D\uDCDA",
+    description: "Jadilah pembelajar seumur hidup — ilmu tidak pernah sia-sia.",
+    habits: [
+      "Baca minimal 1 buku per bulan — di luar bidang profesionalmu juga",
+      "Ikuti perkembangan di industri dan dunia — baca berita, artikel, atau riset",
+      "Pelajari skill yang tidak terkait langsung dengan karir — memasak, musik, berkebun",
+      "Dokumentasikan apa yang kamu pelajari — blog, catatan, atau berbagi dengan teman",
+      "Ikut kursus atau workshop singkat setidaknya 2 kali setahun",
+    ],
+  },
+  {
+    name: "Sosial & Relasi",
+    emoji: "\uD83D\uDC65",
+    description: "Kualitas hidupmu ditentukan oleh kualitas hubunganmu dengan orang lain.",
+    habits: [
+      "Luangkan waktu berkualitas dengan keluarga dan teman dekat tanpa distraksi gadget",
+      "Bangun network yang tulus — bukan hanya untuk keuntungan, tapi untuk koneksi bermakna",
+      "Praktikkan active listening saat orang lain berbicara — dengarkan untuk paham, bukan untuk merespon",
+      "Bergabung dengan komunitas yang sejalan dengan nilai dan minatmu",
+      "Berikan nilai sebelum meminta — bantu orang lain tanpa mengharapkan imbalan langsung",
+    ],
+  },
+  {
+    name: "Profesional & Finansial",
+    emoji: "\uD83D\uDCC8",
+    description: "Bangun karir dan keuangan yang stabil sebagai fondasi menjalani hidup.",
+    habits: [
+      "Kelola keuangan pribadi dengan disiplin — catat pemasukan, pengeluaran, dan tabungan",
+      "Investasikan minimal 10% penghasilan untuk masa depan — reksadana, saham, atau emas",
+      "Bangun emergency fund minimal 6 bulan biaya hidup",
+      "Kembangkan skill profesional yang relevan dengan industri dan minatmu",
+      "Cari mentor atau coach untuk membantu perkembangan karirmu",
+    ],
+  },
+];
+
+export function getLifePillars(): LifePillar[] {
+  return PILLARS;
+}
+
+const ALTERNATIVE_FUTURES: Record<string, AlternativeFuture[]> = {
+  "football-player": [
+    { title: "Pelatih Sepak Bola", description: "Bagikan pengalamanmu sebagai pelatih di SSB, akademi, atau klub. Lisensi pelatih GRASSROOTS hingga A bisa diambil bertahap.", skills: ["Kepemimpinan", "Komunikasi tim", "Analisis taktik", "Manajemen pemain"] },
+    { title: "Pemandu Bakat (Scout)", description: "Cari dan rekrut pemain muda berbakat untuk klub atau akademi. Pemain pensiunan sering menjadi scout ulung karena pengalaman mereka mengenali bakat.", skills: ["Observasi", "Penilaian bakat", "Jaringan luas", "Pengetahuan sepak bola"] },
+    { title: "Wasit Profesional", description: "Pahami peraturan dari sisi yang berbeda. Wasit profesional di Indonesia bisa berkarier dari level daerah hingga internasional.", skills: ["Ketegasan", "Pengetahuan aturan", "Keputusan cepat", "Manajemen tekanan"] },
+    { title: "Jurnalis atau Komentator Olahraga", description: "Tulis atau bicarakan sepak bola sebagai analis, komentator TV, atau penulis di media olahraga.", skills: ["Menulis", "Public speaking", "Analisis pertandingan", "Pengetahuan industri"] },
+    { title: "Fisioterapis atau Sport Scientist", description: "Bantu pemain pulih dari cedera dan optimalkan performa fisik mereka. Latar belakang atlet memberimu perspektif unik.", skills: ["Anatomi", "Rehabilitasi cedera", "Ilmu olahraga", "Empati pasien"] },
+    { title: "Manajer Klub atau Akademi", description: "Kelola operasional klub sepak bola — dari administrasi, logistik, hingga pengembangan pemain muda.", skills: ["Manajemen organisasi", "Kepemimpinan", "Administrasi", "Network industri"] },
+    { title: "Konten Kreator Sepak Bola", description: "Buat konten tentang sepak bola — review pertandingan, tutorial skill, analisis taktik, atau behind-the-scenes di YouTube/TikTok/Instagram.", skills: ["Produksi video", "Storytelling", "Pengetahuan sepak bola", "Personal branding"] },
+    { title: "Pengusaha Peralatan Olahraga", description: "Buka toko peralatan sepak bola, apparel, atau aksesoris. Pemahaman tentang kebutuhan pemain adalah keunggulan kompetitif.", skills: ["Kewirausahaan", "Pengetahuan produk", "Customer service", "Manajemen bisnis"] },
+  ],
+  entrepreneur: [
+    { title: "Konsultan Bisnis", description: "Bantu startup atau UKM lain dengan pengalaman dan pengetahuan yang kamu kumpulkan sebagai founder.", skills: ["Pemecahan masalah", "Strategi bisnis", "Analisis data", "Komunikasi"] },
+    { title: "Venture Capital atau Angel Investor", description: "Investasikan modal dan pengalamanmu ke startup tahap awal. Banyak founder sukses beralih ke investing.", skills: ["Penilaian bisnis", "Due diligence", "Portfolio management", "Mentoring"] },
+    { title: "Product Manager", description: "Pimpin pengembangan produk digital di perusahaan teknologi. Pengalaman founder membuatmu paham product lifecycle.", skills: ["Manajemen produk", "User research", "Data-driven decision", "Cross-team collaboration"] },
+    { title: "Executive atau General Manager", description: "Pimpin divisi atau perusahaan sebagai GM atau CEO. Pengalaman entrepreneur adalah bekal berharga.", skills: ["Kepemimpinan", "Manajemen operasional", "Financial literacy", "Strategic thinking"] },
+    { title: "Dosen atau Pengajar Entrepreneurship", description: "Ajarkan kewirausahaan di universitas atau program inkubator. Pengalaman nyata lebih berharga dari teori.", skills: ["Public speaking", "Mentoring", "Kurikulum design", "Network industri"] },
+    { title: "Penulis atau Content Creator Bisnis", description: "Tulis buku, blog, atau buat konten tentang entrepreneurship dan bisnis untuk menginspirasi founder baru.", skills: ["Menulis", "Storytelling", "Personal branding", "Pengetahuan industri"] },
+    { title: "Corporate Innovator", description: "Pimpin inovasi dan transformasi digital di perusahaan besar. Corporate butuh founder mindset.", skills: ["Intrapreneurship", "Change management", "Stakeholder management", "Inovasi"] },
+    { title: "Konsultan Pemasaran Digital", description: "Bantu brand dan UKM mengembangkan strategi pemasaran digital mereka.", skills: ["Digital marketing", "Strategi konten", "Analytics", "Advertising"] },
+  ],
+  programmer: [
+    { title: "Technical Lead / Engineering Manager", description: "Pimpin tim engineering — dari arsitektur teknis hingga pengembangan karir anggota tim. Kode tidak harus ditulis sendiri.", skills: ["Kepemimpinan teknis", "Code review", "Manajemen proyek", "Mentoring"] },
+    { title: "Software Architect", description: "Rancang arsitektur sistem yang scalable, maintainable, dan aman. Fokus ke big picture, bukan detail implementasi.", skills: ["System design", "Cloud architecture", "Security", "Technical decision making"] },
+    { title: "DevOps / Platform Engineer", description: "Bangun dan kelola infrastructure, CI/CD, dan platform yang digunakan tim engineering lain.", skills: ["Docker/K8s", "Cloud (AWS/GCP/Azure)", "Automation", "Monitoring"] },
+    { title: "Product Manager Teknis", description: "Jembatani tim engineering dan bisnis — pahami kebutuhan teknis dan prioritas bisnis secara bersamaan.", skills: ["Komunikasi teknis", "Prioritasi", "User empathy", "Data analysis"] },
+    { title: "Freelance / Independent Consultant", description: "Kerjakan project untuk berbagai klien dengan rate yang kamu tentukan sendiri.", skills: ["Client management", "Estimasi proyek", "Full-stack", "Negosiasi"] },
+    { title: "Technical Writer", description: "Dokumentasikan API, buat tutorial, atau tulis buku teknis. Coding background membuatmu bisa menjelaskan dengan jelas.", skills: ["Menulis teknis", "Dokumentasi API", "Pendidikan", "Komunikasi"] },
+    { title: "Founder Teknologi", description: "Bangun startup teknologi — pemahaman coding memberimu keunggulan dalam membangun produk.", skills: ["Kewirausahaan", "Full-stack", "Product sense", "Technical leadership"] },
+    { title: "Data Scientist / Data Engineer", description: "Analisis data besar untuk insight bisnis. Background programming adalah fondasi kuat.", skills: ["Python/R", "SQL", "Machine learning", "Statistical analysis"] },
+    { title: "Pengajar Coding", description: "Ajarkan coding di bootcamp, universitas, atau platform online. Bagikan skill yang kamu kuasai.", skills: ["Public speaking", "Kurikulum design", "Kesabaran", "Pengetahuan teknis"] },
+  ],
+  runner: [
+    { title: "Pelatih Lari", description: "Latih pelari lain dari pemula hingga level kompetitif. Sertifikasi pelatih lari internasional (NASM, UESCA) bisa diambil.", skills: ["Pengetahuan fisiologi", "Periodisasi latihan", "Komunikasi", "Motivasi"] },
+    { title: "Fisioterapis Olahraga", description: "Spesialisasi dalam cedera pelari — ITBS, shin splints, PF. Pengalaman sebagai runner memberimu pemahaman mendalam.", skills: ["Anatomi", "Rehabilitasi", "Gait analysis", "Empati pasien"] },
+    { title: "Event Organizer Lari", description: "Selenggarakan event lari — dari fun run 5K hingga marathon. Industri race di Indonesia tumbuh pesat.", skills: ["Manajemen event", "Logistik", "Sponsorship", "Koordinasi vendor"] },
+    { title: "Content Creator Lari & Fitness", description: "Buat konten tentang lari — tips latihan, review sepatu, vlog race day. Komunitas lari Indonesia sangat aktif.", skills: ["Produksi video", "Pengetahuan lari", "Personal branding", "Komunitas"] },
+    { title: "Pemilik Toko Lari", description: "Buka toko khusus sepatu lari, apparel, dan aksesoris. Gait analysis service adalah nilai tambah.", skills: ["Pengetahuan produk", "Customer service", "Manajemen bisnis", "Gait analysis"] },
+    { title: "Penulis atau Podcaster Olahraga", description: "Tulis buku tentang lari atau buat podcast tentang olahraga. Cerita dan pengalamanmu berharga untuk dibagikan.", skills: ["Menulis", "Komunikasi", "Pengetahuan industri", "Storytelling"] },
+    { title: "Sport Psychologist", description: "Bantu atlet mengatasi tekanan mental, kecemasan kompetisi, dan burnout. Pengalaman atlet memberimu kredibilitas.", skills: ["Psikologi olahraga", "Mental coaching", "Visualisasi", "Konseling"] },
+  ],
+  musician: [
+    { title: "Pengajar Musik", description: "Les privat atau mengajar di sekolah musik — penghasilan stabil, tetap bermain musik setiap hari.", skills: ["Komunikasi", "Kesabaran", "Pengetahuan teori", "Adaptasi metode"] },
+    { title: "Sound Engineer / Audio Producer", description: "Mix, master, dan produksi musik untuk artis lain. Keahlian teknis audio sangat dicari industri.", skills: ["Audio engineering", "DAW proficiency", "Mixing & mastering", "Telinga terlatih"] },
+    { title: "Komposer untuk Media", description: "Buat musik untuk film, game, iklan, podcast. Skill komposisi membuka pintu ke industri kreatif luas.", skills: ["Komposisi", "Orchestration", "Sync licensing", "Client management"] },
+    { title: "Music Content Creator", description: "Buat tutorial, cover, atau review alat musik di YouTube/TikTok. Monetisasi dari konten musik bisa sangat menguntungkan.", skills: ["Produksi video", "Bermain alat musik", "Personal branding", "SEO konten"] },
+    { title: "Teknisi / Luthier Alat Musik", description: "Service, setup, dan repair alat musik — skill langka yang sangat dibutuhkan komunitas musisi.", skills: ["Pengetahuan alat musik", "Ketelitian manual", "Problem solving", "Customer service"] },
+    { title: "Music Therapist", description: "Gunakan musik untuk terapi kesehatan mental dan fisik. Kombinasi skill musik dan psikologi.", skills: ["Psikologi dasar", "Musik", "Empati", "Komunikasi"] },
+    { title: "A&R atau Music Executive", description: "Cari bakat baru, kelola artis, atau pimpin label musik. Jaringan dan pengalaman sebagai musisi adalah aset.", skills: ["Penilaian bakat", "Network industri", "Manajemen artis", "Kontrak & legal"] },
+    { title: "Kurator Musik / Playlist Curator", description: "Kurasi playlist untuk platform streaming, radio, atau brand. Telinga terlatihmu sangat berharga.", skills: ["Pengetahuan musik luas", "Tren industri", "Kurasi", "Kolaborasi"] },
+  ],
+  "content-creator": [
+    { title: "Video Editor Profesional", description: "Spesialisasi di editing video untuk brand, kreator lain, atau agensi. Skill editing adalah yang paling dicari di industri konten.", skills: ["Adobe Premiere/DaVinci", "Color grading", "Motion graphics", "Storytelling"] },
+    { title: "Content Strategist", description: "Bantu brand atau perusahaan merancang strategi konten yang efektif. Pengalaman sebagai kreator adalah nilai jual utama.", skills: ["Strategi konten", "Analytics", "Copywriting", "Platform knowledge"] },
+    { title: "Social Media Manager", description: "Kelola sosial media untuk brand dari strategi hingga eksekusi. Kreator paham algoritma dan engagement.", skills: ["Platform mastery", "Content planning", "Community management", "Analytics"] },
+    { title: "Brand Consultant", description: "Bantu brand membangun identitas digital dan strategi influencer marketing. Kamu paham kedua sisi.", skills: ["Brand strategy", "Influencer marketing", "Komunikasi", "Kreativitas"] },
+    { title: "Pemilik Agensi Kreatif", description: "Bangun agensi yang melayani produksi konten, manajemen sosial media, dan strategi digital untuk klien.", skills: ["Kewirausahaan", "Manajemen tim", "Sales", "Project management"] },
+    { title: "Podcast Producer", description: "Produksi podcast untuk brand, individu, atau jaringan podcast. Skill produksi konten sangat transferable.", skills: ["Audio production", "Interview skills", "Show format", "Distribusi"] },
+    { title: "Digital Marketing Specialist", description: "Fokus ke paid ads, SEO, dan performance marketing. Kreator yang paham traffic bisa beralih ke marketing.", skills: ["Paid advertising", "SEO", "Analytics", "Conversion optimization"] },
+    { title: "Penulis atau Copywriter", description: "Tulis konten untuk website, blog, email marketing, atau media cetak. Storytelling skill adalah fondasi.", skills: ["Copywriting", "Storytelling", "Riset", "Adaptasi brand voice"] },
+  ],
+  "digital-marketer": [
+    { title: "Head of Marketing / CMO", description: "Pimpin strategi marketing perusahaan secara keseluruhan — dari brand hingga performance marketing.", skills: ["Kepemimpinan", "Strategi marketing", "Budget management", "Team leadership"] },
+    { title: "Growth Marketing Consultant", description: "Bantu startup dan UKM mengembangkan strategi growth yang data-driven dan terukur.", skills: ["Growth strategy", "Eksperimen", "Analytics", "Channel optimization"] },
+    { title: "SEO Specialist Senior", description: "Jadi ahli SEO yang membantu website berkembang melalui organic search. Skill ini selalu dicari.", skills: ["Technical SEO", "Content strategy", "Link building", "Analytics"] },
+    { title: "E-commerce Marketing Manager", description: "Pimpin strategi marketing untuk brand e-commerce di Shopee, Tokopedia, dan platform lain.", skills: ["E-commerce platform", "Campaign management", "Analytics", "Advertising"] },
+    { title: "Product Marketing Manager", description: "Jembatani produk, marketing, dan sales — pastikan positioning dan messaging produk tepat sasaran.", skills: ["Product positioning", "Go-to-market", "Cross-functional", "Customer research"] },
+    { title: "Brand Strategist", description: "Bangun identitas dan strategi brand dari riset, positioning, hingga eksekusi kampanye.", skills: ["Brand strategy", "Riset pasar", "Kreativitas", "Komunikasi"] },
+    { title: "Data & Analytics Lead", description: "Pimpin tim data marketing — dari tracking hingga insight-driven decision making.", skills: ["Data analysis", "Attribution modeling", "Dashboard design", "Statistical thinking"] },
+    { title: "Marketing Agency Owner", description: "Buka agensi digital marketing yang melayani berbagai klien dari UKM hingga korporasi.", skills: ["Kewirausahaan", "Sales & pitching", "Manajemen tim", "Multichannel expertise"] },
+  ],
+  doctor: [
+    { title: "Tenaga Kesehatan Masyarakat", description: "Kerja di puskesmas, dinas kesehatan, atau organisasi kesehatan global seperti WHO. Dampakmu bisa lebih luas dari satu pasien.", skills: ["Kesehatan populasi", "Epidemiologi", "Komunikasi publik", "Kebijakan kesehatan"] },
+    { title: "Peneliti Medis & Akademisi", description: "Lakukan penelitian di universitas atau lembaga riset. Publikasi dan inovasi medis adalah kontribusi jangka panjang.", skills: ["Metodologi riset", "Publikasi ilmiah", "Analisis data", "Pengajaran"] },
+    { title: "Konsultan Kesehatan", description: "Bantu perusahaan, startup, atau organisasi dalam strategi kesehatan, wellbeing, atau produk kesehatan.", skills: ["Konsultasi", "Pengetahuan medis", "Komunikasi", "Strategi"] },
+    { title: "Farmasi atau Industri Farmasi", description: "Kerja di industri farmasi — dari R&D, regulatory affairs, hingga medical affairs.", skills: ["Farmakologi", "Regulatory knowledge", "Clinical trials", "Komunikasi ilmiah"] },
+    { title: "Manajemen Rumah Sakit", description: "Pimpin operasional rumah sakit atau klinik — dari administrasi hingga kualitas pelayanan.", skills: ["Manajemen healthcare", "Kepemimpinan", "Operasional", "Keuangan"] },
+    { title: "Kebijakan & Administrasi Kesehatan", description: "Bantu merancang kebijakan kesehatan di tingkat daerah atau nasional. Dokter paham sistem kesehatan dari dalam.", skills: ["Analisis kebijakan", "Advokasi", "Kesehatan masyarakat", "Leadership"] },
+    { title: "Kesehatan Digital & Telemedicine", description: "Gabung ke startup health-tech atau platform telemedicine — masa depan kesehatan ada di sini.", skills: ["Digital health", "Produk teknologi", "Inovasi", "Kolaborasi"] },
+    { title: "Dokter Estetika & Wellness", description: "Spesialisasi di estetika, anti-aging, atau wellness tanpa jalur PPDS formal.", skills: ["Estetika medis", "Prosedur minimal invasif", "Konsultasi", "Kewirausahaan"] },
+  ],
+  athlete: [
+    { title: "Pelatih Profesional", description: "Latih atlet muda atau tim di cabang olahraga spesifikmu. Ambil lisensi pelatih dari federasi atau lembaga internasional.", skills: ["Kepelatihan", "Komunikasi", "Periodisasi latihan", "Motivasi"] },
+    { title: "Fisioterapis atau Sport Massage", description: "Bantu atlet pulih dan cegah cedera. Pengalaman sebagai atlet memberimu pemahaman unik tentang tubuh.", skills: ["Anatomi", "Sports massage", "Rehabilitasi", "Body mechanics"] },
+    { title: "Sport Scientist", description: "Kerja di laboratorium performa olahraga — ukur dan optimalkan fisiologi atlet.", skills: ["Fisiologi olahraga", "Data analysis", "Biomechanics", "Lab testing"] },
+    { title: "Manajer Olahraga", description: "Kelola atlet, klub, atau organisasi olahraga. Dari logistik hingga sponsorship.", skills: ["Manajemen", "Network industri", "Negosiasi", "Administrasi"] },
+    { title: "Komentator atau Analis Olahraga", description: "Bicarakan olahraga di TV, radio, atau podcast. Pengalaman sebagai atlet memberimu perspektif insider.", skills: ["Public speaking", "Analisis pertandingan", "Pengetahuan olahraga", "Karisma"] },
+    { title: "Pengusaha Peralatan Olahraga", description: "Buka toko apparel, sepatu, atau peralatan olahraga. Pahami apa yang benar-benar dibutuhkan atlet.", skills: ["Kewirausahaan", "Pengetahuan produk", "Customer service", "Manajemen bisnis"] },
+    { title: "Konten Kreator Olahraga", description: "Buat konten tentang olahraga — tips latihan, review perlengkapan, atau daily life atlet.", skills: ["Produksi konten", "Pengetahuan olahraga", "Personal branding", "Komunitas"] },
+    { title: "Penyelenggara Event Olahraga", description: "Selenggarakan kompetisi, turnamen, atau event olahraga dari skala lokal hingga nasional.", skills: ["Event management", "Logistik", "Sponsorship", "Koordinasi"] },
+  ],
+  "beauty-creator": [
+    { title: "Makeup Artist (MUA) Profesional", description: "Spesialisasi bridal, editorial, atau special effects makeup. Layanan langsung untuk klien.", skills: ["Teknik makeup", "Client management", "Portofolio", "Hygiene standards"] },
+    { title: "Brand Founder Produk Kecantikan", description: "Ciptakan brand skincare atau makeup sendiri. Pengetahuan sebagai beauty creator adalah modal riset.", skills: ["Kewirausahaan", "Product development", "Branding", "Regulasi kosmetik"] },
+    { title: "Beauty Writer atau Editor", description: "Tulis untuk majalah kecantikan, website, atau jadi beauty editor di media digital.", skills: ["Menulis", "Pengetahuan produk", "Riset ingredients", "Storytelling"] },
+    { title: "Brand Representative atau Educator", description: "Kerja untuk brand kecantikan sebagai representatif atau trainer untuk MUA dan beauty advisor.", skills: ["Public speaking", "Pengetahuan produk", "Training", "Sales"] },
+    { title: "Product Development di Brand Beauty", description: "Kerja di R&D atau product development brand kecantikan — ciptakan produk yang kamu tahu dibutuhkan.", skills: ["Formulasi kosmetik", "Riset pasar", "Project management", "Regulatory"] },
+    { title: "Beauty Therapist atau Esthetician", description: "Layanan facial, skincare treatment, atau beauty therapy profesional.", skills: ["Skincare treatment", "Anatomi kulit", "Konsultasi", "Customer service"] },
+    { title: "Konsultan Branding Kecantikan", description: "Bantu brand baru menentukan strategi branding, packaging, dan positioning di pasar.", skills: ["Brand strategy", "Market research", "Visual identity", "Marketing"] },
+  ],
+  golfer: [
+    { title: "Instruktur Golf", description: "Ajari golf ke pemula hingga pemain menengah — di driving range, klub, atau les privat. Permintaan instruktur golf terus tumbuh.", skills: ["Komunikasi", "Kesabaran", "Pengetahuan teknik golf", "Adaptasi"] },
+    { title: "Club Professional", description: "Kerja di klub golf sebagai pro — kelola turnamen klub, beri les, dan layani anggota klub.", skills: ["Customer service", "Manajemen klub", "Pengetahuan golf", "Event organization"] },
+    { title: "Course Designer atau Greenskeeper", description: "Desain atau rawat lapangan golf. Kombinasi pengetahuan golf dan hortikultura atau arsitektur.", skills: ["Desain lapangan", "Agronomi", "Konstruksi", "Manajemen"] },
+    { title: "Manajer Klub Golf", description: "Kelola operasional klub golf — dari keanggotaan, event, F&B, hingga perawatan lapangan.", skills: ["Manajemen operasional", "Kepemimpinan", "Customer service", "Keuangan"] },
+    { title: "Sales Peralatan Golf", description: "Jual peralatan golf di pro shop, toko olahraga, atau sebagai brand representative.", skills: ["Pengetahuan produk", "Sales", "Customer fitting", "Komunikasi"] },
+    { title: "Konten Kreator Golf", description: "Buat konten golf — review lapangan, tips teknik, vlog turnamen, atau unboxing peralatan. Komunitas golf digital aktif.", skills: ["Produksi video", "Pengetahuan golf", "Storytelling", "Personal branding"] },
+    { title: "Travel Agent Spesialis Golf", description: "Buat paket perjalanan golf ke lapangan di Indonesia dan luar negeri. Komunitas golf menyukai golf travel.", skills: ["Travel planning", "Network lapangan golf", "Customer service", "Logistik"] },
+    { title: "Turnamen Organizer", description: "Selenggarakan turnamen golf amatir atau korporat. Perusahaan sering mengadakan golf gathering.", skills: ["Event management", "Sponsorship", "Koordinasi", "Hospitality"] },
+  ],
+};
+
+export function getAlternativeFutures(slug: string): AlternativeFuture[] {
+  return ALTERNATIVE_FUTURES[slug] ?? [];
+}

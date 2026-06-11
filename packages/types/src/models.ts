@@ -296,11 +296,26 @@ export interface RoadmapV3 {
   smallWins: RoadmapSmallWinCategory[];
   bigWins: RoadmapBigWin[];
   blueprint: RoadmapBlueprint;
+  lifePillars: LifePillar[];
+  alternativeFutures: AlternativeFuture[];
   agePath: AgePathStage[];
   timeline: TimelinePhase[];
   realityCheck: RealityCheck;
   alternativePaths: AlternativePath[];
   masterclassLessons: MasterclassLesson[];
+}
+
+export interface LifePillar {
+  name: string;
+  emoji: string;
+  description: string;
+  habits: string[];
+}
+
+export interface AlternativeFuture {
+  title: string;
+  description: string;
+  skills: string[];
 }
 
 export interface RoadmapDream {

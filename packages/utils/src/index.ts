@@ -42,4 +42,5 @@ export {
   getVaultItems, saveVaultItem, removeVaultItem,
   toggleDailyHabit, getDoneHabits, getStreak, updateStreak,
 } from "./roadmap-v3-seed";
+export { getLifePillars, getAlternativeFutures } from "./roadmap-life-pillars-seed";
 

@@ -4,7 +4,7 @@ import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, MapPin, Clock, Users, BookOpen, Sparkles, Zap, Trophy,
-  Star, Sun, Library, Target, GraduationCap,
+  Star, Sun, Library, Target, GraduationCap, Heart, Compass,
 } from "lucide-react";
 import { Badge, Button } from "@beautifio/ui";
 import {
@@ -24,6 +24,8 @@ import { RoadmapV3BlueprintSection } from "@/features/roadmap/components/Roadmap
 import { RoadmapV3LearningVault } from "@/features/roadmap/components/RoadmapV3LearningVault";
 import { RoadmapV3DailyReflections } from "@/features/roadmap/components/RoadmapV3DailyReflections";
 import { RoadmapV3MasterclassSection } from "@/features/roadmap/components/RoadmapV3MasterclassSection";
+import { RoadmapV3LifePillarsSection } from "@/features/roadmap/components/RoadmapV3LifePillarsSection";
+import { RoadmapV3AlternativeFuturesSection } from "@/features/roadmap/components/RoadmapV3AlternativeFuturesSection";
 
 const V3_TABS = [
   { key: "dream", label: "Dream", icon: Star },
@@ -32,6 +34,8 @@ const V3_TABS = [
   { key: "milestones", label: "Milestones", icon: Trophy },
   { key: "blueprint", label: "Blueprint", icon: BookOpen },
   { key: "masterclass", label: "Masterclass", icon: GraduationCap },
+  { key: "life", label: "Life Pillars", icon: Heart },
+  { key: "altfutures", label: "Alt Futures", icon: Compass },
   { key: "vault", label: "Vault", icon: Library },
   { key: "reflections", label: "Reflections", icon: Target },
   { key: "related", label: "Related", icon: Sparkles },
@@ -131,6 +135,8 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
             {v3Tab === "skills" && <RoadmapV3SmallWinsSection categories={v3Roadmap.smallWins} />}
             {v3Tab === "milestones" && <RoadmapV3BigWinsSection bigWins={v3Roadmap.bigWins} roadmapSlug={slug} />}
             {v3Tab === "blueprint" && <RoadmapV3BlueprintSection blueprint={v3Roadmap.blueprint} />}
+            {v3Tab === "life" && <RoadmapV3LifePillarsSection pillars={v3Roadmap.lifePillars} />}
+            {v3Tab === "altfutures" && <RoadmapV3AlternativeFuturesSection futures={v3Roadmap.alternativeFutures} mainTitle={v3Roadmap.title} />}
             {v3Tab === "masterclass" && (
               <RoadmapV3MasterclassSection
                 agePath={v3Roadmap.agePath}
