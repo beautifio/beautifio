@@ -1,6 +1,5 @@
 import type {
   UserLifeProfile, LifeCapital, GrowthZone, LifeStage,
-  CapitalSourceType, LifeLevel,
 } from "@beautifio/types";
 import { ZONE_INFO, STAGE_INFO, SPIRITUAL_PRACTICES } from "./life-engine-seed";
 import { ROADMAP_V3_SEED } from "./roadmap-v3-seed";
@@ -29,27 +28,6 @@ export interface DailyCoachFocus {
   insight: string;
   focusAreas: CoachFocusArea[];
   motivationSentence: string;
-}
-
-export interface WeeklyWin {
-  label: string;
-  emoji: string;
-}
-
-export interface WeeklyChallenge {
-  label: string;
-  emoji: string;
-}
-
-export interface WeeklyGrowthReport {
-  weekStart: string;
-  weekEnd: string;
-  wins: WeeklyWin[];
-  challenges: WeeklyChallenge[];
-  capitalChanges: Partial<LifeCapital>;
-  streakChange: number;
-  suggestedImprovements: string[];
-  summary: string;
 }
 
 export interface FailureCoachResponse {
@@ -124,17 +102,6 @@ export interface PersonalizedInsight {
   message: string;
   emoji: string;
   priority: "high" | "medium" | "low";
-}
-
-export interface CoachPanelData {
-  dailyFocus: DailyCoachFocus;
-  insights: PersonalizedInsight[];
-  zoneAnalysis: ZoneAnalysis;
-  capitalAdvice: CapitalAdvice;
-  dreamNavigation: DreamNavigation | null;
-  motivation: MotivationMessage;
-  opportunities: OpportunityMatch[];
-  weeklyReport: WeeklyGrowthReport | null;
 }
 
 /* ══════════════════════════════════════════
@@ -456,27 +423,6 @@ export function matchOpportunities(): OpportunityMatch[] {
 
 /* ─── DREAM COMPANION VOICE ─── */
 
-export function getDreamCompanionVoice(dreamSlug: string | null): string {
-  const voices: Record<string, string> = {
-    "football-player": "Lapangan masih menunggumu hari ini. Setiap tendangan mendekatkanmu pada mimpimu.",
-    doctor: "Satu halaman yang kamu baca hari ini bisa menyelamatkan nyawa seseorang di masa depan.",
-    entrepreneur: "Setiap bisnis besar pernah dimulai dari satu ide sederhana. Hari ini, rawat ide itu.",
-    programmer: "Baris kode yang kamu tulis hari ini bisa menjadi solusi untuk jutaan orang.",
-    musician: "Setiap nada yang kamu latih hari ini adalah langkah menuju panggung impianmu.",
-    "content-creator": "Satu konten hari ini bisa menginspirasi ribuan orang yang belum pernah kamu temui.",
-    "digital-marketer": "Strategi yang kamu pahami hari ini bisa mengubah cara orang melihat brand.",
-    runner: "Setiap langkah hari ini adalah bukti bahwa kamu lebih kuat dari kemarin.",
-    athlete: "Latihan hari ini adalah investasi untuk kemenangan di masa depan.",
-    "beauty-creator": "Kreativitasmu hari ini bisa membuat seseorang merasa percaya diri.",
-    golfer: "Setiap ayunan hari ini mendekatkanmu pada pukulan sempurna.",
-  };
-
-  if (!dreamSlug || !voices[dreamSlug]) {
-    return "Mimpimu berharga. Teruslah melangkah, meskipun satu langkah kecil hari ini.";
-  }
-  return voices[dreamSlug];
-}
-
 /* ─── MOTIVATION ENGINE ─── */
 
 export function generateMotivation(): MotivationMessage {
@@ -513,58 +459,6 @@ export function generateMotivation(): MotivationMessage {
     message: pick.message,
     context: pick.context,
     emoji: ZONE_INFO[zone].emoji,
-  };
-}
-
-/* ─── WEEKLY REPORT ─── */
-
-export function generateWeeklyReport(): WeeklyGrowthReport | null {
-  const profile = getProfile();
-  if (!profile.capitalTrends) return null;
-
-  const now = new Date();
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - 7);
-  const weekEnd = now;
-
-  const capitalChanges: Partial<LifeCapital> = {};
-  const wins: WeeklyWin[] = [];
-  const challenges: WeeklyChallenge[] = [];
-
-  for (const key of Object.keys(profile.capitalTrends) as (keyof LifeCapital)[]) {
-    const change = profile.capitalTrends[key]?.weekly ?? 0;
-    (capitalChanges as any)[key] = change;
-    if (change > 0) {
-      wins.push({ label: `${key.charAt(0).toUpperCase() + key.slice(1)} Capital +${change}`, emoji: getCapitalEmoji(key) });
-    } else if (change < 0) {
-      challenges.push({ label: `${key.charAt(0).toUpperCase() + key.slice(1)} Capital ${change}`, emoji: getCapitalEmoji(key) });
-    }
-  }
-
-  if (wins.length === 0) wins.push({ label: "Bertahan dan terus hadir", emoji: "💪" });
-  if (challenges.length === 0 && profile.currentZone === "comfort") {
-    challenges.push({ label: "Belum ada tantangan yang diambil", emoji: "🛋️" });
-  }
-
-  const summary = wins.length > challenges.length
-    ? `Minggu yang produktif! ${wins.length} area capital meningkat. Fokus terus pada konsistensi.`
-    : challenges.length > wins.length
-    ? `Minggu yang menantang — tapi kamu tetap di sini. Itu sendiri sudah kemenangan.`
-    : `Minggu yang stabil. Saatnya mengambil langkah lebih berani minggu depan.`;
-
-  const improvements = getCapitalAdvice().recommendation
-    ? [getCapitalAdvice().recommendation]
-    : ["Coba ambil 1 tantangan baru minggu ini"];
-
-  return {
-    weekStart: weekStart.toISOString(),
-    weekEnd: weekEnd.toISOString(),
-    wins,
-    challenges,
-    capitalChanges,
-    streakChange: getRoadmapStreak(),
-    suggestedImprovements: improvements,
-    summary,
   };
 }
 
@@ -677,16 +571,6 @@ export function analyzeReflection(text: string): ReflectionInsight {
   };
 }
 
-/* ─── HELPER ─── */
-
-function getCapitalEmoji(key: keyof LifeCapital): string {
-  const map: Record<keyof LifeCapital, string> = {
-    knowledge: "📚", skill: "⚡", health: "💪",
-    relationship: "👥", character: "⭐", spiritual: "🕊️",
-  };
-  return map[key];
-}
-
 function getRoadmapStreak(): number {
   if (typeof window === "undefined") return 0;
   try {
@@ -709,17 +593,5 @@ function getTotalVaultItems(): number {
   }
 }
 
-/* ─── PANEL DATA AGGREGATOR ─── */
 
-export function getCoachPanelData(): CoachPanelData {
-  return {
-    dailyFocus: generateDailyCoachFocus(),
-    insights: generateInsights(),
-    zoneAnalysis: analyzeZone(),
-    capitalAdvice: getCapitalAdvice(),
-    dreamNavigation: navigateDream(),
-    motivation: generateMotivation(),
-    opportunities: matchOpportunities(),
-    weeklyReport: generateWeeklyReport(),
-  };
-}
+

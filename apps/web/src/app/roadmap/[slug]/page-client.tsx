@@ -12,7 +12,7 @@ import {
   ROADMAP_TEMPLATES, ROADMAP_SEED_MILESTONES, ROADMAP_SEED_RECOMMENDATIONS,
   ROADMAP_CATEGORIES, getStoredJournals, MOCK_JOURNALS, getRoadmapV3,
   getLifeProfile, ZONE_INFO, STAGE_INFO, updateZone,
-  generateDailyWins, isOnboardingComplete, executePivot,
+  generateDailyWins, executePivot,
 } from "@beautifio/utils";
 import type { RoadmapTask } from "@beautifio/types";
 import { MilestoneTimeline } from "@/features/roadmap/components/MilestoneTimeline";

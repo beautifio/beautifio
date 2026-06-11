@@ -46,19 +46,11 @@ export { getLifePillars, getAlternativeFutures } from "./roadmap-life-pillars-se
 export { STAGE_INFO, ZONE_INFO, SPIRITUAL_PRACTICES, DEFAULT_LIFE_CAPITAL } from "./life-engine-seed";
 export {
   getLifeProfile, saveLifeProfile, updateLifeProfile,
-  isOnboardingComplete, completeOnboarding,
-  calculateCapitalChange, applyCapitalDecay, applyCapitalChanges,
   detectGrowthZone, updateZone,
   generateDailyWins, executePivot,
-  recordFailure, unlockGrowthWin, getAllGrowthWins,
-  getStageProgression,
-  // Phase 15.2
+  getAllGrowthWins,
   LIFE_LEVELS, getLifeLevel, getLifeLevelProgress,
-  CAPITAL_SOURCES, earnCapital, earnMultipleCapital,
-  getCapitalBalanceTips, getStrongestCapital, getWeakestCapital, getCapitalGap,
-  generateDailyMissions, completeMission,
-  UNLOCK_REQUIREMENTS, unlockLifeCapital, getUnlockedFeatures, getAvailableUnlocks,
-  rewardAfterFailure,
+  getStrongestCapital, getWeakestCapital, getCapitalGap,
   getCapitalOverview,
 } from "./life-engine";
 export { DREAM_TEMPLATES, getDreamTemplate, getAllDreamTemplates, buildDreamTemplates } from "./dream-templates";
@@ -68,15 +60,14 @@ export type { GenerateDailyOptions } from "./daily-activity-generator";
 export {
   generateDailyCoachFocus, generateInsights, analyzeZone,
   getCapitalAdvice, navigateDream, matchOpportunities,
-  generateMotivation, generateWeeklyReport,
+  generateMotivation,
   generateFailureCoach, generatePivotCoach,
-  analyzeReflection, getCoachPanelData,
-  getDreamCompanionVoice,
+  analyzeReflection,
 } from "./ai-coach";
 export type {
-  CoachPanelData, DailyCoachFocus, PersonalizedInsight,
+  DailyCoachFocus, PersonalizedInsight,
   ZoneAnalysis, CapitalAdvice, DreamNavigation,
-  MotivationMessage, OpportunityMatch, WeeklyGrowthReport,
+  MotivationMessage, OpportunityMatch,
   FailureCoachResponse, PivotCoachAnalysis, ReflectionInsight,
   CoachFocusArea,
 } from "./ai-coach";
