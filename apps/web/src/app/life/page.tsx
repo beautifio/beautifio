@@ -454,10 +454,11 @@ function ZoneCard({ zone }: { zone: string }) {
         <span className="text-2xl">{info.emoji}</span>
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Growth Zone</p>
-          <h2 className="text-lg font-bold text-text-primary">{info.label}</h2>
+          <h2 className="text-lg font-bold text-text-primary">{info.friendlyLabel}</h2>
+          <p className="text-[10px] text-text-secondary/60">({info.label})</p>
         </div>
       </div>
-      <p className="text-sm text-text-secondary leading-relaxed">{info.description}</p>
+      <p className="text-sm text-text-secondary leading-relaxed">{info.friendlyDescription}</p>
       <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-white/60 dark:bg-white/5">
         <Quote size={14} className="text-text-secondary/40 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-text-secondary leading-relaxed italic">{info.encouragement}</p>

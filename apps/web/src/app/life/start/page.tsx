@@ -181,23 +181,36 @@ export default function LifeEngineStart() {
               <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-4">
                 <Compass size={22} className="text-amber-600" />
               </div>
-              <h1 className="text-2xl font-bold text-text-primary">Di mana kamu sekarang?</h1>
-              <p className="text-sm text-text-secondary mt-2">Jujurlah pada dirimu sendiri — ini untuk membantumu, bukan menghakimi.</p>
+              <h1 className="text-2xl font-bold text-text-primary">Kondisi kamu saat ini paling mirip yang mana?</h1>
+              <p className="text-sm text-text-secondary mt-2">Tidak ada jawaban benar atau salah. Pilih yang paling menggambarkan dirimu saat ini.</p>
             </div>
-            <OptionGrid
-              options={ZONES}
-              selected={zone}
-              onChange={setZone}
-              getLabel={(z) => ZONE_INFO[z].label}
-              getEmoji={(z) => ZONE_INFO[z].emoji}
-            />
-            {zone && (
-              <div className="mt-4 p-4 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100">
-                <p className="text-xs text-text-secondary leading-relaxed italic">
-                  "{ZONE_INFO[zone].encouragement}"
-                </p>
-              </div>
-            )}
+            <div className="space-y-3">
+              {ZONES.map((z) => {
+                const info = ZONE_INFO[z];
+                const active = zone === z;
+                return (
+                  <button key={z} onClick={() => setZone(z)}
+                    className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                      active
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                        : "border-border hover:border-amber-300 hover:bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl flex-shrink-0 mt-0.5">{info.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold ${active ? "text-amber-700" : "text-text-primary"}`}>
+                          {info.friendlyLabel}
+                        </p>
+                        <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{info.friendlyDescription}</p>
+                        <p className="text-[10px] text-text-secondary/50 mt-1">({info.label})</p>
+                      </div>
+                      {active && <Check size={18} className="flex-shrink-0 text-amber-500 mt-1" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

@@ -176,6 +176,8 @@ export interface StageInfo {
 export interface ZoneInfo {
   zone: GrowthZone;
   label: string;
+  friendlyLabel: string;
+  friendlyDescription: string;
   emoji: string;
   description: string;
   encouragement: string;

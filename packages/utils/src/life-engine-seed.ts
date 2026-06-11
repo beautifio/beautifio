@@ -56,6 +56,8 @@ export const ZONE_INFO: Record<string, ZoneInfo> = {
   comfort: {
     zone: "comfort",
     label: "Zona Nyaman",
+    friendlyLabel: "Saya merasa hidup saya nyaman saat ini",
+    friendlyDescription: "Sekarang semuanya terasa cukup nyaman dan belum banyak tantangan baru.",
     emoji: "🛋️",
     description: "Kamu aman dan nyaman, tapi tidak bertumbuh. Tidak ada yang salah — tapi mimpi besar tidak pernah lahir di sini.",
     encouragement: "Ambiiiiil satu langkah kecil ke arah mimpimu. Rasa tidak nyaman adalah temanmu.",
@@ -63,13 +65,17 @@ export const ZONE_INFO: Record<string, ZoneInfo> = {
   fear: {
     zone: "fear",
     label: "Zona Takut",
-    emoji: "😰",
+    friendlyLabel: "Saya ingin berubah tapi masih takut",
+    friendlyDescription: "Saya punya impian atau target, tetapi masih sering ragu, malu, atau takut gagal.",
+    emoji: "😟",
     description: "Kamu ingin maju tapi ragu, takut gagal, takut dihakimi. Ini titik paling banyak orang menyerah. Tapi kamu di sini — sadar — yang artinya kamu peduli.",
     encouragement: "Keberanian bukan tidak takut. Keberanian adalah bertindak meskipun takut. Satu langkah kecil hari ini.",
   },
   learning: {
     zone: "learning",
     label: "Zona Belajar",
+    friendlyLabel: "Saya sedang banyak belajar hal baru",
+    friendlyDescription: "Saya mulai mencoba hal baru, belajar kemampuan baru, dan terus berlatih.",
     emoji: "📚",
     description: "Kamu mulai mengambil tantangan. Belajar hal baru. Kadang gagal — dan itu artinya kamu benar-benar belajar.",
     encouragement: "Kegagalan = data. Bukan vonis. Setiap error adalah progress. Terus!",
@@ -77,6 +83,8 @@ export const ZONE_INFO: Record<string, ZoneInfo> = {
   growth: {
     zone: "growth",
     label: "Zona Bertumbuh",
+    friendlyLabel: "Saya sedang berkembang dan mengejar impian",
+    friendlyDescription: "Saya punya tujuan yang jelas dan sedang berusaha mencapainya setiap hari.",
     emoji: "🚀",
     description: "Kamu sudah menemukan ritme. Tantangan yang dulu sulit sekarang terasa biasa. Kamu menginspirasi orang lain tanpa sadar.",
     encouragement: "Sekarang saatnya naikkan standar. Cari tantangan baru. Ingat — ada yang melihatmu dan terinspirasi.",
