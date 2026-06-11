@@ -47,6 +47,15 @@ export default function CreateJournalPage() {
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-6 pt-6 pb-24">
+        <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50 flex items-start gap-2 mb-4">
+          <BookHeart size={16} className="text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="text-xs text-amber-800 dark:text-amber-300">
+            <p className="font-medium">Fitur ini akan dipindahkan</p>
+            <p className="mt-0.5 text-amber-700 dark:text-amber-400">
+              Catat perjalanan mimpimu di <button onClick={() => router.push("/journey")} className="underline font-medium cursor-pointer">Journey</button> — fitur refleksi harian yang lebih terpadu.
+            </p>
+          </div>
+        </div>
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => router.back()}
