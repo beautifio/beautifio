@@ -31,6 +31,19 @@ export async function getActiveJourney(
   return data;
 }
 
+export async function getAllJourneys(
+  userId: string,
+  limit = 20
+): Promise<DreamJourney[]> {
+  const { data } = await db()
+    .from("dream_journeys")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return data || [];
+}
+
 export async function createJourney(
   userId: string,
   templateSlug: string,
@@ -75,31 +88,42 @@ export async function createJourney(
     }
   }
 
-  for (const bw of bigWinsData) {
-    const { data: bigWin } = await db()
+  // Batch insert all big wins
+  if (bigWinsData.length > 0) {
+    const { data: insertedBigWins } = await db()
       .from("big_wins")
-      .insert({
-        journey_id: journey.id,
-        title: bw.title,
-        description: bw.description,
-        why_it_matters: bw.why_it_matters || "",
-        alternative_path: bw.alternative_path || "",
-        order_index: bw.order,
-      })
-      .select()
-      .single();
+      .insert(
+        bigWinsData.map((bw, i) => ({
+          journey_id: journey.id,
+          title: bw.title,
+          description: bw.description,
+          why_it_matters: bw.why_it_matters || "",
+          alternative_path: bw.alternative_path || "",
+          order_index: bw.order ?? i,
+        }))
+      )
+      .select();
 
-    if (bigWin) {
-      const smallWinsForBig = smallWinsData.filter(
-        (sw: any) => sw.big_win_title === bw.title
+    if (insertedBigWins) {
+      const bigWinTitleToId = new Map(
+        insertedBigWins.map((bw: any) => [bw.title, bw.id])
       );
-      for (const sw of smallWinsForBig) {
-        await db().from("small_wins").insert({
-          big_win_id: bigWin.id,
-          title: sw.title,
-          description: sw.description,
-          order_index: sw.order,
-        });
+
+      const allSmallWins = smallWinsData
+        .map((sw: any) => {
+          const bid = bigWinTitleToId.get(sw.big_win_title);
+          if (!bid) return null;
+          return {
+            big_win_id: bid,
+            title: sw.title,
+            description: sw.description,
+            order_index: sw.order,
+          };
+        })
+        .filter((x: any): x is NonNullable<typeof x> => x != null);
+
+      if (allSmallWins.length > 0) {
+        await db().from("small_wins").insert(allSmallWins);
       }
     }
   }
@@ -113,17 +137,6 @@ export async function createJourney(
   }
 
   return journey;
-}
-
-export async function getAllJourneys(
-  userId: string
-): Promise<DreamJourney[]> {
-  const { data } = await db()
-    .from("dream_journeys")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-  return data || [];
 }
 
 /* ─── Big Wins ─── */
@@ -366,9 +379,11 @@ export async function getJourneyProgress(
   userId: string,
   journeyId: string
 ): Promise<JourneyProgress> {
-  const allBigWins = await getBigWins(journeyId);
-  const todayActivities = await getTodayActivities(userId);
-  const todayReflection = await getTodayReflection(userId);
+  const [allBigWins, todayActivities, todayReflection] = await Promise.all([
+    getBigWins(journeyId),
+    getTodayActivities(userId),
+    getTodayReflection(userId),
+  ]);
 
   const currentBigWin =
     allBigWins.find((bw) => !bw.is_completed && !bw.is_failed) || null;

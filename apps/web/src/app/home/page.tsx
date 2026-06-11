@@ -289,16 +289,14 @@ export default function HomeScreen() {
     }
     (async () => {
       try {
-        const { getActiveJourney, getJourneyProgress, getTodayActivities, getTodayReflection } = await import("@/lib/journey-queries");
+        const { getActiveJourney, getJourneyProgress } = await import("@/lib/journey-queries");
         const j = await getActiveJourney(user.id);
         setJourney(j);
         if (j) {
           const p = await getJourneyProgress(user.id, j.id);
           setProgress(p);
-          const acts = await getTodayActivities(user.id);
-          setActivities(acts);
-          const ref = await getTodayReflection(user.id);
-          setReflection(ref);
+          setActivities(p.today_activities);
+          setReflection(p.today_reflection);
         }
       } catch (e) {
         console.error("Failed to load journey data", e);

@@ -25,7 +25,10 @@ export default function JourneyPage() {
   const [navTab, setNavTab] = useState("journey");
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
         const active = await getActiveJourney(user.id);
@@ -35,7 +38,7 @@ export default function JourneyPage() {
         const { supabase } = await import("@/lib/supabase/client");
         if (supabase) {
           const { data } = await supabase
-            .from("user_profiles")
+            .from("users")
             .select("birth_date")
             .eq("id", user.id)
             .maybeSingle<{ birth_date: string }>();
@@ -49,6 +52,7 @@ export default function JourneyPage() {
         }
       } catch (e) {
         console.error("Gagal memuat perjalanan", e);
+        setError("Gagal memuat data pengguna");
       } finally {
         setLoading(false);
       }

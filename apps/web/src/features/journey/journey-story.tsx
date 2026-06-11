@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { BookHeart, Trophy, Sparkles, Quote, Heart, Star } from "lucide-react";
+import { useMemo } from "react";
+import { BookHeart, Trophy, Quote, Star } from "lucide-react";
 import { Card } from "@beautifio/ui";
-import type { JourneyDailyReflection } from "@beautifio/types";
+import type { GrowthTimelineEvent, JourneyDailyReflection } from "@beautifio/types";
 
 interface StoryEntry {
   date: string;
@@ -13,83 +13,57 @@ interface StoryEntry {
 }
 
 interface JourneyStoryProps {
-  userId: string;
-  journeyId: string;
+  timeline: GrowthTimelineEvent[];
+  todayReflection: JourneyDailyReflection | null;
 }
 
-export function JourneyStory({ userId, journeyId }: JourneyStoryProps) {
-  const [entries, setEntries] = useState<StoryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+export function JourneyStory({ timeline, todayReflection }: JourneyStoryProps) {
+  const entries = useMemo<StoryEntry[]>(() => {
+    const result: StoryEntry[] = [];
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { getTimeline } = await import("@/lib/journey-queries");
-        const events = await getTimeline(userId, journeyId);
-        const timelineEntries: StoryEntry[] = [];
-
-        const { getTodayReflection } = await import("@/lib/journey-queries");
-        const todayRef = await getTodayReflection(userId);
-
-        for (const event of events) {
-          if (event.event_type === "small_win_completed") {
-            timelineEntries.push({
-              date: event.event_date,
-              type: "celebration",
-              content: event.title || "Menyelesaikan satu pencapaian!",
-            });
-          } else if (event.event_type === "big_win_completed") {
-            timelineEntries.push({
-              date: event.event_date,
-              type: "celebration",
-              content: "🏆 BIG WIN: " + (event.title || "Pencapaian besar!"),
-            });
-          } else if (event.event_type === "reflection_written") {
-            timelineEntries.push({
-              date: event.event_date,
-              type: "reflection",
-              content: event.description || event.title || "",
-            });
-          }
-        }
-
-        if (todayRef) {
-          const parts: string[] = [];
-          if (todayRef.learned) parts.push("Mempelajari: " + todayRef.learned);
-          if (todayRef.grateful) parts.push("Bersyukur: " + todayRef.grateful);
-          if (todayRef.improve) parts.push("Perlu diperbaiki: " + todayRef.improve);
-          if (parts.length > 0) {
-            timelineEntries.unshift({
-              date: new Date().toISOString().split("T")[0],
-              type: "reflection",
-              content: parts.join(". "),
-              mood: todayRef.mood,
-            });
-          }
-        }
-
-        timelineEntries.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-
-        setEntries(timelineEntries);
-      } catch (e) {
-        console.error("Failed to load story", e);
-      } finally {
-        setLoading(false);
+    for (const event of timeline) {
+      if (event.event_type === "small_win_completed") {
+        result.push({
+          date: event.event_date,
+          type: "celebration",
+          content: event.title || "Menyelesaikan satu pencapaian!",
+        });
+      } else if (event.event_type === "big_win_completed") {
+        result.push({
+          date: event.event_date,
+          type: "celebration",
+          content: "🏆 BIG WIN: " + (event.title || "Pencapaian besar!"),
+        });
+      } else if (event.event_type === "reflection_written") {
+        result.push({
+          date: event.event_date,
+          type: "reflection",
+          content: event.description || event.title || "",
+        });
       }
-    })();
-  }, [userId, journeyId]);
+    }
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 rounded-xl bg-surface border border-border animate-pulse" />
-        ))}
-      </div>
+    if (todayReflection) {
+      const parts: string[] = [];
+      if (todayReflection.learned) parts.push("Mempelajari: " + todayReflection.learned);
+      if (todayReflection.grateful) parts.push("Bersyukur: " + todayReflection.grateful);
+      if (todayReflection.improve) parts.push("Perlu diperbaiki: " + todayReflection.improve);
+      if (parts.length > 0) {
+        result.unshift({
+          date: new Date().toISOString().split("T")[0],
+          type: "reflection",
+          content: parts.join(". "),
+          mood: todayReflection.mood,
+        });
+      }
+    }
+
+    result.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }
+
+    return result;
+  }, [timeline, todayReflection]);
 
   if (entries.length === 0) {
     return (

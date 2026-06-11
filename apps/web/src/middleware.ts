@@ -57,9 +57,13 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user: any = null;
+  try {
+    const result = await supabase.auth.getUser();
+    user = result.data?.user;
+  } catch {
+    // Session check failed — treat as unauthenticated
+  }
 
   const isAuth = !!user;
 

@@ -339,20 +339,16 @@ export default function ProfileScreen() {
     if (!user) return;
     (async () => {
       try {
-        const {
-          getActiveJourney, getJourneyProgress,
-          getTodayActivities, getTimeline,
-        } = await import("@/lib/journey-queries");
+        const { getActiveJourney, getJourneyProgress, getTimeline } = await import("@/lib/journey-queries");
         const j = await getActiveJourney(user.id);
         setJourney(j);
         if (j) {
-          const [p, a, t] = await Promise.all([
+          const [p, t] = await Promise.all([
             getJourneyProgress(user.id, j.id),
-            getTodayActivities(user.id),
             getTimeline(user.id, j.id, 3),
           ]);
           setProgress(p);
-          setActivities(a);
+          setActivities(p.today_activities);
           setTimeline(t);
         }
       } catch (e) {

@@ -10,8 +10,8 @@ import { Button, Card, Skeleton, BottomNavigation } from "@beautifio/ui";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  getActiveJourney, getBigWins, getTodayActivities,
-  getTodayReflection, getJourneyProgress, getTimeline,
+  getActiveJourney, getBigWins,
+  getJourneyProgress, getTimeline,
   completeActivity, completeSmallWin, saveDailyReflection,
   updateBigWin, completeBigWin, failBigWin, saveBigWinReflection,
   generateAndInsertActivities, getSpiritualPreferences,
@@ -67,41 +67,43 @@ export default function JourneyDetailPage() {
   const [sectionTab, setSectionTab] = useState<"today" | "wins" | "timeline" | "story">("today");
 
   const loadData = useCallback(async () => {
-    if (!user || !id) return;
+    if (!user || !id) {
+      setLoading(false);
+      return;
+    }
     const j = await getActiveJourney(user.id);
     if (!j || j.id !== id) {
-      const allJourneys = await import("@/lib/journey-queries").then(
-        (m) => m.getAllJourneys
-      );
-      const journeys = await allJourneys(user.id);
+      const { getAllJourneys } = await import("@/lib/journey-queries");
+      const journeys = await getAllJourneys(user.id);
       const found = journeys.find((j: DreamJourney) => j.id === id);
       if (!found) {
+        setLoading(false);
         router.push("/journey");
         return;
       }
       setJourney(found);
+      setLoading(false);
       return;
     }
     setJourney(j);
 
-    const [bw, acts, ref, prog, tl, sp] = await Promise.all([
+    const [bw, prog, tl, sp] = await Promise.all([
       getBigWins(id),
-      getTodayActivities(user.id),
-      getTodayReflection(user.id),
       getJourneyProgress(user.id, id),
       getTimeline(user.id, id),
       getSpiritualPreferences(user.id),
     ]);
 
-    if (acts.length === 0) {
+    const activities = prog.today_activities;
+    if (activities.length === 0) {
       const generated = await generateAndInsertActivities(j, sp, undefined);
       setActivities(generated);
     } else {
-      setActivities(acts);
+      setActivities(activities);
     }
 
     setBigWins(bw);
-    setReflection(ref);
+    setReflection(prog.today_reflection);
     setProgress(prog);
     setTimeline(tl);
     setSpiritualPref(sp);
@@ -119,7 +121,7 @@ export default function JourneyDetailPage() {
     }
 
     setLoading(false);
-  }, [user, id, router]);
+  }, [user, id]);
 
   useEffect(() => {
     loadData();
@@ -127,21 +129,18 @@ export default function JourneyDetailPage() {
 
   const handleCompleteActivity = async (activityId: string) => {
     await completeActivity(activityId);
-    setActivities((prev) =>
-      prev.map((a) =>
+    setActivities((prev) => {
+      const next = prev.map((a) =>
         a.id === activityId
           ? { ...a, is_completed: true, completed_at: new Date().toISOString() }
           : a
-      )
-    );
-
-    const updatedActivities = activities.map((a) =>
-      a.id === activityId ? { ...a, is_completed: true } : a
-    );
-    const completedAll = updatedActivities.every((a) => a.is_completed);
-    if (completedAll) {
-      setShowReflection(true);
-    }
+      );
+      const completedAll = next.every((a) => a.is_completed);
+      if (completedAll) {
+        setShowReflection(true);
+      }
+      return next;
+    });
   };
 
   const handleSaveNote = async (activityId: string, notes: string) => {
@@ -159,9 +158,14 @@ export default function JourneyDetailPage() {
   }) => {
     if (!user || !journey) return;
     await saveDailyReflection(user.id, journey.id, data);
+    setReflection({
+      id: "",
+      user_id: user.id,
+      journey_id: journey.id,
+      date: new Date().toISOString().split("T")[0],
+      ...data,
+    });
     setShowReflection(false);
-    const updated = await getTodayReflection(user.id);
-    setReflection(updated);
   };
 
   const handleCompleteSmallWin = async (
@@ -438,7 +442,7 @@ export default function JourneyDetailPage() {
         {sectionTab === "story" && (
           <div>
             <h2 className="text-base font-bold text-text-primary mb-4">Cerita Perjalananku</h2>
-            <JourneyStory userId={user!.id} journeyId={journey.id} />
+            <JourneyStory timeline={timeline} todayReflection={reflection} />
           </div>
         )}
 
