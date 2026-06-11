@@ -23,7 +23,7 @@ interface OnboardingData {
 }
 
 const steps = [
-  { id: "age", title: "Usia", subtitle: "Berapa usiamu?", icon: Heart, options: ["16-17", "18-20", "21-23", "24+"] },
+  { id: "age", title: "Usia", subtitle: "Berapa usiamu?", icon: Heart, options: ["10-12", "13-15", "16-17", "18-20", "21-23", "24+"] },
   { id: "city", title: "Kota", subtitle: "Kamu tinggal di mana?", icon: MapPin, input: true },
   { id: "status", title: "Status", subtitle: "Apa statusmu saat ini?", icon: GraduationCap, options: ["Pelajar SMA/SMK", "Mahasiswa", "Fresh Graduate", "Bekerja", "Mencari Pekerjaan"], multi: true },
   { id: "goals", title: "Tujuan Utama", subtitle: "Apa yang ingin kamu capai?", icon: Target, options: ["Menentukan Karir", "Mengembangkan Skill", "Membangun Relasi", "Mencari Beasiswa", "Mendapatkan Mentor", "Memulai Bisnis"], multi: true, max: 3 },
