@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Compass, Sparkles, Flame, ArrowRight,
+  Compass, Flame, ArrowRight,
   Settings, LogOut, LogIn, User,
   BookOpen, BookHeart, Users, Heart,
   Shield, ChevronRight, CheckCircle2, Circle,
@@ -354,8 +354,7 @@ export default function ProfileScreen() {
         setActivities(p.today_activities);
         setTimeline(t);
       }
-    } catch (e) {
-      console.error("Failed to load journey", e);
+    } catch {
       setDataError("Gagal memuat data perjalanan. Silakan coba lagi.");
     } finally {
       setDataLoading(false);

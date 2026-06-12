@@ -16,9 +16,24 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   isLoading: true,
-  setUser: (user) => set({ user }),
-  setSession: (session) => set({ session }),
-  setLoading: (isLoading) => set({ isLoading }),
+  setUser: (user) => {
+    set((state) => {
+      if (state.user?.id === user?.id) return state;
+      return { user };
+    });
+  },
+  setSession: (session) => {
+    set((state) => {
+      if (state.session?.access_token === session?.access_token) return state;
+      return { session };
+    });
+  },
+  setLoading: (isLoading) => {
+    set((state) => {
+      if (state.isLoading === isLoading) return state;
+      return { isLoading };
+    });
+  },
   signOut: async () => {
     try {
       const { supabase } = await import("@/lib/supabase/client");
@@ -30,5 +45,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     set({ user: null, session: null, isLoading: false });
   },
-  reset: () => set({ user: null, session: null, isLoading: false }),
+  reset: () => {
+    set({ user: null, session: null, isLoading: false });
+  },
 }));
