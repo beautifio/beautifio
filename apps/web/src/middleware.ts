@@ -4,17 +4,25 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 const authPages = ["/login", "/register", "/forgot-password", "/auth"];
 
 const protectedPages = [
+  "/home",
+  "/journey",
   "/profil",
+  "/cerita",
+  "/circle",
+  "/mentors",
+  "/discover",
+  "/inspirasi",
   "/familia",
   "/jurnal/buat",
   "/inspirasi/post",
+  "/onboarding",
+  "/welcome",
 ];
 
 const deprecatedPages: Record<string, string> = {
   "/life": "/journey",
   "/life/start": "/journey",
   "/roadmap": "/journey",
-  "/discover": "/journey",
   "/onboarding": "/journey",
   "/welcome": "/journey",
 };

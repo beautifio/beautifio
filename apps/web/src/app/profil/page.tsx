@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -334,28 +334,37 @@ export default function ProfileScreen() {
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [activities, setActivities] = useState<DailyActivity[]>([]);
   const [timeline, setTimeline] = useState<GrowthTimelineEvent[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
+
+  const loadProfileData = useCallback(async () => {
+    if (!user) return;
+    setDataLoading(true);
+    setDataError(null);
+    try {
+      const { getActiveJourney, getJourneyProgress, getTimeline } = await import("@/lib/journey-queries");
+      const j = await getActiveJourney(user.id);
+      setJourney(j);
+      if (j) {
+        const [p, t] = await Promise.all([
+          getJourneyProgress(user.id, j.id),
+          getTimeline(user.id, j.id, 3),
+        ]);
+        setProgress(p);
+        setActivities(p.today_activities);
+        setTimeline(t);
+      }
+    } catch (e) {
+      console.error("Failed to load journey", e);
+      setDataError("Gagal memuat data perjalanan. Silakan coba lagi.");
+    } finally {
+      setDataLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      try {
-        const { getActiveJourney, getJourneyProgress, getTimeline } = await import("@/lib/journey-queries");
-        const j = await getActiveJourney(user.id);
-        setJourney(j);
-        if (j) {
-          const [p, t] = await Promise.all([
-            getJourneyProgress(user.id, j.id),
-            getTimeline(user.id, j.id, 3),
-          ]);
-          setProgress(p);
-          setActivities(p.today_activities);
-          setTimeline(t);
-        }
-      } catch (e) {
-        console.error("Failed to load journey", e);
-      }
-    })();
-  }, [user]);
+    loadProfileData();
+  }, [loadProfileData]);
 
   if (isLoading) {
     return (
@@ -375,6 +384,34 @@ export default function ProfileScreen() {
   }
 
   if (!user) return <LoginPrompt />;
+
+  if (dataError) {
+    return (
+      <div className="min-h-screen bg-bg p-6 max-w-content mx-auto flex flex-col items-center justify-center text-center">
+        <p className="text-destructive font-medium mb-4">{dataError}</p>
+        <Button variant="primary" size="sm" onClick={loadProfileData}>
+          Coba Lagi
+        </Button>
+      </div>
+    );
+  }
+
+  if (dataLoading) {
+    return (
+      <div className="min-h-screen bg-bg">
+        <div className="max-w-content mx-auto px-6 pt-6 pb-24 space-y-6">
+          <div className="flex flex-col items-center pt-4 pb-6">
+            <Skeleton className="w-20 h-20 rounded-full mb-4" />
+            <Skeleton className="w-36 h-6 mb-2" />
+            <Skeleton className="w-56 h-4" />
+          </div>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="w-full h-32 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg">

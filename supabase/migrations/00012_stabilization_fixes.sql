@@ -8,20 +8,29 @@ ALTER TABLE users
   ADD COLUMN IF NOT EXISTS birth_date DATE;
 
 -- 2. Fix: Add INSERT RLS policy for big_wins
+-- Uses subquery through dream_journeys (which has user_id) because big_wins only has journey_id
 CREATE POLICY "Users can insert own big wins"
   ON big_wins
   FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM dream_journeys
+      WHERE dream_journeys.id = big_wins.journey_id
+        AND dream_journeys.user_id = auth.uid()
+    )
+  );
 
 -- 3. Fix: Add INSERT RLS policy for small_wins
+-- Uses subquery through big_wins → dream_journeys → user_id chain
 CREATE POLICY "Users can insert own small wins"
   ON small_wins
   FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM big_wins
-      WHERE big_wins.id = small_wins.big_win_id
-        AND big_wins.user_id = auth.uid()
+      SELECT 1 FROM big_wins b
+      JOIN dream_journeys j ON b.journey_id = j.id
+      WHERE b.id = small_wins.big_win_id
+        AND j.user_id = auth.uid()
     )
   );
 

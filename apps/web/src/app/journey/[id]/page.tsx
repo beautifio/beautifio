@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Sparkles, CheckCircle2, Circle, BookOpen, Heart,
-  Zap, Users, Target, Flame, ArrowLeft, RotateCcw,
+  Sparkles, BookOpen, Heart,
+  Target, ArrowLeft,
 } from "lucide-react";
 import { Button, Card, Skeleton, BottomNavigation } from "@beautifio/ui";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
@@ -60,6 +60,7 @@ export default function JourneyDetailPage() {
   const [dreamMeaning, setDreamMeaning] = useState("");
   const [ageGroup, setAgeGroup] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showReflection, setShowReflection] = useState(false);
   const [failureBigWin, setFailureBigWin] = useState<BigWin | null>(null);
   const [celebrationBigWin, setCelebrationBigWin] = useState<BigWin | null>(null);
@@ -71,56 +72,59 @@ export default function JourneyDetailPage() {
       setLoading(false);
       return;
     }
-    const j = await getActiveJourney(user.id);
-    if (!j || j.id !== id) {
-      const { getAllJourneys } = await import("@/lib/journey-queries");
-      const journeys = await getAllJourneys(user.id);
-      const found = journeys.find((j: DreamJourney) => j.id === id);
-      if (!found) {
-        setLoading(false);
-        router.push("/journey");
-        return;
+    try {
+      let j = await getActiveJourney(user.id);
+      if (!j || j.id !== id) {
+        const { getAllJourneys } = await import("@/lib/journey-queries");
+        const journeys = await getAllJourneys(user.id);
+        const found = journeys.find((j: DreamJourney) => j.id === id);
+        if (!found) {
+          setLoading(false);
+          router.push("/journey");
+          return;
+        }
+        j = found;
       }
-      setJourney(found);
+      setJourney(j);
+
+      const [bw, prog, tl, sp] = await Promise.all([
+        getBigWins(id),
+        getJourneyProgress(user.id, id),
+        getTimeline(user.id, id),
+        getSpiritualPreferences(user.id),
+      ]);
+
+      const activities = prog.today_activities;
+      if (activities.length === 0) {
+        const generated = await generateAndInsertActivities(j, sp, undefined);
+        setActivities(generated);
+      } else {
+        setActivities(activities);
+      }
+
+      setBigWins(bw);
+      setReflection(prog.today_reflection);
+      setProgress(prog);
+      setTimeline(tl);
+      setSpiritualPref(sp);
+      const { getDreamTemplate } = await import("@beautifio/utils");
+      const tInfo = getDreamTemplate(j.template_slug) || null;
+      setTemplateInfo(tInfo);
+
+      const meaning = getDreamMeaning(j.template_slug);
+      setDreamMeaning(meaning);
+      const futures = getAlternativeFuturesForTemplate(j.template_slug);
+      setAlternativeFutures(futures);
+      if (j.user_age) {
+        const group = getAgeGroup(j.user_age);
+        if (group) setAgeGroup(getAgeGroupLabel(group));
+      }
+    } catch (e) {
+      console.error("Failed to load journey:", e);
+      setError("Gagal memuat perjalanan. Silakan coba lagi.");
+    } finally {
       setLoading(false);
-      return;
     }
-    setJourney(j);
-
-    const [bw, prog, tl, sp] = await Promise.all([
-      getBigWins(id),
-      getJourneyProgress(user.id, id),
-      getTimeline(user.id, id),
-      getSpiritualPreferences(user.id),
-    ]);
-
-    const activities = prog.today_activities;
-    if (activities.length === 0) {
-      const generated = await generateAndInsertActivities(j, sp, undefined);
-      setActivities(generated);
-    } else {
-      setActivities(activities);
-    }
-
-    setBigWins(bw);
-    setReflection(prog.today_reflection);
-    setProgress(prog);
-    setTimeline(tl);
-    setSpiritualPref(sp);
-    const { getDreamTemplate } = await import("@beautifio/utils");
-    const tInfo = getDreamTemplate(j.template_slug) || null;
-    setTemplateInfo(tInfo);
-
-    const meaning = getDreamMeaning(j.template_slug);
-    setDreamMeaning(meaning);
-    const futures = getAlternativeFuturesForTemplate(j.template_slug);
-    setAlternativeFutures(futures);
-    if (j.user_age) {
-      const group = getAgeGroup(j.user_age);
-      if (group) setAgeGroup(getAgeGroupLabel(group));
-    }
-
-    setLoading(false);
   }, [user, id]);
 
   useEffect(() => {
@@ -172,6 +176,17 @@ export default function JourneyDetailPage() {
     smallWinId: string,
     reflection?: string
   ) => {
+    setBigWins((prev) =>
+      prev.map((bw) => ({
+        ...bw,
+        small_wins: bw.small_wins?.map((sw) =>
+          sw.id === smallWinId
+            ? { ...sw, is_completed: true, completed_at: new Date().toISOString() }
+            : sw
+        ),
+      }))
+    );
+
     await completeSmallWin(smallWinId, reflection);
     const updated = await getBigWins(id);
     setBigWins(updated);
@@ -208,6 +223,17 @@ export default function JourneyDetailPage() {
     setBigWins(bw);
     setFailureBigWin(null);
   };
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-bg p-6 max-w-content mx-auto flex flex-col items-center justify-center text-center">
+        <p className="text-destructive font-medium mb-4">{error}</p>
+        <Button variant="primary" size="sm" onClick={() => { setError(null); setLoading(true); loadData(); }}>
+          Coba Lagi
+        </Button>
+      </div>
+    );
+  }
 
   if (loading || !journey) {
     return (
@@ -402,19 +428,10 @@ export default function JourneyDetailPage() {
               </Button>
             )}
 
-            <div className="mt-6">
-              <h3 className="text-sm font-bold text-text-primary mb-3">Streak</h3>
-              <Card className="p-4">
-                <div className="flex items-center gap-3">
-                  <Flame size={24} className="text-accent" />
-                  <div>
-                    <p className="text-lg font-bold text-text-primary">
-                      {progress?.completed_activities_today || 0} / {progress?.total_activities_today || 6}
-                    </p>
-                    <p className="text-xs text-text-secondary">aktivitas selesai hari ini</p>
-                  </div>
-                </div>
-              </Card>
+            <div className="mt-4 text-center">
+              <p className="text-sm text-text-secondary">
+                {progress?.completed_activities_today || 0} dari {progress?.total_activities_today || 6} aktivitas selesai
+              </p>
             </div>
           </div>
         )}
@@ -454,35 +471,7 @@ export default function JourneyDetailPage() {
           </div>
         )}
 
-        {/* Alternative Futures — always visible at bottom */}
-        {alternativeFutures.length > 0 && (
-          <div className="mt-8 p-4 rounded-2xl bg-muted/20 border border-border/50">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap size={16} className="text-accent" />
-              <h3 className="text-sm font-bold text-text-primary">Jalan Lain, Skill Sama</h3>
-            </div>
-            <p className="text-xs text-text-secondary mb-3">
-              Jika suatu saat kamu mengambil jalan berbeda, kemampuan yang kamu pelajari di sini tetap berguna.
-            </p>
-            <div className="space-y-2">
-              {alternativeFutures.slice(0, 4).map((f, i) => (
-                <div key={i} className="p-3 rounded-xl bg-bg border border-border/30">
-                  <p className="text-sm font-semibold text-text-primary">{f.title}</p>
-                  <p className="text-xs text-text-secondary mt-0.5">{f.description}</p>
-                  {f.skills.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {f.skills.slice(0, 3).map((s, j) => (
-                        <span key={j} className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Alternative Futures shown in FailureModal only */}
       </div>
 
       <BottomNavigation items={NAV_TABS} activeTab={navTab} onTabChange={(id) => { setNavTab(id); router.push(navRoute(id)); }} />
