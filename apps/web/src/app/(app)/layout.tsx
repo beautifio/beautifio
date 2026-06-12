@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { BottomNavigation } from "@beautifio/ui";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
@@ -7,6 +8,15 @@ import { NAV_TABS, navRoute } from "@/lib/navigation";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+
+  useEffect(() => {
+    NAV_TABS.forEach((tab) => router.prefetch(navRoute(tab.id)));
+  }, [router]);
+
+  const onTabChange = useCallback(
+    (id: string) => router.push(navRoute(id)),
+    [router],
+  );
 
   const activeTab = NAV_TABS.find((tab) => {
     const route = navRoute(tab.id);
@@ -19,7 +29,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <BottomNavigation
         items={NAV_TABS}
         activeTab={activeTab}
-        onTabChange={(id) => router.push(navRoute(id))}
+        onTabChange={onTabChange}
       />
     </div>
   );
