@@ -12,6 +12,10 @@ import { Badge } from "@beautifio/ui";
 import { CONTENT_TABS, ANON_CATEGORIES, getAllItems } from "@/lib/inspirasi-data";
 import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
 
+const TAB_ICONS: Record<string, typeof Sparkles> = {
+  Sparkles, BookOpen, PenLine, BookHeart, Quote, Users,
+};
+
 function ContentTypeBar({
   active,
   onChange,
@@ -22,7 +26,7 @@ function ContentTypeBar({
   return (
     <div className="flex overflow-x-auto gap-2 px-4 py-3">
       {CONTENT_TABS.map((tab) => {
-        const Icon = tab.icon;
+        const Icon = TAB_ICONS[tab.icon]!;
         const isActive = tab.key === active;
         return (
           <button
@@ -93,7 +97,7 @@ function InspirasiCard({ item }: { item: InspirasiItem }) {
   }, [router, item.slug]);
 
   const tab = CONTENT_TABS.find((t) => t.key === item.type)!;
-  const TypeIcon = tab.icon;
+  const TypeIcon = TAB_ICONS[tab.icon]!;
 
   return (
     <div
@@ -277,7 +281,7 @@ export default function InspirasiPage() {
       <div className="max-w-2xl mx-auto px-4 pb-4">
         {filteredItems.length === 0 ? (
           <EmptyState
-            icon={activeTabInfo.icon}
+            icon={TAB_ICONS[activeTabInfo.icon]!}
             message={`Tidak ada ${activeTabInfo.label.toLowerCase()} yang ditemukan`}
           />
         ) : (

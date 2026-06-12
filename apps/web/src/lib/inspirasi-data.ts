@@ -26,15 +26,13 @@ export interface InspirasiItem {
   createdAt?: string;
 }
 
-import { Sparkles, BookOpen, PenLine, BookHeart, Quote, Users } from "lucide-react";
-
-export const CONTENT_TABS: { key: ContentType; label: string; icon: typeof Sparkles }[] = [
-  { key: "all", label: "Semua", icon: Sparkles },
-  { key: "story", label: "Cerita", icon: BookOpen },
-  { key: "anonymous", label: "Curhat", icon: PenLine },
-  { key: "journal", label: "Journal", icon: BookHeart },
-  { key: "mentor", label: "Mentor", icon: Quote },
-  { key: "community", label: "Komunitas", icon: Users },
+export const CONTENT_TABS: { key: ContentType; label: string; icon: string }[] = [
+  { key: "all", label: "Semua", icon: "Sparkles" },
+  { key: "story", label: "Cerita", icon: "BookOpen" },
+  { key: "anonymous", label: "Curhat", icon: "PenLine" },
+  { key: "journal", label: "Journal", icon: "BookHeart" },
+  { key: "mentor", label: "Mentor", icon: "Quote" },
+  { key: "community", label: "Komunitas", icon: "Users" },
 ];
 
 export const ANON_CATEGORIES = [

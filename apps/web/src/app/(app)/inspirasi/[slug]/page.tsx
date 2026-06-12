@@ -12,6 +12,10 @@ import { CONTENT_TABS, getAllItems } from "@/lib/inspirasi-data";
 import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
 import { SafeSpaceModal, NeedHelpButton } from "@/features/safe-space/SafeSpaceModal";
 
+const TAB_ICONS: Record<string, typeof Sparkles> = {
+  Sparkles, BookOpen, PenLine, BookHeart, Quote, Users,
+};
+
 function renderContent(text: string) {
   const paragraphs = text.split("\n\n");
   return paragraphs.map((para, i) => {
@@ -112,7 +116,7 @@ export default function InspirasiDetailPage({
   }
 
   const tab = CONTENT_TABS.find((t) => t.key === item.type)!;
-  const TypeIcon = tab.icon;
+  const TypeIcon = TAB_ICONS[tab.icon]!;
 
   const relatedItems = getAllItems().filter((d) => item.related_slugs.includes(d.slug));
 
@@ -285,7 +289,7 @@ export default function InspirasiDetailPage({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {relatedItems.slice(0, 4).map((related) => {
                   const relatedTab = CONTENT_TABS.find((t) => t.key === related.type)!;
-                  const RelatedIcon = relatedTab.icon;
+                  const RelatedIcon = TAB_ICONS[relatedTab.icon]!;
                   return (
                     <Link
                       key={related.id}
