@@ -19,7 +19,16 @@ export function useAuth() {
       return;
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const SESSION_TIMEOUT = 15_000;
+
+    const sessionOrTimeout = Promise.race([
+      supabase.auth.getSession(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("getSession timed out")), SESSION_TIMEOUT),
+      ),
+    ]);
+
+    sessionOrTimeout.then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
