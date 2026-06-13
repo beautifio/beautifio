@@ -79,6 +79,7 @@ export default function JourneyPage() {
         setCreating(false);
       }
     } catch (e: any) {
+      console.error("handleStartJourney error:", e);
       setError(e?.message || "Terjadi kesalahan. Coba lagi.");
       setCreating(false);
     }

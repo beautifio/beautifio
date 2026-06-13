@@ -12,7 +12,7 @@ import type {
   WeeklyReview,
   MonthlyReview,
 } from "@beautifio/types";
-import { generateDailyActivities, getAgeGroupedContent } from "@beautifio/utils";
+import { generateDailyActivities, getAgeGroupedContent, buildDreamTemplates } from "@beautifio/utils";
 
 function db() {
   if (!supabase) throw new Error("Supabase client not initialized");
@@ -86,6 +86,38 @@ export async function createJourney(
   category: string,
   userAge?: number | null
 ): Promise<DreamJourney | null> {
+  // Ensure dream_templates has the template — auto-seed if missing
+  const { count, error: countErr } = await db()
+    .from("dream_templates")
+    .select("*", { count: "exact", head: true })
+    .eq("slug", templateSlug);
+  if (countErr) console.error("createJourney: template count query failed", countErr);
+  if ((count ?? 0) === 0) {
+    const templates = buildDreamTemplates();
+    const tpl = templates[templateSlug];
+    if (tpl) {
+      const { error: seedErr } = await db().from("dream_templates").insert({
+        slug: tpl.slug,
+        title: tpl.title,
+        emoji: tpl.emoji,
+        color: tpl.color,
+        category: tpl.category,
+        duration: tpl.duration,
+        description: tpl.description,
+        why_matters: tpl.why_matters,
+        career_options: tpl.career_options,
+        success_examples: tpl.success_examples,
+        big_wins: tpl.big_wins as any,
+        small_wins: tpl.small_wins as any,
+        daily_activities: tpl.daily_activities as any,
+        alternative_futures: tpl.alternative_futures as any,
+        min_age: tpl.min_age ?? 0,
+        max_age: tpl.max_age ?? 99,
+      });
+      if (seedErr) console.error("createJourney: auto-seed template failed", seedErr);
+    }
+  }
+
   const slug = generateJourneySlug(templateSlug, title);
   const { data: journey, error } = await db()
     .from("dream_journeys")
@@ -101,7 +133,10 @@ export async function createJourney(
     .select()
     .single();
 
-  if (error || !journey) return null;
+  if (error || !journey) {
+    console.error("createJourney: dream_journeys insert failed", { error, userId, templateSlug });
+    return null;
+  }
 
   let bigWinsData: any[] = [];
   let smallWinsData: any[] = [];
@@ -126,7 +161,7 @@ export async function createJourney(
 
   // Batch insert all big wins
   if (bigWinsData.length > 0) {
-    const { data: insertedBigWins } = await db()
+    const { data: insertedBigWins, error: bwError } = await db()
       .from("big_wins")
       .insert(
         bigWinsData.map((bw, i) => ({
@@ -140,7 +175,9 @@ export async function createJourney(
       )
       .select();
 
-    if (insertedBigWins) {
+    if (bwError) {
+      console.error("createJourney: big_wins insert failed", bwError);
+    } else if (insertedBigWins) {
       const bigWinTitleToId = new Map(
         insertedBigWins.map((bw: any) => [bw.title, bw.id])
       );
@@ -159,7 +196,8 @@ export async function createJourney(
         .filter((x: any): x is NonNullable<typeof x> => x != null);
 
       if (allSmallWins.length > 0) {
-        await db().from("small_wins").insert(allSmallWins);
+        const { error: swError } = await db().from("small_wins").insert(allSmallWins);
+        if (swError) console.error("createJourney: small_wins insert failed", swError);
       }
     }
   }
@@ -169,7 +207,8 @@ export async function createJourney(
     spiritualPref: null,
   });
   if (activities.length > 0) {
-    await db().from("daily_activities").insert(activities);
+    const { error: actError } = await db().from("daily_activities").insert(activities);
+    if (actError) console.error("createJourney: daily_activities insert failed", actError);
   }
 
   return journey;
