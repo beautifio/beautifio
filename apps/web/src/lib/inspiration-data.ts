@@ -14,17 +14,32 @@ export interface InspirationItem {
   publishedAt: string;
 }
 
-const DREAM_MAP: Record<string, { title: string; emoji: string }> = {
-  doctor: { title: "Dokter", emoji: "🩺" },
-  entrepreneur: { title: "Entrepreneur", emoji: "💼" },
-  programmer: { title: "Programmer", emoji: "💻" },
-  athlete: { title: "Atlet", emoji: "🏅" },
-  musician: { title: "Musisi", emoji: "🎵" },
-  "content-creator": { title: "Content Creator", emoji: "🎨" },
-  "football-player": { title: "Pemain Bola", emoji: "⚽" },
-  runner: { title: "Pelari", emoji: "🏃" },
-  "digital-marketer": { title: "Digital Marketer", emoji: "📱" },
+export interface DreamCategory {
+  slug: string;
+  label: string;
+  emoji: string;
+  dreams: { slug: string; title: string; emoji: string }[];
+}
+
+const DREAM_MAP: Record<string, { title: string; emoji: string; category: string }> = {
+  doctor: { title: "Dokter", emoji: "🩺", category: "health" },
+  entrepreneur: { title: "Entrepreneur", emoji: "💼", category: "business" },
+  programmer: { title: "Programmer", emoji: "💻", category: "tech" },
+  athlete: { title: "Atlet", emoji: "🏅", category: "sports" },
+  musician: { title: "Musisi", emoji: "🎵", category: "creative" },
+  "content-creator": { title: "Content Creator", emoji: "🎨", category: "creative" },
+  "football-player": { title: "Pemain Bola", emoji: "⚽", category: "sports" },
+  runner: { title: "Pelari", emoji: "🏃", category: "sports" },
+  "digital-marketer": { title: "Digital Marketer", emoji: "📱", category: "business" },
 };
+
+export const DREAM_CATEGORIES: DreamCategory[] = [
+  { slug: "sports", label: "Olahraga", emoji: "🏅", dreams: ["athlete", "football-player", "runner"].map((s) => ({ slug: s, ...DREAM_MAP[s] })) },
+  { slug: "health", label: "Kesehatan", emoji: "🩺", dreams: ["doctor"].map((s) => ({ slug: s, ...DREAM_MAP[s] })) },
+  { slug: "tech", label: "Teknologi", emoji: "💻", dreams: ["programmer"].map((s) => ({ slug: s, ...DREAM_MAP[s] })) },
+  { slug: "business", label: "Bisnis", emoji: "💼", dreams: ["entrepreneur", "digital-marketer"].map((s) => ({ slug: s, ...DREAM_MAP[s] })) },
+  { slug: "creative", label: "Kreatif", emoji: "🎨", dreams: ["musician", "content-creator"].map((s) => ({ slug: s, ...DREAM_MAP[s] })) },
+];
 
 const DATA: InspirationItem[] = [
   // ===== STORIES =====
@@ -232,6 +247,13 @@ export function getInspirationBySlug(slug: string): InspirationItem | undefined 
 
 export function getInspirationForDream(dreamSlug: string): InspirationItem[] {
   return DATA.filter((item) => item.dreamSlugs.includes(dreamSlug));
+}
+
+export function getInspirationForCategory(categorySlug: string): InspirationItem[] {
+  const cat = DREAM_CATEGORIES.find((c) => c.slug === categorySlug);
+  if (!cat) return [];
+  const slugs = cat.dreams.map((d) => d.slug);
+  return DATA.filter((item) => item.dreamSlugs.some((s) => slugs.includes(s)));
 }
 
 export function getInspirationGrouped(): {

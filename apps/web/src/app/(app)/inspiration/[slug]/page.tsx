@@ -19,7 +19,7 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
     return allItems
       .filter((i) => i.id !== item.id && (
         i.dreamSlugs.some((s) => item.dreamSlugs.includes(s)) ||
-        i.tags.some((t) => item.tags.includes(t))
+        (item.dreamSlugs.length === 0 && i.tags.some((t) => item.tags.includes(t)))
       ))
       .slice(0, 3);
   }, [item]);

@@ -5,17 +5,15 @@ import { useRouter } from "next/navigation";
 import { Search, Clock, Sparkles, BookOpen } from "lucide-react";
 import {
   getAllInspiration, getInspirationGrouped, getInspirationForDream,
-  searchInspiration, DREAM_MAP,
+  getInspirationForCategory, searchInspiration, DREAM_MAP, DREAM_CATEGORIES,
 } from "@/lib/inspiration-data";
-import type { InspirationItem } from "@/lib/inspiration-data";
+import type { InspirationItem, DreamCategory } from "@/lib/inspiration-data";
 
 const TABS = [
   { key: "for-you", label: "Untukmu", icon: Sparkles },
   { key: "stories", label: "Cerita", icon: BookOpen },
   { key: "articles", label: "Artikel", icon: BookOpen },
 ];
-
-const DREAM_SLUGS = Object.keys(DREAM_MAP);
 
 function InspirationCard({ item }: { item: InspirationItem }) {
   const router = useRouter();
@@ -70,6 +68,7 @@ function InspirationCard({ item }: { item: InspirationItem }) {
 export default function InspirationPage() {
   const [activeTab, setActiveTab] = useState("for-you");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDream, setSelectedDream] = useState<string | null>(null);
 
   const all = getAllInspiration();
@@ -77,10 +76,11 @@ export default function InspirationPage() {
 
   const forYou = useMemo(() => {
     let items = all;
+    if (selectedCategory && !selectedDream) items = getInspirationForCategory(selectedCategory);
     if (selectedDream) items = getInspirationForDream(selectedDream);
     if (searchQuery) items = searchInspiration(searchQuery);
     return items;
-  }, [selectedDream, searchQuery]);
+  }, [selectedCategory, selectedDream, searchQuery]);
 
   const filteredStories = useMemo(() => {
     if (!searchQuery) return stories;
@@ -146,33 +146,67 @@ export default function InspirationPage() {
         </div>
 
         {activeTab === "for-you" && !searchQuery && (
-          <div className="flex gap-2 overflow-x-auto scrollbar-none">
-            <button
-              onClick={() => setSelectedDream(null)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all cursor-pointer ${
-                !selectedDream
-                  ? "bg-purple-600 text-white border-purple-600"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-purple-300"
-              }`}
-            >
-              Semua
-            </button>
-            {DREAM_SLUGS.map((slug) => {
-              const dream = DREAM_MAP[slug];
-              return (
+          <div className="space-y-2">
+            {/* Category row */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => { setSelectedCategory(null); setSelectedDream(null); }}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all cursor-pointer ${
+                  !selectedCategory && !selectedDream
+                    ? "bg-purple-600 text-white border-purple-600"
+                    : "bg-white text-gray-700 border-gray-200 hover:border-purple-300"
+                }`}
+              >
+                Semua
+              </button>
+              {DREAM_CATEGORIES.map((cat) => (
                 <button
-                  key={slug}
-                  onClick={() => setSelectedDream(slug === selectedDream ? null : slug)}
+                  key={cat.slug}
+                  onClick={() => {
+                    if (selectedCategory === cat.slug) {
+                      setSelectedCategory(null);
+                    } else {
+                      setSelectedCategory(cat.slug);
+                      setSelectedDream(null);
+                    }
+                  }}
                   className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all cursor-pointer ${
-                    selectedDream === slug
+                    selectedCategory === cat.slug && !selectedDream
                       ? "bg-purple-600 text-white border-purple-600"
                       : "bg-white text-gray-700 border-gray-200 hover:border-purple-300"
                   }`}
                 >
-                  {dream.emoji} {dream.title}
+                  {cat.emoji} {cat.label}
                 </button>
-              );
-            })}
+              ))}
+            </div>
+
+            {/* Sub-dream chips — show when a category is active */}
+            {selectedCategory && !selectedDream && (
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
+                {DREAM_CATEGORIES.find((c) => c.slug === selectedCategory)?.dreams.map((d) => (
+                  <button
+                    key={d.slug}
+                    onClick={() => setSelectedDream(d.slug)}
+                    className="flex-shrink-0 px-2.5 py-1 rounded-md text-[10px] font-medium border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all cursor-pointer"
+                  >
+                    {d.emoji} {d.title}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Active dream indicator */}
+            {selectedDream && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setSelectedDream(null)}
+                  className="flex-shrink-0 px-2.5 py-1 rounded-md text-[10px] font-medium bg-purple-600 text-white border border-purple-600 transition-all cursor-pointer"
+                >
+                  {DREAM_MAP[selectedDream]?.emoji} {DREAM_MAP[selectedDream]?.title} ✕
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
