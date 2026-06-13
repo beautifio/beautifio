@@ -65,6 +65,14 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // Handle OAuth PKCE code exchange — before any render
+  const code = request.nextUrl.searchParams.get("code");
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const dest = error ? "/login?error=auth_failed" : "/home";
+    return NextResponse.redirect(new URL(dest, request.url));
+  }
+
   let user: any = null;
   try {
     const result = await supabase.auth.getUser();

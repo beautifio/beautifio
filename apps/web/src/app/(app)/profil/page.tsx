@@ -4,21 +4,21 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Compass, Flame, ArrowRight,
+  Compass, ArrowRight,
   Settings, LogOut, LogIn, User,
-  BookOpen, BookHeart, Users, Heart,
-  Shield, ChevronRight, CheckCircle2, Circle,
+  BookOpen, BookHeart, History,
+  ChevronRight,
 } from "lucide-react";
 import {
   Card, CardHeader, CardTitle, CardContent, Avatar,
   Button, Skeleton,
 } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
-import type { DreamJourney, JourneyProgress, DailyActivity, GrowthTimelineEvent } from "@beautifio/types";
+import type { DreamJourney, JourneyProgress, DailyActivity } from "@beautifio/types";
+import type { LifeTimelineEntry, DimensionSummary } from "@/lib/journey-queries";
+import { journeyUrl } from "@/lib/journey-queries";
 
-/* ─── PROFILE HERO ─── */
-
-function ProfileHero({ journey, progress }: { journey: DreamJourney | null; progress: JourneyProgress | null }) {
+function ProfileHero({ journey }: { journey: DreamJourney | null }) {
   const { user } = useAuth();
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Pengguna";
   const initials = user?.user_metadata?.full_name
@@ -32,26 +32,6 @@ function ProfileHero({ journey, progress }: { journey: DreamJourney | null; prog
           <div className="flex flex-col items-center">
             <Avatar initials={initials} size="xl" />
             <h1 className="text-xl font-bold text-text-primary mt-4">{displayName}</h1>
-
-            {journey ? (
-              <div className="mt-4 w-full max-w-sm p-4 rounded-2xl bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20 text-center">
-                <span className="text-3xl block mb-2">{journey.emoji}</span>
-                <p className="text-sm font-bold text-text-primary">{journey.title}</p>
-                {progress?.current_big_win && (
-                  <>
-                    <div className="w-8 h-0.5 bg-accent/30 mx-auto my-2" />
-                    <p className="text-xs text-text-secondary">
-                      🏆 {progress.current_big_win.title}
-                    </p>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="mt-4 w-full max-w-sm p-4 rounded-2xl bg-accent/5 border border-dashed border-accent/30 text-center">
-                <p className="text-sm text-text-secondary">Belum memiliki perjalanan</p>
-                <p className="text-xs text-text-secondary/60 mt-1">Pilih mimpi dan mulai perjalananmu</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -59,14 +39,7 @@ function ProfileHero({ journey, progress }: { journey: DreamJourney | null; prog
   );
 }
 
-/* ─── PERJALANAN HIDUP SAYA ─── */
-
-function MyJourneySection({ journey, progress, activities, timeline }: {
-  journey: DreamJourney | null;
-  progress: JourneyProgress | null;
-  activities: DailyActivity[];
-  timeline: GrowthTimelineEvent[];
-}) {
+function JourneyIdentity({ journey, progress }: { journey: DreamJourney | null; progress: JourneyProgress | null }) {
   const router = useRouter();
 
   if (!journey) {
@@ -92,89 +65,38 @@ function MyJourneySection({ journey, progress, activities, timeline }: {
     );
   }
 
-  const completedToday = progress?.completed_activities_today || 0;
-  const totalToday = progress?.total_activities_today || 6;
-
   return (
     <div className="px-6">
-      <Card padding="lg" className="border-primary/20 bg-primary/5">
+      <Card padding="lg" className="border-accent/20">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Compass size={18} className="text-primary" />
-              <CardTitle>Perjalanan Hidup Saya</CardTitle>
+              <Compass size={18} className="text-accent" />
+              <CardTitle>Siapa Aku?</CardTitle>
             </div>
             <button
-              onClick={() => router.push(`/journey/${journey.id}`)}
-              className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+              onClick={() => router.push(journeyUrl(journey))}
+              className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors cursor-pointer"
             >
-              Buka
+              Buka Perjalanan
             </button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-3">
+        <CardContent>
+          <div className="flex items-center gap-3 mb-3">
             <span className="text-3xl">{journey.emoji}</span>
             <div>
               <p className="text-sm font-bold text-text-primary">{journey.title}</p>
-              {progress?.current_big_win && (
-                <p className="text-xs text-text-secondary">🏆 {progress.current_big_win.title}</p>
-              )}
-              {progress?.current_small_win && (
-                <p className="text-xs text-text-secondary/70 ml-4">→ {progress.current_small_win.title}</p>
-              )}
+              <p className="text-xs text-text-secondary">Ini adalah mimpiku</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Flame size={14} className="text-accent" />
-            <span className="text-xs text-text-secondary">
-              {completedToday}/{totalToday} hari ini
-            </span>
-            {progress && (
-              <span className="text-xs text-text-secondary/60 ml-auto">
-                Big Win {progress.big_wins_completed}/{progress.big_wins_total}
-              </span>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            {Array.from({ length: totalToday }).map((_, i) => (
-              <div
-                key={i}
-                className={`flex-1 h-1.5 rounded-full ${
-                  i < completedToday ? "bg-primary" : "bg-border"
-                }`}
-              />
-            ))}
-          </div>
-
-          {activities.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {activities.slice(0, 4).map((a) => (
-                <div key={a.id} className="flex items-center gap-2 text-xs text-text-secondary">
-                  {a.is_completed ? (
-                    <CheckCircle2 size={10} className="text-success" />
-                  ) : (
-                    <Circle size={10} className="text-text-secondary/30" />
-                  )}
-                  <span className={a.is_completed ? "line-through opacity-60" : ""}>
-                    {a.title}
-                  </span>
-                </div>
-              ))}
-              {activities.length > 4 && (
-                <p className="text-[10px] text-text-secondary/60">+{activities.length - 4} lainnya</p>
+          {progress?.current_big_win && (
+            <div className="p-3 rounded-xl bg-accent/5 border border-accent/10">
+              <p className="text-[11px] font-semibold text-accent uppercase tracking-wide">Sedang Dalam Perjalanan</p>
+              <p className="text-sm text-text-primary mt-1">🏆 {progress.current_big_win.title}</p>
+              {progress.current_big_win.description && (
+                <p className="text-xs text-text-secondary mt-0.5">{progress.current_big_win.description}</p>
               )}
-            </div>
-          )}
-
-          {timeline.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-border/30">
-              <p className="text-[11px] font-medium text-text-primary mb-1">Cerita Terbaru</p>
-              <p className="text-xs text-text-secondary italic">
-                "{timeline[0].title}"
-              </p>
             </div>
           )}
         </CardContent>
@@ -183,12 +105,68 @@ function MyJourneySection({ journey, progress, activities, timeline }: {
   );
 }
 
-/* ─── REFLEKSI TERBARU ─── */
+function CharacterJourney({ summary }: { summary: DimensionSummary[] }) {
+  if (summary.length === 0) return null;
 
-function RecentReflections({ journey, progress }: { journey: DreamJourney | null; progress: JourneyProgress | null }) {
-  const reflection = progress?.today_reflection;
+  return (
+    <div className="px-6">
+      <Card padding="lg">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Compass size={18} className="text-primary" />
+            <CardTitle>Perjalanan Karakter</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {summary.map((s) => (
+            <div key={s.dimension} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+              <span className="text-xl">{s.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-text-primary">{s.label}</p>
+                  <span className="text-xs text-text-secondary">
+                    {s.completed} aktivitas selesai
+                  </span>
+                </div>
+                <p className="text-[11px] text-text-secondary/60 mt-0.5">
+                  {s.completed === 0
+                    ? "Belum ada aktivitas"
+                    : s.completed === 1
+                    ? "1 aktivitas dalam 30 hari terakhir"
+                    : `${s.completed} aktivitas dalam 30 hari terakhir`}
+                </p>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
-  if (!journey || !reflection) return null;
+function LifeTimeline({ entries }: { entries: LifeTimelineEntry[] }) {
+  if (entries.length === 0) {
+    return (
+      <div className="px-6">
+        <Card padding="lg">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <BookHeart size={18} className="text-primary" />
+              <CardTitle>Cerita Perjalananku</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <p className="text-sm text-text-secondary">Belum ada cerita</p>
+              <p className="text-xs text-text-secondary/60 mt-1">
+                Mulai perjalananmu dan setiap langkah akan tercatat di sini
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="px-6">
@@ -196,25 +174,36 @@ function RecentReflections({ journey, progress }: { journey: DreamJourney | null
         <CardHeader>
           <div className="flex items-center gap-2">
             <BookHeart size={18} className="text-primary" />
-            <CardTitle>Refleksi Terbaru</CardTitle>
+            <CardTitle>Cerita Perjalananku</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs font-semibold text-text-primary mb-1">Apa yang kupelajari hari ini?</p>
-              <p className="text-xs text-text-secondary">{reflection.learned}</p>
+          <div className="relative">
+            <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-border" />
+            <div className="space-y-5">
+              {entries.map((entry, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="relative z-10 flex items-center justify-center w-4 h-4 mt-0.5">
+                    <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-text-secondary/50">
+                      {formatDate(entry.date)}
+                    </p>
+                    <p className="text-sm font-medium text-text-primary mt-0.5">
+                      {entry.emoji} {entry.title}
+                    </p>
+                    {entry.description && (
+                      <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
+                        {entry.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div>
-              <p className="text-xs font-semibold text-text-primary mb-1">Yang kusyukuri</p>
-              <p className="text-xs text-text-secondary">{reflection.grateful}</p>
-            </div>
-            {reflection.improve && (
-              <div>
-                <p className="text-xs font-semibold text-text-primary mb-1">Yang ingin kuperbaiki</p>
-                <p className="text-xs text-text-secondary">{reflection.improve}</p>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -222,43 +211,24 @@ function RecentReflections({ journey, progress }: { journey: DreamJourney | null
   );
 }
 
-/* ─── DUKUNGAN ─── */
-
-function SupportSystem() {
-  const router = useRouter();
-
+function StoryLink() {
   return (
     <div className="px-6">
-      <Card padding="lg">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Shield size={18} className="text-purple-600" />
-            <CardTitle>Dukungan Untukku</CardTitle>
+      <Link href="/profil/story">
+        <div className="bg-surface rounded-2xl border border-border p-5 flex items-center gap-4 hover:border-primary/30 transition-colors">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <History size={18} className="text-primary" />
           </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <button onClick={() => router.push("/circle")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-secondary/5 border border-secondary/20 hover:bg-secondary/10 transition-colors text-left cursor-pointer">
-            <Users size={16} className="text-secondary" />
-            <span className="text-xs font-semibold text-text-primary flex-1">Circle</span>
-            <ChevronRight size={14} className="text-text-secondary/30" />
-          </button>
-          <button onClick={() => router.push("/mentors")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors text-left cursor-pointer">
-            <Heart size={16} className="text-destructive" />
-            <span className="text-xs font-semibold text-text-primary flex-1">Mentor</span>
-            <ChevronRight size={14} className="text-text-secondary/30" />
-          </button>
-          <button onClick={() => router.push("/inspirasi")} className="w-full flex items-center gap-3 p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 hover:bg-purple-100/50 transition-colors text-left cursor-pointer">
-            <Shield size={16} className="text-purple-600" />
-            <span className="text-xs font-semibold text-text-primary flex-1">Safe Space</span>
-            <ChevronRight size={14} className="text-text-secondary/30" />
-          </button>
-        </CardContent>
-      </Card>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-text-primary">Ceritaku</p>
+            <p className="text-xs text-text-secondary/60">Timeline, review mingguan & bulanan</p>
+          </div>
+          <ChevronRight size={16} className="text-text-secondary/40 flex-shrink-0" />
+        </div>
+      </Link>
     </div>
   );
 }
-
-/* ─── PENGATURAN ─── */
 
 function SettingsSection() {
   const { signOut } = useAuth();
@@ -297,8 +267,6 @@ function SettingsSection() {
   );
 }
 
-/* ─── LOGIN ─── */
-
 function LoginPrompt() {
   return (
     <div className="flex flex-col items-center justify-center pt-16 pb-8 px-6 min-h-screen bg-bg">
@@ -322,17 +290,23 @@ function LoginPrompt() {
   );
 }
 
-/* ─── MAIN ─── */
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
 
 export default function ProfileScreen() {
 
-  const router = useRouter();
   const { user, isLoading } = useAuth();
 
   const [journey, setJourney] = useState<DreamJourney | null>(null);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
-  const [activities, setActivities] = useState<DailyActivity[]>([]);
-  const [timeline, setTimeline] = useState<GrowthTimelineEvent[]>([]);
+  const [timeline, setTimeline] = useState<LifeTimelineEntry[]>([]);
+  const [summary, setSummary] = useState<DimensionSummary[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
 
@@ -341,20 +315,21 @@ export default function ProfileScreen() {
     setDataLoading(true);
     setDataError(null);
     try {
-      const { getActiveJourney, getJourneyProgress, getTimeline } = await import("@/lib/journey-queries");
+      const { getActiveJourney, getJourneyProgress, getLifeTimeline, getActivitySummary } = await import("@/lib/journey-queries");
       const j = await getActiveJourney(user.id);
       setJourney(j);
+      const [tl, s] = await Promise.all([
+        getLifeTimeline(user.id),
+        getActivitySummary(user.id),
+      ]);
+      setTimeline(tl);
+      setSummary(s);
       if (j) {
-        const [p, t] = await Promise.all([
-          getJourneyProgress(user.id, j.id),
-          getTimeline(user.id, j.id, 3),
-        ]);
+        const p = await getJourneyProgress(user.id, j.id);
         setProgress(p);
-        setActivities(p.today_activities);
-        setTimeline(t);
       }
     } catch {
-      setDataError("Gagal memuat data perjalanan. Silakan coba lagi.");
+      setDataError("Koneksi sedang bermasalah. Periksa internetmu, ya.");
     } finally {
       setDataLoading(false);
     }
@@ -371,7 +346,6 @@ export default function ProfileScreen() {
           <div className="flex flex-col items-center pt-4 pb-6">
             <Skeleton className="w-20 h-20 rounded-full mb-4" />
             <Skeleton className="w-36 h-6 mb-2" />
-            <Skeleton className="w-56 h-4" />
           </div>
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="w-full h-32 rounded-xl" />
@@ -401,7 +375,6 @@ export default function ProfileScreen() {
           <div className="flex flex-col items-center pt-4 pb-6">
             <Skeleton className="w-20 h-20 rounded-full mb-4" />
             <Skeleton className="w-36 h-6 mb-2" />
-            <Skeleton className="w-56 h-4" />
           </div>
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="w-full h-32 rounded-xl" />
@@ -414,13 +387,13 @@ export default function ProfileScreen() {
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto pb-24 space-y-5">
-        <ProfileHero journey={journey} progress={progress} />
-        <MyJourneySection journey={journey} progress={progress} activities={activities} timeline={timeline} />
-        <RecentReflections journey={journey} progress={progress} />
-        <SupportSystem />
+        <ProfileHero journey={journey} />
+        <JourneyIdentity journey={journey} progress={progress} />
+        <CharacterJourney summary={summary} />
+        <StoryLink />
+        <LifeTimeline entries={timeline} />
         <SettingsSection />
       </div>
-
     </div>
   );
 }

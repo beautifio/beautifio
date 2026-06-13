@@ -9,7 +9,7 @@ import { getAllDreamTemplates, getAgeGroupLabel } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
 
-import { getActiveJourney, getAllJourneys, createJourney } from "@/lib/journey-queries";
+import { getActiveJourney, getAllJourneys, createJourney, journeyUrl } from "@/lib/journey-queries";
 
 export default function JourneyPage() {
   const router = useRouter();
@@ -73,7 +73,7 @@ export default function JourneyPage() {
         userAge
       );
       if (journey) {
-        router.push(`/journey/${journey.id}`);
+          router.push(journeyUrl(journey));
       } else {
         setError("Gagal membuat perjalanan. Coba lagi.");
         setCreating(false);
@@ -103,7 +103,7 @@ export default function JourneyPage() {
             <p className="text-sm text-text-secondary mt-1">Lanjutkan perjalananmu</p>
           </div>
 
-          <Link href={`/journey/${activeJourney.id}`}>
+          <Link href={journeyUrl(activeJourney)}>
             <Card className="p-6 border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors">
               <div className="flex items-center gap-4 mb-4">
                 <span className="text-4xl">{activeJourney.emoji}</span>
@@ -139,7 +139,7 @@ export default function JourneyPage() {
           )}
 
           <Link
-            href={`/journey/${activeJourney.id}`}
+            href={journeyUrl(activeJourney)}
             className="fixed bottom-28 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-content"
           >
             <Button variant="accent" size="lg" className="w-full shadow-lg">

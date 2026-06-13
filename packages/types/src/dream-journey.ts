@@ -83,6 +83,7 @@ export interface DreamTemplateAlternativeFuture {
 
 export interface DreamJourney {
   id: string;
+  slug: string;
   user_id: string;
   template_slug: string;
   title: string;
@@ -172,6 +173,7 @@ export interface DailyActivity {
   completed_at: string | null;
   activity_date: string;
   is_custom: boolean;
+  is_journey_activity: boolean;
   notes: string | null;
 }
 
@@ -210,6 +212,41 @@ export interface GrowthTimelineEvent {
   reference_type: string | null;
   metadata: Record<string, unknown> | null;
   event_date: string;
+}
+
+/* ─── Weekly & Monthly Reviews ─── */
+
+export interface WeeklyReview {
+  id: string;
+  user_id: string;
+  journey_id: string | null;
+  week_start: string;
+  proud: string | null;
+  difficult: string | null;
+  improve: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MonthlyReview {
+  id: string;
+  user_id: string;
+  journey_id: string | null;
+  month: string;
+  changed: string | null;
+  learned: string | null;
+  grateful: string | null;
+  focus_next: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StoryEntry {
+  date: string;
+  type: "dream_chosen" | "big_win" | "small_win" | "reflection" | "review";
+  title: string;
+  description?: string;
+  mood?: string;
 }
 
 /* ─── Journey Progress (derived) ─── */

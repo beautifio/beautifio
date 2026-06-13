@@ -2,278 +2,156 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import {
-  Compass, Sparkles, ArrowRight, CheckCircle2, Circle,
-  Sunrise, Sun, Moon,
-} from "lucide-react";
-import { Avatar } from "@beautifio/ui";
+import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Heart } from "lucide-react";
+import { Button, Card } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
-import type {
-  DreamJourney, JourneyProgress, DailyActivity,
-  JourneyDailyReflection, BigWin, SmallWin,
-} from "@beautifio/types";
+import { getAllDreamTemplates } from "@beautifio/utils";
+import { createJourney, journeyUrl } from "@/lib/journey-queries";
+import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
 
-/* ─── GREETING ─── */
-
-function Greeting({ userName, journey }: { userName: string; journey: DreamJourney | null }) {
-  const router = useRouter();
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Selamat Pagi" : hour < 17 ? "Selamat Siang" : "Selamat Malam";
-  const GreetIcon = hour < 12 ? Sunrise : hour < 17 ? Sun : Moon;
-  const initials = userName.split(" ").filter(Boolean).map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U";
-
+function DreamCard({ journey, dreamMeaning }: { journey: DreamJourney; dreamMeaning: string }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-secondary px-6 pt-8 pb-7 text-white">
-      <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4" />
-      <div className="relative">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <Avatar initials={initials} size="lg" />
-            <div>
-              <div className="flex items-center gap-2">
-                <GreetIcon size={14} className="text-white/80" />
-                <h1 className="text-base font-bold">{greeting}, {userName}!</h1>
-              </div>
-              <p className="text-xs text-white/70 mt-0.5">
-                Setiap langkah kecil membawamu lebih dekat ke impianmu.
-              </p>
-            </div>
-          </div>
-          {journey && (
-            <button onClick={() => router.push(`/journey/${journey.id}`)} className="p-2 bg-white/15 rounded-xl hover:bg-white/25 transition-all cursor-pointer active:scale-90">
-              <Sparkles size={16} />
-            </button>
+    <div className="bg-surface rounded-2xl border border-border p-5">
+      <div className="flex items-start gap-3">
+        <span className="text-2xl">{journey.emoji}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-text-secondary/50 mb-1">🎯 Mimpiku</p>
+          <p className="text-sm font-bold text-text-primary">{journey.title}</p>
+          {dreamMeaning && (
+            <p className="text-xs text-text-secondary/60 mt-2 leading-relaxed">
+              {dreamMeaning}
+            </p>
           )}
         </div>
-
-        {journey && (
-          <div className="flex items-center gap-3 bg-white/10 rounded-xl p-3.5 backdrop-blur-sm">
-            <span className="text-3xl">{journey.emoji}</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold">{journey.title}</p>
-              <p className="text-[10px] text-white/70">Apa mimpiku?</p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
-/* ─── SECTION: TARGETKU ─── */
-
-function TargetSection({ progress }: { progress: JourneyProgress | null }) {
+function TargetCard({ progress, journey }: { progress: JourneyProgress | null; journey: DreamJourney | null }) {
   const router = useRouter();
   const bw = progress?.current_big_win;
-  const sw = progress?.current_small_win;
+
+  const pct = progress && progress.big_wins_total > 0
+    ? Math.round((progress.big_wins_completed / progress.big_wins_total) * 100)
+    : 0;
 
   return (
-    <section>
-      <h2 className="text-base font-bold text-text-primary mb-3">Apa targetku saat ini?</h2>
-      <div className="p-4 rounded-2xl bg-surface border border-border">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-            <Compass size={20} className="text-accent" />
-          </div>
-          <div className="flex-1 min-w-0">
-            {bw ? (
-              <>
-                <p className="text-sm font-bold text-text-primary">{bw.title}</p>
-                {bw.description && (
-                  <p className="text-xs text-text-secondary mt-1">{bw.description}</p>
-                )}
-                {sw && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <Circle size={12} className="text-primary" />
-                    <span className="text-xs text-text-secondary">{sw.title}</span>
-                  </div>
-                )}
-                {progress && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs text-text-secondary">
-                      Big Win {progress.big_wins_completed}/{progress.big_wins_total} · Small Win {progress.small_wins_completed}/{progress.small_wins_total}
-                    </span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <p className="text-sm font-bold text-text-primary">Belum ada target</p>
-                <p className="text-xs text-text-secondary mt-1">Aktifkan journey untuk melihat targetmu</p>
-              </>
-            )}
-          </div>
-          {bw && (
-            <button
-              onClick={() => router.push(`/journey/${(progress as any)?.journey_id || ""}`)}
-              className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors cursor-pointer whitespace-nowrap"
-            >
-              Detail
-            </button>
+    <div className="bg-surface rounded-2xl border border-border p-5">
+      <p className="text-xs text-text-secondary/50 mb-1">🔥 Target Saat Ini</p>
+      {bw ? (
+        <>
+          <p className="text-sm font-bold text-text-primary mb-1">{bw.title}</p>
+          {bw.description && (
+            <p className="text-xs text-text-secondary/60 mb-3">{bw.description}</p>
           )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── SECTION: HARI INI ─── */
-
-function TodaySection({
-  activities,
-  progress,
-  onComplete,
-}: {
-  activities: DailyActivity[];
-  progress: JourneyProgress | null;
-  onComplete: (id: string) => void;
-}) {
-  const done = progress?.completed_activities_today ?? 0;
-  const total = progress?.total_activities_today ?? activities.length;
-
-  if (total === 0) {
-    return (
-      <section>
-        <h2 className="text-base font-bold text-text-primary mb-3">Apa yang harus kulakukan hari ini?</h2>
-        <div className="p-4 rounded-2xl bg-surface border border-border text-center">
-          <p className="text-sm text-text-secondary">Belum ada aktivitas hari ini.</p>
-          <p className="text-xs text-text-secondary/60 mt-1">Mulai journey untuk mendapatkan aktivitas harian.</p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-bold text-text-primary">Apa yang harus kulakukan hari ini?</h2>
-        <span className="text-xs text-text-secondary">{done}/{total} selesai</span>
-      </div>
-
-      <div className="flex gap-1.5 mb-3">
-        {Array.from({ length: total }).map((_, i) => (
-          <div
-            key={i}
-            className={`flex-1 h-1.5 rounded-full ${i < done ? "bg-primary" : "bg-border"}`}
-          />
-        ))}
-      </div>
-
-      <div className="space-y-1.5">
-        {activities.map((a) => (
-          <button
-            key={a.id}
-            onClick={() => !a.is_completed && onComplete(a.id)}
-            disabled={a.is_completed}
-            className="w-full flex items-center gap-3 p-3 rounded-xl bg-surface border border-border hover:bg-muted/30 transition-all text-left cursor-pointer disabled:cursor-default"
-          >
-            {a.is_completed ? (
-              <CheckCircle2 size={20} className="text-success flex-shrink-0" />
-            ) : (
-              <Circle size={20} className="text-text-secondary/30 flex-shrink-0" />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className={`text-sm ${a.is_completed ? "text-text-secondary line-through" : "text-text-primary"}`}>
-                {a.title}
-              </p>
-              <p className="text-[10px] text-text-secondary/60">{a.dimension}</p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all"
+                style={{ width: `${pct}%` }}
+              />
             </div>
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ─── SECTION: KEMAJUAN TERBARUKU ─── */
-
-function RecentSection({
-  reflection,
-  progress,
-}: {
-  reflection: JourneyDailyReflection | null;
-  progress: JourneyProgress | null;
-}) {
-  const done = progress?.completed_activities_today ?? 0;
-  const total = progress?.total_activities_today ?? 0;
-
-  return (
-    <section>
-      <h2 className="text-base font-bold text-text-primary mb-3">Apa kemajuan terbaruku?</h2>
-      <div className="p-4 rounded-2xl bg-surface border border-border">
-        {reflection ? (
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs font-semibold text-text-primary mb-1">Apa yang kupelajari hari ini?</p>
-              <p className="text-xs text-text-secondary">{reflection.learned}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-text-primary mb-1">Yang kusyukuri hari ini</p>
-              <p className="text-xs text-text-secondary">{reflection.grateful}</p>
-            </div>
-            {reflection.improve && (
-              <div>
-                <p className="text-xs font-semibold text-text-primary mb-1">Yang ingin kuperbaiki</p>
-                <p className="text-xs text-text-secondary">{reflection.improve}</p>
-              </div>
-            )}
-            {reflection.mood && (
-              <div className="pt-2 border-t border-border">
-                <span className="text-xs text-text-secondary">Suasana hati: {reflection.mood}</span>
-              </div>
-            )}
+            <span className="text-xs font-semibold text-text-secondary">{pct}%</span>
           </div>
-        ) : total > 0 ? (
-          <>
-            <p className="text-sm text-text-secondary">
-              {done}/{total} aktivitas hari ini sudah selesai
-            </p>
-            {done === total && (
-              <p className="text-xs text-text-secondary/60 mt-1">
-                Bagus! Jangan lupa refleksikan harimu di halaman Journey.
-              </p>
-            )}
-          </>
-        ) : (
-          <p className="text-sm text-text-secondary">Belum ada aktivitas hari ini.</p>
-        )}
-      </div>
-    </section>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-text-secondary/70">Belum ada target yang aktif.</p>
+          <p className="text-xs text-text-secondary/50 mt-1 mb-3">
+            Pilih atau aktifkan perjalananmu untuk memulai langkah berikutnya.
+          </p>
+        </>
+      )}
+    </div>
   );
 }
 
-/* ─── NO JOURNEY STATE ─── */
-
-function NoJourney() {
+function TemplateCards() {
   const router = useRouter();
+  const { user } = useAuth();
+  const [templates] = useState(getAllDreamTemplates());
+  const [creating, setCreating] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleStartJourney = async (t: DreamTemplate) => {
+    if (!user || creating) return;
+    setCreating(t.slug);
+    setError(null);
+    try {
+      const journey = await createJourney(
+        user.id,
+        t.slug,
+        t.title,
+        t.emoji,
+        t.category
+      );
+      if (journey) {
+        router.push(journeyUrl(journey));
+      } else {
+        setError("Gagal membuat perjalanan. Coba lagi.");
+        setCreating(null);
+      }
+    } catch (e: any) {
+      setError(e?.message || "Terjadi kesalahan. Coba lagi.");
+      setCreating(null);
+    }
+  };
+
   return (
-    <section>
-      <div className="p-6 rounded-2xl bg-surface border border-border text-center">
-        <p className="text-sm text-text-secondary">Kamu belum memulai perjalanan.</p>
-        <button
-          onClick={() => router.push("/journey")}
-          className="mt-4 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer"
-        >
-          <Sparkles size={16} />
-          Pilih Mimpi Pertamamu
-        </button>
-      </div>
-    </section>
+    <div className="space-y-3">
+      <p className="text-sm text-text-secondary text-center py-4">
+        Kamu belum memulai perjalanan. Pilih mimpi yang paling menarik untukmu.
+      </p>
+      {error && (
+        <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive text-center">
+          {error}
+        </div>
+      )}
+      {templates.map((t) => (
+        <Card key={t.slug} className="p-5 hover:border-primary/30 transition-all">
+          <div className="flex items-start gap-4">
+            <span className="text-3xl mt-1">{t.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-bold text-text-primary">{t.title}</h3>
+              <p className="text-xs text-text-secondary mt-1 line-clamp-2">{t.description}</p>
+              <div className="flex items-center gap-2 mt-3">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
+                <span className="text-[11px] text-text-secondary">{t.duration}</span>
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            className="w-full mt-4"
+            onClick={() => handleStartJourney(t)}
+            loading={creating === t.slug}
+            disabled={!!creating}
+          >
+            <Heart size={14} /> Pilih Mimpi Ini
+          </Button>
+        </Card>
+      ))}
+    </div>
   );
 }
 
-/* ─── MAIN ─── */
+function timeGreeting(): { text: string; icon: React.ReactNode } {
+  const h = new Date().getHours();
+  if (h < 11) return { text: "Selamat Pagi", icon: <Sunrise size={18} /> };
+  if (h < 15) return { text: "Selamat Siang", icon: <Sun size={18} /> };
+  if (h < 18) return { text: "Selamat Sore", icon: <CloudSun size={18} /> };
+  return { text: "Selamat Malam", icon: <Moon size={18} /> };
+}
 
 export default function HomeScreen() {
-
   const router = useRouter();
   const { user } = useAuth();
 
   const [journey, setJourney] = useState<DreamJourney | null>(null);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
-  const [activities, setActivities] = useState<DailyActivity[]>([]);
-  const [reflection, setReflection] = useState<JourneyDailyReflection | null>(null);
+  const [dreamMeaning, setDreamMeaning] = useState("");
   const [loading, setLoading] = useState(true);
 
   const userName =
@@ -294,8 +172,10 @@ export default function HomeScreen() {
         if (j) {
           const p = await getJourneyProgress(user.id, j.id);
           setProgress(p);
-          setActivities(p.today_activities);
-          setReflection(p.today_reflection);
+          try {
+            const { getDreamMeaning } = await import("@beautifio/utils");
+            setDreamMeaning(getDreamMeaning(j.template_slug));
+          } catch {}
         }
       } catch (e) {
         console.error("Failed to load journey data", e);
@@ -305,25 +185,13 @@ export default function HomeScreen() {
     })();
   }, [user]);
 
-  const handleCompleteActivity = async (id: string) => {
-    try {
-      const { completeActivity } = await import("@/lib/journey-queries");
-      await completeActivity(id);
-      setActivities((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, is_completed: true, completed_at: new Date().toISOString() } : a))
-      );
-      if (progress) {
-        setProgress({ ...progress, completed_activities_today: progress.completed_activities_today + 1 });
-      }
-    } catch (e) {
-      console.error("Failed to complete activity", e);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-content mx-auto px-5 pt-5 pb-24 space-y-6">
-        <Greeting userName={userName} journey={journey} />
+      <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-5">
+        <div className="flex items-center gap-2 text-lg font-bold text-text-primary">
+          {timeGreeting().icon}
+          <span>{timeGreeting().text}, {userName} 👋</span>
+        </div>
 
         {loading ? (
           <div className="space-y-4">
@@ -333,15 +201,23 @@ export default function HomeScreen() {
           </div>
         ) : journey ? (
           <>
-            <TargetSection progress={progress} />
-            <TodaySection activities={activities} progress={progress} onComplete={handleCompleteActivity} />
-            <RecentSection reflection={reflection} progress={progress} />
+            <DreamCard journey={journey} dreamMeaning={dreamMeaning} />
+            <TargetCard progress={progress} journey={journey} />
+            <div className="text-center pt-2">
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() => router.push(journeyUrl(journey))}
+              >
+                Lanjutkan Journey <ArrowRight size={16} />
+              </Button>
+            </div>
           </>
         ) : (
-          <NoJourney />
+          <TemplateCards />
         )}
       </div>
-
     </div>
   );
 }

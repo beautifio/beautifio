@@ -9,12 +9,12 @@ import {
 import { Button, Card, Skeleton } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  getActiveJourney, getBigWins,
+  getActiveJourney, getJourneyBySlug, journeyUrl, getBigWins,
   getJourneyProgress, getTimeline,
   completeActivity, completeSmallWin, saveDailyReflection,
   updateBigWin, completeBigWin, failBigWin, saveBigWinReflection,
   generateAndInsertActivities, getSpiritualPreferences,
-  saveActivityNote,
+  saveActivityNote, getJourneyReflections,
 } from "@/lib/journey-queries";
 import type {
   DreamJourney, BigWin, SmallWin, DailyActivity,
@@ -43,8 +43,10 @@ const DIMENSION_LABELS: Record<string, { label: string; emoji: string }> = {
   dream_skill: { label: "Skill Mimpi", emoji: "🎯" },
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function JourneyDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const { user } = useAuth();
   const [journey, setJourney] = useState<DreamJourney | null>(null);
@@ -54,6 +56,7 @@ export default function JourneyDetailPage() {
   const [timeline, setTimeline] = useState<GrowthTimelineEvent[]>([]);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [spiritualPref, setSpiritualPref] = useState<SpiritualPreferences | null>(null);
+  const [allReflections, setAllReflections] = useState<JourneyDailyReflection[]>([]);
   const [templateInfo, setTemplateInfo] = useState<DreamTemplate | null>(null);
   const [alternativeFutures, setAlternativeFutures] = useState<{ title: string; description: string; skills: string[] }[]>([]);
   const [dreamMeaning, setDreamMeaning] = useState("");
@@ -63,33 +66,44 @@ export default function JourneyDetailPage() {
   const [showReflection, setShowReflection] = useState(false);
   const [failureBigWin, setFailureBigWin] = useState<BigWin | null>(null);
   const [celebrationBigWin, setCelebrationBigWin] = useState<BigWin | null>(null);
+  const [showAllBigWins, setShowAllBigWins] = useState(false);
   const [sectionTab, setSectionTab] = useState<"today" | "wins" | "timeline" | "story">("today");
 
   const loadData = useCallback(async () => {
-    if (!user || !id) {
+    if (!user || !slug) {
       setLoading(false);
       return;
     }
     try {
-      let j = await getActiveJourney(user.id);
-      if (!j || j.id !== id) {
+      let j: DreamJourney | null = null;
+      if (UUID_RE.test(slug)) {
         const { getAllJourneys } = await import("@/lib/journey-queries");
         const journeys = await getAllJourneys(user.id);
-        const found = journeys.find((j: DreamJourney) => j.id === id);
-        if (!found) {
-          setLoading(false);
-          router.push("/journey");
-          return;
+        const found = journeys.find((j: DreamJourney) => j.id === slug);
+        if (found) {
+          j = found;
+          router.replace(journeyUrl(found));
         }
-        j = found;
+      } else {
+        j = await getJourneyBySlug(user.id, slug);
+        if (!j) {
+          j = await getActiveJourney(user.id);
+          if (j) router.replace(journeyUrl(j));
+        }
+      }
+      if (!j) {
+        setLoading(false);
+        router.push("/journey");
+        return;
       }
       setJourney(j);
 
-      const [bw, prog, tl, sp] = await Promise.all([
-        getBigWins(id),
-        getJourneyProgress(user.id, id),
-        getTimeline(user.id, id),
+      const [bw, prog, tl, sp, refl] = await Promise.all([
+        getBigWins(j.id),
+        getJourneyProgress(user.id, j.id),
+        getTimeline(user.id, j.id),
         getSpiritualPreferences(user.id),
+        getJourneyReflections(user.id, j.id),
       ]);
 
       const activities = prog.today_activities;
@@ -105,6 +119,7 @@ export default function JourneyDetailPage() {
       setProgress(prog);
       setTimeline(tl);
       setSpiritualPref(sp);
+      setAllReflections(refl);
       const { getDreamTemplate } = await import("@beautifio/utils");
       const tInfo = getDreamTemplate(j.template_slug) || null;
       setTemplateInfo(tInfo);
@@ -119,11 +134,11 @@ export default function JourneyDetailPage() {
       }
     } catch (e) {
       console.error("Failed to load journey:", e);
-      setError("Gagal memuat perjalanan. Silakan coba lagi.");
+      setError("Koneksi sedang bermasalah. Periksa internetmu, ya.");
     } finally {
       setLoading(false);
     }
-  }, [user, id]);
+  }, [user, slug]);
 
   useEffect(() => {
     loadData();
@@ -186,7 +201,7 @@ export default function JourneyDetailPage() {
     );
 
     await completeSmallWin(smallWinId, reflection);
-    const updated = await getBigWins(id);
+    const updated = await getBigWins(journey!.id);
     setBigWins(updated);
 
     const justCompleted = updated.find(
@@ -198,7 +213,7 @@ export default function JourneyDetailPage() {
     );
     if (justCompleted) {
       await completeBigWin(justCompleted.id);
-      const final = await getBigWins(id);
+      const final = await getBigWins(journey!.id);
       setBigWins(final);
       setCelebrationBigWin(justCompleted);
     }
@@ -217,7 +232,7 @@ export default function JourneyDetailPage() {
 
   const handleFailBigWin = async (bigWinId: string) => {
     await failBigWin(bigWinId);
-    const bw = await getBigWins(id);
+    const bw = await getBigWins(journey!.id);
     setBigWins(bw);
     setFailureBigWin(null);
   };
@@ -229,6 +244,9 @@ export default function JourneyDetailPage() {
         <Button variant="primary" size="sm" onClick={() => { setError(null); setLoading(true); loadData(); }}>
           Coba Lagi
         </Button>
+        <p className="text-xs text-text-secondary/50 mt-3 max-w-xs">
+          Masih bermasalah? Coba tutup dan buka kembali aplikasi.
+        </p>
       </div>
     );
   }
@@ -315,6 +333,11 @@ export default function JourneyDetailPage() {
               <div className="min-w-0">
                 <p className="text-xs text-accent font-medium uppercase tracking-wide">Big Win Saat Ini</p>
                 <p className="text-sm font-bold text-text-primary mt-0.5">{currentBigWin.title}</p>
+                {currentBigWin.why_it_matters && (
+                  <p className="text-xs text-text-secondary mt-2 leading-relaxed">
+                    💡 <span className="font-medium">Kenapa ini penting?</span> {currentBigWin.why_it_matters}
+                  </p>
+                )}
                 {currentSmallWin && (
                   <p className="text-xs text-text-secondary mt-1">
                     🎯 Fokus: {currentSmallWin.title}
@@ -442,7 +465,12 @@ export default function JourneyDetailPage() {
               {progress?.big_wins_completed}/{progress?.big_wins_total} selesai
             </p>
 
-            {bigWins.map((bw) => (
+            {(showAllBigWins ? bigWins : (() => {
+              const sorted = [...bigWins].sort((a, b) => a.order_index - b.order_index);
+              const firstIncomplete = sorted.findIndex((bw) => !bw.is_completed && !bw.is_failed);
+              const start = firstIncomplete === -1 ? Math.max(0, sorted.length - 3) : firstIncomplete;
+              return sorted.slice(start, start + 3);
+            })()).map((bw) => (
               <BigWinCard
                 key={bw.id}
                 bigWin={bw}
@@ -450,6 +478,24 @@ export default function JourneyDetailPage() {
                 onFail={() => setFailureBigWin(bw)}
               />
             ))}
+
+            {bigWins.length > 3 && !showAllBigWins && (
+              <button
+                onClick={() => setShowAllBigWins(true)}
+                className="w-full py-3 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer text-center"
+              >
+                Lihat Semua Langkah ({bigWins.length} langkah)
+              </button>
+            )}
+
+            {showAllBigWins && (
+              <button
+                onClick={() => setShowAllBigWins(false)}
+                className="w-full py-3 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors cursor-pointer text-center"
+              >
+                Lihat Lebih Sedikit
+              </button>
+            )}
           </div>
         )}
 
@@ -457,7 +503,7 @@ export default function JourneyDetailPage() {
         {sectionTab === "story" && (
           <div>
             <h2 className="text-base font-bold text-text-primary mb-4">Cerita Perjalananku</h2>
-            <JourneyStory timeline={timeline} todayReflection={reflection} />
+            <JourneyStory reflections={allReflections} />
           </div>
         )}
 

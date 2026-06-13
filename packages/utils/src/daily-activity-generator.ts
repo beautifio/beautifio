@@ -137,6 +137,7 @@ export function generateDailyActivities(
       completed_at: null,
       activity_date: dateStr,
       is_custom: false,
+      is_journey_activity: true,
       notes: null,
     });
   }

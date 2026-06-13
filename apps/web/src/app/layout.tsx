@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/providers";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],

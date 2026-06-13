@@ -75,6 +75,12 @@ export function BigWinCard({ bigWin, onCompleteSmallWin, onFail }: BigWinCardPro
           {bigWin.description && (
             <p className="text-xs text-text-secondary mb-3">{bigWin.description}</p>
           )}
+          {bigWin.why_it_matters && (
+            <div className="mb-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
+              <p className="text-xs font-semibold text-primary/80 mb-1">💡 Kenapa langkah ini penting?</p>
+              <p className="text-xs text-text-secondary leading-relaxed">{bigWin.why_it_matters}</p>
+            </div>
+          )}
 
           <div className="space-y-2">
             {smallWins.map((sw) => (

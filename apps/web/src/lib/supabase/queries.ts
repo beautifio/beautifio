@@ -17,7 +17,11 @@ export async function signIn(email: string, password: string) {
 
 export async function signInWithGoogle() {
   const client = requireClient();
-  return client.auth.signInWithOAuth({ provider: "google" });
+  const isLocal = typeof window !== "undefined" && window.location.hostname === "localhost";
+  return client.auth.signInWithOAuth({
+    provider: "google",
+    options: isLocal ? { redirectTo: "http://localhost:3000/auth/callback" } : undefined,
+  });
 }
 
 export async function signOut() {
