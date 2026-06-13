@@ -6,14 +6,8 @@ const authPages = ["/login", "/register", "/forgot-password", "/auth"];
 const protectedPages = [
   "/journey",
   "/profil",
-  "/cerita",
-  "/circle",
-  "/mentors",
-  "/discover",
-  "/inspirasi",
   "/familia",
-  "/jurnal/buat",
-  "/inspirasi/post",
+  "/jurnal",
   "/onboarding",
   "/welcome",
 ];
