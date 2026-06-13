@@ -10,6 +10,7 @@ interface DailyActivityCardProps {
   dimensionEmoji: string;
   onComplete: (id: string) => void;
   onSaveNote?: (id: string, note: string) => void;
+  estimatedMinutes?: number;
 }
 
 export function DailyActivityCard({
@@ -18,6 +19,7 @@ export function DailyActivityCard({
   dimensionEmoji,
   onComplete,
   onSaveNote,
+  estimatedMinutes,
 }: DailyActivityCardProps) {
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [noteText, setNoteText] = useState(activity.notes || "");
@@ -44,15 +46,22 @@ export function DailyActivityCard({
       >
         <span className="text-lg flex-shrink-0">{dimensionEmoji}</span>
         <div className="flex-1 min-w-0">
-          <p
-            className={`text-sm font-medium ${
-              activity.is_completed
-                ? "text-text-secondary line-through"
-                : "text-text-primary"
-            }`}
-          >
-            {activity.title}
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <p
+              className={`text-sm font-medium ${
+                activity.is_completed
+                  ? "text-text-secondary line-through"
+                  : "text-text-primary"
+              }`}
+            >
+              {activity.title}
+            </p>
+            {estimatedMinutes != null && (
+              <span className="shrink-0 text-[11px] mt-0.5" style={{ color: "rgba(74, 68, 88, 0.6)" }}>
+                {estimatedMinutes} mnt
+              </span>
+            )}
+          </div>
           <p className="text-[11px] text-text-secondary mt-0.5">{dimensionLabel}</p>
         </div>
         {activity.is_completed ? (
@@ -62,40 +71,38 @@ export function DailyActivityCard({
         )}
       </button>
 
-      {activity.is_completed && (
-        <div className="px-4 pb-3">
-          {showNoteInput ? (
-            <div className="flex items-center gap-2">
-              <input
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Tulis catatan singkat..."
-                className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-border bg-bg text-text-primary placeholder:text-text-secondary/40 outline-none focus:border-primary"
-                autoFocus
-                onKeyDown={(e) => e.key === "Enter" && handleSaveNote()}
-              />
-              <button
-                onClick={handleSaveNote}
-                className="text-xs px-2 py-1.5 rounded-lg bg-primary text-primary-foreground font-medium"
-              >
-                Simpan
-              </button>
-            </div>
-          ) : (
+      <div className="px-4 pb-3">
+        {showNoteInput ? (
+          <div className="flex items-center gap-2">
+            <input
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Tulis catatan singkat..."
+              className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-border bg-bg text-text-primary placeholder:text-text-secondary/40 outline-none focus:border-primary"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handleSaveNote()}
+            />
             <button
-              onClick={() => setShowNoteInput(true)}
-              className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
+              onClick={handleSaveNote}
+              className="text-xs px-2 py-1.5 rounded-lg bg-primary text-primary-foreground font-medium"
             >
-              <PenLine size={12} />
-              {activity.notes ? (
-                <span className="italic">{activity.notes}</span>
-              ) : (
-                <span>Tulis catatan...</span>
-              )}
+              Simpan
             </button>
-          )}
-        </div>
-      )}
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowNoteInput(true)}
+            className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <PenLine size={12} />
+            {activity.notes ? (
+              <span className="italic">{activity.notes}</span>
+            ) : (
+              <span>Tulis catatan...</span>
+            )}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

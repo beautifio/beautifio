@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, ArrowRight, Heart, Compass } from "lucide-react";
@@ -10,6 +10,22 @@ import type { DreamTemplate, DreamJourney } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
 
 import { getActiveJourney, getAllJourneys, createJourney, journeyUrl } from "@/lib/journey-queries";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  sports: "Sports",
+  creative: "Creative",
+  business: "Business",
+  health: "Health",
+  tech: "Tech",
+};
+
+const FILTER_OPTIONS = ["Semua", ...Object.values(CATEGORY_LABELS)] as const;
+type FilterKey = (typeof FILTER_OPTIONS)[number];
+
+function categoryMatches(category: string, filter: FilterKey): boolean {
+  if (filter === "Semua") return true;
+  return CATEGORY_LABELS[category] === filter;
+}
 
 export default function JourneyPage() {
   const router = useRouter();
@@ -22,6 +38,12 @@ export default function JourneyPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [userAge, setUserAge] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("Semua");
+
+  const filteredTemplates = useMemo(
+    () => templates.filter((t) => categoryMatches(t.category, activeFilter)),
+    [templates, activeFilter]
+  );
 
   useEffect(() => {
     if (!user) {
@@ -166,58 +188,53 @@ export default function JourneyPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4">
-          {templates.map((t) => {
+        <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
+          {FILTER_OPTIONS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`shrink-0 px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                activeFilter === f
+                  ? "bg-[#FF5E5B] text-white shadow-sm"
+                  : "bg-muted text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {filteredTemplates.map((t) => {
             const ecosystem = getJmEcosystemByTemplateSlug(t.slug);
-            const paths = ecosystem ? getJmCareerPaths(ecosystem.slug) : [];
             return (
-              <Card key={t.slug} className="p-5 hover:border-primary/30 transition-all">
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl mt-1">{t.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-bold text-text-primary">{t.title}</h3>
-                    <p className="text-xs text-text-secondary mt-1 line-clamp-2">{t.description}</p>
-                    <div className="flex items-center gap-2 mt-3">
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
-                      <span className="text-[11px] text-text-secondary">{t.duration}</span>
-                      {userAge && <span className="text-[11px] text-text-secondary/60">{getAgeGroupLabel(userAge as any)}</span>}
+              <Card key={t.slug} className="p-3 hover:border-primary/30 transition-all">
+                <div className="flex flex-col gap-2">
+                  <span className="text-2xl">{t.emoji}</span>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-text-primary leading-tight">{t.title}</h3>
+                    <p className="text-[11px] text-text-secondary mt-1 line-clamp-2 leading-relaxed">{t.description}</p>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
+                      <span className="text-[10px] text-text-secondary">{t.duration}</span>
                     </div>
                     {ecosystem && (
-                      <div className="mt-3 pt-3 border-t border-border/40">
-                        <div className="flex items-start gap-1.5">
-                          <Compass size={12} className="text-accent mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-[10px] text-accent font-semibold uppercase tracking-wide">Pivot Point</p>
-                            <p className="text-[10px] text-text-secondary mt-0.5">{ecosystem.pivotPoint}</p>
-                          </div>
-                        </div>
-                        {paths.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {paths.slice(0, 3).map((p) => (
-                              <span key={p.title} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/5 text-primary">
-                                {p.title.split(" / ")[0]}
-                              </span>
-                            ))}
-                            {paths.length > 3 && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-text-secondary">
-                                +{paths.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      <p className="text-[10px] text-accent mt-1.5 leading-tight">
+                        <Compass size={10} className="inline mr-0.5 -mt-0.5" />
+                        {ecosystem.pivotPoint}
+                      </p>
                     )}
                   </div>
                 </div>
                 <Button
                   variant="primary"
                   size="sm"
-                  className="w-full mt-4"
+                  className="w-full mt-3 text-xs"
                   onClick={() => handleStartJourney(t)}
                   loading={creating && selectedTemplate === t.slug}
                   disabled={creating}
                 >
-                  <Heart size={14} /> Pilih Mimpi Ini
+                  <Heart size={12} /> Pilih
                 </Button>
               </Card>
             );

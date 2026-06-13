@@ -3,20 +3,23 @@
 import { useState } from "react";
 import {
   CheckCircle2, Circle, ChevronDown, ChevronUp,
-  AlertTriangle, Trophy,
+  AlertTriangle, Trophy, RotateCcw,
 } from "lucide-react";
 import type { BigWin, SmallWin } from "@beautifio/types";
+import { Button } from "@beautifio/ui";
 
 interface BigWinCardProps {
   bigWin: BigWin;
   onCompleteSmallWin: (id: string, reflection?: string) => void;
   onFail: () => void;
+  onUndoFail?: () => void;
 }
 
-export function BigWinCard({ bigWin, onCompleteSmallWin, onFail }: BigWinCardProps) {
+export function BigWinCard({ bigWin, onCompleteSmallWin, onFail, onUndoFail }: BigWinCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [newReflection, setNewReflection] = useState("");
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [showConfirmFail, setShowConfirmFail] = useState(false);
 
   const statusIcon = bigWin.is_completed
     ? "✅"
@@ -125,14 +128,49 @@ export function BigWinCard({ bigWin, onCompleteSmallWin, onFail }: BigWinCardPro
                   rows={2}
                 />
               </div>
-              <button
-                onClick={onFail}
-                className="flex items-center gap-1.5 text-xs text-danger/70 hover:text-danger mt-3 cursor-pointer transition-colors"
-              >
-                <AlertTriangle size={12} />
-                Tidak tercapai?
-              </button>
+              {showConfirmFail ? (
+                <div className="mt-3 p-3 rounded-xl bg-danger/5 border border-danger/20">
+                  <p className="text-xs font-semibold text-danger mb-2">Tandai sebagai belum tercapai?</p>
+                  <p className="text-xs text-text-secondary mb-3">Kamu masih bisa kembali dan mencobanya lagi kapan saja.</p>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="flex-1" onClick={() => setShowConfirmFail(false)}>
+                      Batal
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        setShowConfirmFail(false);
+                        onFail();
+                      }}
+                    >
+                      Ya, tandai
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowConfirmFail(true)}
+                  className="flex items-center gap-1.5 text-xs text-danger/70 hover:text-danger mt-3 cursor-pointer transition-colors"
+                  title="Tandai langkah ini sebagai belum tercapai"
+                >
+                  <AlertTriangle size={12} />
+                  Tandai belum tercapai
+                </button>
+              )}
             </>
+          )}
+
+          {bigWin.is_failed && onUndoFail && (
+            <button
+              onClick={onUndoFail}
+              className="flex items-center gap-1.5 text-xs text-text-secondary/60 hover:text-text-secondary mt-3 cursor-pointer transition-colors"
+              title="Kembalikan ke status aktif"
+            >
+              <RotateCcw size={12} />
+              Batalkan — masih dicoba
+            </button>
           )}
         </div>
       )}

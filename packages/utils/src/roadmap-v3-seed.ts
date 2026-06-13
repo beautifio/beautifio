@@ -1506,7 +1506,7 @@ r("doctor", {
 
 r("athlete", {
   slug: "athlete",
-  title: "Atlet Profesional — Panduan Umum",
+  title: "Atlet Profesional",
   description: "Framework menjadi atlet profesional dari berbagai cabang olahraga — dari latihan dasar hingga prestasi nasional dan internasional. Pilih cabang spesifik untuk detail skill dan daily wins yang sesuai.",
   emoji: "\uD83C\uDFC5",
   color: "from-red-600 to-rose-500",

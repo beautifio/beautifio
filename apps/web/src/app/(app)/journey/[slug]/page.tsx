@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Sparkles, BookOpen, Heart,
@@ -12,7 +12,7 @@ import {
   getActiveJourney, getJourneyBySlug, journeyUrl, getBigWins,
   getJourneyProgress, getTimeline,
   completeActivity, completeSmallWin, saveDailyReflection,
-  updateBigWin, completeBigWin, failBigWin, saveBigWinReflection,
+  updateBigWin, completeBigWin, failBigWin, unfailBigWin, saveBigWinReflection,
   generateAndInsertActivities, getSpiritualPreferences,
   saveActivityNote, getJourneyReflections,
 } from "@/lib/journey-queries";
@@ -41,6 +41,24 @@ const DIMENSION_LABELS: Record<string, { label: string; emoji: string }> = {
   social: { label: "Sosial", emoji: "👥" },
   character: { label: "Karakter", emoji: "⭐" },
   dream_skill: { label: "Skill Mimpi", emoji: "🎯" },
+};
+
+const DIMENSION_ORDER: Record<string, number> = {
+  character: 0,
+  dream_skill: 1,
+  knowledge: 2,
+  physical: 3,
+  social: 4,
+  spiritual: 5,
+};
+
+const ESTIMATED_MINUTES: Record<string, number> = {
+  character: 5,
+  dream_skill: 20,
+  knowledge: 15,
+  physical: 15,
+  social: 10,
+  spiritual: 10,
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -74,6 +92,10 @@ export default function JourneyDetailPage() {
       setLoading(false);
       return;
     }
+    setLoading(true);
+    setActivities([]);
+    setReflection(null);
+    setProgress(null);
     try {
       let j: DreamJourney | null = null;
       if (UUID_RE.test(slug)) {
@@ -106,7 +128,9 @@ export default function JourneyDetailPage() {
         getJourneyReflections(user.id, j.id),
       ]);
 
-      const activities = prog.today_activities;
+      const activities = prog.today_activities.filter(
+        (a) => a.journey_id === j.id
+      );
       if (activities.length === 0) {
         const generated = await generateAndInsertActivities(j, sp, undefined);
         setActivities(generated);
@@ -115,7 +139,11 @@ export default function JourneyDetailPage() {
       }
 
       setBigWins(bw);
-      setReflection(prog.today_reflection);
+      setReflection(
+        prog.today_reflection?.journey_id === j.id
+          ? prog.today_reflection
+          : null
+      );
       setProgress(prog);
       setTimeline(tl);
       setSpiritualPref(sp);
@@ -237,6 +265,12 @@ export default function JourneyDetailPage() {
     setFailureBigWin(null);
   };
 
+  const handleUndoFailBigWin = async (bigWinId: string) => {
+    await unfailBigWin(bigWinId);
+    const bw = await getBigWins(journey!.id);
+    setBigWins(bw);
+  };
+
   if (error) {
     return (
       <div className="min-h-screen bg-bg p-6 max-w-content mx-auto flex flex-col items-center justify-center text-center">
@@ -265,28 +299,56 @@ export default function JourneyDetailPage() {
   const currentSmallWin = progress?.current_small_win;
 
   const progressPercent =
-    progress && progress.big_wins_total > 0
-      ? Math.round((progress.big_wins_completed / progress.big_wins_total) * 100)
+    bigWins.length > 0
+      ? Math.round(
+          (bigWins.filter((bw) => bw.is_completed).length / bigWins.length) *
+            100
+        )
       : 0;
+
+  const displayActivities = useMemo(() => {
+    const seenTitles = new Set<string>();
+    return [...activities]
+      .sort(
+        (a, b) =>
+          (DIMENSION_ORDER[a.dimension] ?? 99) -
+          (DIMENSION_ORDER[b.dimension] ?? 99)
+      )
+      .filter((a) => {
+        const key = a.title.toLowerCase().trim();
+        if (seenTitles.has(key)) return false;
+        seenTitles.add(key);
+        return true;
+      })
+      .slice(0, 7);
+  }, [activities]);
 
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-6 pt-6 pb-28">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-5">
           <button onClick={() => router.push("/journey")} className="p-2 -ml-2 hover:bg-muted rounded-xl">
             <ArrowLeft size={20} className="text-text-secondary" />
           </button>
-          <div className="flex items-center gap-3 flex-1">
-            <span className="text-3xl">{journey.emoji}</span>
-            <div>
-              <h1 className="text-lg font-bold text-text-primary">{journey.title}</h1>
-              <p className="text-xs text-text-secondary">Perjalanan Mimpiku</p>
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center">
-              <span className="text-sm font-bold text-primary">{progressPercent}%</span>
+          <span className="text-3xl">{journey.emoji}</span>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-bold text-text-primary">{journey.title}</h1>
+            <div className="mt-2">
+              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progressPercent}%`, backgroundColor: "#FF5E5B" }}
+                />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-[11px] text-text-secondary">
+                  Pencapaian: {bigWins.filter((bw) => bw.is_completed).length}/{bigWins.length}
+                </span>
+                <span className="text-[11px] text-text-secondary">
+                  Hari ini: {displayActivities.filter((a) => a.is_completed).length}/{displayActivities.length}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -327,12 +389,31 @@ export default function JourneyDetailPage() {
 
         {/* Current Focus */}
         {currentBigWin && (
-          <Card className="p-4 mb-6 border-accent/30 bg-accent/5">
+          <Card className="p-4 mb-6 border" style={{ borderColor: "#FFF0EF" }}>
             <div className="flex items-start gap-3">
-              <Target size={18} className="text-accent mt-0.5 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs text-accent font-medium uppercase tracking-wide">Big Win Saat Ini</p>
-                <p className="text-sm font-bold text-text-primary mt-0.5">{currentBigWin.title}</p>
+              <Target size={20} className="text-[#FF5E5B] mt-0.5 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-[#FF5E5B] font-semibold uppercase tracking-wide">Big Win Saat Ini</p>
+                <p className="text-base font-bold text-text-primary mt-0.5">{currentBigWin.title}</p>
+                {(() => {
+                  const sw = currentBigWin.small_wins || [];
+                  const completed = sw.filter((s) => s.is_completed).length;
+                  if (sw.length === 0) return null;
+                  const pct = Math.round((completed / sw.length) * 100);
+                  return (
+                    <div className="mt-2">
+                      <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${pct}%`, backgroundColor: "#FF5E5B" }}
+                        />
+                      </div>
+                      <p className="text-[11px] text-text-secondary mt-1">
+                        {completed} dari {sw.length} langkah selesai
+                      </p>
+                    </div>
+                  );
+                })()}
                 {currentBigWin.why_it_matters && (
                   <p className="text-xs text-text-secondary mt-2 leading-relaxed">
                     💡 <span className="font-medium">Kenapa ini penting?</span> {currentBigWin.why_it_matters}
@@ -401,28 +482,63 @@ export default function JourneyDetailPage() {
                   Aktivitas Hari Ini
                 </h2>
                 <span className="text-xs text-text-secondary">
-                  {activities.filter((a) => a.is_completed).length}/{activities.length}
+                  {displayActivities.filter((a) => a.is_completed).length}/{displayActivities.length}
                 </span>
               </div>
 
-              <div className="space-y-2">
-                {activities.map((a) => {
-                  const dim = DIMENSION_LABELS[a.dimension] || {
-                    label: a.dimension,
-                    emoji: "📌",
-                  };
-                  return (
-                    <DailyActivityCard
-                      key={a.id}
-                      activity={a}
-                      dimensionLabel={dim.label}
-                      dimensionEmoji={dim.emoji}
-                      onComplete={handleCompleteActivity}
-                      onSaveNote={handleSaveNote}
-                    />
-                  );
-                })}
-              </div>
+              <p className="text-[10px] text-text-secondary/50 mb-3 leading-relaxed">
+                6 area pengembangan: ⭐ Karakter → 🎯 Skill Mimpi → 📚 Pengetahuan → 💪 Fisik → 👥 Sosial → 🕊 Spiritual
+              </p>
+
+              {(progress?.streak ?? 0) >= 2 && (
+                <p className="text-sm font-semibold mb-3" style={{ color: "#FFB627" }}>
+                  🔥 {progress?.streak} hari berturut-turut
+                </p>
+              )}
+
+              {(() => {
+                const grouped = new Map<string, typeof displayActivities>();
+                const orderedDimensions = Object.keys(DIMENSION_ORDER);
+
+                for (const a of displayActivities) {
+                  const key = a.dimension;
+                  if (!grouped.has(key)) grouped.set(key, []);
+                  grouped.get(key)!.push(a);
+                }
+
+                return orderedDimensions
+                  .filter((dim) => grouped.has(dim))
+                  .map((dim) => {
+                    const items = grouped.get(dim)!;
+                    const dimInfo = DIMENSION_LABELS[dim] || {
+                      label: dim,
+                      emoji: "📌",
+                    };
+                    const uncompleted = items.filter((a) => !a.is_completed);
+                    const completed = items.filter((a) => a.is_completed);
+
+                    return (
+                      <div key={dim}>
+                        <p className="text-[11px] uppercase text-text-secondary/60 font-semibold tracking-wide mt-4 mb-2">
+                          {dimInfo.emoji} {dimInfo.label}
+                        </p>
+                        <div className="space-y-1.5">
+                          {[...uncompleted, ...completed].map((a) => (
+                            <DailyActivityCard
+                              key={a.id}
+                              activity={a}
+                              dimensionLabel={dimInfo.label}
+                              dimensionEmoji={dimInfo.emoji}
+                              onComplete={handleCompleteActivity}
+                              onSaveNote={handleSaveNote}
+                              estimatedMinutes={ESTIMATED_MINUTES[a.dimension]}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  });
+              })()}
             </div>
 
             {reflection && (
@@ -450,8 +566,8 @@ export default function JourneyDetailPage() {
             )}
 
             <div className="mt-4 text-center">
-              <p className="text-sm text-text-secondary">
-                {progress?.completed_activities_today || 0} dari {progress?.total_activities_today || 6} aktivitas selesai
+              <p className="text-xs text-text-secondary">
+                Aktivitas hari ini: {displayActivities.filter((a) => a.is_completed).length} dari {displayActivities.length} selesai
               </p>
             </div>
           </div>
@@ -476,6 +592,7 @@ export default function JourneyDetailPage() {
                 bigWin={bw}
                 onCompleteSmallWin={handleCompleteSmallWin}
                 onFail={() => setFailureBigWin(bw)}
+                onUndoFail={() => handleUndoFailBigWin(bw.id)}
               />
             ))}
 

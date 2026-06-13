@@ -159,12 +159,19 @@ export async function createJourney(
     }
   }
 
+  // Filter out generic dream-selection big wins (user already chose their dream)
+  const filteredBigWins = bigWinsData.filter((bw) => {
+    const lower = (bw.title || "").toLowerCase();
+    const generic = ["menentukan", "memilih", "tentukan", "pilih"];
+    return !generic.some((g) => lower.includes(g));
+  });
+
   // Batch insert all big wins
-  if (bigWinsData.length > 0) {
+  if (filteredBigWins.length > 0) {
     const { data: insertedBigWins, error: bwError } = await db()
       .from("big_wins")
       .insert(
-        bigWinsData.map((bw, i) => ({
+        filteredBigWins.map((bw, i) => ({
           journey_id: journey.id,
           title: bw.title,
           description: bw.description,
@@ -178,6 +185,14 @@ export async function createJourney(
     if (bwError) {
       console.error("createJourney: big_wins insert failed", bwError);
     } else if (insertedBigWins) {
+      // Auto-complete the first big win — user already chose their dream
+      await db()
+        .from("big_wins")
+        .update({
+          is_completed: true,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", insertedBigWins[0].id);
       const bigWinTitleToId = new Map(
         insertedBigWins.map((bw: any) => [bw.title, bw.id])
       );
@@ -249,6 +264,13 @@ export async function failBigWin(
     .eq("id", id);
 }
 
+export async function unfailBigWin(id: string): Promise<void> {
+  await db()
+    .from("big_wins")
+    .update({ is_failed: false, is_completed: false })
+    .eq("id", id);
+}
+
 export async function saveBigWinReflection(
   bigWinId: string,
   reflection: {
@@ -283,28 +305,40 @@ export async function completeSmallWin(
 /* ─── Daily Activities ─── */
 
 export async function getTodayActivities(
-  userId: string
+  userId: string,
+  journeyId?: string
 ): Promise<DailyActivity[]> {
   const today = new Date().toISOString().split("T")[0];
-  const { data } = await db()
+  let query = db()
     .from("daily_activities")
     .select("*")
     .eq("user_id", userId)
-    .eq("activity_date", today)
-    .order("dimension");
+    .eq("activity_date", today);
+
+  if (journeyId) {
+    query = query.eq("journey_id", journeyId);
+  }
+
+  const { data } = await query.order("dimension");
   return data || [];
 }
 
 export async function getActivitiesForDate(
   userId: string,
-  date: string
+  date: string,
+  journeyId?: string
 ): Promise<DailyActivity[]> {
-  const { data } = await db()
+  let query = db()
     .from("daily_activities")
     .select("*")
     .eq("user_id", userId)
-    .eq("activity_date", date)
-    .order("dimension");
+    .eq("activity_date", date);
+
+  if (journeyId) {
+    query = query.eq("journey_id", journeyId);
+  }
+
+  const { data } = await query.order("dimension");
   return data || [];
 }
 
@@ -343,6 +377,14 @@ export async function generateAndInsertActivities(
   spiritualPref?: SpiritualPreferences | null,
   date?: string
 ): Promise<DailyActivity[]> {
+  const dateStr = date || new Date().toISOString().split("T")[0];
+
+  await db()
+    .from("daily_activities")
+    .delete()
+    .eq("journey_id", journey.id)
+    .eq("activity_date", dateStr);
+
   const activities = generateDailyActivities({ journey, spiritualPref, date });
   const { data } = await db()
     .from("daily_activities")
@@ -461,15 +503,21 @@ export async function saveMonthlyReview(
 }
 
 export async function getTodayReflection(
-  userId: string
+  userId: string,
+  journeyId?: string
 ): Promise<JourneyDailyReflection | null> {
   const today = new Date().toISOString().split("T")[0];
-  const { data } = await db()
+  let query = db()
     .from("daily_reflections")
     .select("*")
     .eq("user_id", userId)
-    .eq("date", today)
-    .maybeSingle();
+    .eq("date", today);
+
+  if (journeyId) {
+    query = query.eq("journey_id", journeyId);
+  }
+
+  const { data } = await query.maybeSingle();
   return data;
 }
 
@@ -479,7 +527,7 @@ export async function saveDailyReflection(
   reflection: { learned: string; grateful: string; improve: string; mood: string }
 ): Promise<void> {
   const today = new Date().toISOString().split("T")[0];
-  const existing = await getTodayReflection(userId);
+  const existing = await getTodayReflection(userId, journeyId);
 
   if (existing) {
     await db()
@@ -812,16 +860,49 @@ export async function getActivitySummary(userId: string): Promise<DimensionSumma
     .sort((a, b) => b.total - a.total);
 }
 
+/* ─── Streak ─── */
+
+async function calculateStreak(
+  userId: string,
+  journeyId: string
+): Promise<number> {
+  const { data } = await db()
+    .from("daily_activities")
+    .select("activity_date, is_completed")
+    .eq("user_id", userId)
+    .eq("journey_id", journeyId)
+    .eq("is_completed", true)
+    .order("activity_date", { ascending: false });
+
+  if (!data || data.length === 0) return 0;
+
+  const activeDays = new Set(data.map((r) => r.activity_date));
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; ; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split("T")[0];
+    if (activeDays.has(key)) {
+      streak++;
+    } else if (i > 0) {
+      break;
+    }
+  }
+  return streak;
+}
+
 /* ─── Journey Progress (derived) ─── */
 
 export async function getJourneyProgress(
   userId: string,
   journeyId: string
 ): Promise<JourneyProgress> {
-  const [allBigWins, todayActivities, todayReflection] = await Promise.all([
+  const [allBigWins, todayActivities, todayReflection, streak] = await Promise.all([
     getBigWins(journeyId),
-    getTodayActivities(userId),
-    getTodayReflection(userId),
+    getTodayActivities(userId, journeyId),
+    getTodayReflection(userId, journeyId),
+    calculateStreak(userId, journeyId),
   ]);
 
   const currentBigWin =
@@ -842,7 +923,7 @@ export async function getJourneyProgress(
     today_reflection: todayReflection,
     completed_activities_today: completedToday,
     total_activities_today: todayActivities.length,
-    streak: 0,
+    streak,
     big_wins_completed: bigWinsCompleted,
     big_wins_total: allBigWins.length,
     small_wins_completed: smallWinsCompleted,

@@ -101,6 +101,32 @@ function guessCategory(category: string, template: DreamTemplate | undefined): s
   return "";
 }
 
+function seededRandom(seed: string): () => number {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return () => {
+    hash = (hash * 1103515245 + 12345) & 0x7fffffff;
+    return hash / 0x7fffffff;
+  };
+}
+
+function pick<T>(arr: T[], rand: () => number): T {
+  return arr[Math.floor(rand() * arr.length)];
+}
+
+function shuffleArray<T>(arr: T[], rand: () => number): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 export function generateDailyActivities(
   options: GenerateDailyOptions
 ): Omit<DailyActivity, "id" | "created_at">[] {
@@ -109,23 +135,34 @@ export function generateDailyActivities(
   const template = getDreamTemplate(journey.template_slug);
   const activities: Omit<DailyActivity, "id" | "created_at">[] = [];
 
+  // Seeded random so the same day always gets the same activities
+  const seed = `${journey.id}-${dateStr}`;
+  const rand = seededRandom(seed);
+
   const dimensions: DailyActivityDimension[] = [
-    "spiritual",
-    "physical",
-    "knowledge",
-    "social",
     "character",
     "dream_skill",
+    "knowledge",
+    "physical",
+    "social",
+    "spiritual",
   ];
 
+  const usedTitles = new Set<string>();
+
   for (const dimension of dimensions) {
-    const titles = getActivitiesForDimension(
+    const titlePool = getActivitiesForDimension(
       dimension,
       template,
       spiritualPref,
       journey.category
     );
-    const title = titles[Math.floor(Math.random() * titles.length)];
+
+    // Pick a title not already used (deduplicate across dimensions)
+    const available = titlePool.filter((t) => !usedTitles.has(t.toLowerCase()));
+    const pool = available.length > 0 ? available : titlePool;
+    const title = pick(pool, rand);
+    usedTitles.add(title.toLowerCase());
 
     activities.push({
       journey_id: journey.id,
