@@ -75,7 +75,8 @@ function TemplateCards() {
   const [error, setError] = useState<string | null>(null);
 
   const handleStartJourney = async (t: DreamTemplate) => {
-    if (!user || creating) return;
+    if (!user) return router.push("/login");
+    if (creating) return;
     setCreating(t.slug);
     setError(null);
     try {

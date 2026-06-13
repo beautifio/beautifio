@@ -4,7 +4,6 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 const authPages = ["/login", "/register", "/forgot-password", "/auth"];
 
 const protectedPages = [
-  "/home",
   "/journey",
   "/profil",
   "/cerita",
