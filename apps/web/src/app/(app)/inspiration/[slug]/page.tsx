@@ -3,8 +3,7 @@
 import { use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, User, BookOpen, Sparkles } from "lucide-react";
-import { Badge } from "@beautifio/ui";
+import { ArrowLeft, Clock, BookOpen } from "lucide-react";
 import {
   getInspirationBySlug, getAllInspiration, DREAM_MAP,
 } from "@/lib/inspiration-data";
@@ -27,11 +26,11 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
 
   if (!item) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center px-5">
-          <BookOpen size={32} className="mx-auto text-text-secondary/30 mb-3" />
-          <p className="text-sm font-semibold text-text-primary">Inspirasi tidak ditemukan</p>
-          <Link href="/inspiration" className="text-xs text-primary font-medium hover:underline mt-2 inline-block">
+          <BookOpen size={32} className="mx-auto text-gray-300 mb-3" />
+          <p className="text-sm font-semibold text-gray-700">Inspirasi tidak ditemukan</p>
+          <Link href="/inspiration" className="text-xs text-purple-600 font-medium hover:underline mt-2 inline-block">
             Kembali ke Inspirasi
           </Link>
         </div>
@@ -42,7 +41,7 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
   const dreamInfo = item.dreamSlugs.map((s) => DREAM_MAP[s]).filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-bg pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
       <div className={`relative bg-gradient-to-br ${item.coverGradient} px-5 pt-6 pb-8 text-white`}>
         <button
@@ -53,9 +52,9 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
         </button>
 
         <div className="flex items-center gap-2 mb-3">
-          <Badge variant="default" className="bg-white/20 text-white border-0 text-[10px]">
+          <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-medium">
             {item.type === "story" ? "📖 Cerita" : "📝 Artikel"}
-          </Badge>
+          </span>
           <span className="text-[10px] text-white/70 flex items-center gap-1">
             <Clock size={10} /> {item.readingTime} menit
           </span>
@@ -74,41 +73,43 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
       </div>
 
       {/* Author & Meta */}
-      <div className="bg-surface border-b border-border px-5 py-4">
+      <div className="bg-white border-b border-gray-200 px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-sm font-semibold text-accent">
+          <div className="w-9 h-9 rounded-full bg-purple-200 flex items-center justify-center text-sm font-semibold text-purple-700">
             {item.author.charAt(0)}
           </div>
           <div>
-            <p className="text-sm font-semibold text-text-primary">{item.author}</p>
-            <p className="text-[11px] text-text-secondary">{item.publishedAt}</p>
+            <p className="text-sm font-semibold text-gray-900">{item.author}</p>
+            <p className="text-[11px] text-gray-500">{item.publishedAt}</p>
           </div>
         </div>
       </div>
 
       {/* Tags */}
       {item.tags.length > 0 && (
-        <div className="px-5 py-3 flex flex-wrap gap-1.5 border-b border-border">
+        <div className="px-5 py-3 flex flex-wrap gap-1.5 border-b border-gray-200 bg-white">
           {item.tags.map((tag, i) => (
-            <Badge key={i} variant="accent" className="text-[10px]">{tag}</Badge>
+            <span key={i} className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-medium">
+              {tag}
+            </span>
           ))}
         </div>
       )}
 
       {/* Content */}
-      <div className="px-5 py-5">
-        <div className="text-text-primary leading-relaxed space-y-3">
+      <div className="bg-white px-5 py-5">
+        <div className="text-gray-900 leading-relaxed space-y-3">
           {item.content.split("\n\n").map((paragraph, i) => {
             if (paragraph.startsWith("**") && paragraph.endsWith("**")) {
               const text = paragraph.replace(/\*\*/g, "");
               return (
-                <h3 key={i} className="text-sm font-bold text-text-primary mt-5 mb-2">{text}</h3>
+                <h3 key={i} className="text-sm font-bold text-gray-900 mt-5 mb-2">{text}</h3>
               );
             }
             if (paragraph.startsWith("- ")) {
               const items = paragraph.split("\n").map((line) => line.replace("- ", ""));
               return (
-                <ul key={i} className="list-disc list-inside text-xs text-text-secondary space-y-1 my-2">
+                <ul key={i} className="list-disc list-inside text-sm text-gray-700 space-y-1 my-2">
                   {items.map((li, j) => (
                     <li key={j}>{li.replace(/\*\*/g, "")}</li>
                   ))}
@@ -116,13 +117,13 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
               );
             }
             return (
-              <p key={i} className="text-xs text-text-secondary my-2 leading-relaxed">
+              <p key={i} className="text-sm text-gray-700 my-2 leading-relaxed">
                 {paragraph.split("\n").map((line, j) => (
                   <span key={j}>
                     {line.includes("**") ? (
                       line.split(/(\*\*.*?\*\*)/).map((part, k) =>
                         part.startsWith("**") && part.endsWith("**")
-                          ? <strong key={k} className="font-bold text-text-primary">{part.slice(2, -2)}</strong>
+                          ? <strong key={k} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>
                           : part
                       )
                     ) : line}
@@ -137,13 +138,13 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
 
       {/* Related */}
       {related.length > 0 && (
-        <div className="px-5 py-6 border-t border-border">
-          <h3 className="text-sm font-bold text-text-primary mb-3">Inspirasi Terkait</h3>
+        <div className="px-5 py-6">
+          <h3 className="text-sm font-bold text-gray-900 mb-3">Inspirasi Terkait</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {related.map((r) => (
               <div
                 key={r.id}
-                className="bg-surface rounded-xl border border-border overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => router.push(`/inspiration/${r.slug}`)}
               >
                 <div className={`aspect-[16/6] bg-gradient-to-r ${r.coverGradient} flex items-center px-4`}>
@@ -151,7 +152,7 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
                   <span className="text-white text-xs font-medium ml-2">{r.title}</span>
                 </div>
                 <div className="p-3">
-                  <p className="text-[10px] text-text-secondary">{r.readingTime} menit baca</p>
+                  <p className="text-[10px] text-gray-500">{r.readingTime} menit baca</p>
                 </div>
               </div>
             ))}
