@@ -78,3 +78,30 @@ export type {
   CoachFocusArea,
 } from "./ai-coach";
 
+export {
+  JM_ECOSYSTEMS, getJmEcosystem, getJmEcosystemByTitle, getJmEcosystemByTemplateSlug,
+} from "./journey-mapper-ecosystems";
+export type { JmEcosystem } from "./journey-mapper-types";
+export {
+  JM_HARD_SKILLS, JM_SOFT_SKILLS,
+  getJmHardSkill, getJmSoftSkill, getJmHardSkillsByCategory, resolveJmSkillCodes,
+} from "./journey-mapper-skills";
+export type { JmHardSkill, JmSoftSkill } from "./journey-mapper-types";
+export {
+  JM_PROFESSIONS, getJmProfession, getJmProfessionsByEcosystem,
+} from "./journey-mapper-professions";
+export type { JmProfession } from "./journey-mapper-types";
+export {
+  JM_BENCHMARKS, getJmBenchmarks,
+} from "./journey-mapper-benchmarks";
+export type { JmBenchmark } from "./journey-mapper-types";
+export {
+  JM_OPPORTUNITIES, getJmOpportunities,
+} from "./journey-mapper-opportunities";
+export type { JmOpportunity } from "./journey-mapper-types";
+export {
+  getJmCareerPaths, getJmPersonalizedPaths,
+  getJmEncouragement, getJmTransferableSkills,
+} from "./journey-mapper";
+export type { JmCareerPath } from "./journey-mapper-types";
+

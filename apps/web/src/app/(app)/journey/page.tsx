@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Heart } from "lucide-react";
+import { Sparkles, ArrowRight, Heart, Compass } from "lucide-react";
 import { Button, Card, CardContent, Skeleton } from "@beautifio/ui";
-import { getAllDreamTemplates, getAgeGroupLabel } from "@beautifio/utils";
+import { getAllDreamTemplates, getAgeGroupLabel, getJmEcosystemByTemplateSlug, getJmCareerPaths } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -167,32 +167,61 @@ export default function JourneyPage() {
         )}
 
         <div className="grid grid-cols-1 gap-4">
-          {templates.map((t) => (
-            <Card key={t.slug} className="p-5 hover:border-primary/30 transition-all">
-              <div className="flex items-start gap-4">
-                <span className="text-3xl mt-1">{t.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-bold text-text-primary">{t.title}</h3>
-                  <p className="text-xs text-text-secondary mt-1 line-clamp-2">{t.description}</p>
-                  <div className="flex items-center gap-2 mt-3">
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
-                    <span className="text-[11px] text-text-secondary">{t.duration}</span>
-                    {userAge && <span className="text-[11px] text-text-secondary/60">{getAgeGroupLabel(userAge as any)}</span>}
+          {templates.map((t) => {
+            const ecosystem = getJmEcosystemByTemplateSlug(t.slug);
+            const paths = ecosystem ? getJmCareerPaths(ecosystem.slug) : [];
+            return (
+              <Card key={t.slug} className="p-5 hover:border-primary/30 transition-all">
+                <div className="flex items-start gap-4">
+                  <span className="text-3xl mt-1">{t.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-bold text-text-primary">{t.title}</h3>
+                    <p className="text-xs text-text-secondary mt-1 line-clamp-2">{t.description}</p>
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
+                      <span className="text-[11px] text-text-secondary">{t.duration}</span>
+                      {userAge && <span className="text-[11px] text-text-secondary/60">{getAgeGroupLabel(userAge as any)}</span>}
+                    </div>
+                    {ecosystem && (
+                      <div className="mt-3 pt-3 border-t border-border/40">
+                        <div className="flex items-start gap-1.5">
+                          <Compass size={12} className="text-accent mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-[10px] text-accent font-semibold uppercase tracking-wide">Pivot Point</p>
+                            <p className="text-[10px] text-text-secondary mt-0.5">{ecosystem.pivotPoint}</p>
+                          </div>
+                        </div>
+                        {paths.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {paths.slice(0, 3).map((p) => (
+                              <span key={p.title} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/5 text-primary">
+                                {p.title.split(" / ")[0]}
+                              </span>
+                            ))}
+                            {paths.length > 3 && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-text-secondary">
+                                +{paths.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-              <Button
-                variant="primary"
-                size="sm"
-                className="w-full mt-4"
-                onClick={() => handleStartJourney(t)}
-                loading={creating && selectedTemplate === t.slug}
-                disabled={creating}
-              >
-                <Heart size={14} /> Pilih Mimpi Ini
-              </Button>
-            </Card>
-          ))}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="w-full mt-4"
+                  onClick={() => handleStartJourney(t)}
+                  loading={creating && selectedTemplate === t.slug}
+                  disabled={creating}
+                >
+                  <Heart size={14} /> Pilih Mimpi Ini
+                </Button>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>

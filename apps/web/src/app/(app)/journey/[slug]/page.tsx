@@ -528,6 +528,11 @@ export default function JourneyDetailPage() {
       {failureBigWin && (
         <FailureModal
           bigWin={failureBigWin}
+          dreamSlug={journey!.template_slug}
+          developedSkills={bigWins
+            .flatMap((bw) => bw.small_wins || [])
+            .filter((sw) => sw.is_completed)
+            .map((sw) => sw.title)}
           onConfirm={() => handleFailBigWin(failureBigWin.id)}
           onClose={() => setFailureBigWin(null)}
         />
