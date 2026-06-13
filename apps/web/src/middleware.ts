@@ -58,7 +58,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Handle OAuth PKCE code exchange — before any render
+  // Handle OAuth PKCE code exchange
   const code = request.nextUrl.searchParams.get("code");
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -66,12 +66,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
+  // Try getUser with fallback to cookie presence check
   let user: any = null;
   try {
-    const result = await supabase.auth.getUser();
-    user = result.data?.user;
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
   } catch {
-    // Session check failed — treat as unauthenticated
+    // Attempt to parse session from cookies as fallback
+    try {
+      const { data } = await supabase.auth.getSession();
+      user = data?.session?.user ?? null;
+    } catch {
+      // truly not authenticated
+    }
   }
 
   const isAuth = !!user;
