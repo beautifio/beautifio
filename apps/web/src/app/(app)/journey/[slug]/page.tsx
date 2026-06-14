@@ -271,6 +271,31 @@ export default function JourneyDetailPage() {
     setBigWins(bw);
   };
 
+  const displayActivities = useMemo(() => {
+    const seenTitles = new Set<string>();
+    return [...activities]
+      .sort(
+        (a, b) =>
+          (DIMENSION_ORDER[a.dimension] ?? 99) -
+          (DIMENSION_ORDER[b.dimension] ?? 99)
+      )
+      .filter((a) => {
+        const key = a.title.toLowerCase().trim();
+        if (seenTitles.has(key)) return false;
+        seenTitles.add(key);
+        return true;
+      })
+      .slice(0, 7);
+  }, [activities]);
+
+  const progressPercent =
+    bigWins.length > 0
+      ? Math.round(
+          (bigWins.filter((bw) => bw.is_completed).length / bigWins.length) *
+            100
+        )
+      : 0;
+
   if (error) {
     return (
       <div className="min-h-screen bg-bg p-6 max-w-content mx-auto flex flex-col items-center justify-center text-center">
@@ -297,31 +322,6 @@ export default function JourneyDetailPage() {
 
   const currentBigWin = progress?.current_big_win;
   const currentSmallWin = progress?.current_small_win;
-
-  const progressPercent =
-    bigWins.length > 0
-      ? Math.round(
-          (bigWins.filter((bw) => bw.is_completed).length / bigWins.length) *
-            100
-        )
-      : 0;
-
-  const displayActivities = useMemo(() => {
-    const seenTitles = new Set<string>();
-    return [...activities]
-      .sort(
-        (a, b) =>
-          (DIMENSION_ORDER[a.dimension] ?? 99) -
-          (DIMENSION_ORDER[b.dimension] ?? 99)
-      )
-      .filter((a) => {
-        const key = a.title.toLowerCase().trim();
-        if (seenTitles.has(key)) return false;
-        seenTitles.add(key);
-        return true;
-      })
-      .slice(0, 7);
-  }, [activities]);
 
   return (
     <div className="min-h-screen bg-bg">
