@@ -54,8 +54,8 @@ export {
   getCapitalOverview,
 } from "./life-engine";
 export { DREAM_TEMPLATES, getDreamTemplate, getAllDreamTemplates, buildDreamTemplates } from "./dream-templates";
-export { generateDailyActivities } from "./daily-activity-generator";
-export type { GenerateDailyOptions } from "./daily-activity-generator";
+export { generateDailyActivities, ACTIVITY_DETAILS } from "./daily-activity-generator";
+export type { GenerateDailyOptions, ActivityDetail } from "./daily-activity-generator";
 export {
   getAgeGroup, getAgeGroupLabel, getAgeRangeLabel,
   getStageForAge, getAgeGroupedContent,

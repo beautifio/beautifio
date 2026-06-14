@@ -86,6 +86,11 @@ export default function JourneyDetailPage() {
   const [celebrationBigWin, setCelebrationBigWin] = useState<BigWin | null>(null);
   const [showAllBigWins, setShowAllBigWins] = useState(false);
   const [sectionTab, setSectionTab] = useState<"today" | "wins" | "timeline" | "story">("today");
+  const [expandedActivityId, setExpandedActivityId] = useState<string | null>(null);
+
+  const handleToggleExpand = useCallback((id: string) => {
+    setExpandedActivityId((prev) => (prev === id ? null : id));
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!user || !slug) {
@@ -532,6 +537,8 @@ export default function JourneyDetailPage() {
                               onComplete={handleCompleteActivity}
                               onSaveNote={handleSaveNote}
                               estimatedMinutes={ESTIMATED_MINUTES[a.dimension]}
+                              isExpanded={expandedActivityId === a.id}
+                              onToggleExpand={handleToggleExpand}
                             />
                           ))}
                         </div>

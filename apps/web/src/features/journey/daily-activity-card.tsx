@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, Circle, PenLine } from "lucide-react";
+import { useState, useCallback } from "react";
+import { CheckCircle2, Circle, PenLine, ChevronDown, ChevronUp } from "lucide-react";
 import type { DailyActivity } from "@beautifio/types";
+import { ACTIVITY_DETAILS } from "@beautifio/utils";
+import type { ActivityDetail } from "@beautifio/utils";
 
 interface DailyActivityCardProps {
   activity: DailyActivity;
@@ -11,6 +13,8 @@ interface DailyActivityCardProps {
   onComplete: (id: string) => void;
   onSaveNote?: (id: string, note: string) => void;
   estimatedMinutes?: number;
+  isExpanded: boolean;
+  onToggleExpand: (id: string) => void;
 }
 
 export function DailyActivityCard({
@@ -20,57 +24,127 @@ export function DailyActivityCard({
   onComplete,
   onSaveNote,
   estimatedMinutes,
+  isExpanded,
+  onToggleExpand,
 }: DailyActivityCardProps) {
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [noteText, setNoteText] = useState(activity.notes || "");
 
-  const handleSaveNote = () => {
+  const detailKey = `${activity.dimension}::${activity.title.toLowerCase().trim()}`;
+  const detail: ActivityDetail | undefined = ACTIVITY_DETAILS[detailKey];
+
+  const handleSaveNote = useCallback(() => {
     if (onSaveNote && noteText.trim()) {
       onSaveNote(activity.id, noteText.trim());
     }
     setShowNoteInput(false);
-  };
+  }, [onSaveNote, noteText, activity.id]);
 
   return (
     <div
       className={`w-full rounded-xl border-2 text-left transition-all ${
         activity.is_completed
           ? "border-success/30 bg-success/5"
-          : "border-border hover:border-primary/30 hover:bg-muted/30"
+          : isExpanded
+            ? "border-[#FF5E5B]/40 bg-accent/5"
+            : "border-border hover:border-primary/30 hover:bg-muted/30"
       }`}
     >
-      <button
-        onClick={() => !activity.is_completed && onComplete(activity.id)}
-        disabled={activity.is_completed}
-        className="w-full flex items-center gap-3 p-4 cursor-pointer"
-      >
-        <span className="text-lg flex-shrink-0">{dimensionEmoji}</span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <p
-              className={`text-sm font-medium ${
-                activity.is_completed
-                  ? "text-text-secondary line-through"
-                  : "text-text-primary"
-              }`}
-            >
-              {activity.title}
-            </p>
-            {estimatedMinutes != null && (
-              <span className="shrink-0 text-[11px] mt-0.5" style={{ color: "rgba(74, 68, 88, 0.6)" }}>
-                {estimatedMinutes} mnt
-              </span>
+      <div className="p-4 pb-2">
+        <div className="w-full flex items-start gap-3">
+          <button
+            onClick={(e) => { e.stopPropagation(); if (!activity.is_completed) onComplete(activity.id); }}
+            disabled={activity.is_completed}
+            className="mt-0.5 flex-shrink-0 cursor-pointer"
+            aria-label={activity.is_completed ? "Selesai" : "Tandai selesai"}
+          >
+            {activity.is_completed ? (
+              <CheckCircle2 size={20} className="text-success" />
+            ) : (
+              <Circle size={20} className="text-text-secondary/40 hover:text-primary/60 transition-colors" />
             )}
-          </div>
-          <p className="text-[11px] text-text-secondary mt-0.5">{dimensionLabel}</p>
-        </div>
-        {activity.is_completed ? (
-          <CheckCircle2 size={20} className="text-success flex-shrink-0" />
-        ) : (
-          <Circle size={20} className="text-text-secondary/40 flex-shrink-0" />
-        )}
-      </button>
+          </button>
 
+          <button
+            onClick={() => onToggleExpand(activity.id)}
+            className="flex-1 min-w-0 text-left cursor-pointer"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-lg flex-shrink-0">{dimensionEmoji}</span>
+                <p
+                  className={`text-sm font-medium ${
+                    activity.is_completed
+                      ? "text-text-secondary line-through"
+                      : "text-text-primary"
+                  }`}
+                >
+                  {activity.title}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {estimatedMinutes != null && (
+                  <span className="text-[11px]" style={{ color: "rgba(74, 68, 88, 0.6)" }}>
+                    {estimatedMinutes} mnt
+                  </span>
+                )}
+                {detail && (
+                  isExpanded ? (
+                    <ChevronUp size={14} className="text-text-secondary/40" />
+                  ) : (
+                    <ChevronDown size={14} className="text-text-secondary/40" />
+                  )
+                )}
+              </div>
+            </div>
+            <p className="text-[11px] text-text-secondary mt-0.5">{dimensionLabel}</p>
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded detail section */}
+      {isExpanded && detail && (
+        <div className="px-4 pb-3 space-y-3 border-t border-border/50 pt-3">
+          <p className="text-[13px] text-text-secondary leading-relaxed">
+            {detail.description}
+          </p>
+
+          {detail.tips.length > 0 && (
+            <div>
+              <p className="text-[11px] font-semibold text-text-primary mb-1">Tips:</p>
+              <ul className="space-y-1">
+                {detail.tips.map((tip, i) => (
+                  <li key={i} className="text-[12px] text-text-secondary leading-relaxed flex items-start gap-1.5">
+                    <span className="text-primary mt-0.5">•</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {detail.warnings && (
+            <div className="p-2.5 rounded-lg" style={{ backgroundColor: "rgba(255, 94, 91, 0.08)" }}>
+              <p className="text-[12px] text-[#FF5E5B] leading-relaxed">
+                ⚠ Perhatikan: {detail.warnings}
+              </p>
+            </div>
+          )}
+
+          {detail.video_url && detail.video_label && (
+            <a
+              href={detail.video_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[12px] text-primary font-medium hover:underline"
+            >
+              ▶ {detail.video_label}
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Notes section */}
       <div className="px-4 pb-3">
         {showNoteInput ? (
           <div className="flex items-center gap-2">

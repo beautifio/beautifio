@@ -8,6 +8,291 @@ import type {
 import { SPIRITUAL_PRACTICES } from "./life-engine-seed";
 import { getDreamTemplate } from "./dream-templates";
 
+export interface ActivityDetail {
+  description: string;
+  tips: string[];
+  warnings: string | null;
+  video_url: string | null;
+  video_label: string | null;
+}
+
+export const ACTIVITY_DETAILS: Record<string, ActivityDetail> = {};
+
+function addDetails(dimension: string, title: string, detail: ActivityDetail) {
+  const key = `${dimension}::${title.toLowerCase().trim()}`;
+  ACTIVITY_DETAILS[key] = detail;
+}
+
+// ─── Pemain Sepak Bola — dimension activities (DIMENSION_ACTIVITIES_BY_CATEGORY olahraga) ───
+
+addDetails("physical", "Lari 20 menit", {
+  description: "Lari ringan untuk membangun stamina dan kebugaran dasar. Fokus pada konsistensi, bukan kecepatan.",
+  tips: [
+    "Jaga average pace di rentang 6–8 menit/km untuk lari ringan",
+    "Mulai dengan 5 menit jalan kaki sebagai pemanasan",
+    "Atur napas — tarik lewat hidung, buang lewat mulut",
+    "Gunakan sepatu lari yang sesuai, bukan sepatu casual",
+  ],
+  warnings: "Jangan lari jika tubuh sedang sakit, demam, atau ada cedera. Istirahat lebih baik daripada memaksakan.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("physical", "Stretching 10 menit", {
+  description: "Peregangan setelah latihan untuk meningkatkan fleksibilitas dan mempercepat pemulihan otot.",
+  tips: [
+    "Fokus pada otot yang banyak dipakai: hamstring, quad, betis, dan pinggul",
+    "Tahan setiap regangan minimal 20–30 detik tanpa menggoyang",
+    "Jangan meregang sampai sakit — rasa tertarik ringan sudah cukup",
+  ],
+  warnings: "Lakukan stretching saat otot sudah hangat (setelah latihan), bukan sebelum. Stretching otot dingin bisa menyebabkan cedera.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("physical", "Latihan fisik inti", {
+  description: "Latihan kekuatan core untuk stabilitas dan mencegah cedera. Otot inti yang kuat membantu keseimbangan dan power saat bermain.",
+  tips: [
+    "Plank 3 set × 30 detik — jaga posisi tubuh lurus",
+    "Russian twist 3 set × 15 repetisi per sisi — gunakan bola atau beban ringan",
+    "Jangan tahan napas — buang napas saat kontraksi, tarik saat relaksasi",
+  ],
+  warnings: "Hentikan jika ada nyeri punggung bawah. Perbaiki form dulu sebelum menambah durasi.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("spiritual", "Doa sebelum berolahraga", {
+  description: "Memanjatkan doa atau afirmasi positif sebelum latihan sebagai bentuk syukur dan persiapan mental.",
+  tips: [
+    "Luangkan 1-2 menit hening atau baca doa sesuai keyakinan",
+    "Fokuskan niat: latihan hari ini untuk apa?",
+    "Ucapkan satu afirmasi: 'Hari ini aku akan memberikan yang terbaik'",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("spiritual", "Syukur karena tubuh sehat", {
+  description: "Luangkan waktu untuk menyadari dan bersyukur atas kesehatan yang dimiliki. Ini membangun mindset positif.",
+  tips: [
+    "Tulis satu hal tentang tubuhmu yang kamu syukuri hari ini",
+    "Bisa dilakukan selesai mandi atau sebelum tidur",
+    "Bersyukur bukan hanya soal hasil, tapi juga proses",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("knowledge", "Baca artikel teknik olahraga", {
+  description: "Tambah pengetahuan taktis dan teknis dengan membaca 1 artikel atau menonton 1 video analisis per hari.",
+  tips: [
+    "Mulai dari sumber terpercaya: fourfourtwo.com, tifoball.com, atau UEFA.com",
+    "Tulis 1 hal yang kamu pelajari di kolom catatan setelah selesai",
+    "Pilih topik yang relevan dengan posisimu atau tim favoritmu",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("knowledge", "Pelajari nutrisi atlet", {
+  description: "Baca atau tonton materi tentang nutrisi yang tepat untuk atlet. Apa yang kamu makan memengaruhi performa.",
+  tips: [
+    "Pahami makronutrien: protein untuk otot, karbohidrat untuk energi",
+    "Cari info tentang makanan khas Indonesia yang mendukung performa atlet",
+    "Catat 1 perubahan pola makan yang bisa kamu mulai minggu ini",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("social", "Sapa teman latihan", {
+  description: "Bangun koneksi sosial dengan menyapa rekan latihan. Tim yang solid dibangun dari hubungan interpersonal yang baik.",
+  tips: [
+    "Sapa minimal satu orang sebelum latihan dimulai",
+    "Tanya kabar atau bagaimana latihannya hari ini",
+    "Tawarkan bantuan jika ada teman yang kesulitan",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("social", "Bagikan progres latihan", {
+  description: "Ceritakan progres atau pencapaian kecil hari ini ke teman atau keluarga. Sharing meningkatkan akuntabilitas.",
+  tips: [
+    "Bisa lewat chat, story IG, atau obrolan santai",
+    "Fokus pada proses (mis: 'hari ini aku berhasil lari 5km nonstop')",
+    "Jangan takut terlihat sombong — progresmu bisa menginspirasi orang lain",
+  ],
+  warnings: "Hindari membandingkan progresmu dengan orang lain. Setiap orang punya timeline-nya sendiri.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("character", "Catat waktu latihan hari ini", {
+  description: "Log durasi dan isi latihan hari ini. Tracking konsisten membantu kamu melihat pola dan kemajuan.",
+  tips: [
+    "Catat minimal: jam mulai, jam selesai, dan apa yang dilatih",
+    "Bisa pakai kolom catatan di bawah aktivitas ini",
+    "Tambahkan rating kondisi tubuh: 1–5 — berguna untuk deteksi kelelahan",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("character", "Tidak menunda jadwal latihan", {
+  description: "Latihan yang dijadwalkan harus dilakukan hari ini, bukan ditunda. Disiplin adalah fondasi segala prestasi.",
+  tips: [
+    "Ingatkan dirimu: alasan 'malas' adalah pilihan, bukan halangan",
+    "Kalau benar-benar tidak bisa, reschedule bukan skip — tentukan waktu pengganti SEKARANG juga",
+    "Disiplin selama 21 hari berturut-turut akan mengubahnya jadi kebiasaan",
+  ],
+  warnings: "Jangan menyalahkan diri sendiri kalau pernah skip. Yang penting adalah kembali ke jalur, bukan sempurna.",
+  video_url: null,
+  video_label: null,
+});
+
+// ─── Pemain Sepak Bola — dream_skill activities (from template daily_activities) ───
+
+addDetails("dream_skill", "Bangun Pagi (05:00)", {
+  description: "Bangun sebelum subuh untuk memulai hari lebih awal. Memberimu waktu ekstra untuk persiapan dan tidak terburu-buru.",
+  tips: [
+    "Letakkan alarm di seberang kamar supaya kamu harus bangun untuk mematikannya",
+    "Minum segelas air putih begitu bangun untuk mengaktifkan metabolisme",
+    "Konsistenlah selama 7 hari — setelah itu tubuh akan terbiasa bangun jam 5",
+  ],
+  warnings: "Pastikan tidur malam tidak kurang dari 7 jam. Bangun pagi tidak sehat jika tidur larut malam terus-menerus.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Doa & Refleksi", {
+  description: "Berdoa dan bersyukur untuk hari yang baru. Momentum spiritual yang menguatkan mental dan memberi ketenangan.",
+  tips: [
+    "Gunakan 3-5 menit pertama setelah bangun untuk doa atau meditasi",
+    "Ucapkan rasa syukur untuk 3 hal kecil sebelum memikirkan target latihan",
+    "Jika tidak terbiasa, mulai dengan menarik napas dalam 5 kali sambil fokus",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Stretching Dinamis", {
+  description: "Peregangan 10 menit untuk menyiapkan tubuh sebelum latihan. Meningkatkan aliran darah dan mengurangi risiko cedera.",
+  tips: [
+    "Lakukan leg swings, arm circles, dan trunk rotations — bukan static hold",
+    "Mulai dari gerakan kecil, tingkatkan amplitudo perlahan",
+    "Jangan lompat-lompat saat stretching — fokus pada kontrol gerakan",
+  ],
+  warnings: "Stretching dinamis dilakukan SEBELUM latihan. Stretching statis dilakukan SETELAH latihan. Jangan tertukar.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Sarapan Sehat", {
+  description: "Karbohidrat kompleks + protein + buah untuk bahan bakar tubuh. Sarapan atlet tidak boleh sembarangan.",
+  tips: [
+    "Kombinasi ideal: nasi merah/oatmeal + telur + pisang",
+    "Hindari gula berlebihan dan makanan olahan di pagi hari",
+    "Minum air putih 1 gelas sebelum sarapan untuk rehidrasi",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Ball Mastery (30 menit)", {
+  description: "Latihan kontrol bola untuk meningkatkan teknik dasar. Fokus pada touch, koordinasi kaki, dan kelincahan.",
+  tips: [
+    "Mulai dengan inside-outside touches — kaki kanan 5 menit, kiri 5 menit",
+    "Latihan dribble zig-zag dengan cone atau botol air sebagai penanda",
+    "Fokus pada kontrol, bukan kecepatan — kecepatan datang sendiri setelah teknik bagus",
+    "Rekam dirimu sendiri tiap minggu untuk melihat perkembangan",
+  ],
+  warnings: "Lakukan di permukaan yang rata. Istirahat jika lutut atau pergelangan kaki terasa nyeri.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Passing & Receiving", {
+  description: "Latihan operan pendek, panjang, dan one-touch. Kemampuan passing dan receiving yang akurat adalah fondasi permainan tim.",
+  tips: [
+    "Latih passing dengan kedua kaki — dominan dan non-dominan",
+    "Gunakan tembok sebagai partner: passing ke tembok, kontrol, passing lagi",
+    "Fokus pada first touch yang mengarah ke ruang kosong, bukan diam di tempat",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Physical Training", {
+  description: "Sprint, agility ladder, dan kekuatan tubuh untuk meningkatkan kebugaran atletik secara menyeluruh.",
+  tips: [
+    "Mulai dengan dynamic warm-up 5 menit sebelum latihan fisik",
+    "Interval training: sprint 20 detik, jog 40 detik — ulang 6 kali",
+    "Agility ladder: lakukan 3-4 variasi gerakan, masing-masing 3 repetisi",
+  ],
+  warnings: "Jangan memaksakan sprint jika otot masih pegal dari latihan kemarin. Recovery sama pentingnya dengan latihan.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Small Sided Game", {
+  description: "Game 4v4 atau 5v5 untuk aplikasi teknik dalam situasi pertandingan. Melatih pengambilan keputusan cepat.",
+  tips: [
+    "Fokus pada satu aspek per game: hari ini hanya passing, besok hanya dribbling",
+    "Gerak tanpa bola sama penting dengan kontrol bola — jangan diam",
+    "Komunikasi dengan rekan setim: panggil nama, arahkan dengan tangan",
+  ],
+  warnings: "Jaga intensitas — small sided game sering lebih berat dari latihan biasa karena ruang terbatas. Minum air di setiap jeda.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Recovery Session", {
+  description: "Stretching statis, foam roller, atau ice bath untuk pemulihan otot setelah latihan intens.",
+  tips: [
+    "Lakukan stretching statis: tiap posisi 30 detik, tanpa menggoyang",
+    "Foam roller: gulung perlahan pada area yang terasa kencang — berhenti di titik nyeri",
+    "Minum protein shake atau susu coklat dalam 30 menit setelah latihan untuk pemulihan otot maksimal",
+  ],
+  warnings: "Jangan gunakan foam roller langsung pada tulang atau sendi — hanya pada jaringan otot. Jika sakit berlebih, hentikan.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Tidur Sebelum 22:00", {
+  description: "Tidur cukup 8 jam untuk pemulihan optimal. tidur adalah bagian paling penting dari jadwal latihan — bukan opsional.",
+  tips: [
+    "Matikan layar gadget 30 menit sebelum tidur — cahaya biru mengganggu kualitas tidur",
+    "Baca buku atau lakukan teknik pernapasan 4-7-8 untuk mempercepat tidur",
+    "Konsisten: tidur dan bangun di jam yang sama setiap hari, termasuk akhir pekan",
+  ],
+  warnings: "Kafein setelah jam 3 sore bisa mengganggu kualitas tidur. Hindari kopi, teh, dan minuman bersoda di sore-malam hari.",
+  video_url: null,
+  video_label: null,
+});
+
+addDetails("dream_skill", "Jurnal Harian", {
+  description: "Catat progres latihan dan perasaan hari ini. Jurnal membantu melacak pola dan menjaga motivasi jangka panjang.",
+  tips: [
+    "Tulis 3 hal: apa yang dilatih, bagaimana rasanya, satu hal yang dipelajari",
+    "Jangan hanya menulis yang buruk — catat juga kemajuan kecil",
+    "Kalau tidak sempat, cukup tulis 1 kalimat. Konsistensi lebih penting daripada panjang",
+  ],
+  warnings: null,
+  video_url: null,
+  video_label: null,
+});
+
 export interface GenerateDailyOptions {
   journey: DreamJourney;
   spiritualPref?: SpiritualPreferences | null;
