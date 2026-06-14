@@ -1,3 +1,5 @@
+import { NavWrapper } from "@/components/NavWrapper";
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <NavWrapper>{children}</NavWrapper>;
 }

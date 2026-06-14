@@ -3,6 +3,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 const PUBLIC_ROUTES = [
   "/",
+  "/home",
   "/login",
   "/register",
   "/mimpi",
