@@ -162,6 +162,8 @@ export interface SmallWinReflection {
 
 /* ─── Daily Activities ─── */
 
+export type ActivityType = 'general' | 'knowledge' | 'physical' | 'social' | 'spiritual' | 'character' | 'dream_skill';
+
 export interface DailyActivity {
   id: string;
   journey_id: string;
@@ -175,6 +177,24 @@ export interface DailyActivity {
   is_custom: boolean;
   is_journey_activity: boolean;
   notes: string | null;
+  article_id: string | null;
+  activity_type: ActivityType;
+  estimated_minutes: number | null;
+}
+
+/* ─── Article Read Tracking ─── */
+
+export interface ArticleRead {
+  id: string;
+  user_id: string;
+  article_id: string;
+  activity_id: string | null;
+  journey_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  scroll_percentage: number;
+  time_spent_seconds: number;
+  is_completed: boolean;
 }
 
 /* ─── Daily Reflections ─── */
