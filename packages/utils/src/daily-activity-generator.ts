@@ -14,6 +14,8 @@ export interface ActivityDetail {
   warnings: string | null;
   video_url: string | null;
   video_label: string | null;
+  article_id?: string | null;
+  article_slug?: string | null;
 }
 
 export const ACTIVITY_DETAILS: Record<string, ActivityDetail> = {};
@@ -96,6 +98,8 @@ addDetails("knowledge", "Baca artikel teknik olahraga", {
   warnings: null,
   video_url: null,
   video_label: null,
+  article_id: null,
+  article_slug: "panduan-olahraga-pemula-tanpa-cedera",
 });
 
 addDetails("knowledge", "Pelajari nutrisi atlet", {
@@ -108,6 +112,8 @@ addDetails("knowledge", "Pelajari nutrisi atlet", {
   warnings: null,
   video_url: null,
   video_label: null,
+  article_id: null,
+  article_slug: null,
 });
 
 addDetails("social", "Sapa teman latihan", {
@@ -454,6 +460,10 @@ export function generateDailyActivities(
     const title = pick(pool, rand);
     usedTitles.add(title.toLowerCase());
 
+    const detailKey = `${dimension}::${title.toLowerCase().trim()}`;
+    const detail = (ACTIVITY_DETAILS as Record<string, any>)[detailKey];
+    const activityType = dimension === "knowledge" ? "knowledge" : dimension;
+
     activities.push({
       journey_id: journey.id,
       user_id: journey.user_id,
@@ -466,6 +476,9 @@ export function generateDailyActivities(
       is_custom: false,
       is_journey_activity: true,
       notes: null,
+      article_id: detail?.article_id ?? null,
+      activity_type: activityType,
+      estimated_minutes: null,
     });
   }
 

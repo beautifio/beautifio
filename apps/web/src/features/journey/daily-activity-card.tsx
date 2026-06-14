@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { CheckCircle2, Circle, PenLine, ChevronDown, ChevronUp } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Circle, PenLine, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import type { DailyActivity } from "@beautifio/types";
 import { ACTIVITY_DETAILS } from "@beautifio/utils";
 import type { ActivityDetail } from "@beautifio/utils";
@@ -128,6 +129,23 @@ export function DailyActivityCard({
               <p className="text-[12px] text-[#FF5E5B] leading-relaxed">
                 ⚠ Perhatikan: {detail.warnings}
               </p>
+            </div>
+          )}
+
+          {detail.article_slug && (
+            <div className="p-3 rounded-lg bg-accent/5 border border-accent/15">
+              <div className="flex items-start gap-2.5">
+                <BookOpen size={16} className="text-accent mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-text-primary">Artikel yang disarankan</p>
+                  <Link
+                    href={`/inspirasi/${detail.article_slug}?from=journey&activity_id=${activity.id}&journey_id=${activity.journey_id}`}
+                    className="inline-flex items-center gap-1 text-[12px] text-primary font-medium hover:underline mt-1"
+                  >
+                    Baca Sekarang →
+                  </Link>
+                </div>
+              </div>
             </div>
           )}
 
