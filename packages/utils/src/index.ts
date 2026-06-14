@@ -105,3 +105,9 @@ export {
 } from "./journey-mapper";
 export type { JmCareerPath } from "./journey-mapper-types";
 
+export {
+  BENCHMARK_DATABASE, getBenchmarkDream,
+  getBenchmarkDreamsByCategory, determineUserPhase,
+} from "./benchmark-database";
+export type { BenchmarkDream } from "./benchmark-database";
+

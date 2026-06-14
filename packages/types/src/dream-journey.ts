@@ -284,3 +284,59 @@ export interface JourneyProgress {
   small_wins_completed: number;
   small_wins_total: number;
 }
+
+/* ─── Benchmark Phase System ─── */
+
+export type UserPhaseStatus = "not_started" | "in_progress" | "completed" | "ahead";
+
+export interface DreamPhase {
+  id: string;
+  dream_template_slug: string;
+  phase_number: number;
+  phase_name: string;
+  age_min: number | null;
+  age_max: number | null;
+  big_win_title: string;
+  big_win_description: string | null;
+  industry_benchmark: string | null;
+  over_achievement: string | null;
+  behind_schedule_signal: string | null;
+  sort_order: number;
+  small_wins: DreamPhaseSmallWin[];
+}
+
+export interface DreamPhaseSmallWin {
+  id: string;
+  phase_id: string;
+  title: string;
+  description: string | null;
+  target_value: string | null;
+  target_unit: string | null;
+  how_to_measure: string | null;
+  sort_order: number;
+}
+
+export interface UserPhaseStatusRecord {
+  id: string;
+  user_id: string;
+  journey_id: string;
+  dream_phase_id: string;
+  status: UserPhaseStatus;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OnboardingQuestion {
+  id: string;
+  question: string;
+  type: "text" | "select" | "number";
+  options?: string[];
+}
+
+export interface PhaseDetectionResult {
+  current_phase: DreamPhase | null;
+  status: "on_track" | "behind_schedule" | "ahead_of_schedule";
+  message: string;
+  all_phases: DreamPhase[];
+}
