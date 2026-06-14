@@ -23,7 +23,7 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
     return pathname === route || pathname.startsWith(route + "/");
   })?.id ?? "home";
 
-  const hideNav = pathname === "/login" || pathname === "/register" || pathname === "/forgot-password" || pathname.startsWith("/auth/") || pathname.startsWith("/coba/");
+  const hideNav = pathname === "/login" || pathname === "/register" || pathname === "/forgot-password" || pathname.startsWith("/auth/") || pathname.startsWith("/coba/") || pathname === "/" || pathname.startsWith("/mimpi");
 
   return (
     <div className={`min-h-screen bg-bg ${hideNav ? "" : "pb-20"}`}>
