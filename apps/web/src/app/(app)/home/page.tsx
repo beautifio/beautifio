@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { use, useState, useEffect } from "react";
 import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Heart } from "lucide-react";
 import { Button, Card } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
@@ -131,9 +131,13 @@ function timeGreeting(): { text: string; icon: React.ReactNode } {
   return { text: "Selamat Malam", icon: <Moon size={18} /> };
 }
 
-export default function HomeScreen() {
+export default function HomeScreen({
+  searchParams,
+}: {
+  searchParams: Promise<{ mimpi?: string }>;
+}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const resolvedParams = use(searchParams);
   const { user } = useAuth();
 
   const [journey, setJourney] = useState<DreamJourney | null>(null);
@@ -142,7 +146,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
 
-  const mimpiSlug = searchParams.get("mimpi");
+  const mimpiSlug = resolvedParams?.mimpi;
 
   const userName =
     user?.user_metadata?.full_name ||

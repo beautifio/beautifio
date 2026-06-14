@@ -1,20 +1,24 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { use, useState } from "react";
 import { Mail, Lock, Eye, EyeOff, UserPlus, User } from "lucide-react";
 import { Button, Input, Skeleton } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
 
-export default function RegisterPage() {
+export default function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mimpi?: string }>;
+}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const resolvedParams = use(searchParams);
   const { isLoading } = useAuth();
   const setUser = useAuthStore((s) => s.setUser);
   const setSession = useAuthStore((s) => s.setSession);
-  const mimpiSlug = searchParams.get("mimpi");
+  const mimpiSlug = resolvedParams.mimpi;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
