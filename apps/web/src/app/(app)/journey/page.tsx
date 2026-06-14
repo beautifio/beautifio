@@ -10,6 +10,7 @@ import type { DreamTemplate, DreamJourney } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
 
 import { getActiveJourney, getAllJourneys, createJourney, journeyUrl } from "@/lib/journey-queries";
+import { JourneyOnboardingModal } from "@/features/journey/journey-onboarding-modal";
 
 const CATEGORY_LABELS: Record<string, string> = {
   sports: "Sports",
@@ -39,6 +40,8 @@ export default function JourneyPage() {
   const [userAge, setUserAge] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("Semua");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
 
   const filteredTemplates = useMemo(
     () => templates.filter((t) => categoryMatches(t.category, activeFilter)),
@@ -82,6 +85,13 @@ export default function JourneyPage() {
 
   const handleStartJourney = async (template: DreamTemplate) => {
     if (!user || creating) return;
+
+    if (!userAge) {
+      setOnboardingTemplate(template);
+      setShowOnboarding(true);
+      return;
+    }
+
     setCreating(true);
     setError(null);
     setSelectedTemplate(template.slug);
@@ -241,6 +251,15 @@ export default function JourneyPage() {
           })}
         </div>
       </div>
+
+      <JourneyOnboardingModal
+        open={showOnboarding && !!onboardingTemplate}
+        template={onboardingTemplate!}
+        onClose={() => {
+          setShowOnboarding(false);
+          setOnboardingTemplate(null);
+        }}
+      />
     </div>
   );
 }

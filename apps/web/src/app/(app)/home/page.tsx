@@ -7,6 +7,7 @@ import { Button, Card } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { getAllDreamTemplates } from "@beautifio/utils";
 import { createJourney, journeyUrl } from "@/lib/journey-queries";
+import { JourneyOnboardingModal } from "@/features/journey/journey-onboarding-modal";
 import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
 
 function DreamCard({ journey, dreamMeaning }: { journey: DreamJourney; dreamMeaning: string }) {
@@ -71,32 +72,12 @@ function TemplateCards() {
   const router = useRouter();
   const { user } = useAuth();
   const [templates] = useState(getAllDreamTemplates());
-  const [creating, setCreating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<DreamTemplate | null>(null);
 
   const handleStartJourney = async (t: DreamTemplate) => {
     if (!user) return router.push("/login");
-    if (creating) return;
-    setCreating(t.slug);
-    setError(null);
-    try {
-      const journey = await createJourney(
-        user.id,
-        t.slug,
-        t.title,
-        t.emoji,
-        t.category
-      );
-      if (journey) {
-        router.push(journeyUrl(journey));
-      } else {
-        setError("Gagal membuat perjalanan. Coba lagi.");
-        setCreating(null);
-      }
-    } catch (e: any) {
-      setError(e?.message || "Terjadi kesalahan. Coba lagi.");
-      setCreating(null);
-    }
+    setSelectedTemplate(t);
   };
 
   return (
@@ -127,13 +108,17 @@ function TemplateCards() {
             size="sm"
             className="w-full mt-4"
             onClick={() => handleStartJourney(t)}
-            loading={creating === t.slug}
-            disabled={!!creating}
           >
             <Heart size={14} /> Pilih Mimpi Ini
           </Button>
         </Card>
       ))}
+
+      <JourneyOnboardingModal
+        open={!!selectedTemplate}
+        template={selectedTemplate!}
+        onClose={() => setSelectedTemplate(null)}
+      />
     </div>
   );
 }
