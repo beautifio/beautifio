@@ -66,13 +66,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
-  // Try getUser with fallback to cookie presence check
+  // Try getUser with retry for transient failures (cookie propagation race)
   let user: any = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data?.user;
-  } catch {
-    // Attempt to parse session from cookies as fallback
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const { data } = await supabase.auth.getUser();
+      user = data?.user;
+      if (user) break;
+    } catch {
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 200));
+        continue;
+      }
+    }
+  }
+
+  // Fallback to cookie presence check only if both retries failed
+  if (!user) {
     try {
       const { data } = await supabase.auth.getSession();
       user = data?.session?.user ?? null;

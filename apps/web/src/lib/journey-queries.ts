@@ -226,7 +226,75 @@ export async function createJourney(
     if (actError) console.error("createJourney: daily_activities insert failed", actError);
   }
 
+  // Determine & save current phase
+  if (userAge) {
+    try {
+      const { data: phaseResult } = await db().rpc("determine_current_phase", {
+        p_user_age: userAge,
+        p_template_slug: templateSlug,
+      });
+
+      if (phaseResult && phaseResult.length > 0) {
+        const phase = phaseResult[0];
+
+        const { data: existingStatus } = await db()
+          .from("user_phase_status")
+          .select("id")
+          .eq("journey_id", journey.id)
+          .eq("dream_phase_id", phase.phase_id)
+          .maybeSingle();
+
+        if (!existingStatus) {
+          await db().from("user_phase_status").insert({
+            user_id: userId,
+            journey_id: journey.id,
+            dream_phase_id: phase.phase_id,
+            status: phase.behind_schedule_signal
+              ? "in_progress"
+              : "in_progress",
+          });
+        }
+      }
+    } catch (e) {
+      console.error("createJourney: phase detection failed", e);
+    }
+  }
+
   return journey;
+}
+
+/* ─── Phases ─── */
+
+export async function getActivePhaseWithBenchmarks(
+  journeyId: string,
+  userId: string
+): Promise<{
+  phase: any;
+  smallWins: any[];
+  status: string;
+} | null> {
+  const { data: ups } = await db()
+    .from("user_phase_status")
+    .select("*, dream_phases(*)")
+    .eq("journey_id", journeyId)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!ups) return null;
+
+  const { data: sw } = await db()
+    .from("small_win_templates")
+    .select("*")
+    .eq("phase_id", ups.dream_phase_id)
+    .order("sort_order");
+
+  return {
+    phase: ups.dream_phases,
+    smallWins: sw || [],
+    status: ups.status,
+  };
 }
 
 /* ─── Big Wins ─── */

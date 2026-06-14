@@ -4,8 +4,6 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
 
-const REFRESH_INTERVAL = 10 * 60 * 1000;
-
 export function useAuth() {
   const user = useAuthStore((s) => s.user);
   const session = useAuthStore((s) => s.session);
@@ -23,16 +21,6 @@ export function useAuth() {
 
     let cancelled = false;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (cancelled) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    }).catch(() => {
-      if (cancelled) return;
-      setLoading(false);
-    });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
       if (event === "SIGNED_OUT") {
@@ -42,25 +30,26 @@ export function useAuth() {
         setSession(session);
         setUser(session?.user ?? null);
       }
+      if (event === "INITIAL_SESSION") {
+        setLoading(false);
+      }
     });
 
-    const refreshTimer = setInterval(async () => {
-      if (!supabase) return;
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && !cancelled) {
-          setSession(session);
-          setUser(session.user);
-        }
-      } catch {
-        // silent
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled) return;
+      if (session?.access_token !== useAuthStore.getState().session?.access_token) {
+        setSession(session);
+        setUser(session?.user ?? null);
       }
-    }, REFRESH_INTERVAL);
+      setLoading(false);
+    }).catch(() => {
+      if (cancelled) return;
+      setLoading(false);
+    });
 
     return () => {
       cancelled = true;
       subscription.unsubscribe();
-      clearInterval(refreshTimer);
     };
   }, [setUser, setSession, setLoading]);
 

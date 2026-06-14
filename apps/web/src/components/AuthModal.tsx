@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, X } from "lucide-react";
 import { Button, Input } from "@beautifio/ui";
 import { useAuthStore } from "@/stores/auth-store";
@@ -98,6 +99,7 @@ function AuthForm({
   mode: "login" | "register";
   onSuccess: () => void;
 }) {
+  const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const setSession = useAuthStore((s) => s.setSession);
   const [email, setEmail] = useState("");
@@ -136,6 +138,8 @@ function AuthForm({
         if (data?.session) {
           setSession(data.session);
           setUser(data.session.user);
+          await new Promise((r) => setTimeout(r, 300));
+          router.refresh();
           onSuccess();
         }
       } else {
@@ -156,6 +160,8 @@ function AuthForm({
         if (data?.session) {
           setSession(data.session);
           setUser(data.session.user);
+          await new Promise((r) => setTimeout(r, 300));
+          router.refresh();
           onSuccess();
           return;
         }

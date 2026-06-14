@@ -64,6 +64,8 @@ export default function LoginPage() {
         }
         setSession(data.session);
         setUser(data.session.user);
+        await new Promise((r) => setTimeout(r, 300));
+        router.refresh();
         router.push("/home");
       }
     } catch {

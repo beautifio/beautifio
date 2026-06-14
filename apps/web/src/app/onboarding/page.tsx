@@ -13,7 +13,7 @@ import { useAuthStore } from "@/stores/auth-store";
 export const dynamic = "force-dynamic";
 
 interface OnboardingData {
-  age: string;
+  age: number | null;
   city: string;
   status: string[];
   goals: string[];
@@ -23,7 +23,7 @@ interface OnboardingData {
 }
 
 const steps = [
-  { id: "age", title: "Usia", subtitle: "Berapa usiamu?", icon: Heart, options: ["10-12", "13-15", "16-17", "18-20", "21-23", "24+"] },
+  { id: "age", title: "Usia", subtitle: "Berapa usiamu?", icon: Heart, input: true, type: "number" },
   { id: "city", title: "Kota", subtitle: "Kamu tinggal di mana?", icon: MapPin, input: true },
   { id: "status", title: "Status", subtitle: "Apa statusmu saat ini?", icon: GraduationCap, options: ["Pelajar SMA/SMK", "Mahasiswa", "Fresh Graduate", "Bekerja", "Mencari Pekerjaan"], multi: true },
   { id: "goals", title: "Tujuan Utama", subtitle: "Apa yang ingin kamu capai?", icon: Target, options: ["Menentukan Karir", "Mengembangkan Skill", "Membangun Relasi", "Mencari Beasiswa", "Mendapatkan Mentor", "Memulai Bisnis"], multi: true, max: 3 },
@@ -211,7 +211,7 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [showMatching, setShowMatching] = useState(false);
   const [data, setData] = useState<OnboardingData>({
-    age: "",
+    age: null,
     city: "",
     status: [],
     goals: [],
@@ -221,12 +221,18 @@ export default function OnboardingPage() {
   });
 
   const update = useCallback((key: keyof OnboardingData, val: string[]) => {
-    setData((prev) => ({ ...prev, [key]: key === "city" ? val[0] || "" : val }));
+    if (key === "age") {
+      const num = parseInt(val[0], 10);
+      setData((prev) => ({ ...prev, age: isNaN(num) ? null : num }));
+    } else {
+      setData((prev) => ({ ...prev, [key]: key === "city" ? val[0] || "" : val }));
+    }
   }, []);
 
   const canProceed = (() => {
     const s = steps[step];
     const val = data[s.id as keyof OnboardingData];
+    if (s.id === "age") return data.age !== null && data.age >= 10 && data.age <= 40;
     if (s.input) return (val as string)?.trim().length > 0;
     if (Array.isArray(val)) return val.length > 0;
     return !!val;
@@ -241,10 +247,18 @@ export default function OnboardingPage() {
     setSaving(true);
 
     if (user && supabase) {
-      await supabase.from("users").update({
+      const updateData: Record<string, unknown> = {
         city: data.city,
         last_active_at: new Date().toISOString(),
-      }).eq("id", user.id);
+      };
+
+      if (data.age && data.age >= 10 && data.age <= 40) {
+        const birthDate = new Date();
+        birthDate.setFullYear(birthDate.getFullYear() - data.age);
+        updateData.birth_date = birthDate.toISOString().split("T")[0];
+      }
+
+      await supabase.from("users").update(updateData).eq("id", user.id);
 
       const { error: goalsErr } = await supabase.from("user_goals").insert(
         data.goals.map((g) => ({
@@ -297,7 +311,8 @@ export default function OnboardingPage() {
   const currentVal = (() => {
     const val = data[s.id as keyof OnboardingData];
     if (Array.isArray(val)) return val;
-    return val ? [val] : [];
+    if (s.id === "age") return data.age ? [String(data.age)] : [];
+    return val ? [String(val)] : [];
   })();
 
   return (
@@ -322,14 +337,43 @@ export default function OnboardingPage() {
             </div>
 
             {s.input ? (
-              <input
-                autoFocus
-                placeholder="Contoh: Sleman, Yogyakarta"
-                value={(data.city as string) || ""}
-                onChange={(e) => update("city", [e.target.value])}
-                onKeyDown={(e) => e.key === "Enter" && canProceed && handleNext()}
-                className="w-full h-13 px-4 rounded-xl border border-border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
-              />
+              s.type === "number" ? (
+                <div className="space-y-3">
+                  <input
+                    autoFocus
+                    type="number"
+                    min={10}
+                    max={40}
+                    placeholder="Contoh: 16"
+                    value={data.age ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        update("age", []);
+                      } else {
+                        const num = parseInt(val, 10);
+                        if (!isNaN(num) && num >= 10 && num <= 40) {
+                          update("age", [val]);
+                        }
+                      }
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && canProceed && handleNext()}
+                    className="w-full h-13 px-4 rounded-xl border border-border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20 text-center text-2xl font-bold"
+                  />
+                  <p className="text-xs text-text-secondary text-center">
+                    Masukkan usia dalam angka (10–40 tahun)
+                  </p>
+                </div>
+              ) : (
+                <input
+                  autoFocus
+                  placeholder="Contoh: Sleman, Yogyakarta"
+                  value={(data.city as string) || ""}
+                  onChange={(e) => update("city", [e.target.value])}
+                  onKeyDown={(e) => e.key === "Enter" && canProceed && handleNext()}
+                  className="w-full h-13 px-4 rounded-xl border border-border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+                />
+              )
             ) : (
               <SelectGrid
                 options={s.options || []}

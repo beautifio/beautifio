@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Sparkles, BookOpen, Heart,
-  Target, ArrowLeft,
+  Target, ArrowLeft, MapPin,
 } from "lucide-react";
 import { Button, Card, Skeleton } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
@@ -14,7 +14,7 @@ import {
   completeActivity, completeSmallWin, saveDailyReflection,
   updateBigWin, completeBigWin, failBigWin, unfailBigWin, saveBigWinReflection,
   generateAndInsertActivities, getSpiritualPreferences,
-  saveActivityNote, getJourneyReflections,
+  saveActivityNote, getJourneyReflections, getActivePhaseWithBenchmarks,
 } from "@/lib/journey-queries";
 import type {
   DreamJourney, BigWin, SmallWin, DailyActivity,
@@ -79,6 +79,7 @@ export default function JourneyDetailPage() {
   const [alternativeFutures, setAlternativeFutures] = useState<{ title: string; description: string; skills: string[] }[]>([]);
   const [dreamMeaning, setDreamMeaning] = useState("");
   const [ageGroup, setAgeGroup] = useState<string | null>(null);
+  const [activePhase, setActivePhase] = useState<{ phase: any; smallWins: any[]; status: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showReflection, setShowReflection] = useState(false);
@@ -125,13 +126,15 @@ export default function JourneyDetailPage() {
       }
       setJourney(j);
 
-      const [bw, prog, tl, sp, refl] = await Promise.all([
+      const [bw, prog, tl, sp, refl, ph] = await Promise.all([
         getBigWins(j.id),
         getJourneyProgress(user.id, j.id),
         getTimeline(user.id, j.id),
         getSpiritualPreferences(user.id),
         getJourneyReflections(user.id, j.id),
+        getActivePhaseWithBenchmarks(j.id, user.id),
       ]);
+      setActivePhase(ph);
 
       const { getDreamTemplate, getActivitiesForDimension: validatePool } = await import("@beautifio/utils");
 
@@ -409,6 +412,73 @@ export default function JourneyDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Active Phase */}
+        {activePhase && (
+          <Card className="p-4 mb-4 border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+                <MapPin size={16} className="text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-primary font-semibold uppercase tracking-wide">
+                    Fase Saat Ini
+                  </p>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      activePhase.status === "completed"
+                        ? "bg-green-100 text-green-700"
+                        : activePhase.status === "behind"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {activePhase.status === "completed"
+                      ? "✓ Selesai"
+                      : activePhase.status === "behind"
+                      ? "⚠️ Tertinggal"
+                      : "📌 On Track"}
+                  </span>
+                </div>
+                <p className="text-base font-bold text-text-primary mt-0.5">
+                  {activePhase.phase.title}
+                </p>
+                {activePhase.phase.description && (
+                  <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+                    {activePhase.phase.description}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-2 text-[11px] text-text-secondary">
+                  <span className="px-2 py-0.5 rounded-full bg-muted">
+                    Usia {activePhase.phase.age_min}–{activePhase.phase.age_max} tahun
+                  </span>
+                  {activePhase.phase.benchmark_time_years && (
+                    <span>⏱ {activePhase.phase.benchmark_time_years} tahun</span>
+                  )}
+                </div>
+                {activePhase.smallWins.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-border/30">
+                    <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-wide mb-1.5">
+                      Target Fase Ini
+                    </p>
+                    <div className="space-y-1">
+                      {activePhase.smallWins.map((sw: any) => (
+                        <div
+                          key={sw.id}
+                          className="flex items-center gap-2 text-[11px] text-text-secondary"
+                        >
+                          <span className="w-1 h-1 rounded-full bg-primary/40 flex-shrink-0" />
+                          <span>{sw.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Current Focus */}
         {currentBigWin && (
