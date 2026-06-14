@@ -7,7 +7,7 @@ import {
   Award, ChevronRight,
 } from "lucide-react";
 import { Button, Card } from "@beautifio/ui";
-import { getDreamTemplate, getBenchmarkForTemplate } from "@beautifio/utils";
+import { getDreamTemplate, getBenchmarkForTemplate, TEMPLATE_TO_BENCHMARK_SLUG } from "@beautifio/utils";
 import type { DreamTemplate, DreamPhase, DreamPhaseSmallWin } from "@beautifio/types";
 
 export default function MimpiPreviewPage() {
@@ -215,7 +215,7 @@ export default function MimpiPreviewPage() {
         {/* CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-bg via-bg/95 to-transparent pt-8 pb-6 px-6">
           <div className="max-w-content mx-auto">
-            <Link href={`/register?mimpi=${slug}`}>
+            <Link href={`/register?mimpi=${TEMPLATE_TO_BENCHMARK_SLUG[slug] || slug}`}>
               <Button variant="primary" size="lg" className="w-full shadow-lg">
                 Mulai Perjalanan Ini <ChevronRight size={16} />
               </Button>

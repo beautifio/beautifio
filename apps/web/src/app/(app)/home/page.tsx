@@ -5,7 +5,7 @@ import { use, useState, useEffect } from "react";
 import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Heart } from "lucide-react";
 import { Button, Card } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
-import { getAllDreamTemplates, getDreamTemplate } from "@beautifio/utils";
+import { getAllDreamTemplates, getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
 import { createJourney, journeyUrl } from "@/lib/journey-queries";
 import { JourneyOnboardingModal } from "@/features/journey/journey-onboarding-modal";
 import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
@@ -183,7 +183,11 @@ export default function HomeScreen({
 
   useEffect(() => {
     if (!loading && !journey && mimpiSlug) {
-      const t = getDreamTemplate(mimpiSlug);
+      let t = getDreamTemplate(mimpiSlug);
+      if (!t) {
+        const templateSlug = getTemplateFromBenchmarkSlug(mimpiSlug);
+        if (templateSlug) t = getDreamTemplate(templateSlug);
+      }
       if (t) setOnboardingTemplate(t);
     }
   }, [loading, journey, mimpiSlug]);

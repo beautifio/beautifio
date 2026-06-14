@@ -30,10 +30,20 @@ export const TEMPLATE_TO_BENCHMARK_SLUG: Record<string, string> = {
   "beauty-creator": "youtuber-vlogger",
 };
 
+/** Reverse mapping: benchmark slug (Indonesian) → template slug (English) */
+export const BENCHMARK_TO_TEMPLATE_SLUG: Record<string, string> = 
+  Object.fromEntries(
+    Object.entries(TEMPLATE_TO_BENCHMARK_SLUG).map(([k, v]) => [v, k])
+  );
+
 export function getBenchmarkForTemplate(templateSlug: string): BenchmarkDream | undefined {
   const benchmarkSlug = TEMPLATE_TO_BENCHMARK_SLUG[templateSlug];
   if (!benchmarkSlug) return undefined;
   return BENCHMARK_DATABASE[benchmarkSlug];
+}
+
+export function getTemplateFromBenchmarkSlug(benchmarkSlug: string): string | undefined {
+  return BENCHMARK_TO_TEMPLATE_SLUG[benchmarkSlug];
 }
 
 export function getBenchmarkDreamsByCategory(category: string): BenchmarkDream[] {

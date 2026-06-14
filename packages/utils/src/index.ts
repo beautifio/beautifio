@@ -109,6 +109,7 @@ export {
   BENCHMARK_DATABASE, getBenchmarkDream,
   getBenchmarkDreamsByCategory, determineUserPhase,
   getBenchmarkForTemplate, TEMPLATE_TO_BENCHMARK_SLUG,
+  BENCHMARK_TO_TEMPLATE_SLUG, getTemplateFromBenchmarkSlug,
 } from "./benchmark-database";
 export type { BenchmarkDream } from "./benchmark-database";
 
