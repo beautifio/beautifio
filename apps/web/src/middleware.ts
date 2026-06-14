@@ -1,15 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-const authPages = ["/login", "/register", "/forgot-password", "/auth"];
-
-const protectedPages = [
-  "/journey",
-  "/profil",
-  "/familia",
-  "/jurnal",
-  "/onboarding",
-  "/welcome",
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/register",
+  "/mimpi",
+  "/auth/callback",
 ];
 
 const deprecatedPages: Record<string, string> = {
@@ -19,16 +16,6 @@ const deprecatedPages: Record<string, string> = {
   "/onboarding": "/journey",
   "/welcome": "/journey",
 };
-
-function isAuthPage(pathname: string): boolean {
-  return authPages.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
-
-function isProtectedPage(pathname: string): boolean {
-  return protectedPages.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
-}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -93,8 +80,19 @@ export async function middleware(request: NextRequest) {
 
   const isAuth = !!user;
 
-  // Redirect authenticated users away from auth pages
-  if (isAuth && isAuthPage(pathname)) {
+  const isPublic = PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  );
+
+  // Unauthenticated → only allow public routes
+  if (!isAuth && !isPublic) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Authenticated on landing or auth pages → redirect to home
+  if (isAuth && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
     const url = request.nextUrl.clone();
     url.pathname = "/home";
     const mimpi = request.nextUrl.searchParams.get("mimpi");
@@ -102,14 +100,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect unauthenticated users away from protected pages
-  if (!isAuth && isProtectedPage(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  // Redirect deprecated pages (and sub-paths) to new Journey system
+  // Redirect deprecated pages to new Journey system
   const deprecatedMatch = Object.entries(deprecatedPages).find(
     ([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
