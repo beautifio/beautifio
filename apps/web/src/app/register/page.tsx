@@ -99,6 +99,19 @@ export default function RegisterPage({
       if (data?.session) {
         setSession(data.session);
         setUser(data.session.user);
+
+        // Check if guest data exists → migrate to DB
+        const { getGuestJourney, clearGuestJourney, migrateGuestToDB } = await import("@/lib/guest-journey");
+        const guestData = getGuestJourney();
+        if (guestData) {
+          const result = await migrateGuestToDB(data.session.user.id, guestData);
+          clearGuestJourney();
+          if (result) {
+            router.push(`/journey/${result.slug}`);
+            return;
+          }
+        }
+
         const dest = mimpiSlug ? `/home?mimpi=${mimpiSlug}` : "/home";
         router.push(dest);
         return;

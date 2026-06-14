@@ -70,6 +70,18 @@ export default function LoginPage({
         }
         setSession(data.session);
         setUser(data.session.user);
+
+        const { getGuestJourney, clearGuestJourney, migrateGuestToDB } = await import("@/lib/guest-journey");
+        const guestData = getGuestJourney();
+        if (guestData) {
+          const result = await migrateGuestToDB(data.session.user.id, guestData);
+          clearGuestJourney();
+          if (result) {
+            router.push(`/journey/${result.slug}`);
+            return;
+          }
+        }
+
         await new Promise((r) => setTimeout(r, 300));
         router.refresh();
         const dest = mimpiSlug ? `/home?mimpi=${mimpiSlug}` : "/home";

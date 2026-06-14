@@ -50,3 +50,47 @@ export function getDaysRemaining(startDate: string): number {
 export function todayStr(): string {
   return new Date().toISOString().split("T")[0];
 }
+
+export async function migrateGuestToDB(
+  userId: string,
+  guestData: GuestJourneyData
+): Promise<{ slug: string } | null> {
+  const { getDreamTemplate } = await import("@beautifio/utils");
+  const template = getDreamTemplate(guestData.templateSlug);
+  if (!template) return null;
+
+  const { createJourney } = await import("@/lib/journey-queries");
+  const journey = await createJourney(
+    userId,
+    guestData.templateSlug,
+    template.title,
+    template.emoji,
+    template.category,
+    guestData.userAge
+  );
+  if (!journey) return null;
+
+  const { supabase } = await import("@/lib/supabase/client");
+  if (supabase) {
+    // Onboarding questions
+    if (Object.keys(guestData.onboardingAnswers).length > 0) {
+      await supabase
+        .from("users")
+        .update({ onboarding_data: guestData.onboardingAnswers as any })
+        .eq("id", userId);
+    }
+
+    // Mark completed activities by matching title + date
+    for (const [date, titles] of Object.entries(guestData.completedActivities)) {
+      if (titles.length === 0) continue;
+      await supabase
+        .from("daily_activities")
+        .update({ is_completed: true, completed_at: new Date().toISOString() })
+        .eq("journey_id", journey.id)
+        .eq("activity_date", date)
+        .in("title", titles);
+    }
+  }
+
+  return { slug: journey.slug || `${journey.id.slice(0, 8)}` };
+}

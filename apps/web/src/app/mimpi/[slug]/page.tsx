@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -7,11 +8,13 @@ import {
   Award, ChevronRight,
 } from "lucide-react";
 import { Button, Card } from "@beautifio/ui";
-import { getDreamTemplate, getBenchmarkForTemplate, TEMPLATE_TO_BENCHMARK_SLUG } from "@beautifio/utils";
+import { getDreamTemplate, getBenchmarkForTemplate } from "@beautifio/utils";
+import { GuestOnboardingModal } from "@/features/journey/guest-onboarding-modal";
 import type { DreamTemplate, DreamPhase, DreamPhaseSmallWin } from "@beautifio/types";
 
 export default function MimpiPreviewPage() {
   const { slug } = useParams<{ slug: string }>();
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const template = getDreamTemplate(slug) || null;
   const benchmark = getBenchmarkForTemplate(slug);
   const phases: (DreamPhase & { small_win_templates?: DreamPhaseSmallWin[] })[] = benchmark?.phases?.map((p) => ({
@@ -215,14 +218,20 @@ export default function MimpiPreviewPage() {
         {/* CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-bg via-bg/95 to-transparent pt-8 pb-6 px-6">
           <div className="max-w-content mx-auto">
-            <Link href={`/register?mimpi=${TEMPLATE_TO_BENCHMARK_SLUG[slug] || slug}`}>
-              <Button variant="primary" size="lg" className="w-full shadow-lg">
-                Mulai Perjalanan Ini <ChevronRight size={16} />
-              </Button>
-            </Link>
+            <Button variant="primary" size="lg" className="w-full shadow-lg" onClick={() => setShowOnboarding(true)}>
+              Mulai Perjalanan Ini <ChevronRight size={16} />
+            </Button>
           </div>
         </div>
       </div>
+
+      {template && (
+        <GuestOnboardingModal
+          open={showOnboarding}
+          template={template}
+          onClose={() => setShowOnboarding(false)}
+        />
+      )}
     </div>
   );
 }

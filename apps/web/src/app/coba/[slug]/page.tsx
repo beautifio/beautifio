@@ -1,9 +1,8 @@
 "use client";
 
-import { use, useState, useEffect, useCallback } from "react";
+import { use, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Sparkles, ChevronRight, Clock } from "lucide-react";
+import { ArrowLeft, Sparkles, ChevronRight, Clock, X } from "lucide-react";
 import { Button } from "@beautifio/ui";
 import { getDreamTemplate, getBenchmarkForTemplate, determineUserPhase, TEMPLATE_TO_BENCHMARK_SLUG, generateDailyActivities, ACTIVITY_DETAILS } from "@beautifio/utils";
 import { DailyActivityCard } from "@/features/journey/daily-activity-card";
@@ -36,6 +35,11 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
   const [activities, setActivities] = useState<DailyActivity[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [ready, setReady] = useState(false);
+  const [showRegisterSheet, setShowRegisterSheet] = useState(false);
+  const [day2Dismissed, setDay2Dismissed] = useState(false);
+  const day1PromptFired = useRef(false);
+  const initialLoadRef = useRef(false);
+  const prevCompletedRef = useRef(0);
 
   useEffect(() => {
     const data = getGuestJourney();
@@ -94,6 +98,23 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
     setActivities(merged.sort((a, b) => (DIMENSION_ORDER[a.dimension] ?? 99) - (DIMENSION_ORDER[b.dimension] ?? 99)));
     setReady(true);
   }, [guestData, slug, router]);
+
+  const day = guestData ? getCurrentDay(guestData.startDate) : 1;
+
+  // Day 1 trigger: show sheet when completing 3rd activity
+  useEffect(() => {
+    if (day !== 1 || day < 1) return;
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      return;
+    }
+    const completed = activities.filter((a) => a.is_completed).length;
+    if (completed === 3 && prevCompletedRef.current < 3 && !day1PromptFired.current) {
+      day1PromptFired.current = true;
+      setShowRegisterSheet(true);
+    }
+    prevCompletedRef.current = completed;
+  }, [activities, day]);
 
   const handleToggleComplete = useCallback((activityId: string) => {
     setActivities((prev) => {
@@ -155,7 +176,6 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
     );
   }
 
-  const day = guestData ? getCurrentDay(guestData.startDate) : 1;
   const expired = guestData ? isTrialExpired(guestData.startDate) : false;
   const completedCount = activities.filter((a) => a.is_completed).length;
   const template = getDreamTemplate(slug);
@@ -272,24 +292,85 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
           ))}
         </div>
 
-        <div className="bg-accent/5 rounded-2xl border border-accent/15 p-5 text-center space-y-3">
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles size={18} className="text-accent" />
-            <p className="text-sm font-semibold text-text-primary">Daftar Gratis</p>
+        {/* Day-specific CTA */}
+        {day < 3 && (
+          <div className="bg-accent/5 rounded-2xl border border-accent/15 p-5 text-center space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <Sparkles size={18} className="text-accent" />
+              <p className="text-sm font-semibold text-text-primary">
+                {day === 2 ? "Kamu sudah 2 hari!" : "Daftar Gratis"}
+              </p>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              {day === 2
+                ? "Simpan progres 2 harimu dengan membuat akun gratis."
+                : "Coba gratis 3 hari. Daftar untuk menyimpan progres-mu selamanya."}
+            </p>
+            <Button
+              variant="primary"
+              size="sm"
+              className="w-full"
+              onClick={() => router.push(`/register?mimpi=${encodeURIComponent(benchmarkSlug || slug)}`)}
+            >
+              Daftar Sekarang <ChevronRight size={14} />
+            </Button>
           </div>
-          <p className="text-xs text-text-secondary leading-relaxed">
-            Perjalananmu berjalan dengan baik! Daftar gratis untuk menyimpan progres-mu selamanya.
-          </p>
-          <Button
-            variant="primary"
-            size="sm"
-            className="w-full"
-            onClick={() => router.push(`/register?mimpi=${encodeURIComponent(benchmarkSlug || slug)}`)}
-          >
-            Daftar Sekarang <ChevronRight size={14} />
-          </Button>
-        </div>
+        )}
       </div>
+
+      {/* Day 2 banner */}
+      {day === 2 && !day2Dismissed && (
+        <div className="fixed top-0 left-0 right-0 z-40 bg-accent/10 border-b border-accent/20 px-5 py-3">
+          <div className="max-w-content mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-accent shrink-0" />
+              <p className="text-xs text-text-primary font-medium">
+                Kamu sudah 2 hari! Simpan progresmu.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => router.push(`/register?mimpi=${encodeURIComponent(benchmarkSlug || slug)}`)}
+                className="text-xs font-semibold text-accent underline whitespace-nowrap"
+              >
+                Daftar
+              </button>
+              <button onClick={() => setDay2Dismissed(true)} className="p-1 text-text-secondary hover:text-text-primary">
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Day 1 bottom sheet: triggered after 3rd activity completion */}
+      {showRegisterSheet && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setShowRegisterSheet(false)}>
+          <div
+            className="w-full max-w-content bg-surface rounded-t-xl p-6 pb-8 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
+                <Sparkles size={24} className="text-accent" />
+              </div>
+              <p className="text-base font-bold text-text-primary">Perjalananmu berjalan dengan baik!</p>
+              <p className="text-sm text-text-secondary mt-1">
+                Daftar gratis untuk menyimpan progress-mu.
+              </p>
+            </div>
+            <div className="space-y-2 pt-2">
+              <Button variant="primary" size="lg" className="w-full" onClick={() => router.push(`/register?mimpi=${encodeURIComponent(benchmarkSlug || slug)}`)}>
+                Daftar Sekarang
+              </Button>
+              <Button variant="secondary" size="lg" className="w-full" onClick={() => setShowRegisterSheet(false)}>
+                Lanjutkan dulu
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
