@@ -9,7 +9,7 @@ import { Button, Input } from "@beautifio/ui";
 import { supabase } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
 import { createJourney, journeyUrl } from "@/lib/journey-queries";
-import { getDreamTemplate } from "@beautifio/utils";
+import { getBenchmarkForTemplate } from "@beautifio/utils";
 import type { DreamTemplate } from "@beautifio/types";
 
 interface OnboardingQuestion {
@@ -46,7 +46,8 @@ export function JourneyOnboardingModal({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const questions: OnboardingQuestion[] = (template as any)?.onboarding_questions || [];
+  const benchmark = getBenchmarkForTemplate(template.slug);
+  const questions: OnboardingQuestion[] = (benchmark?.onboarding || (template as any)?.onboarding_questions || []);
 
   const totalSteps = 2 + (questions.length > 0 ? 1 : 0);
 

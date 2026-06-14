@@ -15,6 +15,27 @@ export function getBenchmarkDream(slug: string): BenchmarkDream | undefined {
   return BENCHMARK_DATABASE[slug];
 }
 
+/** Map dream template slugs (English) to benchmark database slugs (Indonesian) */
+export const TEMPLATE_TO_BENCHMARK_SLUG: Record<string, string> = {
+  "football-player": "pemain-sepak-bola-profesional",
+  "athlete": "atlet-bulu-tangkis-profesional",
+  "golfer": "atlet-bulu-tangkis-profesional",
+  "runner": "atlet-bulu-tangkis-profesional",
+  "programmer": "software-engineer",
+  "doctor": "dokter-umum",
+  "musician": "penyanyi-musisi-profesional",
+  "content-creator": "content-creator",
+  "digital-marketer": "digital-marketer",
+  "entrepreneur": "entrepreneur-ceo-startup",
+  "beauty-creator": "youtuber-vlogger",
+};
+
+export function getBenchmarkForTemplate(templateSlug: string): BenchmarkDream | undefined {
+  const benchmarkSlug = TEMPLATE_TO_BENCHMARK_SLUG[templateSlug];
+  if (!benchmarkSlug) return undefined;
+  return BENCHMARK_DATABASE[benchmarkSlug];
+}
+
 export function getBenchmarkDreamsByCategory(category: string): BenchmarkDream[] {
   return Object.values(BENCHMARK_DATABASE).filter((d) => d.category === category);
 }

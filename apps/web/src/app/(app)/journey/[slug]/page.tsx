@@ -442,20 +442,17 @@ export default function JourneyDetailPage() {
                   </span>
                 </div>
                 <p className="text-base font-bold text-text-primary mt-0.5">
-                  {activePhase.phase.title}
+                  {activePhase.phase.phase_name}
                 </p>
-                {activePhase.phase.description && (
+                {activePhase.phase.big_win_description && (
                   <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-                    {activePhase.phase.description}
+                    {activePhase.phase.big_win_description}
                   </p>
                 )}
                 <div className="flex items-center gap-2 mt-2 text-[11px] text-text-secondary">
                   <span className="px-2 py-0.5 rounded-full bg-muted">
                     Usia {activePhase.phase.age_min}–{activePhase.phase.age_max} tahun
                   </span>
-                  {activePhase.phase.benchmark_time_years && (
-                    <span>⏱ {activePhase.phase.benchmark_time_years} tahun</span>
-                  )}
                 </div>
                 {activePhase.smallWins.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-border/30">

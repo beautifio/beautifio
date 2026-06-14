@@ -1,69 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Clock, Target, MapPin, Users, Sparkles,
   Award, ChevronRight,
 } from "lucide-react";
-import { Button, Card, Skeleton } from "@beautifio/ui";
-import { getDreamTemplate } from "@beautifio/utils";
-import type { DreamTemplate } from "@beautifio/types";
-
-interface PhaseData {
-  id: string;
-  phase_number: number;
-  phase_name: string;
-  age_min: number | null;
-  age_max: number | null;
-  big_win_title: string;
-  big_win_description: string | null;
-  industry_benchmark: string | null;
-  over_achievement: string | null;
-  behind_schedule_signal: string | null;
-  sort_order: number;
-  small_win_templates: {
-    id: string;
-    title: string;
-    description: string | null;
-    sort_order: number;
-  }[];
-}
+import { Button, Card } from "@beautifio/ui";
+import { getDreamTemplate, getBenchmarkForTemplate } from "@beautifio/utils";
+import type { DreamTemplate, DreamPhase, DreamPhaseSmallWin } from "@beautifio/types";
 
 export default function MimpiPreviewPage() {
   const { slug } = useParams<{ slug: string }>();
-  const router = useRouter();
-  const [template, setTemplate] = useState<DreamTemplate | null>(null);
-  const [phases, setPhases] = useState<PhaseData[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const t = getDreamTemplate(slug);
-    setTemplate(t || null);
-
-    if (t) {
-      fetch(`/api/mimpi/${slug}`)
-        .then((r) => r.json())
-        .then((data) => setPhases(data.phases || []))
-        .catch(() => setPhases([]))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, [slug]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-bg">
-        <div className="max-w-content mx-auto px-6 pt-8 space-y-4">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-          <Skeleton className="h-32 w-full rounded-2xl" />
-        </div>
-      </div>
-    );
-  }
+  const template = getDreamTemplate(slug) || null;
+  const benchmark = getBenchmarkForTemplate(slug);
+  const phases: (DreamPhase & { small_win_templates?: DreamPhaseSmallWin[] })[] = benchmark?.phases?.map((p) => ({
+    ...p,
+    small_win_templates: p.small_wins || [],
+  })) || [];
 
   if (!template) {
     return (
@@ -75,6 +29,8 @@ export default function MimpiPreviewPage() {
       </div>
     );
   }
+
+  const showPhases = phases.length > 0;
 
   const successExamples = template.success_examples || [];
   const careerOptions = template.career_options || [];
@@ -182,7 +138,7 @@ export default function MimpiPreviewPage() {
         )}
 
         {/* Phase Timeline */}
-        {phases.length > 0 && (
+        {showPhases && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <MapPin size={16} className="text-primary" />
@@ -232,7 +188,7 @@ export default function MimpiPreviewPage() {
                       </p>
                     </div>
                   )}
-                  {phase.small_win_templates.length > 0 && (
+                  {phase.small_win_templates && phase.small_win_templates.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-border/40">
                       <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-wide mb-1">
                         Target fase ini
