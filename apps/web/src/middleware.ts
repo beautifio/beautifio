@@ -8,6 +8,7 @@ const PUBLIC_ROUTES = [
   "/register",
   "/mimpi",
   "/coba",
+  "/journey",
   "/auth/callback",
 ];
 
