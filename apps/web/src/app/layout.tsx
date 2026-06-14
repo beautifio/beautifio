@@ -3,6 +3,8 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { NavWrapper } from "@/components/NavWrapper";
+
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -24,7 +26,7 @@ export default function RootLayout({
       <body className={`${poppins.variable} font-sans antialiased`}>
         <ErrorBoundary>
           <Providers>
-            {children}
+            <NavWrapper>{children}</NavWrapper>
           </Providers>
         </ErrorBoundary>
       </body>
