@@ -2,128 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { use, useState, useEffect } from "react";
-import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Heart } from "lucide-react";
-import { Button, Card } from "@beautifio/ui";
+import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Flame, Sparkles } from "lucide-react";
+import { Button } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
-import { getAllDreamTemplates, getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
-import { createJourney, journeyUrl } from "@/lib/journey-queries";
+import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
+import { journeyUrl } from "@/lib/journey-queries";
 import { JourneyOnboardingModal } from "@/features/journey/journey-onboarding-modal";
-import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
-
-function DreamCard({ journey, dreamMeaning }: { journey: DreamJourney; dreamMeaning: string }) {
-  return (
-    <div className="bg-surface rounded-2xl border border-border p-5">
-      <div className="flex items-start gap-3">
-        <span className="text-2xl">{journey.emoji}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-text-secondary/50 mb-1">🎯 Mimpiku</p>
-          <p className="text-sm font-bold text-text-primary">{journey.title}</p>
-          {dreamMeaning && (
-            <p className="text-xs text-text-secondary/60 mt-2 leading-relaxed">
-              {dreamMeaning}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TargetCard({ progress, journey }: { progress: JourneyProgress | null; journey: DreamJourney | null }) {
-  const router = useRouter();
-  const bw = progress?.current_big_win;
-
-  const pct = progress && progress.big_wins_total > 0
-    ? Math.round((progress.big_wins_completed / progress.big_wins_total) * 100)
-    : 0;
-
-  return (
-    <div className="bg-surface rounded-2xl border border-border p-5">
-      <p className="text-xs text-text-secondary/50 mb-1">🔥 Target Saat Ini</p>
-      {bw ? (
-        <>
-          <p className="text-sm font-bold text-text-primary mb-1">{bw.title}</p>
-          {bw.description && (
-            <p className="text-xs text-text-secondary/60 mb-3">{bw.description}</p>
-          )}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="text-xs font-semibold text-text-secondary">{pct}%</span>
-          </div>
-        </>
-      ) : (
-        <>
-          <p className="text-sm text-text-secondary/70">Belum ada target yang aktif.</p>
-          <p className="text-xs text-text-secondary/50 mt-1 mb-3">
-            Pilih atau aktifkan perjalananmu untuk memulai langkah berikutnya.
-          </p>
-        </>
-      )}
-    </div>
-  );
-}
-
-function TemplateCards() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const [templates] = useState(getAllDreamTemplates());
-  const [error, setError] = useState<string | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<DreamTemplate | null>(null);
-
-  const handleStartJourney = async (t: DreamTemplate) => {
-    if (!user) return router.push("/login");
-    setSelectedTemplate(t);
-  };
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-text-secondary text-center py-4">
-        Kamu belum memulai perjalanan. Pilih mimpi yang paling menarik untukmu.
-      </p>
-      {error && (
-        <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive text-center">
-          {error}
-        </div>
-      )}
-      {templates.map((t) => (
-        <Card key={t.slug} className="p-5 hover:border-primary/30 transition-all">
-          <div className="flex items-start gap-4">
-            <span className="text-3xl mt-1">{t.emoji}</span>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold text-text-primary">{t.title}</h3>
-              <p className="text-xs text-text-secondary mt-1 line-clamp-2">{t.description}</p>
-              <div className="flex items-center gap-2 mt-3">
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
-                <span className="text-[11px] text-text-secondary">{t.duration}</span>
-              </div>
-            </div>
-          </div>
-          <Button
-            variant="primary"
-            size="sm"
-            className="w-full mt-4"
-            onClick={() => handleStartJourney(t)}
-          >
-            <Heart size={14} /> Pilih Mimpi Ini
-          </Button>
-        </Card>
-      ))}
-
-      {selectedTemplate && (
-        <JourneyOnboardingModal
-          open={true}
-          template={selectedTemplate}
-          onClose={() => setSelectedTemplate(null)}
-        />
-      )}
-    </div>
-  );
-}
+import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types";
 
 function timeGreeting(): { text: string; icon: React.ReactNode } {
   const h = new Date().getHours();
@@ -144,7 +29,6 @@ export default function HomeScreen({
 
   const [journey, setJourney] = useState<DreamJourney | null>(null);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
-  const [dreamMeaning, setDreamMeaning] = useState("");
   const [loading, setLoading] = useState(true);
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
 
@@ -168,10 +52,6 @@ export default function HomeScreen({
         if (j) {
           const p = await getJourneyProgress(user.id, j.id);
           setProgress(p);
-          try {
-            const { getDreamMeaning } = await import("@beautifio/utils");
-            setDreamMeaning(getDreamMeaning(j.template_slug));
-          } catch {}
         }
       } catch (e) {
         console.error("Failed to load journey data", e);
@@ -194,7 +74,7 @@ export default function HomeScreen({
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-5">
+      <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-6">
         <div className="flex items-center gap-2 text-lg font-bold text-text-primary">
           {timeGreeting().icon}
           <span>{timeGreeting().text}, {userName} 👋</span>
@@ -208,33 +88,79 @@ export default function HomeScreen({
           </div>
         ) : journey ? (
           <>
-            <DreamCard journey={journey} dreamMeaning={dreamMeaning} />
-            <TargetCard progress={progress} journey={journey} />
-            <div className="text-center pt-2">
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full"
-                onClick={() => router.push(journeyUrl(journey))}
-              >
-                Lanjutkan Journey <ArrowRight size={16} />
-              </Button>
+            <div className="bg-surface rounded-2xl border border-border p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-3xl">{journey.emoji}</span>
+                <div>
+                  <p className="text-sm font-bold text-text-primary">{journey.title}</p>
+                  <p className="text-xs text-text-secondary">Perjalanan aktif</p>
+                </div>
+              </div>
+
+              {progress && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <Flame size={16} className="text-accent" />
+                      <span className="text-sm text-text-secondary">Streak</span>
+                    </div>
+                    <span className="text-sm font-bold text-text-primary">{progress.streak} hari</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-primary" />
+                      <span className="text-sm text-text-secondary">Aktivitas Hari Ini</span>
+                    </div>
+                    <span className="text-sm font-bold text-text-primary">
+                      {progress.completed_activities_today}/{progress.total_activities_today}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
+
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={() => router.push(journeyUrl(journey))}
+            >
+              Lanjutkan Journey <ArrowRight size={16} />
+            </Button>
           </>
         ) : (
-          <>
-            <TemplateCards />
-
-            {onboardingTemplate && (
-              <JourneyOnboardingModal
-                open={true}
-                template={onboardingTemplate}
-                onClose={() => setOnboardingTemplate(null)}
-              />
-            )}
-          </>
+          <div className="flex flex-col items-center justify-center pt-12 space-y-6">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Sparkles size={36} className="text-primary" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-text-primary">
+                Kamu belum memulai perjalanan
+              </p>
+              <p className="text-sm text-text-secondary mt-1">
+                Pilih mimpi yang ingin kamu wujudkan
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={() => router.push("/journey")}
+            >
+              Mulai Perjalananmu <ArrowRight size={16} />
+            </Button>
+          </div>
         )}
       </div>
+
+      {onboardingTemplate && (
+        <JourneyOnboardingModal
+          open={true}
+          template={onboardingTemplate}
+          onClose={() => setOnboardingTemplate(null)}
+        />
+      )}
     </div>
   );
 }
