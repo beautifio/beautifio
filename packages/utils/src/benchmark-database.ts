@@ -111,9 +111,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Olahraga",
     durationYears: "8–15 tahun",
     onboarding: [
-      { id: "psb-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "psb-onb-2", question: "Apa posisi yang kamu mainkan?", type: "select", options: ["Kiper", "Bek", "Gelandang", "Penyerang"] },
-      { id: "psb-onb-3", question: "Apakah kamu sudah bergabung SSB atau klub?", type: "select", options: ["Sudah", "Belum"] },
+      { id: "ssb_status", label: "Kamu sudah bergabung SSB atau klub sepak bola?", type: "single_select", options: ["Belum sama sekali", "Baru bergabung (< 6 bulan)", "Sudah lumayan lama (6 bulan - 2 tahun)", "Sudah lama dan sering main kompetisi"], purpose: "menentukan status on-track/behind di fase aktif" },
+      { id: "posisi", label: "Kamu main di posisi mana?", type: "single_select", options: ["Belum tahu / masih mencoba", "Penyerang", "Gelandang / Tengah", "Bek / Kiper"], purpose: "menentukan drill skill_mimpi yang relevan di daily activities" },
+      { id: "frekuensi_latihan", label: "Seberapa sering kamu latihan sekarang?", type: "single_select", options: ["Belum rutin", "1-2 kali seminggu", "3-4 kali seminggu", "Hampir setiap hari"], purpose: "menentukan intensitas aktivitas fisik yang di-generate" },
+      { id: "hambatan_utama", label: "Apa yang paling menghambat kamu sekarang?", type: "single_select", options: ["Belum tahu harus mulai dari mana", "Tidak ada klub / SSB yang terjangkau", "Fisik belum siap", "Dukungan keluarga kurang"], purpose: "menentukan tips khusus di reflection dan activity notes" },
     ],
     phases: [
       {
@@ -326,10 +327,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Olahraga",
     durationYears: "8–15 tahun",
     onboarding: [
-      { id: "abt-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "abt-onb-2", question: "Apakah kamu sudah bergabung klub bulutangkis?", type: "select", options: ["Sudah", "Belum"] },
-      { id: "abt-onb-3", question: "Kategori apa yang kamu mainkan?", type: "select", options: ["Tunggal", "Ganda"] },
-      { id: "abt-onb-4", question: "Apakah kamu kidal?", type: "select", options: ["Ya", "Tidak"] },
+      { id: "klub_status", label: "Kamu sudah bergabung klub bulu tangkis?", type: "single_select", options: ["Belum sama sekali", "Baru bergabung", "Sudah aktif latihan rutin", "Sudah sering ikut turnamen"], purpose: "menentukan fase dan status on-track/behind" },
+      { id: "kategori_main", label: "Kamu main di kategori apa?", type: "single_select", options: ["Belum tahu / masih mencoba semua", "Tunggal (single)", "Ganda (double)", "Keduanya"], purpose: "menentukan drill yang relevan di skill_mimpi" },
+      { id: "frekuensi_latihan", label: "Seberapa sering kamu latihan sekarang?", type: "single_select", options: ["Belum rutin", "1-2 kali seminggu", "3-5 kali seminggu", "Hampir setiap hari"], purpose: "menentukan intensitas program latihan" },
+      { id: "target_kompetisi", label: "Target kompetisi terdekat kamu apa?", type: "single_select", options: ["Belum ada target kompetisi", "Turnamen antar sekolah / komunitas", "Turnamen antar klub / daerah", "Kejurnas atau Pelatda"], purpose: "menentukan urgency milestone dan timeline aktivitas" },
     ],
     phases: [
       {
@@ -486,10 +487,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Olahraga",
     durationYears: "2–5 tahun",
     onboarding: [
-      { id: "pes-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "pes-onb-2", question: "Game apa yang kamu mainkan?", type: "text" },
-      { id: "pes-onb-3", question: "Apa rank kamu sekarang?", type: "text" },
-      { id: "pes-onb-4", question: "Berapa jam main per hari?", type: "number" },
+      { id: "game_utama", label: "Game apa yang mau kamu fokuskan?", type: "single_select", options: ["Mobile Legends (MLBB)", "PUBG Mobile", "Valorant", "Game lain / belum yakin"], purpose: "menentukan skill_mimpi yang relevan (terminologi per game berbeda)" },
+      { id: "rank_sekarang", label: "Rank kamu sekarang di game itu?", type: "single_select", options: ["Masih di rank bawah / baru main", "Epic / Platinum (atau setara)", "Legend / Diamond (atau setara)", "Mythic / Immortal (atau setara)"], purpose: "menentukan fase dan gap ke target pro" },
+      { id: "waktu_main", label: "Berapa jam per hari kamu main secara serius?", type: "single_select", options: ["Kurang dari 2 jam", "2-4 jam", "4-6 jam", "Lebih dari 6 jam"], purpose: "menentukan intensitas improvement plan" },
+      { id: "setup_status", label: "Setup gaming kamu sekarang seperti apa?", type: "single_select", options: ["Pakai HP biasa / laptop seadanya", "HP / PC yang lumayan", "Setup yang cukup kompetitif", "Setup pro / high-end"], purpose: "menentukan tips khusus (rekomendasi upgrade atau workaround)" },
     ],
     phases: [
       {
@@ -631,9 +632,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Kesehatan",
     durationYears: "10–13 tahun",
     onboarding: [
-      { id: "dok-onb-1", question: "Apa kelas kamu sekarang?", type: "select", options: ["SMP", "SMA", "Kuliah"] },
-      { id: "dok-onb-2", question: "Berapa nilai IPA kamu saat ini?", type: "text" },
-      { id: "dok-onb-3", question: "Apa target Fakultas Kedokteran kamu?", type: "text" },
+      { id: "jenjang_sekarang", label: "Kamu sekarang ada di tahap mana?", type: "single_select", options: ["SMP / belum SMA", "SMA (kelas 10-12)", "Sudah kuliah di FK", "Koas / sudah lulus S.Ked"], purpose: "menentukan fase yang tepat (bisa langsung skip ke fase lanjut)" },
+      { id: "nilai_ipa", label: "Rata-rata nilai IPA / sains kamu di sekolah?", type: "single_select", options: ["Di bawah 75", "75-84", "85-90", "Di atas 90"], purpose: "menentukan urgency remedial vs fokus ke kompetisi" },
+      { id: "target_fk", label: "FK mana yang kamu incar?", type: "single_select", options: ["Belum tahu / belum riset", "FK Swasta terakreditasi", "FK PTN daerah (selain top 5)", "FK UI / UGM / Unair / Undip / Unpad"], purpose: "menentukan target UTBK yang realistis dan tips spesifik" },
+      { id: "bimbel_status", label: "Kamu sudah ikut bimbel atau les khusus UTBK?", type: "single_select", options: ["Belum sama sekali", "Belajar mandiri / online", "Bimbel reguler", "Bimbel intensif + tryout rutin"], purpose: "menentukan rekomendasi resource belajar di knowledge activities" },
     ],
     phases: [
       {
@@ -801,10 +803,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Teknologi",
     durationYears: "2–6 tahun",
     onboarding: [
-      { id: "se-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "se-onb-2", question: "Apakah kamu sudah bisa coding?", type: "select", options: ["Sudah", "Belum"] },
-      { id: "se-onb-3", question: "Bahasa apa yang kamu pelajari?", type: "text" },
-      { id: "se-onb-4", question: "Apa tujuan kamu?", type: "select", options: ["Kerja", "Freelance", "Startup"] },
+      { id: "coding_level", label: "Seberapa jauh kemampuan coding kamu sekarang?", type: "single_select", options: ["Belum pernah coding sama sekali", "Tahu dasar-dasar (variabel, loop, fungsi)", "Sudah bisa buat project kecil sendiri", "Sudah punya portfolio / pernah freelance"], purpose: "menentukan fase dan starting point yang tepat" },
+      { id: "bahasa_programming", label: "Bahasa programming apa yang mau kamu fokuskan?", type: "single_select", options: ["Belum tahu / minta saran", "Python (data, AI, backend)", "JavaScript / TypeScript (web, fullstack)", "Kotlin / Swift (mobile apps)"], purpose: "menentukan resource dan drill di knowledge & skill_mimpi" },
+      { id: "tujuan_karier", label: "Kamu mau jadi programmer yang seperti apa?", type: "single_select", options: ["Belum yakin, mau eksplorasi dulu", "Kerja full-time di perusahaan tech", "Freelance / remote worker", "Bikin startup / produk sendiri"], purpose: "menentukan milestone dan benchmark yang relevan" },
+      { id: "waktu_belajar", label: "Berapa jam per hari kamu bisa belajar coding?", type: "single_select", options: ["Kurang dari 1 jam", "1-2 jam", "2-4 jam", "Lebih dari 4 jam"], purpose: "menentukan kecepatan milestone dan intensitas daily activities" },
     ],
     phases: [
       {
@@ -946,10 +948,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Kreatif",
     durationYears: "1–4 tahun",
     onboarding: [
-      { id: "cc-onb-1", question: "Apa platform utama kamu?", type: "select", options: ["TikTok", "YouTube", "Instagram"] },
-      { id: "cc-onb-2", question: "Apa niche atau topik konten kamu?", type: "text" },
-      { id: "cc-onb-3", question: "Sudah punya akun berapa lama?", type: "text" },
-      { id: "cc-onb-4", question: "Berapa followers kamu sekarang?", type: "number" },
+      { id: "platform_utama", label: "Platform mana yang mau kamu fokuskan?", type: "single_select", options: ["TikTok", "YouTube", "Instagram / Reels", "Belum yakin / mau semua platform"], purpose: "menentukan tips spesifik per platform di daily activities" },
+      { id: "follower_sekarang", label: "Berapa follower / subscriber kamu sekarang?", type: "single_select", options: ["Belum punya akun / baru mulai", "Di bawah 1.000", "1.000 - 10.000", "Di atas 10.000"], purpose: "menentukan fase dan milestone berikutnya" },
+      { id: "niche_konten", label: "Topik atau niche konten yang mau kamu buat?", type: "single_select", options: ["Masih mencari / belum tahu", "Edukasi / tips & trik", "Entertainment / komedi / vlog", "Lifestyle / fashion / beauty / kuliner"], purpose: "menentukan referensi benchmark dan tips konten yang relevan" },
+      { id: "frekuensi_upload", label: "Seberapa sering kamu upload konten sekarang?", type: "single_select", options: ["Belum pernah upload sama sekali", "Sesekali, tidak rutin", "1-2 kali seminggu", "Hampir setiap hari"], purpose: "menentukan target konsistensi yang realistis" },
     ],
     phases: [
       {
@@ -1091,9 +1093,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Teknologi",
     durationYears: "2–4 tahun",
     onboarding: [
-      { id: "uiux-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "uiux-onb-2", question: "Apa background kamu?", type: "select", options: ["Desainer Grafis", "Pemula Total"] },
-      { id: "uiux-onb-3", question: "Tools apa yang sudah kamu kuasai?", type: "text" },
+      { id: "background_design", label: "Background desain kamu sekarang seperti apa?", type: "single_select", options: ["Belum pernah belajar desain sama sekali", "Pernah pakai Canva / tools desain sederhana", "Sudah belajar Figma / Adobe", "Sudah punya portofolio desain"], purpose: "menentukan fase dan starting point" },
+      { id: "tools_dikuasai", label: "Tools desain yang sudah kamu pakai?", type: "single_select", options: ["Belum ada", "Canva / Powerpoint", "Figma (basic)", "Figma + Adobe (intermediate/advanced)"], purpose: "menentukan drill di skill_mimpi yang relevan" },
+      { id: "tujuan_karier", label: "Kamu mau fokus ke area UI/UX yang mana?", type: "single_select", options: ["Belum yakin, eksplorasi dulu", "Mobile app design", "Web / dashboard design", "UX Research (riset + strategi)"], purpose: "menentukan resources dan benchmark yang spesifik" },
+      { id: "waktu_belajar", label: "Berapa jam per hari kamu bisa belajar desain?", type: "single_select", options: ["Kurang dari 1 jam", "1-2 jam", "2-4 jam", "Lebih dari 4 jam"], purpose: "menentukan kecepatan milestone" },
     ],
     phases: [
       {
@@ -1204,10 +1207,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Teknologi",
     durationYears: "3–6 tahun",
     onboarding: [
-      { id: "gd-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "gd-onb-2", question: "Apakah kamu sudah bisa coding?", type: "select", options: ["Sudah", "Belum"] },
-      { id: "gd-onb-3", question: "Apa target platform kamu?", type: "select", options: ["Mobile", "PC", "Console"] },
-      { id: "gd-onb-4", question: "Game engine apa yang kamu pilih?", type: "text" },
+      { id: "coding_level", label: "Kemampuan coding kamu sekarang?", type: "single_select", options: ["Belum bisa coding sama sekali", "Tahu dasar-dasar pemrograman", "Sudah bisa pakai game engine (Unity/Godot)", "Sudah pernah rilis game meski sederhana"], purpose: "menentukan fase dan starting point" },
+      { id: "engine_pilihan", label: "Game engine yang mau kamu pakai?", type: "single_select", options: ["Belum tahu / minta saran", "Unity (C#)", "Godot (GDScript/Python-like)", "Unreal Engine (C++ / Blueprint)"], purpose: "menentukan resource dan drill spesifik" },
+      { id: "tipe_game", label: "Tipe game yang mau kamu buat?", type: "single_select", options: ["Belum tahu / mau coba semua", "Mobile game (Android/iOS)", "PC / indie game", "VR / AR / experimental"], purpose: "menentukan pipeline dan tools yang relevan" },
+      { id: "waktu_belajar", label: "Berapa jam per hari kamu bisa belajar game dev?", type: "single_select", options: ["Kurang dari 1 jam", "1-2 jam", "2-4 jam", "Lebih dari 4 jam"], purpose: "menentukan kecepatan milestone" },
     ],
     phases: [
       {
@@ -1303,9 +1306,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Kesehatan",
     durationYears: "9–12 tahun",
     onboarding: [
-      { id: "psi-onb-1", question: "Apa kelas kamu sekarang?", type: "select", options: ["SMP", "SMA", "Kuliah"] },
-      { id: "psi-onb-2", question: "Bagaimana nilai pelajaran kamu?", type: "text" },
-      { id: "psi-onb-3", question: "Apakah kamu sudah tahu bedanya psikolog dan psikiater?", type: "select", options: ["Ya", "Tidak"] },
+      { id: "jenjang_sekarang", label: "Kamu sekarang ada di tahap mana?", type: "single_select", options: ["SMP / belum SMA", "SMA (kelas 10-12)", "Kuliah S1 Psikologi", "Sudah S1, mau lanjut S2 Profesi"], purpose: "menentukan fase yang tepat" },
+      { id: "motivasi_utama", label: "Kenapa kamu tertarik jadi psikolog?", type: "single_select", options: ["Suka dengerin cerita orang dan bantu mereka", "Ingin memahami perilaku manusia lebih dalam", "Tertarik dunia kesehatan mental", "Ingin bantu orang terdekat yang pernah struggle"], purpose: "menentukan konten motivasi dan daily activity yang relevan" },
+      { id: "nilai_soshum", label: "Nilai IPS / Soshum kamu rata-rata berapa?", type: "single_select", options: ["Di bawah 75", "75-84", "85-90", "Di atas 90"], purpose: "menentukan kesiapan masuk jurusan psikologi" },
+      { id: "pengalaman_sosial", label: "Kamu sudah punya pengalaman membantu orang lain?", type: "single_select", options: ["Belum ada pengalaman khusus", "Sering jadi 'tempat curhat' teman", "Pernah ikut kegiatan sosial / volunteer", "Sudah pernah magang / relawan konseling"], purpose: "menentukan progress dan keunggulan yang sudah dimiliki" },
     ],
     phases: [
       {
@@ -1406,9 +1410,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Transportasi",
     durationYears: "4–7 tahun",
     onboarding: [
-      { id: "plt-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "plt-onb-2", question: "Bagaimana kondisi kesehatan kamu (penglihatan, fisik)?", type: "text" },
-      { id: "plt-onb-3", question: "Apakah kamu sudah tahu biaya sekolah penerbangan?", type: "select", options: ["Sudah", "Belum"] },
+      { id: "jenjang_sekarang", label: "Kamu sekarang ada di tahap mana?", type: "single_select", options: ["SMP atau awal SMA", "SMA kelas 10-12", "Sudah lulus SMA / menunggu masuk sekolah", "Sudah di sekolah penerbangan"], purpose: "menentukan fase dan urgency persiapan" },
+      { id: "kondisi_kesehatan", label: "Kondisi penglihatanmu sekarang?", type: "single_select", options: ["Normal / 20/20 tanpa alat bantu", "Sedikit minus, pakai kacamata ringan", "Minus cukup tinggi", "Belum pernah periksa mata"], purpose: "menentukan urgency medical check dan tips persiapan medis" },
+      { id: "nilai_matematika", label: "Nilai matematika dan fisika kamu rata-rata?", type: "single_select", options: ["Di bawah 75", "75-84", "85-90", "Di atas 90"], purpose: "menentukan kesiapan akademis masuk sekolah penerbangan" },
+      { id: "target_sekolah", label: "Sekolah penerbangan mana yang kamu incar?", type: "single_select", options: ["Belum tahu / masih riset", "STPI Curug (negeri)", "Sekolah penerbangan swasta Indonesia", "Sekolah penerbangan luar negeri"], purpose: "menentukan tips persiapan dan timeline biaya yang spesifik" },
     ],
     phases: [
       {
@@ -1555,9 +1560,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Bisnis",
     durationYears: "Tidak ada batas waktu",
     onboarding: [
-      { id: "ent-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "ent-onb-2", question: "Apakah kamu sudah punya ide bisnis?", type: "select", options: ["Sudah", "Belum"] },
-      { id: "ent-onb-3", question: "Apakah kamu sudah pernah jualan sesuatu?", type: "select", options: ["Sudah", "Belum"] },
+      { id: "tahap_bisnis", label: "Kamu sekarang ada di tahap mana?", type: "single_select", options: ["Masih punya ide, belum mulai apapun", "Sudah mulai riset / validasi ide", "Sudah pernah jualan sesuatu (meski kecil)", "Sudah punya bisnis yang berjalan"], purpose: "menentukan fase dan milestone yang relevan" },
+      { id: "bidang_bisnis", label: "Bisnis di bidang apa yang mau kamu bangun?", type: "single_select", options: ["Belum tahu / masih eksplorasi", "Produk fisik / UMKM / kuliner", "Digital / tech / platform", "Jasa / freelance / creative"], purpose: "menentukan tips dan benchmark yang spesifik" },
+      { id: "modal_awal", label: "Modal awal yang kamu punya atau bisa akses?", type: "single_select", options: ["Belum ada modal sama sekali", "Di bawah Rp 1 juta", "Rp 1-10 juta", "Di atas Rp 10 juta"], purpose: "menentukan strategi bisnis yang realistis (lean vs funded)" },
+      { id: "support_system", label: "Ada orang yang mendukung kamu untuk berbisnis?", type: "single_select", options: ["Tidak ada / keluarga kurang setuju", "Ada teman yang satu visi", "Keluarga mendukung", "Sudah ada mentor / komunitas bisnis"], purpose: "menentukan tips motivasi dan social activities yang relevan" },
     ],
     phases: [
       {
@@ -1678,9 +1684,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Bisnis",
     durationYears: "1–3 tahun",
     onboarding: [
-      { id: "dm-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "dm-onb-2", question: "Apakah kamu sudah pernah kelola sosmed bisnis?", type: "select", options: ["Sudah", "Belum"] },
-      { id: "dm-onb-3", question: "Apa tujuan kamu?", type: "select", options: ["Kerja", "Freelance", "In-house"] },
+      { id: "pengalaman_marketing", label: "Pengalaman marketing digital kamu sekarang?", type: "single_select", options: ["Belum pernah sama sekali", "Pernah kelola sosmed pribadi atau teman", "Sudah pernah kelola iklan berbayar", "Sudah pernah dapat klien / kerja di bidang ini"], purpose: "menentukan fase dan starting point" },
+      { id: "spesialisasi_pilihan", label: "Mau spesialisasi di channel mana?", type: "single_select", options: ["Belum tahu, mau pelajari semua", "Social media (Meta, TikTok, IG)", "Search (Google Ads, SEO)", "Email marketing / CRM"], purpose: "menentukan drill dan resource yang spesifik" },
+      { id: "tujuan_karier", label: "Kamu mau jadi digital marketer yang seperti apa?", type: "single_select", options: ["Freelance / terima klien sendiri", "In-house di perusahaan", "Kerja di agency digital", "Bikin agency sendiri"], purpose: "menentukan milestone dan benchmark karier" },
+      { id: "waktu_belajar", label: "Berapa jam per hari bisa kamu dedikasikan?", type: "single_select", options: ["Kurang dari 1 jam", "1-2 jam", "2-4 jam", "Lebih dari 4 jam"], purpose: "menentukan kecepatan milestone" },
     ],
     phases: [
       {
@@ -1768,7 +1775,7 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     ],
   },
 
-  "dokter-gigi": {
+    "dokter-gigi": {
     slug: "dokter-gigi",
     title: "Dokter Gigi",
     emoji: "🦷",
@@ -1776,9 +1783,8 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Kesehatan",
     durationYears: "9–11 tahun",
     onboarding: [
-      { id: "dgi-onb-1", question: "Apa kelas kamu sekarang?", type: "select", options: ["SMP", "SMA", "Kuliah"] },
-      { id: "dgi-onb-2", question: "Bagaimana nilai IPA kamu?", type: "text" },
-      { id: "dgi-onb-3", question: "Apa target FKG kamu?", type: "text" },
+      { id: "jenjang_sekarang", label: "Kamu sekarang ada di tahap mana?", type: "single_select", options: ["SMA / masih sekolah", "Kuliah / sudah lulus SMA", "Sudah di fakultas kedokteran gigi"], purpose: "menentukan fase awal" },
+      { id: "target_fkg", label: "Kampus FKG mana yang kamu incar?", type: "single_select", options: ["Belum tahu / masih riset", "FKG PTN negeri", "FKG swasta"], purpose: "menentukan target akademis" },
     ],
     phases: [
       {
@@ -1871,7 +1877,7 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     ],
   },
 
-  "arsitek": {
+    "arsitek": {
     slug: "arsitek",
     title: "Arsitek",
     emoji: "🏗️",
@@ -1879,9 +1885,8 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Desain",
     durationYears: "6–10 tahun",
     onboarding: [
-      { id: "ars-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "ars-onb-2", question: "Apakah kamu suka gambar/seni?", type: "select", options: ["Suka", "Tidak"] },
-      { id: "ars-onb-3", question: "Software apa yang sudah kamu kenal?", type: "select", options: ["AutoCAD", "SketchUp", "Lainnya", "Belum ada"] },
+      { id: "minat_desain", label: "Seberapa besar minat kamu di dunia desain?", type: "single_select", options: ["Mulai tertarik dan ingin belajar", "Sudah suka gambar / desain sejak lama", "Sudah bisa pakai software desain"], purpose: "menentukan fase awal" },
+      { id: "software_dikuasai", label: "Software desain yang sudah kamu kenal?", type: "single_select", options: ["Belum ada", "AutoCAD / SketchUp dasar", "Sudah lumayan menguasai"], purpose: "menentukan skill drill" },
     ],
     phases: [
       {
@@ -1982,9 +1987,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Kuliner",
     durationYears: "3–8 tahun",
     onboarding: [
-      { id: "chf-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "chf-onb-2", question: "Apa yang sudah bisa kamu masak?", type: "text" },
-      { id: "chf-onb-3", question: "Apa tujuan kamu?", type: "select", options: ["Restoran", "Kafe Sendiri", "Chef Hotel", "Konten"] },
+      { id: "kemampuan_memasak", label: "Kemampuan memasak kamu sekarang?", type: "single_select", options: ["Masih sangat dasar (baru bisa masak sederhana)", "Lumayan bisa masak berbagai menu", "Cukup mahir dan sering coba resep baru", "Sudah pernah masak untuk banyak orang / event"], purpose: "menentukan fase dan starting point" },
+      { id: "jalur_pilihan", label: "Jalur mana yang mau kamu tekuni?", type: "single_select", options: ["Masih eksplorasi / belum tahu", "Restoran / hotel fine dining", "F&B entrepreneur / buka usaha sendiri", "Food content creator / chef influencer"], purpose: "menentukan milestone dan benchmark yang relevan" },
+      { id: "spesialisasi", label: "Ada jenis masakan yang paling kamu sukai?", type: "single_select", options: ["Belum ada spesialisasi", "Masakan Indonesia / Asia", "Western / continental", "Pastry / kue / dessert"], purpose: "menentukan drill dan referensi yang spesifik" },
+      { id: "sekolah_kuliner", label: "Kamu berencana sekolah kuliner formal?", type: "single_select", options: ["Tidak, mau belajar otodidak", "Mungkin kursus singkat saja", "Iya, SMK Tata Boga atau sekolah kuliner", "Iya, sekolah kuliner internasional"], purpose: "menentukan jalur dan timeline yang realistis" },
     ],
     phases: [
       {
@@ -2095,10 +2101,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Kreatif",
     durationYears: "1–4 tahun",
     onboarding: [
-      { id: "ytb-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "ytb-onb-2", question: "Apa niche konten kamu?", type: "text" },
-      { id: "ytb-onb-3", question: "Sudah punya akun berapa lama?", type: "text" },
-      { id: "ytb-onb-4", question: "Berapa subscribers kamu sekarang?", type: "number" },
+      { id: "channel_status", label: "Status channel YouTube kamu sekarang?", type: "single_select", options: ["Belum punya channel", "Punya channel, belum upload sama sekali", "Sudah upload tapi subscriber masih sedikit", "Sudah punya subscriber lebih dari 1.000"], purpose: "menentukan fase dan milestone berikutnya" },
+      { id: "niche_konten", label: "Konten apa yang mau kamu buat?", type: "single_select", options: ["Masih mencari niche", "Vlog / daily life / travel", "Gaming / review produk / tech", "Edukasi / how-to / tutorial"], purpose: "menentukan tips konten yang relevan" },
+      { id: "peralatan", label: "Peralatan yang kamu punya sekarang?", type: "single_select", options: ["Hanya HP biasa", "HP yang cukup baik untuk rekam video", "Kamera + mic basic", "Setup lumayan lengkap (kamera, lighting, mic)"], purpose: "menentukan tips produksi yang realistis sesuai budget" },
+      { id: "waktu_produksi", label: "Berapa jam per minggu bisa kamu buat konten?", type: "single_select", options: ["Kurang dari 3 jam", "3-7 jam", "7-15 jam", "Lebih dari 15 jam"], purpose: "menentukan frekuensi upload yang realistis" },
     ],
     phases: [
       {
@@ -2194,9 +2200,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Pendidikan",
     durationYears: "5–7 tahun",
     onboarding: [
-      { id: "gru-onb-1", question: "Apa mata pelajaran favorit kamu?", type: "text" },
-      { id: "gru-onb-2", question: "Apa kelas kamu sekarang?", type: "select", options: ["SMP", "SMA", "Kuliah"] },
-      { id: "gru-onb-3", question: "Apakah kamu sudah pernah ngajar/les?", type: "select", options: ["Sudah", "Belum"] },
+      { id: "jenjang_sekarang", label: "Kamu sekarang ada di tahap mana?", type: "single_select", options: ["SMP atau SMA", "Kuliah di FKIP / jurusan pendidikan", "Sudah lulus S1, belum PPG", "Sudah punya sertifikat pendidik"], purpose: "menentukan fase dan milestone berikutnya" },
+      { id: "mapel_pilihan", label: "Mata pelajaran apa yang mau kamu ajar?", type: "single_select", options: ["Belum tahu / masih eksplorasi", "Sains / Matematika / IPA", "Bahasa (Indonesia, Inggris, daerah)", "IPS / Seni / Olahraga / Agama"], purpose: "menentukan resource dan drill yang relevan" },
+      { id: "jenjang_mengajar", label: "Kamu mau mengajar di jenjang mana?", type: "single_select", options: ["Belum yakin", "PAUD / TK / SD", "SMP / SMA / SMK", "Perguruan tinggi / dosen"], purpose: "menentukan jalur PPG dan sertifikasi yang tepat" },
+      { id: "pengalaman_mengajar", label: "Sudah pernah mengajar atau les siapapun?", type: "single_select", options: ["Belum pernah sama sekali", "Pernah bantu teman / adik belajar", "Pernah jadi tutor les", "Sudah pernah mengajar di sekolah / magang"], purpose: "menentukan langkah konkret yang bisa segera dilakukan" },
     ],
     phases: [
       {
@@ -2307,10 +2314,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Kreatif",
     durationYears: "3–10 tahun",
     onboarding: [
-      { id: "mus-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "mus-onb-2", question: "Apa instrumen/vokal kamu?", type: "text" },
-      { id: "mus-onb-3", question: "Apa genre musik kamu?", type: "text" },
-      { id: "mus-onb-4", question: "Di mana saja kamu sudah pernah tampil?", type: "text" },
+      { id: "kemampuan_sekarang", label: "Kemampuan vokal atau bermusik kamu sekarang?", type: "single_select", options: ["Masih pemula, belum pernah les", "Sudah les vokal / instrumen", "Sudah sering tampil di depan orang", "Sudah punya rekaman / konten musik yang ditonton orang"], purpose: "menentukan fase dan starting point" },
+      { id: "fokus_utama", label: "Kamu lebih ke vokal atau instrumen?", type: "single_select", options: ["Vokal / penyanyi", "Instrumen (gitar, piano, drum, dll)", "Keduanya", "Lebih ke produksi / songwriter"], purpose: "menentukan drill skill_mimpi yang relevan" },
+      { id: "genre", label: "Genre musik yang mau kamu tekuni?", type: "single_select", options: ["Masih eksplorasi / belum yakin", "Pop / R&B / ballad", "Rock / indie / alternative", "Dangdut / folk / tradisional"], purpose: "menentukan benchmark dan referensi artis yang relevan" },
+      { id: "platform_rilis", label: "Kamu sudah punya platform untuk berbagi musik?", type: "single_select", options: ["Belum ada sama sekali", "Punya akun TikTok / YouTube untuk konten musik", "Sudah rilis di Spotify / streaming", "Sudah punya fanbase kecil tapi aktif"], purpose: "menentukan milestone distribusi musik" },
     ],
     phases: [
       {
@@ -2421,9 +2428,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Kreatif",
     durationYears: "3–10 tahun",
     onboarding: [
-      { id: "akt-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "akt-onb-2", question: "Apakah kamu sudah pernah akting/teater?", type: "select", options: ["Sudah", "Belum"] },
-      { id: "akt-onb-3", question: "Apa tipe yang kamu minati?", type: "select", options: ["Film", "Sinetron", "Teater", "Iklan"] },
+      { id: "pengalaman_akting", label: "Pengalaman akting kamu sekarang?", type: "single_select", options: ["Belum pernah sama sekali", "Pernah ikut drama sekolah / teater komunitas", "Sudah ikut kelas atau sanggar akting", "Sudah pernah audisi / dapat peran meski kecil"], purpose: "menentukan fase dan starting point" },
+      { id: "media_pilihan", label: "Kamu mau fokus ke media apa?", type: "single_select", options: ["Semua / belum yakin", "Film layar lebar / web series", "Sinetron / FTV", "Teater / pertunjukan panggung"], purpose: "menentukan tips audisi dan benchmark yang relevan" },
+      { id: "kota_domisili_industri", label: "Kamu tinggal di atau dekat kota produksi besar?", type: "single_select", options: ["Jakarta atau Banten", "Bandung atau Jawa Barat", "Kota besar lain (Surabaya, Bali, Jogja)", "Kota kecil / daerah"], purpose: "menentukan strategi akses industri yang realistis" },
+      { id: "hambatan_utama", label: "Apa yang paling menghambat kamu sekarang?", type: "single_select", options: ["Tidak tahu cara mulai / casting di mana", "Belum punya keberanian tampil", "Keluarga kurang mendukung", "Jarak dari pusat industri hiburan"], purpose: "menentukan tips motivasi dan langkah konkret" },
     ],
     phases: [
       {
@@ -2509,9 +2517,10 @@ export const BENCHMARK_DATABASE: Record<string, BenchmarkDream> = {
     category: "Olahraga",
     durationYears: "8–15 tahun",
     onboarding: [
-      { id: "ren-onb-1", question: "Berapa usia kamu sekarang?", type: "number" },
-      { id: "ren-onb-2", question: "Gaya renang apa yang sudah kamu kuasai?", type: "text" },
-      { id: "ren-onb-3", question: "Apakah kamu sudah bergabung klub renang?", type: "select", options: ["Sudah", "Belum"] },
+      { id: "klub_status", label: "Kamu sudah bergabung klub renang?", type: "single_select", options: ["Belum, masih latihan sendiri", "Baru bergabung klub", "Sudah aktif di klub dan rutin latihan", "Sudah sering ikut kompetisi resmi"], purpose: "menentukan fase dan status on-track/behind" },
+      { id: "gaya_spesialisasi", label: "Gaya renang yang mau kamu fokuskan?", type: "single_select", options: ["Belum tahu / masih mencoba semua gaya", "Gaya bebas (freestyle)", "Gaya punggung / dada", "Gaya kupu-kupu (butterfly)"], purpose: "menentukan drill teknis yang relevan" },
+      { id: "kemampuan_sekarang", label: "Kamu sekarang bisa berenang berapa jauh?", type: "single_select", options: ["Belum bisa berenang / baru belajar", "Bisa 25-50 meter", "Bisa 100-200 meter", "Bisa lebih dari 200 meter tanpa istirahat"], purpose: "menentukan intensitas program latihan" },
+      { id: "frekuensi_latihan", label: "Seberapa sering kamu latihan renang?", type: "single_select", options: ["Belum rutin", "1-2 kali seminggu", "3-4 kali seminggu", "5+ kali seminggu"], purpose: "menentukan program yang realistis dan target peningkatan" },
     ],
     phases: [
       {

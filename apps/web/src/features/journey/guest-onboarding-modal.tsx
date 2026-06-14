@@ -27,7 +27,7 @@ export function GuestOnboardingModal({
 
   const benchmark = getBenchmarkForTemplate(template.slug);
   // Only show select-type questions (age/number already collected in step 0)
-  const questions: OnboardingQuestion[] = (benchmark?.onboarding || []).filter((q) => q.type === "select");
+  const questions: OnboardingQuestion[] = (benchmark?.onboarding || []).filter((q) => q.type === "single_select");
   const totalSteps = 2 + (questions.length > 0 ? 1 : 0);
 
   const phaseInfo = age && benchmark
@@ -184,7 +184,7 @@ export function GuestOnboardingModal({
               <div className="space-y-5">
                 {questions.map((q) => (
                   <div key={q.id}>
-                    <p className="text-sm font-semibold text-text-primary mb-2">{q.question}</p>
+                    <p className="text-sm font-semibold text-text-primary mb-2">{q.label}</p>
                     <div className="grid grid-cols-1 gap-2">
                       {(q.options || []).map((opt) => (
                         <button
@@ -277,7 +277,7 @@ export function GuestOnboardingModal({
                       {questions.map((q) => (
                         answers[q.id] && (
                           <div key={q.id} className="flex items-start gap-2 text-sm">
-                            <span className="text-text-secondary shrink-0">{q.question}</span>
+                            <span className="text-text-secondary shrink-0">{q.label}</span>
                             <span className="text-text-primary font-medium">: {answers[q.id]}</span>
                           </div>
                         )

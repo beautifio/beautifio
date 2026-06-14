@@ -329,9 +329,10 @@ export interface UserPhaseStatusRecord {
 
 export interface OnboardingQuestion {
   id: string;
-  question: string;
-  type: "text" | "select" | "number";
-  options?: string[];
+  label: string;
+  type: "single_select";
+  options: string[];
+  purpose: string;
 }
 
 export interface PhaseDetectionResult {
