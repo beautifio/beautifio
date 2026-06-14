@@ -97,6 +97,8 @@ export async function middleware(request: NextRequest) {
   if (isAuth && isAuthPage(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/home";
+    const mimpi = request.nextUrl.searchParams.get("mimpi");
+    if (mimpi) url.searchParams.set("mimpi", mimpi);
     return NextResponse.redirect(url);
   }
 

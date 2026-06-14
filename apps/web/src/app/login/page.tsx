@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
@@ -10,9 +10,11 @@ import { useAuthStore } from "@/stores/auth-store";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isLoading } = useAuth();
   const setUser = useAuthStore((s) => s.setUser);
   const setSession = useAuthStore((s) => s.setSession);
+  const mimpiSlug = searchParams.get("mimpi");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,7 +68,8 @@ export default function LoginPage() {
         setUser(data.session.user);
         await new Promise((r) => setTimeout(r, 300));
         router.refresh();
-        router.push("/home");
+        const dest = mimpiSlug ? `/home?mimpi=${mimpiSlug}` : "/home";
+        router.push(dest);
       }
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");

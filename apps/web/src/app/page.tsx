@@ -152,7 +152,7 @@ export default function SplashScreen() {
         }`}
       >
         <Link
-          href="/welcome"
+          href="/mimpi"
           className="flex items-center justify-center w-full h-14 rounded-full bg-[#FFC64F] text-[#084463] font-bold text-sm shadow-lg hover:bg-[#FFC64F]/90 active:scale-[0.98] transition-all cursor-pointer gap-2"
         >
           Mulai Perjalananmu

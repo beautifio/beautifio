@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Heart } from "lucide-react";
 import { Button, Card } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
-import { getAllDreamTemplates } from "@beautifio/utils";
+import { getAllDreamTemplates, getDreamTemplate } from "@beautifio/utils";
 import { createJourney, journeyUrl } from "@/lib/journey-queries";
 import { JourneyOnboardingModal } from "@/features/journey/journey-onboarding-modal";
 import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
@@ -133,12 +133,16 @@ function timeGreeting(): { text: string; icon: React.ReactNode } {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
 
   const [journey, setJourney] = useState<DreamJourney | null>(null);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [dreamMeaning, setDreamMeaning] = useState("");
   const [loading, setLoading] = useState(true);
+  const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
+
+  const mimpiSlug = searchParams.get("mimpi");
 
   const userName =
     user?.user_metadata?.full_name ||
@@ -171,6 +175,13 @@ export default function HomeScreen() {
     })();
   }, [user]);
 
+  useEffect(() => {
+    if (!loading && !journey && mimpiSlug) {
+      const t = getDreamTemplate(mimpiSlug);
+      if (t) setOnboardingTemplate(t);
+    }
+  }, [loading, journey, mimpiSlug]);
+
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-5">
@@ -201,7 +212,15 @@ export default function HomeScreen() {
             </div>
           </>
         ) : (
-          <TemplateCards />
+          <>
+            <TemplateCards />
+
+            <JourneyOnboardingModal
+              open={!!onboardingTemplate}
+              template={onboardingTemplate!}
+              onClose={() => setOnboardingTemplate(null)}
+            />
+          </>
         )}
       </div>
     </div>

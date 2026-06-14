@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, UserPlus, User } from "lucide-react";
@@ -10,9 +10,11 @@ import { useAuthStore } from "@/stores/auth-store";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isLoading } = useAuth();
   const setUser = useAuthStore((s) => s.setUser);
   const setSession = useAuthStore((s) => s.setSession);
+  const mimpiSlug = searchParams.get("mimpi");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -93,7 +95,8 @@ export default function RegisterPage() {
       if (data?.session) {
         setSession(data.session);
         setUser(data.session.user);
-        router.push("/home");
+        const dest = mimpiSlug ? `/home?mimpi=${mimpiSlug}` : "/home";
+        router.push(dest);
         return;
       }
 
