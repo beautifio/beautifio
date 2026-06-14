@@ -7,6 +7,7 @@ const PUBLIC_ROUTES = [
   "/login",
   "/register",
   "/mimpi",
+  "/coba",
   "/auth/callback",
 ];
 
