@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Heart, MapPin, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Heart, MapPin, Minus, Plus, Sparkles } from "lucide-react";
 import { Button } from "@beautifio/ui";
 import { getBenchmarkForTemplate, determineUserPhase } from "@beautifio/utils";
 import { saveGuestJourney } from "@/lib/guest-journey";
@@ -26,7 +26,6 @@ export function GuestOnboardingModal({
   const [ageError, setAgeError] = useState<string | null>(null);
 
   const benchmark = getBenchmarkForTemplate(template.slug);
-  // Only show select-type questions (age/number already collected in step 0)
   const questions: OnboardingQuestion[] = (benchmark?.onboarding || []).filter((q) => q.type === "single_select");
   const totalSteps = 2 + (questions.length > 0 ? 1 : 0);
 
@@ -57,6 +56,13 @@ export function GuestOnboardingModal({
     }
   };
 
+  const adjustAge = (delta: number) => {
+    const current = age ?? 10;
+    const next = Math.max(10, Math.min(40, current + delta));
+    setAge(next);
+    setAgeError(null);
+  };
+
   const handleFinish = () => {
     if (!template || !age) return;
 
@@ -85,26 +91,26 @@ export function GuestOnboardingModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
       <div
-        className="w-full max-w-content bg-surface rounded-t-xl sm:rounded-xl max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-content bg-surface rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-surface z-10 pt-4 pb-2 px-6 border-b border-border">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="sticky top-0 bg-surface z-10 pt-5 pb-3 px-6 border-b border-border">
+          <div className="flex items-center gap-3">
             {step > 0 ? (
               <button
                 onClick={() => setStep(step - 1)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-muted transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-muted transition-colors cursor-pointer shrink-0"
               >
                 <ArrowLeft size={18} />
               </button>
             ) : (
-              <div className="w-8" />
+              <div className="w-8 shrink-0" />
             )}
             <div className="flex-1 flex gap-1.5">
               {Array.from({ length: totalSteps }).map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 flex-1 rounded-full transition-all duration-500 ${
+                  className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
                     i <= step ? "bg-primary" : "bg-border"
                   }`}
                 />
@@ -112,38 +118,52 @@ export function GuestOnboardingModal({
             </div>
             <button
               onClick={() => { reset(); onClose(); }}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-muted transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-muted transition-colors cursor-pointer shrink-0"
             >
               <span className="text-lg leading-none">&times;</span>
             </button>
           </div>
         </div>
 
-        <div className="px-6 pt-4 pb-6">
+        <div className="px-6 pt-6 pb-6">
           {/* Step 1: Age + Phase Preview */}
           {step === 0 && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <MapPin size={24} className="text-primary" />
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <MapPin size={26} className="text-primary" />
                 </div>
-                <h2 className="text-lg font-bold text-text-primary">Berapa Usiamu?</h2>
-                <p className="text-sm text-text-secondary mt-1">
-                  Untuk menentukan fase yang tepat untuk perjalananmu
+                <h2 className="text-xl font-bold text-text-primary">Berapa Usiamu?</h2>
+                <p className="text-sm text-text-secondary mt-1.5">
+                  Untuk menentukan fase perjalanan yang tepat
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">Usia</label>
-                <input
-                  type="number"
-                  min={10}
-                  max={40}
-                  placeholder="Masukkan usiamu"
-                  value={age !== null ? String(age) : ""}
-                  onChange={(e) => handleAgeChange(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-surface text-text-primary placeholder:text-text-secondary/40 outline-none focus:border-primary transition-colors"
-                />
+              <div className="max-w-[200px] mx-auto">
+                <label className="block text-sm font-semibold text-text-primary mb-3 text-center">Usia</label>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => adjustAge(-1)}
+                    className="w-11 h-11 rounded-xl border border-border flex items-center justify-center text-text-secondary hover:bg-muted hover:text-text-primary transition-colors cursor-pointer"
+                  >
+                    <Minus size={18} />
+                  </button>
+                  <input
+                    type="number"
+                    min={10}
+                    max={40}
+                    placeholder="18"
+                    value={age !== null ? String(age) : ""}
+                    onChange={(e) => handleAgeChange(e.target.value)}
+                    className="w-full text-center text-2xl font-bold text-text-primary bg-muted/50 rounded-xl border border-border py-3 outline-none focus:border-primary transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <button
+                    onClick={() => adjustAge(1)}
+                    className="w-11 h-11 rounded-xl border border-border flex items-center justify-center text-text-secondary hover:bg-muted hover:text-text-primary transition-colors cursor-pointer"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
               </div>
 
               {ageError && (
@@ -151,20 +171,24 @@ export function GuestOnboardingModal({
               )}
 
               {phaseInfo?.phase && (
-                <div className="p-4 rounded-xl bg-accent/5 border border-accent/20">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20">
+                  <div className="flex items-center gap-2 mb-2.5">
                     <Sparkles size={14} className="text-accent" />
-                    <p className="text-xs font-semibold text-accent uppercase tracking-wide">Fase Kamu</p>
+                    <p className="text-xs font-semibold text-accent uppercase tracking-wider">Fase Kamu</p>
                   </div>
-                  <p className="text-sm text-text-primary font-semibold">
-                    Berdasarkan usiamu ({age} tahun), kamu akan mulai di{" "}
-                    <span className="text-accent">
-                      Fase {phaseInfo.phase.phase_number}: {phaseInfo.phase.phase_name}
+                  <p className="text-sm text-text-primary">
+                    Kamu akan memulai di{" "}
+                    <span className="font-bold text-accent">
+                      {phaseInfo.phase.phase_name}
                     </span>
                   </p>
-                  <p className="text-xs text-text-secondary mt-1">
-                    Rentang usia fase ini: {phaseInfo.phase.age_min}–{phaseInfo.phase.age_max} tahun
-                  </p>
+                  <div className="flex items-center gap-3 mt-2 text-xs text-text-secondary">
+                    <span>Fase {phaseInfo.phase.phase_number}</span>
+                    <span className="w-1 h-1 rounded-full bg-text-secondary/30" />
+                    <span>
+                      {phaseInfo.phase.age_min}–{phaseInfo.phase.age_max} tahun
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -172,33 +196,50 @@ export function GuestOnboardingModal({
 
           {/* Step 2: Questions */}
           {step === 1 && questions.length > 0 && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <Sparkles size={24} className="text-primary" />
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles size={26} className="text-primary" />
                 </div>
-                <h2 className="text-lg font-bold text-text-primary">Ceritakan Tentang Dirimu</h2>
-                <p className="text-sm text-text-secondary mt-1">Agar perjalananmu lebih personal</p>
+                <h2 className="text-xl font-bold text-text-primary">Ceritakan Tentang Dirimu</h2>
+                <p className="text-sm text-text-secondary mt-1.5">Agar saran aktivitas lebih personal</p>
               </div>
 
-              <div className="space-y-5">
-                {questions.map((q) => (
+              <div className="space-y-6">
+                {questions.map((q, idx) => (
                   <div key={q.id}>
-                    <p className="text-sm font-semibold text-text-primary mb-2">{q.label}</p>
+                    <p className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </span>
+                      {q.label}
+                    </p>
                     <div className="grid grid-cols-1 gap-2">
-                      {(q.options || []).map((opt) => (
-                        <button
-                          key={opt}
-                          onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt }))}
-                          className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all cursor-pointer ${
-                            answers[q.id] === opt
-                              ? "border-primary bg-primary/10 text-primary font-semibold"
-                              : "border-border bg-surface text-text-secondary hover:border-primary/30"
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
+                      {(q.options || []).map((opt) => {
+                        const selected = answers[q.id] === opt;
+                        return (
+                          <button
+                            key={opt}
+                            onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt }))}
+                            className={`w-full text-left px-4 py-3.5 rounded-xl border text-sm transition-all cursor-pointer flex items-center gap-3 ${
+                              selected
+                                ? "border-primary bg-primary/8 text-text-primary font-semibold ring-1 ring-primary/20"
+                                : "border-border bg-surface text-text-secondary hover:border-primary/30 hover:bg-muted/30"
+                            }`}
+                          >
+                            <span
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                                selected
+                                  ? "border-primary bg-primary"
+                                  : "border-text-secondary/30"
+                              }`}
+                            >
+                              {selected && <Check size={12} className="text-white" />}
+                            </span>
+                            {opt}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
@@ -208,28 +249,29 @@ export function GuestOnboardingModal({
 
           {/* Step 1b (no questions): confirmation */}
           {step === 1 && questions.length === 0 && (
-            <div className="text-center py-8">
-              <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
-                <Heart size={24} className="text-success" />
+            <div className="text-center py-6">
+              <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center mx-auto mb-4">
+                <Heart size={26} className="text-success" />
               </div>
-              <h2 className="text-lg font-bold text-text-primary">Siap Memulai!</h2>
-              <p className="text-sm text-text-secondary mt-1">
-                Kamu akan mencoba perjalanan mimpi{" "}
+              <h2 className="text-xl font-bold text-text-primary">Siap Memulai!</h2>
+              <p className="text-sm text-text-secondary mt-1.5">
+                Kamu akan mencoba perjalanan{" "}
                 <span className="font-semibold text-text-primary">
                   {template.emoji} {template.title}
                 </span>
               </p>
               {phaseInfo?.phase && (
-                <div className="mt-4 p-4 rounded-xl bg-accent/5 border border-accent/20 text-left">
-                  <p className="text-sm text-text-primary">
-                    Mulai di{" "}
-                    <span className="font-semibold text-accent">
-                      Fase {phaseInfo.phase.phase_number}: {phaseInfo.phase.phase_name}
-                    </span>
+                <div className="mt-5 p-4 rounded-xl bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20 text-left inline-block min-w-[240px]">
+                  <p className="text-xs text-accent font-semibold tracking-wider uppercase mb-1">Fase Awal</p>
+                  <p className="text-sm font-semibold text-text-primary">
+                    {phaseInfo.phase.phase_name}
+                  </p>
+                  <p className="text-xs text-text-secondary mt-1">
+                    Fase {phaseInfo.phase.phase_number} · {phaseInfo.phase.age_min}–{phaseInfo.phase.age_max} tahun
                   </p>
                 </div>
               )}
-              <p className="text-xs text-text-secondary/70 mt-4">
+              <p className="text-xs text-text-secondary/60 mt-5">
                 Trial gratis 3 hari. Tidak perlu daftar.
               </p>
             </div>
@@ -237,48 +279,58 @@ export function GuestOnboardingModal({
 
           {/* Step 3 / Summary */}
           {step === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
-                  <Heart size={24} className="text-success" />
+                <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center mx-auto mb-4">
+                  <Heart size={26} className="text-success" />
                 </div>
-                <h2 className="text-lg font-bold text-text-primary">Siap Memulai!</h2>
-                <p className="text-sm text-text-secondary mt-1">
-                  Periksa kembali sebelum memulai perjalanan
-                </p>
+                <h2 className="text-xl font-bold text-text-primary">Siap Memulai!</h2>
+                <p className="text-sm text-text-secondary mt-1.5">Periksa kembali sebelum memulai</p>
               </div>
 
               <div className="space-y-3">
-                <div className="p-4 rounded-xl bg-surface border border-border">
-                  <p className="text-xs text-text-secondary mb-1">Mimpi</p>
-                  <p className="text-sm font-semibold text-text-primary">
-                    {template.emoji} {template.title}
-                  </p>
+                <div className="p-4 rounded-xl bg-surface border border-border flex items-center gap-3">
+                  <span className="text-2xl">{template.emoji}</span>
+                  <div>
+                    <p className="text-xs text-text-secondary">Mimpi</p>
+                    <p className="text-sm font-semibold text-text-primary">{template.title}</p>
+                  </div>
                 </div>
-                <div className="p-4 rounded-xl bg-surface border border-border">
-                  <p className="text-xs text-text-secondary mb-1">Usia</p>
-                  <p className="text-sm font-semibold text-text-primary">{age} tahun</p>
+                <div className="p-4 rounded-xl bg-surface border border-border flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                    {age}
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-secondary">Usia</p>
+                    <p className="text-sm font-semibold text-text-primary">{age} tahun</p>
+                  </div>
                 </div>
                 {phaseInfo?.phase && (
-                  <div className="p-4 rounded-xl bg-accent/5 border border-accent/20">
-                    <p className="text-xs text-text-secondary mb-1">Fase Awal</p>
-                    <p className="text-sm font-semibold text-accent">
-                      Fase {phaseInfo.phase.phase_number}: {phaseInfo.phase.phase_name}
-                    </p>
-                    <p className="text-xs text-text-secondary mt-1">
-                      Rentang usia: {phaseInfo.phase.age_min}–{phaseInfo.phase.age_max} tahun
-                    </p>
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                      <Sparkles size={16} className="text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-accent font-semibold tracking-wider uppercase">Fase Awal</p>
+                      <p className="text-sm font-bold text-accent">{phaseInfo.phase.phase_name}</p>
+                      <p className="text-[11px] text-text-secondary/70">
+                        Fase {phaseInfo.phase.phase_number} · {phaseInfo.phase.age_min}–{phaseInfo.phase.age_max} tahun
+                      </p>
+                    </div>
                   </div>
                 )}
                 {Object.keys(answers).length > 0 && (
                   <div className="p-4 rounded-xl bg-surface border border-border">
-                    <p className="text-xs text-text-secondary mb-2">Jawaban Kamu</p>
-                    <div className="space-y-1.5">
+                    <p className="text-xs text-text-secondary mb-3 font-semibold uppercase tracking-wider">Jawaban Kamu</p>
+                    <div className="space-y-2.5">
                       {questions.map((q) => (
                         answers[q.id] && (
-                          <div key={q.id} className="flex items-start gap-2 text-sm">
-                            <span className="text-text-secondary shrink-0">{q.label}</span>
-                            <span className="text-text-primary font-medium">: {answers[q.id]}</span>
+                          <div key={q.id} className="flex items-start gap-2">
+                            <Check size={14} className="text-success mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-xs text-text-secondary">{q.label}</p>
+                              <p className="text-sm font-medium text-text-primary">{answers[q.id]}</p>
+                            </div>
                           </div>
                         )
                       ))}
@@ -294,7 +346,7 @@ export function GuestOnboardingModal({
           <Button
             variant="primary"
             size="lg"
-            className="w-full"
+            className="w-full shadow-lg"
             onClick={() => {
               if (step < totalSteps - 1) {
                 setStep(step + 1);
@@ -305,9 +357,13 @@ export function GuestOnboardingModal({
             disabled={!canProceed()}
           >
             {step < totalSteps - 1 ? (
-              <>Lanjut <ArrowRight size={16} /></>
+              <span className="flex items-center gap-2">
+                Lanjut <ArrowRight size={16} />
+              </span>
             ) : (
-              <><Heart size={16} /> Mulai Coba Gratis</>
+              <span className="flex items-center gap-2">
+                <Heart size={16} /> Mulai Coba Gratis
+              </span>
             )}
           </Button>
         </div>
