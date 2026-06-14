@@ -299,6 +299,8 @@ export interface GenerateDailyOptions {
   date?: string;
 }
 
+export { getActivitiesForDimension };
+
 const DIMENSION_ACTIVITIES_BY_CATEGORY: Record<
   string,
   Partial<Record<DailyActivityDimension, string[]>>
@@ -418,6 +420,9 @@ export function generateDailyActivities(
   const { journey, spiritualPref, date } = options;
   const dateStr = date || new Date().toISOString().split("T")[0];
   const template = getDreamTemplate(journey.template_slug);
+  if (!template && journey.template_slug) {
+    console.warn(`generateDailyActivities: template not found for slug "${journey.template_slug}" — using fallback`);
+  }
   const activities: Omit<DailyActivity, "id" | "created_at">[] = [];
 
   // Seeded random so the same day always gets the same activities

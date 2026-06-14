@@ -133,14 +133,33 @@ export default function JourneyDetailPage() {
         getJourneyReflections(user.id, j.id),
       ]);
 
-      const activities = prog.today_activities.filter(
+      const { getDreamTemplate, getActivitiesForDimension: validatePool } = await import("@beautifio/utils");
+
+      let loadedActivities = prog.today_activities.filter(
         (a) => a.journey_id === j.id
       );
-      if (activities.length === 0) {
+
+      // Safety filter: validate activities against expected template pool
+      if (loadedActivities.length > 0) {
+        const template = getDreamTemplate(j.template_slug);
+        if (template) {
+          const hasMismatch = loadedActivities.some((a) => {
+            const pool = validatePool(a.dimension, template, sp, j.category);
+            return !pool.some((t: string) => t.toLowerCase().trim() === a.title.toLowerCase().trim());
+          });
+          if (hasMismatch) {
+            console.warn("Data leak detected: regenerating activities for journey", j.id);
+            await generateAndInsertActivities(j, sp, undefined);
+            loadedActivities = [];
+          }
+        }
+      }
+
+      if (loadedActivities.length > 0) {
+        setActivities(loadedActivities);
+      } else {
         const generated = await generateAndInsertActivities(j, sp, undefined);
         setActivities(generated);
-      } else {
-        setActivities(activities);
       }
 
       setBigWins(bw);
@@ -153,7 +172,6 @@ export default function JourneyDetailPage() {
       setTimeline(tl);
       setSpiritualPref(sp);
       setAllReflections(refl);
-      const { getDreamTemplate } = await import("@beautifio/utils");
       const tInfo = getDreamTemplate(j.template_slug) || null;
       setTemplateInfo(tInfo);
 
