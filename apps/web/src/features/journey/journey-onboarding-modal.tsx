@@ -46,7 +46,7 @@ export function JourneyOnboardingModal({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const benchmark = getBenchmarkForTemplate(template.slug);
+  const benchmark = template ? getBenchmarkForTemplate(template.slug) : undefined;
   const questions: OnboardingQuestion[] = (benchmark?.onboarding || (template as any)?.onboarding_questions || []);
 
   const totalSteps = 2 + (questions.length > 0 ? 1 : 0);
@@ -63,7 +63,7 @@ export function JourneyOnboardingModal({
   }, [open]);
 
   useEffect(() => {
-    if (!age || age < 10 || age > 40 || !supabase) {
+    if (!age || age < 10 || age > 40 || !supabase || !template) {
       setPhasePreview(null);
       return;
     }
@@ -84,7 +84,7 @@ export function JourneyOnboardingModal({
           age_max: data[0].age_max,
         });
       });
-  }, [age, template.slug]);
+  }, [age, template?.slug]);
 
   const canProceedStep = () => {
     if (step === 0) return age !== null && age >= 10 && age <= 40;
@@ -95,7 +95,7 @@ export function JourneyOnboardingModal({
   };
 
   const handleFinish = async () => {
-    if (!user || creating) return;
+    if (!user || creating || !template) return;
     setCreating(true);
     setError(null);
 
@@ -141,7 +141,7 @@ export function JourneyOnboardingModal({
     }
   };
 
-  if (!open) return null;
+  if (!open || !template) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">

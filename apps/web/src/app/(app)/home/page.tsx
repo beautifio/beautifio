@@ -114,11 +114,13 @@ function TemplateCards() {
         </Card>
       ))}
 
-      <JourneyOnboardingModal
-        open={!!selectedTemplate}
-        template={selectedTemplate!}
-        onClose={() => setSelectedTemplate(null)}
-      />
+      {selectedTemplate && (
+        <JourneyOnboardingModal
+          open={true}
+          template={selectedTemplate}
+          onClose={() => setSelectedTemplate(null)}
+        />
+      )}
     </div>
   );
 }
@@ -219,11 +221,13 @@ export default function HomeScreen({
           <>
             <TemplateCards />
 
-            <JourneyOnboardingModal
-              open={!!onboardingTemplate}
-              template={onboardingTemplate!}
-              onClose={() => setOnboardingTemplate(null)}
-            />
+            {onboardingTemplate && (
+              <JourneyOnboardingModal
+                open={true}
+                template={onboardingTemplate}
+                onClose={() => setOnboardingTemplate(null)}
+              />
+            )}
           </>
         )}
       </div>
