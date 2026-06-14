@@ -1,13 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Heart, Compass } from "lucide-react";
-import { Button } from "@beautifio/ui";
+import { Compass } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getAllDreamTemplates, getJmEcosystemByTemplateSlug } from "@beautifio/utils";
-import type { DreamTemplate } from "@beautifio/types";
 
 const CATEGORY_LABELS: Record<string, string> = {
   sports: "Sports",
@@ -35,10 +33,11 @@ export default function LandingPage({
   const [templates] = useState(getAllDreamTemplates());
   const [activeFilter, setActiveFilter] = useState<FilterKey>("Semua");
 
-  if (user) {
-    router.replace("/home");
-    return null;
-  }
+  useEffect(() => {
+    if (user) router.replace("/home");
+  }, [user, router]);
+
+  if (user) return null;
 
   const filtered = templates.filter((t) => categoryMatches(t.category, activeFilter));
 
