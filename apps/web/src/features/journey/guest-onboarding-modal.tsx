@@ -26,7 +26,8 @@ export function GuestOnboardingModal({
   const [ageError, setAgeError] = useState<string | null>(null);
 
   const benchmark = getBenchmarkForTemplate(template.slug);
-  const questions: OnboardingQuestion[] = benchmark?.onboarding || [];
+  // Only show select-type questions (age/number already collected in step 0)
+  const questions: OnboardingQuestion[] = (benchmark?.onboarding || []).filter((q) => q.type === "select");
   const totalSteps = 2 + (questions.length > 0 ? 1 : 0);
 
   const phaseInfo = age && benchmark
