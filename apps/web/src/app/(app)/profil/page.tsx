@@ -7,7 +7,7 @@ import {
   Compass, ArrowRight,
   Settings, LogOut, LogIn, User,
   BookOpen, BookHeart, History,
-  ChevronRight,
+  ChevronRight, BookMarked,
 } from "lucide-react";
 import {
   Card, CardHeader, CardTitle, CardContent, Avatar,
@@ -290,6 +290,35 @@ function LoginPrompt() {
   );
 }
 
+function ReadingStats({ user }: { user: any }) {
+  const [stats, setStats] = useState<{ total_read: number; total_minutes: number } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { getUserArticleStats } = await import("@/lib/article-queries");
+        const data = await getUserArticleStats(user.id);
+        setStats(data);
+      } catch {
+        // silent
+      }
+    })();
+  }, [user]);
+
+  if (!stats || stats.total_read === 0) return null;
+
+  return (
+    <div className="px-6">
+      <div className="flex items-center gap-2 px-4 py-3 rounded-xl" style={{ backgroundColor: "#FFF0EF" }}>
+        <BookMarked size={14} style={{ color: "#D94040" }} />
+        <span className="text-xs" style={{ color: "#D94040" }}>
+          {stats.total_read} artikel dibaca · {stats.total_minutes} menit total waktu membaca
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
   return date.toLocaleDateString("id-ID", {
@@ -389,6 +418,7 @@ export default function ProfileScreen() {
       <div className="max-w-content mx-auto pb-24 space-y-5">
         <ProfileHero journey={journey} />
         <JourneyIdentity journey={journey} progress={progress} />
+        <ReadingStats user={user} />
         <CharacterJourney summary={summary} />
         <StoryLink />
         <LifeTimeline entries={timeline} />

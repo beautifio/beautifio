@@ -130,6 +130,7 @@ export function CalendarHistory({ userId }: CalendarHistoryProps) {
 function DayDetail({ day, userId }: { day: CalendarDayInfo; userId: string }) {
   const [activities, setActivities] = useState<any[]>([]);
   const [reflections, setReflections] = useState<any[]>([]);
+  const [articles, setArticles] = useState<{ title: string; slug: string; reading_time: number; completed_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -138,12 +139,39 @@ function DayDetail({ day, userId }: { day: CalendarDayInfo; userId: string }) {
       try {
         const { supabase } = await import("@/lib/supabase/client");
         if (!supabase) return;
-        const [actRes, refRes] = await Promise.all([
+        const [actRes, refRes, artRes] = await Promise.all([
           supabase.from("daily_activities").select("title, is_completed").eq("user_id", userId).eq("activity_date", day.date),
           supabase.from("daily_reflections").select("learned, grateful, improve, mood").eq("user_id", userId).eq("date", day.date),
+          supabase
+            .from("article_reads")
+            .select("completed_at, article_id")
+            .eq("user_id", userId)
+            .eq("is_completed", true)
+            .gte("completed_at", `${day.date}T00:00:00Z`)
+            .lte("completed_at", `${day.date}T23:59:59Z`)
+            .order("completed_at", { ascending: true }),
         ]);
         setActivities(actRes.data || []);
         setReflections(refRes.data || []);
+        const articleIds = (artRes.data || []).map((r: any) => r.article_id);
+        if (articleIds.length > 0) {
+          const { data: storyData } = await supabase
+            .from("stories")
+            .select("id, title, slug, reading_time")
+            .in("id", articleIds);
+          const storyMap = new Map((storyData || []).map((s: any) => [s.id, s]));
+          setArticles((artRes.data || []).map((r: any) => {
+            const story = storyMap.get(r.article_id);
+            return {
+              title: story?.title ?? "",
+              slug: story?.slug ?? "",
+              reading_time: story?.reading_time ?? 0,
+              completed_at: r.completed_at,
+            };
+          }));
+        } else {
+          setArticles([]);
+        }
       } catch {} finally {
         setLoading(false);
       }
@@ -172,6 +200,24 @@ function DayDetail({ day, userId }: { day: CalendarDayInfo; userId: string }) {
               </div>
             </div>
           )}
+          {articles.length > 0 && (
+            <div className="pt-2 border-t border-border">
+              <p className="text-[11px] font-semibold text-text-secondary/60 mb-1">Artikel dibaca</p>
+              <div className="space-y-1.5">
+                {articles.map((a, i) => (
+                  <a
+                    key={i}
+                    href={`/inspirasi/${a.slug}`}
+                    className="text-xs text-text-primary flex items-start gap-1.5 hover:text-primary transition-colors"
+                  >
+                    <span>📖</span>
+                    <span className="flex-1">{a.title}</span>
+                    <span className="text-text-secondary/50 whitespace-nowrap">{a.reading_time} mnt</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
           {reflections.map((r, i) => (
             <div key={i} className="pt-2 border-t border-border">
               <p className="text-[11px] font-semibold text-text-secondary/60 mb-1">Refleksi</p>
@@ -180,7 +226,7 @@ function DayDetail({ day, userId }: { day: CalendarDayInfo; userId: string }) {
               {r.mood && <p className="text-xs text-text-secondary/40 mt-1">Suasana hati: {r.mood}</p>}
             </div>
           ))}
-          {activities.length === 0 && reflections.length === 0 && (
+          {activities.length === 0 && articles.length === 0 && reflections.length === 0 && (
             <p className="text-xs text-text-secondary/50">Tidak ada catatan untuk hari ini.</p>
           )}
         </>

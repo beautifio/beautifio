@@ -1,16 +1,23 @@
 "use client";
 
-import { useState, use, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, use, useEffect, useCallback, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, BookHeart, Clock, Heart, Bookmark, Share2, Flag,
-  Shield, MessageSquare, Users, Sparkles, BookOpen, PenLine, Quote,
+  Shield, MessageSquare, Users, Sparkles, BookOpen, PenLine, Quote, X, MapPin,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
 import { CONTENT_TABS, getAllItems } from "@/lib/inspirasi-data";
 import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
 import { SafeSpaceModal, NeedHelpButton } from "@/features/safe-space/SafeSpaceModal";
+import {
+  upsertArticleRead,
+  updateArticleReadProgress,
+  hasCompletedReadForActivity,
+  getArticleIdsInUserJourney,
+} from "@/lib/article-queries";
+import { useAuth } from "@/hooks/use-auth";
 
 const TAB_ICONS: Record<string, typeof Sparkles> = {
   Sparkles, BookOpen, PenLine, BookHeart, Quote, Users,
@@ -37,13 +44,19 @@ function renderContent(text: string) {
   });
 }
 
-export default function InspirasiDetailPage({
+function InspirasiDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
+
+  const fromJourney = searchParams.get("from") === "journey";
+  const activityId = searchParams.get("activity_id");
+  const journeyId = searchParams.get("journey_id");
 
   const item = getAllItems().find((d) => d.slug === slug);
 
@@ -53,6 +66,151 @@ export default function InspirasiDetailPage({
   const [saveCount, setSaveCount] = useState(item?.save_count ?? 0);
   const [showSafeSpace, setShowSafeSpace] = useState(false);
 
+  const [readId, setReadId] = useState<string | null>(null);
+  const [scrollPercentage, setScrollPercentage] = useState(0);
+  const [timeSpent, setTimeSpent] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [showBanner, setShowBanner] = useState(true);
+  const [articleAlreadyRead, setArticleAlreadyRead] = useState(false);
+  const [initDone, setInitDone] = useState(false);
+  const [articleInJourney, setArticleInJourney] = useState(false);
+
+  const scrollPctRef = useRef(0);
+  const timeSpentRef = useRef(0);
+  const completedRef = useRef(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const readIdRef = useRef<string | null>(null);
+
+  const estimatedMinutes = item?.reading_time ?? 5;
+
+  const triggerCompletion = useCallback(async (readIdVal: string) => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    setIsCompleted(true);
+
+    await updateArticleReadProgress(readIdVal, {
+      is_completed: true,
+      completed_at: new Date().toISOString(),
+      scroll_percentage: scrollPctRef.current,
+      time_spent_seconds: timeSpentRef.current,
+    });
+
+    if (activityId) {
+      try {
+        const res = await fetch("/api/journey/complete-reading", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ activity_id: activityId }),
+        });
+        if (res.ok) {
+          setToastMessage("✓ Aktivitas journey-mu sudah otomatis tercatat!");
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 3000);
+        }
+      } catch {
+        // silent
+      }
+    }
+  }, [activityId]);
+
+  useEffect(() => {
+    if (!fromJourney || !user || !item || !activityId || initDone) return;
+
+    let cancelled = false;
+
+    (async () => {
+      const alreadyRead = await hasCompletedReadForActivity(user.id, activityId, item.id);
+      if (cancelled) return;
+
+      if (alreadyRead) {
+        setArticleAlreadyRead(true);
+        setToastMessage("Kamu sudah pernah baca ini. Aktivitas langsung tercatat ✓");
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+
+        try {
+          await fetch("/api/journey/complete-reading", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ activity_id: activityId }),
+          });
+        } catch {
+          // silent
+        }
+
+        setInitDone(true);
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const newReadId = await upsertArticleRead({
+        user_id: user.id,
+        article_id: item.id,
+        activity_id: activityId,
+        journey_id: journeyId || undefined,
+        started_at: now,
+      });
+      if (cancelled || !newReadId) return;
+
+      setReadId(newReadId);
+      readIdRef.current = newReadId;
+      setInitDone(true);
+
+      timeIntervalRef.current = setInterval(() => {
+        setTimeSpent((prev) => {
+          const next = prev + 1;
+          timeSpentRef.current = next;
+          return next;
+        });
+      }, 1000);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fromJourney, user, item, activityId, journeyId, initDone]);
+
+  useEffect(() => {
+    if (!fromJourney || !readId || isCompleted) return;
+
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = docHeight > 0 ? Math.min(100, Math.round((scrollTop / docHeight) * 100)) : 0;
+      scrollPctRef.current = pct;
+      setScrollPercentage(pct);
+
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      debounceTimerRef.current = setTimeout(async () => {
+        await updateArticleReadProgress(readIdRef.current!, {
+          scroll_percentage: scrollPctRef.current,
+          time_spent_seconds: timeSpentRef.current,
+        });
+      }, 10000);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [fromJourney, readId, isCompleted]);
+
+  useEffect(() => {
+    if (!readId || completedRef.current) return;
+
+    const timeThreshold = estimatedMinutes * 60 * 0.7;
+
+    if (scrollPercentage >= 80 || timeSpent >= timeThreshold) {
+      triggerCompletion(readId);
+    }
+  }, [scrollPercentage, timeSpent, readId, triggerCompletion, estimatedMinutes]);
+
   useEffect(() => {
     if (item) {
       setLikeCount(item.like_count);
@@ -61,6 +219,27 @@ export default function InspirasiDetailPage({
       setIsSaved(false);
     }
   }, [item]);
+
+  useEffect(() => {
+    if (!user || !item) return;
+    (async () => {
+      try {
+        const ids = await getArticleIdsInUserJourney(user.id);
+        if (ids.includes(item.id)) {
+          setArticleInJourney(true);
+        }
+      } catch {
+        // silent
+      }
+    })();
+  }, [user, item]);
+
+  useEffect(() => {
+    return () => {
+      if (timeIntervalRef.current) clearInterval(timeIntervalRef.current);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
 
   const handleLike = useCallback(() => {
     setIsLiked((prev) => {
@@ -126,7 +305,13 @@ export default function InspirasiDetailPage({
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-14">
           <button
-            onClick={() => router.push("/inspirasi")}
+            onClick={() => {
+              if (fromJourney && journeyId) {
+                router.push(`/journey/${journeyId}`);
+              } else {
+                router.push("/inspirasi");
+              }
+            }}
             className="p-1.5 -ml-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
             aria-label="Kembali"
           >
@@ -137,6 +322,40 @@ export default function InspirasiDetailPage({
           </h1>
         </div>
       </div>
+
+      {/* Journey Progress Bar */}
+      {fromJourney && (
+        <div className="sticky top-14 z-10">
+          <div className="h-[3px] w-full bg-gray-200">
+            <div
+              className="h-full transition-all duration-300"
+              style={{ width: `${scrollPercentage}%`, backgroundColor: "#FF5E5B" }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Journey Banner */}
+      {fromJourney && showBanner && (
+        <div className="max-w-2xl mx-auto px-4 mt-3">
+          <div
+            className="flex items-start gap-2 px-4 py-3 rounded-lg text-sm"
+            style={{ backgroundColor: "#FFF0EF", border: "1px solid #FFB3A8", color: "#D94040" }}
+          >
+            <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
+            <p className="flex-1">
+              Dari journey-mu · Baca sampai selesai untuk menyelesaikan aktivitas hari ini
+            </p>
+            <button
+              onClick={() => setShowBanner(false)}
+              className="shrink-0 p-0.5 rounded hover:bg-black/5 transition-colors"
+              aria-label="Tutup"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-2xl mx-auto">
         {/* Hero Image */}
@@ -280,6 +499,19 @@ export default function InspirasiDetailPage({
             </div>
           </div>
 
+          {/* Article in Journey */}
+          {articleInJourney && !fromJourney && (
+            <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: "#FFF0EF", border: "1px solid #FFB3A8" }}>
+              <p className="text-sm font-medium" style={{ color: "#D94040" }}>
+                <MapPin className="w-4 h-4 inline mr-1.5" />
+                Artikel ini ada di journey-mu juga
+              </p>
+              <p className="text-xs mt-1" style={{ color: "#D94040" }}>
+                Kembali ke <Link href="/journey" className="font-semibold underline">journey-mu</Link> untuk melihat aktivitas hari ini.
+              </p>
+            </div>
+          )}
+
           {/* Related Items */}
           {relatedItems.length > 0 && (
             <div>
@@ -334,6 +566,15 @@ export default function InspirasiDetailPage({
         </div>
       </div>
 
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium animate-in slide-in-from-bottom-2 fade-in duration-300">
+            {toastMessage}
+          </div>
+        </div>
+      )}
+
       <SafeSpaceModal
         open={showSafeSpace}
         onClose={() => setShowSafeSpace(false)}
@@ -341,5 +582,17 @@ export default function InspirasiDetailPage({
       />
 
     </div>
+  );
+}
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <InspirasiDetailPage params={params} />
+    </Suspense>
   );
 }

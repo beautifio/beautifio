@@ -6,11 +6,13 @@ import Link from "next/link";
 import {
   BookHeart, Clock, Heart, MessageSquare, Flag, Shield,
   Users, Sparkles, BookOpen, PenLine, Quote,
-  Bookmark, Share2, Plus,
+  Bookmark, Share2, Plus, MapPin,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
 import { CONTENT_TABS, ANON_CATEGORIES, getAllItems } from "@/lib/inspirasi-data";
 import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
+import { useAuth } from "@/hooks/use-auth";
+import { getPendingJourneyArticleIds } from "@/lib/article-queries";
 
 const TAB_ICONS: Record<string, typeof Sparkles> = {
   Sparkles, BookOpen, PenLine, BookHeart, Quote, Users,
@@ -47,7 +49,7 @@ function ContentTypeBar({
   );
 }
 
-function InspirasiCard({ item }: { item: InspirasiItem }) {
+function InspirasiCard({ item, isSuggested }: { item: InspirasiItem; isSuggested?: boolean }) {
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -138,6 +140,12 @@ function InspirasiCard({ item }: { item: InspirasiItem }) {
             <span className="text-red-600 font-medium">(ditolak)</span>
           )}
         </div>
+        {isSuggested && (
+          <div className="flex items-center gap-1 text-[11px] font-medium mb-2" style={{ color: "#D94040" }}>
+            <MapPin className="w-3 h-3" />
+            <span>Disarankan di journey-mu</span>
+          </div>
+        )}
 
         <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
           {item.title}
@@ -217,8 +225,22 @@ function EmptyState({
 
 export default function InspirasiPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ContentType>("all");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [suggestedIds, setSuggestedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const ids = await getPendingJourneyArticleIds(user.id);
+        setSuggestedIds(new Set(ids));
+      } catch {
+        // silent
+      }
+    })();
+  }, [user]);
 
   const categories = useMemo(() => {
     const cats = new Set(getAllItems().map((item) => item.category));
@@ -287,7 +309,7 @@ export default function InspirasiPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {filteredItems.map((item) => (
-              <InspirasiCard key={item.id} item={item} />
+              <InspirasiCard key={item.id} item={item} isSuggested={suggestedIds.has(item.id)} />
             ))}
           </div>
         )}
