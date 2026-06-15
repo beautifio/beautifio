@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { BottomNavigation } from "@beautifio/ui";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
 import { useAuthStore } from "@/stores/auth-store";
+import { getGuestJourney, isTrialExpired } from "@/lib/guest-journey";
+import { getBenchmarkForTemplate } from "@beautifio/utils";
 import { LogIn, UserPlus, X } from "lucide-react";
 
 const PROTECTED_TABS = ["journey", "circle", "profil"];
@@ -26,10 +28,30 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
 
   const onTabChange = useCallback(
     (id: string) => {
-      if (!user && PROTECTED_TABS.includes(id)) {
+      if (user) {
+        router.push(navRoute(id));
+        return;
+      }
+
+      // Check for active guest trial
+      const guest = getGuestJourney();
+      if (guest && !isTrialExpired(guest.startDate)) {
+        if (id === "journey") {
+          const benchmark = getBenchmarkForTemplate(guest.templateSlug);
+          router.push(`/coba/${benchmark?.slug || guest.templateSlug}`);
+          return;
+        }
+        // circle & profil still need login even for guest trial users
         setPendingTab(id);
         return;
       }
+
+      // No guest trial, no user → protected tabs show sheet
+      if (PROTECTED_TABS.includes(id)) {
+        setPendingTab(id);
+        return;
+      }
+
       router.push(navRoute(id));
     },
     [user, router],
