@@ -4,7 +4,7 @@ import { use, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Sparkles, ChevronRight, Clock, X } from "lucide-react";
 import { Button } from "@beautifio/ui";
-import { getDreamTemplate, getBenchmarkForTemplate, determineUserPhase, TEMPLATE_TO_BENCHMARK_SLUG, generateDailyActivities, ACTIVITY_DETAILS } from "@beautifio/utils";
+import { getDreamTemplate, getBenchmarkForTemplate, determineUserPhase, getTemplateFromBenchmarkSlug, TEMPLATE_TO_BENCHMARK_SLUG, generateDailyActivities, ACTIVITY_DETAILS } from "@beautifio/utils";
 import { DailyActivityCard } from "@/features/journey/daily-activity-card";
 import { getGuestJourney, saveGuestJourney, getCurrentDay, isTrialExpired, todayStr } from "@/lib/guest-journey";
 import type { DreamJourney, DailyActivity, DailyActivityDimension } from "@beautifio/types";
@@ -43,7 +43,13 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
 
   useEffect(() => {
     const data = getGuestJourney();
-    if (!data || data.templateSlug !== slug) {
+    if (!data) {
+      router.replace("/");
+      return;
+    }
+    // slug bisa berupa template slug (football-player) atau benchmark slug (pemain-sepak-bola-profesional)
+    const benchmark = TEMPLATE_TO_BENCHMARK_SLUG[data.templateSlug] || data.templateSlug;
+    if (data.templateSlug !== slug && benchmark !== slug) {
       router.replace("/");
       return;
     }
@@ -53,7 +59,9 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
   useEffect(() => {
     if (!guestData) return;
 
-    const template = getDreamTemplate(slug);
+    // Resolve slug ke template slug (bisa template slug atau benchmark slug)
+    const resolvedSlug = getDreamTemplate(slug) ? slug : (getTemplateFromBenchmarkSlug(slug) || slug);
+    const template = getDreamTemplate(resolvedSlug);
     if (!template) {
       router.replace("/");
       return;

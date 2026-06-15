@@ -1,16 +1,18 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Heart, Compass } from "lucide-react";
+import { Sparkles, ArrowRight, Heart, Compass, LogIn } from "lucide-react";
 import { Button, Card, CardContent, Skeleton } from "@beautifio/ui";
 import { getAllDreamTemplates, getAgeGroupLabel, getJmEcosystemByTemplateSlug, getJmCareerPaths } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
 
 import { getActiveJourney, getAllJourneys, createJourney, journeyUrl } from "@/lib/journey-queries";
-import { JourneyOnboardingModal } from "@/features/journey/journey-onboarding-modal";
+
+const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
 
 const CATEGORY_LABELS: Record<string, string> = {
   sports: "Sports",
@@ -84,7 +86,13 @@ export default function JourneyPage() {
   }, [user]);
 
   const handleStartJourney = async (template: DreamTemplate) => {
-    if (!user || creating) return;
+    if (creating) return;
+
+    // Guest → redirect to landing page to start guest trial
+    if (!user) {
+      router.push("/");
+      return;
+    }
 
     if (!userAge) {
       setOnboardingTemplate(template);

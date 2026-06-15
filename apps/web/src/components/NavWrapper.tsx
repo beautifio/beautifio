@@ -6,7 +6,6 @@ import { BottomNavigation } from "@beautifio/ui";
 import { NAV_TABS, navRoute } from "@/lib/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { getGuestJourney, isTrialExpired } from "@/lib/guest-journey";
-import { getBenchmarkForTemplate } from "@beautifio/utils";
 import { LogIn, UserPlus, X } from "lucide-react";
 
 const PROTECTED_TABS = ["journey", "circle", "profil"];
@@ -37,8 +36,7 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
       const guest = getGuestJourney();
       if (guest && !isTrialExpired(guest.startDate)) {
         if (id === "journey") {
-          const benchmark = getBenchmarkForTemplate(guest.templateSlug);
-          router.push(`/coba/${benchmark?.slug || guest.templateSlug}`);
+          router.push(`/coba/${guest.templateSlug}`);
         } else {
           router.push(navRoute(id));
         }
