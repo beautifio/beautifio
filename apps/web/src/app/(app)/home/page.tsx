@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { use, useState, useEffect } from "react";
 import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Flame, Sparkles } from "lucide-react";
@@ -7,8 +8,9 @@ import { Button } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
 import { journeyUrl } from "@/lib/journey-queries";
-import { JourneyOnboardingModal } from "@/features/journey/journey-onboarding-modal";
 import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types";
+
+const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
 
 function timeGreeting(): { text: string; icon: React.ReactNode } {
   const h = new Date().getHours();

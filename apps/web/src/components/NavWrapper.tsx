@@ -56,6 +56,13 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
     [user, router],
   );
 
+  const onTabHover = useCallback(
+    (id: string) => {
+      router.prefetch(navRoute(id));
+    },
+    [router],
+  );
+
   return (
     <div className="min-h-screen bg-bg pb-16">
       {children}
@@ -63,6 +70,7 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
         items={NAV_TABS}
         activeTab={activeTab}
         onTabChange={onTabChange}
+        onTabHover={onTabHover}
       />
 
       {pendingTab && (

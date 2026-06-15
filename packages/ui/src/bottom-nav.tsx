@@ -12,6 +12,7 @@ interface BottomNavigationProps {
   items: NavItem[];
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onTabHover?: (tab: string) => void;
   className?: string;
 }
 
@@ -19,6 +20,7 @@ export function BottomNavigation({
   items,
   activeTab,
   onTabChange,
+  onTabHover,
   className = "",
 }: BottomNavigationProps) {
   return (
@@ -33,6 +35,7 @@ export function BottomNavigation({
           <button
             key={item.id}
             onClick={() => onTabChange(item.id)}
+            onPointerEnter={() => onTabHover?.(item.id)}
             className={`flex flex-col items-center justify-center gap-1 flex-1 h-full cursor-pointer transition-all relative ${
               isActive ? "text-primary" : "text-text-secondary hover:text-text-primary"
             }`}

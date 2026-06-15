@@ -7,6 +7,7 @@ import {
   Target, ArrowLeft, MapPin,
 } from "lucide-react";
 import { Button, Card, Skeleton } from "@beautifio/ui";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/use-auth";
 import {
   getActiveJourney, getJourneyBySlug, journeyUrl, getBigWins,
@@ -23,11 +24,12 @@ import type {
 } from "@beautifio/types";
 import { DailyActivityCard } from "@/features/journey/daily-activity-card";
 import { BigWinCard } from "@/features/journey/big-win-card";
-import { ReflectionModal } from "@/features/journey/reflection-modal";
 import { JourneyTimeline } from "@/features/journey/journey-timeline";
 import { JourneyStory } from "@/features/journey/journey-story";
-import { FailureModal } from "@/features/journey/failure-modal";
-import { BigWinCelebration } from "@/features/journey/big-win-celebration";
+
+const ReflectionModal = dynamic(() => import("@/features/journey/reflection-modal").then(m => ({ default: m.ReflectionModal })), { ssr: false });
+const FailureModal = dynamic(() => import("@/features/journey/failure-modal").then(m => ({ default: m.FailureModal })), { ssr: false });
+const BigWinCelebration = dynamic(() => import("@/features/journey/big-win-celebration").then(m => ({ default: m.BigWinCelebration })), { ssr: false });
 import type { DreamTemplate } from "@beautifio/types";
 import {
   getAgeGroup, getAgeGroupLabel, getAgeRangeLabel,
