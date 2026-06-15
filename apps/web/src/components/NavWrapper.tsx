@@ -33,16 +33,15 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Check for active guest trial
+      // Active guest trial → all tabs navigate directly (no login prompt)
       const guest = getGuestJourney();
       if (guest && !isTrialExpired(guest.startDate)) {
         if (id === "journey") {
           const benchmark = getBenchmarkForTemplate(guest.templateSlug);
           router.push(`/coba/${benchmark?.slug || guest.templateSlug}`);
-          return;
+        } else {
+          router.push(navRoute(id));
         }
-        // circle & profil still need login even for guest trial users
-        setPendingTab(id);
         return;
       }
 

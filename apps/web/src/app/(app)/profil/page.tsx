@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Compass, ArrowRight,
-  Settings, LogOut, LogIn, User,
+  Settings, LogOut, LogIn, User, UserPlus,
   BookOpen, BookHeart, History,
   ChevronRight, BookMarked,
 } from "lucide-react";
@@ -17,6 +17,8 @@ import { useAuth } from "@/hooks/use-auth";
 import type { DreamJourney, JourneyProgress, DailyActivity } from "@beautifio/types";
 import type { LifeTimelineEntry, DimensionSummary } from "@/lib/journey-queries";
 import { journeyUrl } from "@/lib/journey-queries";
+import { getGuestJourney, isTrialExpired, getCurrentDay } from "@/lib/guest-journey";
+import { getDreamTemplate } from "@beautifio/utils";
 
 function ProfileHero({ journey }: { journey: DreamJourney | null }) {
   const { user } = useAuth();
@@ -268,6 +270,43 @@ function SettingsSection() {
 }
 
 function LoginPrompt() {
+  const guest = getGuestJourney();
+  if (guest && !isTrialExpired(guest.startDate)) {
+    const template = getDreamTemplate(guest.templateSlug);
+    const day = getCurrentDay(guest.startDate);
+    return (
+      <div className="flex flex-col items-center justify-center pt-12 pb-8 px-6 min-h-screen bg-bg">
+        <div className="w-20 h-20 rounded-2xl bg-primary/5 flex items-center justify-center mb-5">
+          <span className="text-3xl">{template?.emoji || "🚀"}</span>
+        </div>
+        <h2 className="text-xl font-bold text-text-primary mb-1 text-center">
+          {template?.title || "Perjalanan Mimpimu"}
+        </h2>
+        <p className="text-sm text-text-secondary text-center mb-2">
+          Hari ke-{day} dari 3 masa percobaan
+        </p>
+        <div className="w-full max-w-xs bg-muted/50 rounded-full h-2 mb-6">
+          <div
+            className="h-2 rounded-full bg-primary transition-all"
+            style={{ width: `${(day / 3) * 100}%` }}
+          />
+        </div>
+        <p className="text-xs text-text-secondary/70 text-center mb-6 max-w-xs">
+          Daftar sekarang untuk menyimpan progres & melanjutkan perjalananmu
+        </p>
+        <Link href="/register" className="w-full max-w-xs">
+          <Button variant="primary" size="lg" className="w-full">
+            <UserPlus size={16} /> Daftar & Simpan Progres
+          </Button>
+        </Link>
+        <p className="text-xs text-text-secondary mt-4">
+          Sudah punya akun?{" "}
+          <Link href="/login" className="text-secondary font-semibold hover:underline">Masuk</Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center pt-16 pb-8 px-6 min-h-screen bg-bg">
       <div className="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center mb-6">

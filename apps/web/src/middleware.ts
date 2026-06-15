@@ -10,6 +10,8 @@ const PUBLIC_ROUTES = [
   "/coba",
   "/journey",
   "/inspirasi",
+  "/circle",
+  "/profil",
   "/auth/callback",
 ];
 
