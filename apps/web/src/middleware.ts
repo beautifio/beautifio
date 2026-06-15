@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   "/mimpi",
   "/coba",
   "/journey",
+  "/inspirasi",
   "/auth/callback",
 ];
 

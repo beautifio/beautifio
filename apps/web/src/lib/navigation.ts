@@ -17,6 +17,6 @@ export const NAV_TABS: NavTab[] = [
 export function navRoute(id: string): string {
   if (id === "home") return "/home";
   if (id === "journey") return "/journey";
-  if (id === "inspiration") return "/inspiration";
+  if (id === "inspiration") return "/inspirasi";
   return `/${id}`;
 }
