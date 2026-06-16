@@ -4,13 +4,13 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Heart, Compass } from "lucide-react";
-import { Button, Card, CardContent, Skeleton } from "@beautifio/ui";
-import { getAllDreamTemplates, getAgeGroupLabel, getJmEcosystemByTemplateSlug, getJmCareerPaths } from "@beautifio/utils";
-import type { DreamTemplate, DreamJourney } from "@beautifio/types";
+import { Sparkles, ArrowRight, Heart, Compass, ChevronDown, ChevronUp, Flame } from "lucide-react";
+import { Button, Card, Skeleton } from "@beautifio/ui";
+import { getAllDreamTemplates, getJmEcosystemByTemplateSlug } from "@beautifio/utils";
+import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
 
-import { getActiveJourney, getAllJourneys, createJourney, journeyUrl } from "@/lib/journey-queries";
+import { getAllJourneys, createJourney, journeyUrl, getJourneyProgress } from "@/lib/journey-queries";
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
 
@@ -30,11 +30,21 @@ function categoryMatches(category: string, filter: FilterKey): boolean {
   return CATEGORY_LABELS[category] === filter;
 }
 
+function statusLabel(status: string) {
+  switch (status) {
+    case "completed": return "Selesai";
+    case "archived": return "Ditinggalkan";
+    case "pivoted": return "Dialihkan";
+    default: return "Aktif";
+  }
+}
+
 export default function JourneyPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [activeJourneys, setActiveJourneys] = useState<DreamJourney[]>([]);
-  const [previousJourneys, setPreviousJourneys] = useState<DreamJourney[]>([]);
+  const [primaryJourney, setPrimaryJourney] = useState<DreamJourney | null>(null);
+  const [primaryProgress, setPrimaryProgress] = useState<JourneyProgress | null>(null);
+  const [otherJourneys, setOtherJourneys] = useState<DreamJourney[]>([]);
   const [templates] = useState(() => getAllDreamTemplates());
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -44,6 +54,7 @@ export default function JourneyPage() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>("Semua");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
+  const [showAllPrevious, setShowAllPrevious] = useState(false);
 
   const filteredTemplates = useMemo(
     () => templates.filter((t) => categoryMatches(t.category, activeFilter)),
@@ -58,8 +69,23 @@ export default function JourneyPage() {
     (async () => {
       try {
         const all = await getAllJourneys(user.id);
-        setActiveJourneys(all.filter((j) => j.status === "active"));
-        setPreviousJourneys(all.filter((j) => j.status !== "active"));
+        const active = all.filter((j) => j.status === "active");
+        const sortedActive = active.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        const primary = sortedActive[0] || null;
+        setPrimaryJourney(primary);
+
+        const rest = all.filter((j) => j.id !== primary?.id);
+        setOtherJourneys(rest);
+
+        if (primary) {
+          getJourneyProgress(user.id, primary.id)
+            .then(setPrimaryProgress)
+            .catch(() => {});
+        }
+
         const { supabase } = await import("@/lib/supabase/client");
         if (supabase) {
           const { data } = await supabase
@@ -87,7 +113,6 @@ export default function JourneyPage() {
   const handleStartJourney = async (template: DreamTemplate) => {
     if (creating) return;
 
-    // Guest → redirect to landing page to start guest trial
     if (!user) {
       router.push("/");
       return;
@@ -128,197 +153,187 @@ export default function JourneyPage() {
     return (
       <div className="min-h-screen bg-bg p-6 max-w-content mx-auto">
         <Skeleton className="h-8 w-48 mb-6" />
-        <Skeleton className="h-40 w-full mb-4 rounded-xl" />
-        <Skeleton className="h-40 w-full mb-4 rounded-xl" />
+        <Skeleton className="h-48 w-full mb-4 rounded-2xl" />
+        <Skeleton className="h-32 w-full mb-4 rounded-xl" />
       </div>
     );
   }
 
-  if (activeJourneys.length > 0) {
-    return (
-      <div className="min-h-screen bg-bg">
-        <div className="max-w-content mx-auto px-6 pt-8 pb-28">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-text-primary">Perjalanan Mimpiku</h1>
-            <p className="text-sm text-text-secondary mt-1">Lanjutkan atau jelajahi perjalanan baru</p>
-          </div>
+  const progressPct = primaryProgress
+    ? Math.round((primaryProgress.big_wins_completed / Math.max(primaryProgress.big_wins_total, 1)) * 100)
+    : 0;
 
-          <section className="mb-8">
-            <h2 className="text-base font-bold text-text-primary mb-4">Journey yang Saya Jalani</h2>
-            <div className="space-y-3">
-              {activeJourneys.map((j) => (
-                <Link key={j.id} href={journeyUrl(j)}>
-                  <Card className="p-5 border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <span className="text-3xl">{j.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-bold text-text-primary">{j.title}</h3>
-                        <p className="text-xs text-text-secondary mt-0.5">Perjalanan aktif</p>
-                      </div>
-                      <ArrowRight size={18} className="text-primary shrink-0" />
-                    </div>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          {previousJourneys.length > 0 && (
-            <section className="mb-8">
-              <h2 className="text-base font-bold text-text-primary mb-4">Mimpi Sebelumnya</h2>
-              <div className="space-y-2">
-                {previousJourneys.map((j) => (
-                  <Card key={j.id} className="p-4 opacity-60">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{j.emoji}</span>
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">{j.title}</p>
-                        <p className="text-xs text-text-secondary">{j.status === "pivoted" ? "Dialihkan" : "Selesai"}</p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section>
-            <h2 className="text-base font-bold text-text-primary mb-4">Coba Explore Journey Lain</h2>
-            <p className="text-xs text-text-secondary mb-4">Kamu bisa menjalani lebih dari satu perjalanan sekaligus</p>
-
-            <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
-              {FILTER_OPTIONS.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setActiveFilter(f)}
-                  className={`shrink-0 px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
-                    activeFilter === f
-                      ? "bg-[#FF5E5B] text-white shadow-sm"
-                      : "bg-muted text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {filteredTemplates.map((t) => {
-                const ecosystem = getJmEcosystemByTemplateSlug(t.slug);
-                return (
-                  <Card key={t.slug} className="p-3 hover:border-primary/30 transition-all">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-2xl">{t.emoji}</span>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-bold text-text-primary leading-tight">{t.title}</h3>
-                        <p className="text-[11px] text-text-secondary mt-1 line-clamp-2 leading-relaxed">{t.description}</p>
-                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
-                          <span className="text-[10px] text-text-secondary">{t.duration}</span>
-                        </div>
-                        {ecosystem && (
-                          <p className="text-[10px] text-accent mt-1.5 leading-tight">
-                            <Compass size={10} className="inline mr-0.5 -mt-0.5" />
-                            {ecosystem.pivotPoint}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="w-full mt-3 text-xs"
-                      onClick={() => handleStartJourney(t)}
-                      loading={creating && selectedTemplate === t.slug}
-                      disabled={creating}
-                    >
-                      <Heart size={12} /> Pilih
-                    </Button>
-                  </Card>
-                );
-              })}
-            </div>
-          </section>
-        </div>
-
-        <JourneyOnboardingModal
-          open={showOnboarding && !!onboardingTemplate}
-          template={onboardingTemplate!}
-          onClose={() => {
-            setShowOnboarding(false);
-            setOnboardingTemplate(null);
-          }}
-        />
-      </div>
-    );
-  }
+  const hasJourneys = primaryJourney || otherJourneys.length > 0;
 
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-6 pt-8 pb-28">
-        <div className="text-center mb-6">
-          <p className="text-base text-text-secondary">Kamu belum memulai perjalanan.</p>
-          <p className="text-sm text-text-secondary/60 mt-1">Pilih mimpi yang paling menarik untukmu.</p>
-        </div>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive text-center">
-            {error}
-          </div>
-        )}
+        {/* ─── HERO CARD ─── */}
+        {primaryJourney && (
+          <Link href={journeyUrl(primaryJourney)} className="block mb-8">
+            <Card className="p-6 border-2 border-primary bg-gradient-to-br from-primary/5 via-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 transition-all">
+              <div className="flex items-start gap-4 mb-4">
+                <span className="text-4xl">{primaryJourney.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl font-bold text-text-primary">{primaryJourney.title}</h1>
+                  <p className="text-xs text-text-secondary mt-0.5">Perjalanan Aktif</p>
+                </div>
+              </div>
 
-        <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
-          {FILTER_OPTIONS.map((f) => (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              className={`shrink-0 px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
-                activeFilter === f
-                  ? "bg-[#FF5E5B] text-white shadow-sm"
-                  : "bg-muted text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {filteredTemplates.map((t) => {
-            const ecosystem = getJmEcosystemByTemplateSlug(t.slug);
-            return (
-              <Card key={t.slug} className="p-3 hover:border-primary/30 transition-all">
-                <div className="flex flex-col gap-2">
-                  <span className="text-2xl">{t.emoji}</span>
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-bold text-text-primary leading-tight">{t.title}</h3>
-                    <p className="text-[11px] text-text-secondary mt-1 line-clamp-2 leading-relaxed">{t.description}</p>
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
-                      <span className="text-[10px] text-text-secondary">{t.duration}</span>
-                    </div>
-                    {ecosystem && (
-                      <p className="text-[10px] text-accent mt-1.5 leading-tight">
-                        <Compass size={10} className="inline mr-0.5 -mt-0.5" />
-                        {ecosystem.pivotPoint}
-                      </p>
-                    )}
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs text-text-secondary mb-1">
+                    <span>Progress</span>
+                    <span className="font-semibold text-text-primary">{progressPct}%</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500"
+                      style={{ width: `${progressPct}%` }}
+                    />
                   </div>
                 </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="w-full mt-3 text-xs"
-                  onClick={() => handleStartJourney(t)}
-                  loading={creating && selectedTemplate === t.slug}
-                  disabled={creating}
-                >
-                  <Heart size={12} /> Pilih
-                </Button>
-              </Card>
-            );
-          })}
-        </div>
+
+                <div className="flex items-center gap-3 text-xs text-text-secondary">
+                  {primaryProgress && primaryProgress.streak > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Flame size={14} className="text-orange-500" />
+                      {primaryProgress.streak} hari berturut-turut
+                    </span>
+                  )}
+                  <span>
+                    {primaryProgress?.big_wins_completed || 0}/{primaryProgress?.big_wins_total || 0} big wins
+                  </span>
+                </div>
+
+                {primaryProgress?.current_big_win && (
+                  <div className="p-3 rounded-xl bg-accent/10 border border-accent/20">
+                    <p className="text-[11px] text-accent font-semibold uppercase tracking-wide">Sedang</p>
+                    <p className="text-sm font-bold text-text-primary mt-0.5">
+                      {primaryProgress.current_big_win.title}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-border/50 flex justify-end">
+                <span className="text-sm font-semibold text-primary flex items-center gap-1">
+                  Lanjutkan <ArrowRight size={16} />
+                </span>
+              </div>
+            </Card>
+          </Link>
+        )}
+
+        {/* ─── PERJALANAN SEBELUMNYA ─── */}
+        {otherJourneys.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-base font-bold text-text-primary mb-3">Perjalanan Sebelumnya</h2>
+            <div className="space-y-2">
+              {(showAllPrevious ? otherJourneys : otherJourneys.slice(0, 3)).map((j) => (
+                <div key={j.id} className="p-4 rounded-xl bg-surface border border-border opacity-60 hover:opacity-80 transition-opacity">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{j.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-text-primary">{j.title}</p>
+                      <p className="text-[11px] text-text-secondary">{statusLabel(j.status)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {otherJourneys.length > 3 && (
+              <button
+                onClick={() => setShowAllPrevious(!showAllPrevious)}
+                className="mt-2 flex items-center gap-1 text-xs font-medium text-text-secondary hover:text-text-primary cursor-pointer mx-auto"
+              >
+                {showAllPrevious ? (
+                  <>Lebih sedikit <ChevronUp size={14} /></>
+                ) : (
+                  <>Lihat semua ({otherJourneys.length}) <ChevronDown size={14} /></>
+                )}
+              </button>
+            )}
+          </section>
+        )}
+
+        {/* ─── JELAJAHI MIMPI LAIN ─── */}
+        <section className={hasJourneys ? "" : ""}>
+          {primaryJourney && (
+            <>
+              <h2 className="text-base font-bold text-text-primary mb-1">Jelajahi Mimpi Lain</h2>
+              <p className="text-xs text-text-secondary mb-4">Kamu bisa menjalani lebih dari satu perjalanan sekaligus</p>
+            </>
+          )}
+
+          {!hasJourneys && (
+            <div className="text-center mb-6 pt-4">
+              <p className="text-base text-text-secondary">Kamu belum memulai perjalanan.</p>
+              <p className="text-sm text-text-secondary/60 mt-1">Pilih mimpi yang paling menarik untukmu.</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive text-center">
+              {error}
+            </div>
+          )}
+
+          <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
+            {FILTER_OPTIONS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                className={`shrink-0 px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                  activeFilter === f
+                    ? "bg-[#FF5E5B] text-white shadow-sm"
+                    : "bg-muted text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {filteredTemplates.map((t) => {
+              const ecosystem = getJmEcosystemByTemplateSlug(t.slug);
+              return (
+                <Card key={t.slug} className="p-3 hover:border-primary/30 transition-all">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-2xl">{t.emoji}</span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-text-primary leading-tight">{t.title}</h3>
+                      <p className="text-[11px] text-text-secondary mt-1 line-clamp-2 leading-relaxed">{t.description}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
+                        <span className="text-[10px] text-text-secondary">{t.duration}</span>
+                      </div>
+                      {ecosystem && (
+                        <p className="text-[10px] text-accent mt-1.5 leading-tight">
+                          <Compass size={10} className="inline mr-0.5 -mt-0.5" />
+                          {ecosystem.pivotPoint}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full mt-3 text-xs"
+                    onClick={() => handleStartJourney(t)}
+                    loading={creating && selectedTemplate === t.slug}
+                    disabled={creating}
+                  >
+                    <Heart size={12} /> Pilih
+                  </Button>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+
       </div>
 
       <JourneyOnboardingModal
