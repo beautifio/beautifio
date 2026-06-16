@@ -9,7 +9,7 @@ import {
   Bookmark, Share2, Plus, MapPin,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
-import { CONTENT_TABS, ANON_CATEGORIES, getAllItems } from "@/lib/inspirasi-data";
+import { CONTENT_TABS, getAllItems } from "@/lib/inspirasi-data";
 import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
 import { useAuth } from "@/hooks/use-auth";
 import { getPendingJourneyArticleIds } from "@/lib/article-queries";

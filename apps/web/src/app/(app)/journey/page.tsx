@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Heart, Compass, LogIn } from "lucide-react";
+import { Sparkles, ArrowRight, Heart, Compass } from "lucide-react";
 import { Button, Card, CardContent, Skeleton } from "@beautifio/ui";
 import { getAllDreamTemplates, getAgeGroupLabel, getJmEcosystemByTemplateSlug, getJmCareerPaths } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney } from "@beautifio/types";
