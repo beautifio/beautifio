@@ -2,13 +2,13 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Flame, Sparkles, Heart } from "lucide-react";
 import { Button } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
 import { journeyUrl } from "@/lib/journey-queries";
-import { getGuestJourney, isTrialExpired, getCurrentDay, getDaysRemaining } from "@/lib/guest-journey";
+import { getGuestJourney, isTrialExpired, getCurrentDay, getDaysRemaining, migrateGuestToDB, clearGuestJourney } from "@/lib/guest-journey";
 import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types";
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
@@ -41,6 +41,23 @@ export default function HomeScreen({
     user?.user_metadata?.full_name ||
     user?.email?.split("@")[0] ||
     "Sobat";
+
+  const migratedRef = useRef(false);
+
+  // Catch-all migration: handle OAuth login where guest data wasn't migrated
+  useEffect(() => {
+    if (!user || migratedRef.current) return;
+    migratedRef.current = true;
+    (async () => {
+      const guest = getGuestJourney();
+      if (!guest) return;
+      const result = await migrateGuestToDB(user.id, guest);
+      if (result) {
+        clearGuestJourney();
+        router.refresh();
+      }
+    })();
+  }, [user, router]);
 
   useEffect(() => {
     if (!user) {
