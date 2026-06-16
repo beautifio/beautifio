@@ -8,6 +8,8 @@ const CATEGORY_AGES: Record<string, { min: number; max: number }> = {
   tech: { min: 12, max: 99 },
   creative: { min: 8, max: 99 },
   health: { min: 14, max: 99 },
+  education: { min: 17, max: 99 },
+  lifestyle: { min: 14, max: 99 },
 };
 
 function guessAgeRange(category: string): { min: number; max: number } {
@@ -46,6 +48,8 @@ function buildDailyPhysical(title: string, category: string): string[] {
     business: ["Jalan kaki 10 menit", "Minum air putih cukup", "Tidur cukup"],
     creative: ["Regangkan tangan dan jari", "Jalan sebentar cari inspirasi", "Minum air putih"],
     health: ["Jalan santai 15 menit", "Latihan pernapasan", "Istirahat cukup"],
+    education: ["Jalan-jalan di kelas", "Tegakkan postur mengajar", "Minum air putih"],
+    lifestyle: ["Jalan kaki 10 menit", "Minum air putih cukup", "Tidur cukup"],
   };
   for (const [key, acts] of Object.entries(byCategory)) {
     if (category.toLowerCase().includes(key)) return acts;
@@ -146,10 +150,6 @@ export function buildDreamTemplates(): Record<string, DreamTemplate> {
 
   for (const t of ADDITIONAL_TEMPLATES) {
     templates[t.slug] = t;
-  }
-
-  if (templates["pro-footballer"] && !templates["football-player"]) {
-    templates["football-player"] = templates["pro-footballer"];
   }
 
   return templates;

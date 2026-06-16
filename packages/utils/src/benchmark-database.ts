@@ -17,7 +17,7 @@ export function getBenchmarkDream(slug: string): BenchmarkDream | undefined {
 
 /** Map dream template slugs (English) to benchmark database slugs (Indonesian) */
 export const TEMPLATE_TO_BENCHMARK_SLUG: Record<string, string> = {
-  "pro-footballer": "pemain-sepak-bola-profesional",
+  "football-player": "pemain-sepak-bola-profesional",
   "programmer": "software-engineer",
   "doctor": "dokter-umum",
   "musician": "penyanyi-musisi-profesional",
@@ -25,6 +25,18 @@ export const TEMPLATE_TO_BENCHMARK_SLUG: Record<string, string> = {
   "digital-marketer": "digital-marketer",
   "entrepreneur": "entrepreneur-ceo-startup",
   "beauty-creator": "youtuber-vlogger",
+  "badminton-player": "atlet-bulu-tangkis-profesional",
+  "swimmer": "atlet-renang-profesional",
+  "esports-player": "pemain-e-sports",
+  "actor": "aktor-aktris-film-sinetron",
+  "ui-ux-designer": "ui-ux-designer",
+  "game-developer": "game-developer",
+  "psychologist": "psikolog-klinis",
+  "chef": "chef-juru-masak-profesional",
+  "teacher": "guru-pendidik",
+  "pilot": "pilot-pesawat-komersial",
+  "dentist": "dokter-gigi",
+  "youtuber": "youtuber-vlogger",
 };
 
 /** Reverse mapping: benchmark slug (Indonesian) → template slug (English) */

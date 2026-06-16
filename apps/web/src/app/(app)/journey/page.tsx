@@ -20,6 +20,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   business: "Business",
   health: "Health",
   tech: "Tech",
+  education: "Education",
+  lifestyle: "Lifestyle",
 };
 
 const FILTER_OPTIONS = ["Semua", ...Object.values(CATEGORY_LABELS)] as const;

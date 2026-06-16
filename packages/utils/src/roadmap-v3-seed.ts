@@ -15,8 +15,8 @@ function r(slug: string, data: Omit<RoadmapV3, "lifePillars" | "alternativeFutur
   };
 }
 
-r("pro-footballer", {
-  slug: "pro-footballer",
+r("football-player", {
+  slug: "football-player",
   title: "Pemain Sepak Bola Profesional",
   description: "Jalur menjadi pemain sepak bola profesional — dari latihan dasar hingga karier profesional.",
   emoji: "\u26bd",
