@@ -138,6 +138,7 @@ export default function JourneyPage() {
 
   const handleStartJourney = async (template: DreamTemplate) => {
     if (creating || !user) return;
+    setSelectedTemplate(template.slug);
 
     if (activeJourneyCount >= MAX_ACTIVE) {
       setPendingTemplate(template);
@@ -145,12 +146,6 @@ export default function JourneyPage() {
       return;
     }
 
-    if (!userAge) {
-      startJourneyFlow(template);
-      return;
-    }
-
-    // Has age → show onboarding with pre-filled age (skips age step)
     startJourneyFlow(template);
   };
 
@@ -173,6 +168,7 @@ export default function JourneyPage() {
     setArchiving(true);
     try {
       await archiveJourney(journeyId);
+      await reloadJourneys();
       setShowLimitModal(false);
       setArchiving(false);
       if (pendingTemplate) {
@@ -489,6 +485,7 @@ export default function JourneyPage() {
         onClose={() => {
           setShowOnboarding(false);
           setOnboardingTemplate(null);
+          setSelectedTemplate(null);
         }}
       />
     </div>

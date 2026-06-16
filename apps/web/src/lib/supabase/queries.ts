@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import type { Circle, CircleMember, Message, CircleSession, CircleMentorQA, CircleSessionRsvp } from "@beautifio/types";
+import { TEMPLATE_TO_BENCHMARK_SLUG } from "@beautifio/utils";
 
 function requireClient() {
   if (!supabase) throw new Error("Supabase client not initialized.");
@@ -89,11 +90,13 @@ export async function getRecommendedCircles(userId: string, templateSlug?: strin
 
 export async function getCirclesByTemplate(templateSlug: string) {
   const client = requireClient();
+  const benchmarkSlug = TEMPLATE_TO_BENCHMARK_SLUG[templateSlug];
+  const slugs = benchmarkSlug ? [templateSlug, benchmarkSlug] : [templateSlug];
   const { data, error } = await client
     .from("circles")
     .select("*")
     .eq("status", "active")
-    .eq("template_slug", templateSlug)
+    .in("template_slug", slugs)
     .order("member_count", { ascending: false })
     .limit(5);
   if (error) throw error;

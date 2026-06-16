@@ -98,14 +98,14 @@ export function JourneyOnboardingModal({
   }, [age, template?.slug]);
 
   useEffect(() => {
-    if (step !== 2 || !user || !template || circleLoaded) return;
+    if (step !== totalSteps - 1 || !user || !template || circleLoaded) return;
     setCircleLoaded(true);
     import("@/lib/supabase/queries").then((q) => {
       q.getCirclesByTemplate(template.slug).then((circles) => {
         setMatchingCircles(circles.slice(0, 1));
       }).catch(() => {});
     });
-  }, [step, user, template, circleLoaded]);
+  }, [step, user, template, circleLoaded, totalSteps]);
 
   const canProceedStep = () => {
     if (step === 0) return age !== null && age >= 10 && age <= 40;
@@ -317,35 +317,8 @@ export function JourneyOnboardingModal({
             </div>
           )}
 
-          {/* Step 1b (when no questions): just acts as age-only flow */}
-          {step === 1 && questions.length === 0 && (
-            <div className="text-center py-8">
-              <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
-                <Heart size={24} className="text-success" />
-              </div>
-              <h2 className="text-lg font-bold text-text-primary">
-                Siap Memulai!
-              </h2>
-              <p className="text-sm text-text-secondary mt-1">
-                Kamu akan memulai perjalanan mimpi{" "}
-                <span className="font-semibold text-text-primary">
-                  {template.emoji} {template.title}
-                </span>
-              </p>
-              {phasePreview && (
-                <div className="mt-4 p-4 rounded-xl bg-accent/5 border border-accent/20 text-left">
-                  <p className="text-sm text-text-primary">
-                    Mulai di <span className="font-semibold text-accent">
-                      Fase {phasePreview.phase_number}: {phasePreview.phase_name}
-                    </span>
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 3 / Summary */}
-          {step === 2 && (
+          {/* Last Step / Summary (with circles) */}
+          {step === totalSteps - 1 && (
             <div className="space-y-5">
               <div className="text-center">
                 <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
