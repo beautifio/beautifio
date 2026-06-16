@@ -34,6 +34,7 @@ export default function HomeScreen({
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
+  const [migrationTick, setMigrationTick] = useState(0);
 
   const mimpiSlug = resolvedParams?.mimpi;
 
@@ -52,10 +53,8 @@ export default function HomeScreen({
       const guest = getGuestJourney();
       if (!guest) return;
       const result = await migrateGuestToDB(user.id, guest);
-      if (result) {
-        clearGuestJourney();
-        router.refresh();
-      }
+      clearGuestJourney();
+      if (result) setMigrationTick((n) => n + 1);
     })();
   }, [user, router]);
 
@@ -79,7 +78,7 @@ export default function HomeScreen({
         setLoading(false);
       }
     })();
-  }, [user]);
+  }, [user, migrationTick]);
 
   useEffect(() => {
     if (!loading && !journey && mimpiSlug) {

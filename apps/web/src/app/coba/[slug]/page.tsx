@@ -61,7 +61,7 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
       return;
     }
     setGuestData(data);
-  }, [slug, router]);
+  }, [slug, router, user]);
 
   useEffect(() => {
     if (!guestData) return;
@@ -75,13 +75,6 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
     }
 
     const dateStr = todayStr();
-    const day = getCurrentDay(guestData.startDate);
-
-    if (day > 3) {
-      setReady(true);
-      return;
-    }
-
     const mockJourney = {
       id: `guest-${guestData.templateSlug}`,
       template_slug: guestData.templateSlug,
