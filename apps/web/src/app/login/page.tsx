@@ -102,7 +102,7 @@ export default function LoginPage({
         setError("Supabase belum dikonfigurasi. Hubungi administrator.");
         return;
       }
-      await signInWithGoogle();
+      await signInWithGoogle(window.location.href);
     } catch {
       setError("Gagal login dengan Google");
     }

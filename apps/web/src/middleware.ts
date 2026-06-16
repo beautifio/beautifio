@@ -54,8 +54,12 @@ export async function middleware(request: NextRequest) {
   // Handle OAuth PKCE code exchange
   const code = request.nextUrl.searchParams.get("code");
   if (code) {
+    const mimpi = request.nextUrl.searchParams.get("mimpi");
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    const dest = error ? "/login?error=auth_failed" : "/home";
+    if (error) {
+      return NextResponse.redirect(new URL("/login?error=auth_failed", request.url));
+    }
+    const dest = mimpi ? `/home?mimpi=${mimpi}` : "/home";
     return NextResponse.redirect(new URL(dest, request.url));
   }
 

@@ -23,11 +23,7 @@ function categoryMatches(category: string, filter: FilterKey): boolean {
   return CATEGORY_LABELS[category] === filter;
 }
 
-export default function LandingPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ mimpi?: string }>;
-}) {
+export default function LandingPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [templates] = useState(getAllDreamTemplates());

@@ -15,12 +15,12 @@ export async function signIn(email: string, password: string) {
   return client.auth.signInWithPassword({ email, password });
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(redirectTo?: string) {
   const client = requireClient();
-  const isLocal = typeof window !== "undefined" && window.location.hostname === "localhost";
+  const url = redirectTo || (typeof window !== "undefined" ? window.location.href : undefined);
   return client.auth.signInWithOAuth({
     provider: "google",
-    options: isLocal ? { redirectTo: "http://localhost:3000/auth/callback" } : undefined,
+    options: url ? { redirectTo: url } : undefined,
   });
 }
 

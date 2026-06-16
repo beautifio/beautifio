@@ -149,7 +149,7 @@ export default function RegisterPage({
       <div className="max-w-content mx-auto w-full px-6 pt-12 pb-8 flex-1 flex flex-col">
         <div className="text-center mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="w-16 h-16 rounded-full bg-accent/5 flex items-center justify-center mx-auto mb-4">
-            <UserPlus size={28} className="text-accent-foreground" />
+            <UserPlus size={28} className="text-accent" />
           </div>
           <h1 className="text-2xl font-bold text-text-primary">Daftar Akun</h1>
           <p className="text-sm text-text-secondary mt-2">
@@ -313,7 +313,7 @@ export default function RegisterPage({
                 setError("Supabase belum dikonfigurasi.");
                 return;
               }
-              await signInWithGoogle();
+              await signInWithGoogle(window.location.href);
             } catch {
               setError("Gagal daftar dengan Google");
             }
