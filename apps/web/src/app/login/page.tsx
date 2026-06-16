@@ -82,10 +82,10 @@ export default function LoginPage({
           }
         }
 
-        await new Promise((r) => setTimeout(r, 300));
-        router.refresh();
         const dest = mimpiSlug ? `/home?mimpi=${mimpiSlug}` : "/home";
         router.push(dest);
+        await new Promise((r) => setTimeout(r, 100));
+        router.refresh();
       }
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");

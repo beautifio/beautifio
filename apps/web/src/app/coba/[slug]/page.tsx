@@ -7,6 +7,7 @@ import { Button } from "@beautifio/ui";
 import { getDreamTemplate, getBenchmarkForTemplate, determineUserPhase, getTemplateFromBenchmarkSlug, TEMPLATE_TO_BENCHMARK_SLUG, generateDailyActivities, ACTIVITY_DETAILS } from "@beautifio/utils";
 import { DailyActivityCard } from "@/features/journey/daily-activity-card";
 import { getGuestJourney, saveGuestJourney, getCurrentDay, isTrialExpired, todayStr } from "@/lib/guest-journey";
+import { useAuthStore } from "@/stores/auth-store";
 import type { DreamJourney, DailyActivity, DailyActivityDimension } from "@beautifio/types";
 
 const DIMENSION_LABELS: Record<string, { label: string; emoji: string }> = {
@@ -30,6 +31,7 @@ const DIMENSION_ORDER: Record<string, number> = {
 export default function CobaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
 
   const [guestData, setGuestData] = useState<ReturnType<typeof getGuestJourney>>(null);
   const [activities, setActivities] = useState<DailyActivity[]>([]);
@@ -42,6 +44,11 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
   const prevCompletedRef = useRef(0);
 
   useEffect(() => {
+    if (user) {
+      router.replace("/home");
+      return;
+    }
+
     const data = getGuestJourney();
     if (!data) {
       router.replace("/");
@@ -76,8 +83,8 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
     }
 
     const mockJourney = {
-      id: `guest-${slug}`,
-      template_slug: slug,
+      id: `guest-${guestData.templateSlug}`,
+      template_slug: guestData.templateSlug,
       user_id: "guest",
       category: template.category,
       title: template.title,
@@ -186,8 +193,9 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
 
   const expired = guestData ? isTrialExpired(guestData.startDate) : false;
   const completedCount = activities.filter((a) => a.is_completed).length;
-  const template = getDreamTemplate(slug);
-  const benchmarkSlug = TEMPLATE_TO_BENCHMARK_SLUG[slug];
+  const templateSlug = guestData?.templateSlug || slug;
+  const template = getDreamTemplate(templateSlug);
+  const benchmarkSlug = TEMPLATE_TO_BENCHMARK_SLUG[templateSlug];
   const phaseInfo = guestData && benchmarkSlug ? determineUserPhase(benchmarkSlug, guestData.userAge) : null;
 
   if (expired) {

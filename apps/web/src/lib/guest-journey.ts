@@ -30,21 +30,25 @@ export function clearGuestJourney(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-export function getCurrentDay(startDate: string): number {
+function daysSinceStart(startDate: string): number {
   const start = new Date(startDate + "T00:00:00");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   start.setHours(0, 0, 0, 0);
-  const diff = Math.floor((today.getTime() - start.getTime()) / 86400000) + 1;
-  return Math.min(Math.max(diff, 1), 3);
+  return Math.floor((today.getTime() - start.getTime()) / 86400000);
+}
+
+export function getCurrentDay(startDate: string): number {
+  const diff = daysSinceStart(startDate);
+  return Math.min(Math.max(diff + 1, 1), 3);
 }
 
 export function isTrialExpired(startDate: string): boolean {
-  return getCurrentDay(startDate) > 3;
+  return daysSinceStart(startDate) >= 3;
 }
 
 export function getDaysRemaining(startDate: string): number {
-  return Math.max(0, 3 - getCurrentDay(startDate));
+  return Math.max(0, 3 - (daysSinceStart(startDate) + 1));
 }
 
 export function todayStr(): string {

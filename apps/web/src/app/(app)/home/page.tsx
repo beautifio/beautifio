@@ -3,11 +3,12 @@
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { use, useState, useEffect } from "react";
-import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Flame, Sparkles } from "lucide-react";
+import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Flame, Sparkles, Heart } from "lucide-react";
 import { Button } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
 import { journeyUrl } from "@/lib/journey-queries";
+import { getGuestJourney, isTrialExpired, getCurrentDay, getDaysRemaining } from "@/lib/guest-journey";
 import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types";
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
@@ -132,27 +133,63 @@ export default function HomeScreen({
             </Button>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center pt-12 space-y-6">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <Sparkles size={36} className="text-primary" />
-            </div>
-            <div className="text-center">
-              <p className="text-base font-semibold text-text-primary">
-                Kamu belum memulai perjalanan
-              </p>
-              <p className="text-sm text-text-secondary mt-1">
-                Pilih mimpi yang ingin kamu wujudkan
-              </p>
-            </div>
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full"
-              onClick={() => router.push("/journey")}
-            >
-              Mulai Perjalananmu <ArrowRight size={16} />
-            </Button>
-          </div>
+          (() => {
+            const guest = getGuestJourney();
+            if (guest && !isTrialExpired(guest.startDate)) {
+              const template = getDreamTemplate(guest.templateSlug);
+              const day = getCurrentDay(guest.startDate);
+              const remaining = getDaysRemaining(guest.startDate);
+              return (
+                <div className="flex flex-col items-center justify-center pt-12 space-y-6">
+                  <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <span className="text-3xl">{template?.emoji || "🚀"}</span>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-base font-semibold text-text-primary">
+                      {template?.title || "Perjalanan Mimpimu"}
+                    </p>
+                    <p className="text-sm text-text-secondary mt-1">
+                      Hari ke-{day} · {remaining} hari tersisa
+                    </p>
+                  </div>
+                  <div className="w-full max-w-xs bg-muted/50 rounded-full h-2">
+                    <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${(day / 3) * 100}%` }} />
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                    onClick={() => router.push(`/coba/${guest.templateSlug}`)}
+                  >
+                    <Heart size={16} /> Lanjutkan Trial <ArrowRight size={16} />
+                  </Button>
+                </div>
+              );
+            }
+            return (
+              <div className="flex flex-col items-center justify-center pt-12 space-y-6">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Sparkles size={36} className="text-primary" />
+                </div>
+                <div className="text-center">
+                  <p className="text-base font-semibold text-text-primary">
+                    Kamu belum memulai perjalanan
+                  </p>
+                  <p className="text-sm text-text-secondary mt-1">
+                    Pilih mimpi yang ingin kamu wujudkan
+                  </p>
+                </div>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => router.push("/journey")}
+                >
+                  Mulai Perjalananmu <ArrowRight size={16} />
+                </Button>
+              </div>
+            );
+          })()
         )}
       </div>
 

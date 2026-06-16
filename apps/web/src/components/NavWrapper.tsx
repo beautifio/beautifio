@@ -56,6 +56,13 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
 
   const onTabHover = useCallback(
     (id: string) => {
+      if (id === "journey") {
+        const guest = getGuestJourney();
+        if (guest && !isTrialExpired(guest.startDate)) {
+          router.prefetch(`/coba/${guest.templateSlug}`);
+          return;
+        }
+      }
       router.prefetch(navRoute(id));
     },
     [router],
