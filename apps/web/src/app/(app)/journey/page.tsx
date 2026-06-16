@@ -33,7 +33,7 @@ function categoryMatches(category: string, filter: FilterKey): boolean {
 export default function JourneyPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [activeJourney, setActiveJourney] = useState<DreamJourney | null>(null);
+  const [activeJourneys, setActiveJourneys] = useState<DreamJourney[]>([]);
   const [previousJourneys, setPreviousJourneys] = useState<DreamJourney[]>([]);
   const [templates] = useState(() => getAllDreamTemplates());
   const [loading, setLoading] = useState(true);
@@ -57,9 +57,8 @@ export default function JourneyPage() {
     }
     (async () => {
       try {
-        const active = await getActiveJourney(user.id);
-        setActiveJourney(active);
         const all = await getAllJourneys(user.id);
+        setActiveJourneys(all.filter((j) => j.status === "active"));
         setPreviousJourneys(all.filter((j) => j.status !== "active"));
         const { supabase } = await import("@/lib/supabase/client");
         if (supabase) {
@@ -135,35 +134,39 @@ export default function JourneyPage() {
     );
   }
 
-  if (activeJourney) {
+  if (activeJourneys.length > 0) {
     return (
       <div className="min-h-screen bg-bg">
         <div className="max-w-content mx-auto px-6 pt-8 pb-28">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-text-primary">Perjalanan Mimpiku</h1>
-            <p className="text-sm text-text-secondary mt-1">Lanjutkan perjalananmu</p>
+            <p className="text-sm text-text-secondary mt-1">Lanjutkan atau jelajahi perjalanan baru</p>
           </div>
 
-          <Link href={journeyUrl(activeJourney)}>
-            <Card className="p-6 border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors">
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-4xl">{activeJourney.emoji}</span>
-                <div>
-                  <h2 className="text-lg font-bold text-text-primary">{activeJourney.title}</h2>
-                  <p className="text-sm text-text-secondary">Perjalanan aktif</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-primary font-medium">Lihat Detail</span>
-                <ArrowRight size={16} className="text-primary" />
-              </div>
-            </Card>
-          </Link>
+          <section className="mb-8">
+            <h2 className="text-base font-bold text-text-primary mb-4">Journey yang Saya Jalani</h2>
+            <div className="space-y-3">
+              {activeJourneys.map((j) => (
+                <Link key={j.id} href={journeyUrl(j)}>
+                  <Card className="p-5 border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <span className="text-3xl">{j.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-bold text-text-primary">{j.title}</h3>
+                        <p className="text-xs text-text-secondary mt-0.5">Perjalanan aktif</p>
+                      </div>
+                      <ArrowRight size={18} className="text-primary shrink-0" />
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </section>
 
           {previousJourneys.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-base font-bold text-text-primary mb-4">Mimpi Sebelumnya</h3>
-              <div className="space-y-3">
+            <section className="mb-8">
+              <h2 className="text-base font-bold text-text-primary mb-4">Mimpi Sebelumnya</h2>
+              <div className="space-y-2">
                 {previousJourneys.map((j) => (
                   <Card key={j.id} className="p-4 opacity-60">
                     <div className="flex items-center gap-3">
@@ -176,18 +179,76 @@ export default function JourneyPage() {
                   </Card>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          <Link
-            href={journeyUrl(activeJourney)}
-            className="fixed bottom-28 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-content"
-          >
-            <Button variant="accent" size="lg" className="w-full shadow-lg">
-              Lanjutkan Perjalanan <ArrowRight size={16} />
-            </Button>
-          </Link>
+          <section>
+            <h2 className="text-base font-bold text-text-primary mb-4">Coba Explore Journey Lain</h2>
+            <p className="text-xs text-text-secondary mb-4">Kamu bisa menjalani lebih dari satu perjalanan sekaligus</p>
+
+            <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
+              {FILTER_OPTIONS.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setActiveFilter(f)}
+                  className={`shrink-0 px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                    activeFilter === f
+                      ? "bg-[#FF5E5B] text-white shadow-sm"
+                      : "bg-muted text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {filteredTemplates.map((t) => {
+                const ecosystem = getJmEcosystemByTemplateSlug(t.slug);
+                return (
+                  <Card key={t.slug} className="p-3 hover:border-primary/30 transition-all">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-2xl">{t.emoji}</span>
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-bold text-text-primary leading-tight">{t.title}</h3>
+                        <p className="text-[11px] text-text-secondary mt-1 line-clamp-2 leading-relaxed">{t.description}</p>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
+                          <span className="text-[10px] text-text-secondary">{t.duration}</span>
+                        </div>
+                        {ecosystem && (
+                          <p className="text-[10px] text-accent mt-1.5 leading-tight">
+                            <Compass size={10} className="inline mr-0.5 -mt-0.5" />
+                            {ecosystem.pivotPoint}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="w-full mt-3 text-xs"
+                      onClick={() => handleStartJourney(t)}
+                      loading={creating && selectedTemplate === t.slug}
+                      disabled={creating}
+                    >
+                      <Heart size={12} /> Pilih
+                    </Button>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
         </div>
+
+        <JourneyOnboardingModal
+          open={showOnboarding && !!onboardingTemplate}
+          template={onboardingTemplate!}
+          onClose={() => {
+            setShowOnboarding(false);
+            setOnboardingTemplate(null);
+          }}
+        />
       </div>
     );
   }
