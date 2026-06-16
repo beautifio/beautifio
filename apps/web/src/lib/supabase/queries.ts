@@ -87,6 +87,19 @@ export async function getRecommendedCircles(userId: string, templateSlug?: strin
   return (data || []) as Circle[];
 }
 
+export async function getCirclesByTemplate(templateSlug: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("circles")
+    .select("*")
+    .eq("status", "active")
+    .eq("template_slug", templateSlug)
+    .order("member_count", { ascending: false })
+    .limit(5);
+  if (error) throw error;
+  return (data || []) as Circle[];
+}
+
 export async function getCircleById(circleId: string) {
   const client = requireClient();
   const { data, error } = await client.from("circles").select("*").eq("id", circleId).single();
@@ -96,6 +109,15 @@ export async function getCircleById(circleId: string) {
 
 export async function joinCircle(circleId: string, userId: string) {
   const client = requireClient();
+  // Check if already a member
+  const { data: existing } = await client
+    .from("circle_members")
+    .select("id")
+    .eq("circle_id", circleId)
+    .eq("user_id", userId)
+    .is("left_at", null)
+    .maybeSingle();
+  if (existing) return existing as CircleMember;
   // Check capacity
   const { data: circle } = await client.from("circles").select("capacity, member_count").eq("id", circleId).single();
   if (circle && circle.member_count >= circle.capacity) {

@@ -192,8 +192,8 @@ export default function JourneyDetailPage() {
         if (group) setAgeGroup(getAgeGroupLabel(group));
       }
 
-      const { getRecommendedCircles } = await import("@/lib/supabase/queries");
-      const circleData = await getRecommendedCircles(user.id, j.template_slug).catch(() => []);
+      const { getCirclesByTemplate } = await import("@/lib/supabase/queries");
+      const circleData = await getCirclesByTemplate(j.template_slug).catch(() => []);
       setCircles(circleData);
     } catch (e) {
       console.error("Failed to load journey:", e);

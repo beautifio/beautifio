@@ -96,7 +96,7 @@ export function JourneyOnboardingModal({
     if (step !== 2 || !user || !template || circleLoaded) return;
     setCircleLoaded(true);
     import("@/lib/supabase/queries").then((q) => {
-      q.getRecommendedCircles(user.id, template.slug).then((circles) => {
+      q.getCirclesByTemplate(template.slug).then((circles) => {
         setMatchingCircles(circles.slice(0, 1));
       }).catch(() => {});
     });
