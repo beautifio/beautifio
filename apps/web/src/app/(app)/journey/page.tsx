@@ -44,7 +44,9 @@ export default function JourneyPage() {
   const { user } = useAuth();
   const [primaryJourney, setPrimaryJourney] = useState<DreamJourney | null>(null);
   const [primaryProgress, setPrimaryProgress] = useState<JourneyProgress | null>(null);
-  const [otherJourneys, setOtherJourneys] = useState<DreamJourney[]>([]);
+  const [otherActiveJourneys, setOtherActiveJourneys] = useState<DreamJourney[]>([]);
+  const [otherActiveProgress, setOtherActiveProgress] = useState<Record<string, JourneyProgress>>({});
+  const [previousJourneys, setPreviousJourneys] = useState<DreamJourney[]>([]);
   const [templates] = useState(() => getAllDreamTemplates());
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -77,14 +79,27 @@ export default function JourneyPage() {
         const primary = sortedActive[0] || null;
         setPrimaryJourney(primary);
 
-        const rest = all.filter((j) => j.id !== primary?.id);
-        setOtherJourneys(rest);
+        const otherActive = active.filter((j) => j.id !== primary?.id);
+        setOtherActiveJourneys(otherActive);
+
+        const prev = all.filter((j) => j.id !== primary?.id && j.status !== "active");
+        setPreviousJourneys(prev);
 
         if (primary) {
           getJourneyProgress(user.id, primary.id)
             .then(setPrimaryProgress)
             .catch(() => {});
         }
+
+        const progressMap: Record<string, JourneyProgress> = {};
+        await Promise.all(
+          otherActive.map((j) =>
+            getJourneyProgress(user.id, j.id)
+              .then((p) => { progressMap[j.id] = p; })
+              .catch(() => {})
+          )
+        );
+        setOtherActiveProgress(progressMap);
 
         const { supabase } = await import("@/lib/supabase/client");
         if (supabase) {
@@ -163,7 +178,7 @@ export default function JourneyPage() {
     ? Math.round((primaryProgress.big_wins_completed / Math.max(primaryProgress.big_wins_total, 1)) * 100)
     : 0;
 
-  const hasJourneys = primaryJourney || otherJourneys.length > 0;
+  const hasJourneys = primaryJourney || otherActiveJourneys.length > 0 || previousJourneys.length > 0;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -177,7 +192,7 @@ export default function JourneyPage() {
                 <span className="text-4xl">{primaryJourney.emoji}</span>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-xl font-bold text-text-primary">{primaryJourney.title}</h1>
-                  <p className="text-xs text-text-secondary mt-0.5">Perjalanan Aktif</p>
+                  <p className="text-xs text-primary font-semibold mt-0.5 uppercase tracking-wide">Fokus Utama</p>
                 </div>
               </div>
 
@@ -226,12 +241,50 @@ export default function JourneyPage() {
           </Link>
         )}
 
+        {/* ─── JOURNEY AKTIF LAINNYA ─── */}
+        {otherActiveJourneys.length > 0 && (
+          <section className="mb-8">
+            <div className="grid grid-cols-2 gap-3">
+              {otherActiveJourneys.map((j) => {
+                const p = otherActiveProgress[j.id];
+                const pct = p
+                  ? Math.round((p.big_wins_completed / Math.max(p.big_wins_total, 1)) * 100)
+                  : 0;
+                return (
+                  <Link key={j.id} href={journeyUrl(j)}>
+                    <Card className="p-4 border border-border hover:border-primary/30 transition-all h-full">
+                      <span className="text-2xl block mb-2">{j.emoji}</span>
+                      <h3 className="text-sm font-bold text-text-primary">{j.title}</h3>
+                      <div className="mt-2 w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[11px] text-text-secondary">
+                          {p?.big_wins_completed || 0}/{p?.big_wins_total || 0}
+                        </span>
+                        {p && p.streak > 0 && (
+                          <span className="flex items-center gap-0.5 text-[11px] text-orange-500">
+                            <Flame size={11} />{p.streak}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-border/50 flex justify-end">
+                        <span className="text-xs font-medium text-primary">Lanjutkan →</span>
+                      </div>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* ─── PERJALANAN SEBELUMNYA ─── */}
-        {otherJourneys.length > 0 && (
+        {previousJourneys.length > 0 && (
           <section className="mb-8">
             <h2 className="text-base font-bold text-text-primary mb-3">Perjalanan Sebelumnya</h2>
             <div className="space-y-2">
-              {(showAllPrevious ? otherJourneys : otherJourneys.slice(0, 3)).map((j) => (
+              {(showAllPrevious ? previousJourneys : previousJourneys.slice(0, 3)).map((j) => (
                 <div key={j.id} className="p-4 rounded-xl bg-surface border border-border opacity-60 hover:opacity-80 transition-opacity">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{j.emoji}</span>
@@ -243,7 +296,7 @@ export default function JourneyPage() {
                 </div>
               ))}
             </div>
-            {otherJourneys.length > 3 && (
+            {previousJourneys.length > 3 && (
               <button
                 onClick={() => setShowAllPrevious(!showAllPrevious)}
                 className="mt-2 flex items-center gap-1 text-xs font-medium text-text-secondary hover:text-text-primary cursor-pointer mx-auto"
@@ -251,7 +304,7 @@ export default function JourneyPage() {
                 {showAllPrevious ? (
                   <>Lebih sedikit <ChevronUp size={14} /></>
                 ) : (
-                  <>Lihat semua ({otherJourneys.length}) <ChevronDown size={14} /></>
+                  <>Lihat semua ({previousJourneys.length}) <ChevronDown size={14} /></>
                 )}
               </button>
             )}
