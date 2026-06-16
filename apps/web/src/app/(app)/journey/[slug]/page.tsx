@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Sparkles, BookOpen, Heart,
-  Target, ArrowLeft, MapPin,
+  Target, ArrowLeft, MapPin, MoreVertical,
 } from "lucide-react";
 import { Button, Card, Skeleton } from "@beautifio/ui";
 import dynamic from "next/dynamic";
@@ -16,6 +16,7 @@ import {
   updateBigWin, completeBigWin, failBigWin, unfailBigWin, saveBigWinReflection,
   generateAndInsertActivities, getSpiritualPreferences,
   saveActivityNote, getJourneyReflections, getActivePhaseWithBenchmarks,
+  archiveJourney,
 } from "@/lib/journey-queries";
 import type {
   DreamJourney, BigWin, SmallWin, DailyActivity,
@@ -93,6 +94,8 @@ export default function JourneyDetailPage() {
   const [circles, setCircles] = useState<any[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   const handleToggleExpand = useCallback((id: string) => {
     setExpandedActivityId((prev) => (prev === id ? null : id));
@@ -306,6 +309,21 @@ export default function JourneyDetailPage() {
     setCelebrationBigWin(null);
   };
 
+  const handleArchive = async () => {
+    if (!journey || archiving) return;
+    setArchiving(true);
+    try {
+      await archiveJourney(journey.id);
+      router.refresh();
+      router.push("/journey");
+    } catch (e) {
+      console.error("Failed to archive journey", e);
+    } finally {
+      setArchiving(false);
+      setShowArchiveModal(false);
+    }
+  };
+
   const handleFailBigWin = async (bigWinId: string) => {
     await failBigWin(bigWinId);
     const bw = await getBigWins(journey!.id);
@@ -375,7 +393,7 @@ export default function JourneyDetailPage() {
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-6 pt-6 pb-28">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-5">
           <button onClick={() => router.push("/journey")} className="p-2 -ml-2 hover:bg-muted rounded-xl">
             <ArrowLeft size={20} className="text-text-secondary" />
           </button>
@@ -399,6 +417,12 @@ export default function JourneyDetailPage() {
               </div>
             </div>
           </div>
+          <button
+            onClick={() => setShowArchiveModal(true)}
+            className="p-2 hover:bg-muted rounded-xl cursor-pointer"
+          >
+            <MoreVertical size={18} className="text-text-secondary" />
+          </button>
         </div>
 
         {/* Dream Context — always visible */}
@@ -815,6 +839,40 @@ export default function JourneyDetailPage() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
           <div className="bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium animate-in slide-in-from-bottom-2 fade-in duration-300">
             {toastMessage}
+          </div>
+        </div>
+      )}
+
+      {/* Archive Confirmation Modal */}
+      {showArchiveModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={() => setShowArchiveModal(false)}>
+          <div className="w-full max-w-sm bg-surface rounded-t-xl sm:rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-text-primary">Tinggalkan perjalanan ini?</h3>
+            <p className="text-sm text-text-secondary mt-2 leading-relaxed">
+              Progress kamu tetap tersimpan. Kamu bisa lihat riwayatnya di Ceritaku.
+            </p>
+            <p className="text-sm text-text-secondary mt-1 leading-relaxed">
+              Kalau mau, kamu bisa mulai lagi dari awal kapanpun.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1"
+                onClick={() => setShowArchiveModal(false)}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                size="lg"
+                className="flex-1"
+                loading={archiving}
+                onClick={handleArchive}
+              >
+                Ya, tinggalkan
+              </Button>
+            </div>
           </div>
         </div>
       )}

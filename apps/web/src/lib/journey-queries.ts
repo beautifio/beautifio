@@ -46,6 +46,14 @@ export async function getAllJourneys(
   return data || [];
 }
 
+export async function archiveJourney(journeyId: string) {
+  const { error } = await db()
+    .from("dream_journeys")
+    .update({ status: "archived", ended_at: new Date().toISOString() })
+    .eq("id", journeyId);
+  if (error) throw error;
+}
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
