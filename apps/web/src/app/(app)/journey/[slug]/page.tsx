@@ -90,6 +90,9 @@ export default function JourneyDetailPage() {
   const [showAllBigWins, setShowAllBigWins] = useState(false);
   const [sectionTab, setSectionTab] = useState<"today" | "wins" | "timeline" | "story">("today");
   const [expandedActivityId, setExpandedActivityId] = useState<string | null>(null);
+  const [circles, setCircles] = useState<any[]>([]);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   const handleToggleExpand = useCallback((id: string) => {
     setExpandedActivityId((prev) => (prev === id ? null : id));
@@ -188,6 +191,10 @@ export default function JourneyDetailPage() {
         const group = getAgeGroup(j.user_age);
         if (group) setAgeGroup(getAgeGroupLabel(group));
       }
+
+      const { getRecommendedCircles } = await import("@/lib/supabase/queries");
+      const circleData = await getRecommendedCircles(user.id, j.template_slug).catch(() => []);
+      setCircles(circleData);
     } catch (e) {
       console.error("Failed to load journey:", e);
       setError("Koneksi sedang bermasalah. Periksa internetmu, ya.");
@@ -199,6 +206,19 @@ export default function JourneyDetailPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("circle_joined");
+      if (raw) {
+        const { name } = JSON.parse(raw);
+        setToastMessage(`Kamu sudah bergabung di Circle ${name}. Cek tab Circle untuk mulai ngobrol! 👥`);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 5000);
+        localStorage.removeItem("circle_joined");
+      }
+    } catch {}
+  }, []);
 
   const handleCompleteActivity = async (activityId: string) => {
     await completeActivity(activityId);
@@ -521,6 +541,40 @@ export default function JourneyDetailPage() {
           </Card>
         )}
 
+        {/* Circle Recommendation */}
+        {circles.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-bold text-text-primary mb-3">
+              <span className="mr-1.5">👥</span> Gabung Circle Terkait
+            </h3>
+            <div className="space-y-3">
+              {circles.slice(0, 2).map((c: any) => (
+                <Card key={c.id} padding="md" className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => router.push(`/circle/${c.id}`)}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                      {c.name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-text-primary">{c.name}</h4>
+                      {c.description && (
+                        <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{c.description}</p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[11px] text-text-secondary">
+                          👤 {c.member_count}/{c.capacity} anggota
+                        </span>
+                        <Button variant="primary" size="sm" className="ml-auto" onClick={(e) => { e.stopPropagation(); router.push(`/circle/${c.id}`); }}>
+                          Lihat
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Tab Navigation */}
         <div className="flex gap-1 mb-6 p-1 bg-muted rounded-xl">
           <button
@@ -755,6 +809,14 @@ export default function JourneyDetailPage() {
           onSave={handleSaveCelebration}
           onClose={() => setCelebrationBigWin(null)}
         />
+      )}
+
+      {showToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium animate-in slide-in-from-bottom-2 fade-in duration-300">
+            {toastMessage}
+          </div>
+        </div>
       )}
     </div>
   );

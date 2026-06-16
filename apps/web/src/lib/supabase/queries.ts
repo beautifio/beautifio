@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import type { Circle, CircleMember, Message, CircleSession, CircleMentorQA, CircleSessionRsvp } from "@beautifio/types";
 
 function requireClient() {
   if (!supabase) throw new Error("Supabase client not initialized.");
@@ -44,24 +45,219 @@ export async function createGoal(goal: { user_id: string; goal_name: string; goa
   return client.from("user_goals").insert(goal).select().single();
 }
 
+// === CIRCLE QUERIES ===
+
 export async function getMyCircles(userId: string) {
   const client = requireClient();
-  return client.from("circle_members").select("circle_id, circles(*)").eq("user_id", userId).is("left_at", null);
+  const { data, error } = await client
+    .from("circle_members")
+    .select("circle_id, circles(*)")
+    .eq("user_id", userId)
+    .is("left_at", null);
+  if (error) throw error;
+  return (data || []).map((r: any) => r.circles) as Circle[];
 }
 
-export async function getRecommendedCircles() {
+export async function getRecommendedCircles(userId: string, templateSlug?: string) {
   const client = requireClient();
-  return client.from("circles").select("*").eq("status", "active").order("member_count", { ascending: false });
+  // Get circles user is NOT a member of
+  const { data: memberCircleIds } = await client
+    .from("circle_members")
+    .select("circle_id")
+    .eq("user_id", userId)
+    .is("left_at", null);
+
+  const excludeIds = (memberCircleIds || []).map((r: any) => r.circle_id);
+
+  let query = client
+    .from("circles")
+    .select("*")
+    .eq("status", "active");
+
+  if (excludeIds.length > 0) {
+    query = query.not("id", "in", `(${excludeIds.join(",")})`);
+  }
+
+  if (templateSlug) {
+    query = query.eq("template_slug", templateSlug);
+  }
+
+  const { data, error } = await query.order("member_count", { ascending: false }).limit(10);
+  if (error) throw error;
+  return (data || []) as Circle[];
+}
+
+export async function getCircleById(circleId: string) {
+  const client = requireClient();
+  const { data, error } = await client.from("circles").select("*").eq("id", circleId).single();
+  if (error) throw error;
+  return data as Circle;
 }
 
 export async function joinCircle(circleId: string, userId: string) {
   const client = requireClient();
-  return client.from("circle_members").insert({ circle_id: circleId, user_id: userId });
+  // Check capacity
+  const { data: circle } = await client.from("circles").select("capacity, member_count").eq("id", circleId).single();
+  if (circle && circle.member_count >= circle.capacity) {
+    throw new Error("Circle is full");
+  }
+  const { data, error } = await client
+    .from("circle_members")
+    .insert({ circle_id: circleId, user_id: userId })
+    .select()
+    .single();
+  if (error) throw error;
+  // Increment member count
+  await client.rpc("increment_circle_member_count", { circle_id: circleId });
+  return data as CircleMember;
 }
 
-export async function sendMessage(message: { circle_id: string; sender_id: string; message: string }) {
+export async function leaveCircle(circleId: string, userId: string) {
   const client = requireClient();
-  return client.from("messages").insert(message).select().single();
+  const { error } = await client
+    .from("circle_members")
+    .update({ left_at: new Date().toISOString() })
+    .eq("circle_id", circleId)
+    .eq("user_id", userId)
+    .is("left_at", null);
+  if (error) throw error;
+}
+
+export async function sendMessage(msg: {
+  circle_id: string;
+  sender_id: string;
+  message: string;
+  message_type?: "chat" | "weekly_post" | "announcement" | "question";
+}) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("messages")
+    .insert({ ...msg, message_type: msg.message_type || "chat" })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Message;
+}
+
+export async function getMessages(
+  circleId: string,
+  options?: { limit?: number; before?: string }
+) {
+  const client = requireClient();
+  let query = client
+    .from("messages")
+    .select("*")
+    .eq("circle_id", circleId)
+    .order("created_at", { ascending: false })
+    .limit(options?.limit || 50);
+
+  if (options?.before) {
+    query = query.lt("created_at", options.before);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).reverse() as Message[];
+}
+
+export async function getCircleMembers(circleId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("circle_members")
+    .select("*, users!inner(id, full_name, avatar_url)")
+    .eq("circle_id", circleId)
+    .is("left_at", null)
+    .order("role", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getSessions(circleId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("circle_sessions")
+    .select("*")
+    .eq("circle_id", circleId)
+    .order("scheduled_at", { ascending: true });
+  if (error) throw error;
+  return (data || []) as CircleSession[];
+}
+
+export async function getMentorQA(circleId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("circle_mentor_qa")
+    .select("*")
+    .eq("circle_id", circleId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []) as CircleMentorQA[];
+}
+
+export async function askMentor(circleId: string, userId: string, questionText: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("circle_mentor_qa")
+    .insert({ circle_id: circleId, asked_by: userId, question_text: questionText })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as CircleMentorQA;
+}
+
+export async function answerQuestion(qaId: string, mentorId: string, answerText: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("circle_mentor_qa")
+    .update({
+      answer_text: answerText,
+      answered_by: mentorId,
+      is_answered: true,
+      answered_at: new Date().toISOString(),
+    })
+    .eq("id", qaId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as CircleMentorQA;
+}
+
+export async function rsvpSession(sessionId: string, userId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("circle_session_rsvp")
+    .insert({ session_id: sessionId, user_id: userId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as CircleSessionRsvp;
+}
+
+export async function getMyRsvps(userId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("circle_session_rsvp")
+    .select("session_id")
+    .eq("user_id", userId);
+  if (error) throw error;
+  return new Set((data || []).map((r: any) => r.session_id));
+}
+
+export async function createCircle(data: {
+  name: string;
+  description?: string;
+  goal_category: string;
+  template_slug?: string;
+  capacity?: number;
+}) {
+  const client = requireClient();
+  const { data: circle, error } = await client
+    .from("circles")
+    .insert(data)
+    .select()
+    .single();
+  if (error) throw error;
+  return circle as Circle;
 }
 
 export async function getMilestones(goalId: string) {

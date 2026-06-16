@@ -45,6 +45,9 @@ export function JourneyOnboardingModal({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [matchingCircles, setMatchingCircles] = useState<any[]>([]);
+  const [joinCircleOptIn, setJoinCircleOptIn] = useState(true);
+  const [circleLoaded, setCircleLoaded] = useState(false);
 
   const benchmark = template ? getBenchmarkForTemplate(template.slug) : undefined;
   const questions: OnboardingQuestion[] = (benchmark?.onboarding || (template as any)?.onboarding_questions || []);
@@ -59,6 +62,9 @@ export function JourneyOnboardingModal({
       setAnswers({});
       setCreating(false);
       setError(null);
+      setMatchingCircles([]);
+      setJoinCircleOptIn(true);
+      setCircleLoaded(false);
     }
   }, [open]);
 
@@ -85,6 +91,16 @@ export function JourneyOnboardingModal({
         });
       });
   }, [age, template?.slug]);
+
+  useEffect(() => {
+    if (step !== 2 || !user || !template || circleLoaded) return;
+    setCircleLoaded(true);
+    import("@/lib/supabase/queries").then((q) => {
+      q.getRecommendedCircles(user.id, template.slug).then((circles) => {
+        setMatchingCircles(circles.slice(0, 1));
+      }).catch(() => {});
+    });
+  }, [step, user, template, circleLoaded]);
 
   const canProceedStep = () => {
     if (step === 0) return age !== null && age >= 10 && age <= 40;
@@ -129,6 +145,15 @@ export function JourneyOnboardingModal({
       );
 
       if (journey) {
+        if (joinCircleOptIn && matchingCircles.length > 0) {
+          try {
+            const { joinCircle } = await import("@/lib/supabase/queries");
+            await joinCircle(matchingCircles[0].id, user.id);
+            localStorage.setItem("circle_joined", JSON.stringify({ name: matchingCircles[0].name }));
+          } catch (e) {
+            console.error("Failed to join circle", e);
+          }
+        }
         router.refresh();
         router.push(journeyUrl(journey));
       } else {
@@ -368,6 +393,36 @@ export function JourneyOnboardingModal({
                           </div>
                         )
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {matchingCircles.length > 0 && (
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                    <p className="text-xs font-semibold text-primary mb-3">
+                      👥 Ada circle untuk mimpi ini!
+                    </p>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                        {matchingCircles[0].name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-text-primary">{matchingCircles[0].name}</p>
+                        <p className="text-xs text-text-secondary">{matchingCircles[0].member_count} anggota · Aktif</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-text-secondary mb-3">
+                      Gabung circle untuk belajar bareng orang-orang yang punya mimpi sama.
+                    </p>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-3 rounded-xl border border-primary bg-primary/5 cursor-pointer">
+                        <input type="radio" name="joinCircle" checked={joinCircleOptIn} onChange={() => setJoinCircleOptIn(true)} className="w-4 h-4 text-primary accent-primary" />
+                        <span className="text-sm text-text-primary">Ya, gabung circle sekaligus</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 rounded-xl border border-border cursor-pointer">
+                        <input type="radio" name="joinCircle" checked={!joinCircleOptIn} onChange={() => setJoinCircleOptIn(false)} className="w-4 h-4 text-text-secondary accent-primary" />
+                        <span className="text-sm text-text-secondary">Nanti saja</span>
+                      </label>
                     </div>
                   </div>
                 )}

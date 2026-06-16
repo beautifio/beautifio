@@ -1,58 +1,111 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { Search, Users, ChevronRight, Plus, MapPin, User } from "lucide-react";
+import { Search, Users, ChevronRight, Plus, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Card, Badge, Avatar } from "@beautifio/ui";
+import { Card, Badge, Avatar, Button } from "@beautifio/ui";
 import { CIRCLE_CATEGORIES } from "@beautifio/utils";
-
-interface CircleItem {
-  id: string; name: string; tag: string; category: string; members: number; maxMembers: number;
-  desc: string; hasMentor: boolean; lastActive?: string;
-}
-
-const myCircles: CircleItem[] = [
-  { id: "1", name: "Tech Founders", tag: "Bisnis", category: "business", members: 8, maxMembers: 12, desc: "Bagi kamu yang ingin membangun startup teknologi dari nol.", hasMentor: true, lastActive: "2 jam lalu" },
-  { id: "2", name: "Creative Lab", tag: "Kreatif", category: "creator", members: 6, maxMembers: 12, desc: "Ruang berkarya untuk desainer, penulis, dan content creator.", hasMentor: false, lastActive: "5 jam lalu" },
-];
-
-const exploreCircles: CircleItem[] = [
-  { id: "5", name: "Data Science ID", tag: "Teknologi", category: "technology", members: 9, maxMembers: 12, desc: "Diskusi dan project bareng seputar data science & AI.", hasMentor: true },
-  { id: "6", name: "Content Creator Hub", tag: "Kreator", category: "creator", members: 7, maxMembers: 12, desc: "Tips, kolaborasi, dan tumbuh bareng sebagai creator.", hasMentor: false },
-  { id: "3", name: "Future Leaders", tag: "Karir", category: "career", members: 10, maxMembers: 12, desc: "Kaderisasi kepemimpinan muda untuk pengembangan karir.", hasMentor: true },
-  { id: "7", name: "Sports Arena", tag: "Olahraga", category: "sports", members: 11, maxMembers: 12, desc: "Komunitas olahraga dan kebugaran untuk atlet muda dan pecinta fitness.", hasMentor: true },
-  { id: "8", name: "Music Collective", tag: "Musik", category: "music", members: 8, maxMembers: 12, desc: "Berkarya, kolaborasi, dan tumbuh bareng sesama musisi dan pecinta musik.", hasMentor: true },
-  { id: "9", name: "Game Dev Guild", tag: "Gaming", category: "gaming", members: 10, maxMembers: 12, desc: "Komunitas developer game dan esports. Diskusi, develop, dan kompetisi.", hasMentor: false },
-  { id: "10", name: "Beauty Circle", tag: "Kecantikan", category: "beauty", members: 9, maxMembers: 12, desc: "Sharing tips skincare, makeup, dan tren kecantikan terkini.", hasMentor: false },
-  { id: "11", name: "Study Hub", tag: "Pendidikan", category: "education", members: 12, maxMembers: 12, desc: "Belajar bareng, diskusi akademik, dan persiapan ujian masuk. Penuh!", hasMentor: true },
-  { id: "12", name: "Career Boost", tag: "Karir", category: "career", members: 6, maxMembers: 12, desc: "Persiapan karir, coaching CV, dan networking profesional.", hasMentor: true },
-  { id: "4", name: "Green Warriors", tag: "Lingkungan", category: "sports", members: 5, maxMembers: 12, desc: "Aksi nyata peduli lingkungan. Tree planting dan waste management.", hasMentor: false },
-];
+import { useAuth } from "@/hooks/use-auth";
+import type { Circle } from "@beautifio/types";
 
 export default function CircleListPage() {
-
+  const router = useRouter();
+  const { user } = useAuth();
+  const [myCircles, setMyCircles] = useState<Circle[]>([]);
+  const [exploreCircles, setExploreCircles] = useState<Circle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [joining, setJoining] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const router = useRouter();
 
-  const filteredExplore = useMemo(
-    () => {
-      let items = exploreCircles;
-      if (selectedCategory) {
-        items = items.filter((c) => c.category === selectedCategory);
+  const loadCircles = useCallback(async () => {
+    if (!user) { setLoading(false); return; }
+    try {
+      const [
+        { getMyCircles: getMy, getRecommendedCircles: getRec },
+      ] = await Promise.all([
+        import("@/lib/supabase/queries"),
+      ]);
+      const [my, explore] = await Promise.all([
+        getMy(user.id),
+        getRec(user.id),
+      ]);
+      setMyCircles(my);
+      setExploreCircles(explore);
+    } catch (e) {
+      console.error("Failed to load circles", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => { loadCircles(); }, [loadCircles]);
+
+  const handleJoin = async (circleId: string) => {
+    if (!user || joining) return;
+    setJoining(circleId);
+    try {
+      const { joinCircle } = await import("@/lib/supabase/queries");
+      await joinCircle(circleId, user.id);
+      // Move from explore to my circles
+      const joined = exploreCircles.find((c) => c.id === circleId);
+      if (joined) {
+        setExploreCircles((prev) => prev.filter((c) => c.id !== circleId));
+        setMyCircles((prev) => [...prev, { ...joined, member_count: joined.member_count + 1 }]);
       }
-      if (search) {
-        items = items.filter(
-          (c) =>
-            c.name.toLowerCase().includes(search.toLowerCase()) ||
-            c.tag.toLowerCase().includes(search.toLowerCase())
-        );
-      }
-      return items;
-    },
-    [search, selectedCategory]
-  );
+    } catch (e: any) {
+      alert(e.message || "Gagal bergabung");
+    } finally {
+      setJoining(null);
+    }
+  };
+
+  const filteredExplore = useMemo(() => {
+    let items = exploreCircles;
+    if (selectedCategory) {
+      items = items.filter((c) => c.goal_category === selectedCategory);
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      items = items.filter((c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.goal_category.toLowerCase().includes(q)
+      );
+    }
+    return items;
+  }, [exploreCircles, search, selectedCategory]);
+
+  const getCategoryMeta = (cat: string) =>
+    CIRCLE_CATEGORIES.find((c) => c.value === cat);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center px-6">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+            <Users size={28} className="text-text-secondary/40" />
+          </div>
+          <h2 className="text-lg font-bold text-text-primary">Masuk dulu yuk</h2>
+          <p className="text-sm text-text-secondary mt-1 mb-6">Lihat dan gabung circle setelah login</p>
+          <Button variant="primary" onClick={() => router.push("/login")}>Masuk</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-bg p-6 max-w-content mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-32 bg-muted rounded-lg" />
+          <div className="h-12 bg-muted rounded-lg" />
+          <div className="h-24 bg-muted rounded-xl" />
+          <div className="h-24 bg-muted rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg">
@@ -64,9 +117,6 @@ export default function CircleListPage() {
               Temukan dan bergabung dengan komunitas
             </p>
           </div>
-          <button className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 active:scale-[0.97] transition-all">
-            <Plus size={20} />
-          </button>
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-none">
@@ -99,39 +149,41 @@ export default function CircleListPage() {
         {myCircles.length > 0 && !selectedCategory && (
           <section className="mb-8">
             <h2 className="text-sm font-semibold text-text-secondary mb-3 uppercase tracking-wider">
-              Circle Saya
+              Circle Saya ({myCircles.length})
             </h2>
             <div className="space-y-3">
-              {myCircles.map((c, i) => (
-                <div key={c.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 80}ms` }}>
-                  <Link href={`/circle/${c.id}`}>
-                  <Card padding="md" className="hover:border-primary/30 transition-all cursor-pointer group active:scale-[0.98]">
-                    <div className="flex items-center gap-3">
-                      <Avatar initials={c.name.split(" ").map((w) => w[0]).join("")} size="lg" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-text-primary truncate">{c.name}</h3>
-                          {c.hasMentor && (
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-none">Mentor</Badge>
-                          )}
+              {myCircles.map((c, i) => {
+                const meta = getCategoryMeta(c.goal_category);
+                return (
+                  <div key={c.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 80}ms` }}>
+                    <Link href={`/circle/${c.id}`}>
+                      <Card padding="md" className="hover:border-primary/30 transition-all cursor-pointer group active:scale-[0.98]">
+                        <div className="flex items-center gap-3">
+                          <Avatar initials={c.name.split(" ").map((w) => w[0]).join("")} size="lg" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-bold text-text-primary truncate">{c.name}</h3>
+                              {c.template_slug && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-none">Mimpi</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 mt-1">
+                              {meta && (
+                                <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none">{meta.label}</Badge>
+                              )}
+                              <span className="text-xs text-text-secondary">{c.member_count}/{c.capacity} anggota</span>
+                            </div>
+                            <p className="text-xs text-text-secondary mt-1.5 line-clamp-1">{c.description}</p>
+                          </div>
+                          <ChevronRight size={16} className="text-text-secondary group-hover:text-primary transition-colors flex-shrink-0" />
                         </div>
-                        <div className="flex items-center gap-3 mt-1">
-                          <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none">{c.tag}</Badge>
-                          <span className="text-xs text-text-secondary">{c.members}/{c.maxMembers} anggota</span>
-                        </div>
-                        <p className="text-xs text-text-secondary mt-1.5 line-clamp-1">{c.desc}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <ChevronRight size={16} className="text-text-secondary group-hover:text-primary transition-colors" />
-                        <span className="text-[10px] text-text-secondary">{c.lastActive}</span>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
+                      </Card>
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
 
         <section>
@@ -151,48 +203,57 @@ export default function CircleListPage() {
           </div>
 
           <div className="space-y-3">
-            {filteredExplore.map((c, i) => (
-              <div key={c.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 60}ms` }}>
-                <Link href={`/circle/${c.id}`}>
-                <Card padding="md" className="hover:border-secondary/30 transition-all cursor-pointer group">
-                  <div className="flex items-center gap-3">
-                    <Avatar initials={c.name.split(" ").map((w) => w[0]).join("")} size="lg" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-text-primary truncate">{c.name}</h3>
-                        {c.hasMentor && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-none">Mentor</Badge>
-                        )}
+            {filteredExplore.map((c, i) => {
+              const meta = getCategoryMeta(c.goal_category);
+              return (
+                <div key={c.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 60}ms` }}>
+                  <Card padding="md" className="hover:border-secondary/30 transition-all group">
+                    <div className="flex items-center gap-3">
+                      <Avatar initials={c.name.split(" ").map((w) => w[0]).join("")} size="lg" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-text-primary truncate">{c.name}</h3>
+                          {c.template_slug && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-none">Mimpi</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1">
+                          {meta && (
+                            <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none">{meta.label}</Badge>
+                          )}
+                          <span className="text-xs text-text-secondary">{c.member_count}/{c.capacity} anggota</span>
+                        </div>
+                        <p className="text-xs text-text-secondary mt-1.5 line-clamp-1">{c.description}</p>
                       </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none">{c.tag}</Badge>
-                        <span className="text-xs text-text-secondary">{c.members}/{c.maxMembers} anggota</span>
-                      </div>
-                      <p className="text-xs text-text-secondary mt-1.5 line-clamp-1">{c.desc}</p>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={joining === c.id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleJoin(c.id);
+                        }}
+                      >
+                        Gabung
+                      </Button>
                     </div>
-                    <ChevronRight size={16} className="text-text-secondary group-hover:text-secondary transition-colors flex-shrink-0" />
-                  </div>
-                </Card>
-              </Link>
-            </div>
-          ))}
+                  </Card>
+                </div>
+              );
+            })}
           </div>
 
           {filteredExplore.length === 0 && (
             <div className="text-center py-12">
-              <Users size={32} className="mx-auto text-text-secondary/30 mb-3" />
-              <div className="flex flex-col items-center justify-center py-16">
-                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                  <Users size={28} className="text-text-secondary/40" />
-                </div>
-                <p className="text-sm font-semibold text-text-primary">Tidak ada circle ditemukan</p>
-                <p className="text-xs text-text-secondary mt-1">Coba pilih kategori lain</p>
+              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                <Users size={28} className="text-text-secondary/40" />
               </div>
+              <p className="text-sm font-semibold text-text-primary">Tidak ada circle ditemukan</p>
+              <p className="text-xs text-text-secondary mt-1">Coba pilih kategori lain</p>
             </div>
           )}
         </section>
       </div>
-
     </div>
   );
 }
