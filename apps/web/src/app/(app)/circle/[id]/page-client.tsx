@@ -182,7 +182,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
     const channel = sb
       .channel(`circle-${id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `circle_id=eq.${id}` }, (payload) => {
-        setMessages((prev) => [...prev, payload.new as Message]);
+        setMessages((prev) => prev.some((m) => m.id === payload.new.id) ? prev : [...prev, payload.new as Message]);
       })
       .subscribe();
     return () => { sb.removeChannel(channel); };
