@@ -30,12 +30,14 @@ interface JourneyOnboardingModalProps {
   open: boolean;
   template: DreamTemplate;
   onClose: () => void;
+  initialAge?: number | null;
 }
 
 export function JourneyOnboardingModal({
   open,
   template,
   onClose,
+  initialAge,
 }: JourneyOnboardingModalProps) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
@@ -65,6 +67,9 @@ export function JourneyOnboardingModal({
       setMatchingCircles([]);
       setJoinCircleOptIn(true);
       setCircleLoaded(false);
+    } else if (initialAge) {
+      setAge(initialAge);
+      setStep(1);
     }
   }, [open]);
 

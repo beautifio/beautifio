@@ -4,13 +4,13 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Heart, Compass, ChevronDown, ChevronUp, Flame } from "lucide-react";
+import { Sparkles, ArrowRight, Heart, Compass, ChevronDown, ChevronUp, Flame, X } from "lucide-react";
 import { Button, Card, Skeleton } from "@beautifio/ui";
 import { getAllDreamTemplates, getJmEcosystemByTemplateSlug } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
 
-import { getAllJourneys, createJourney, journeyUrl, getJourneyProgress } from "@/lib/journey-queries";
+import { getAllJourneys, createJourney, journeyUrl, getJourneyProgress, archiveJourney } from "@/lib/journey-queries";
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
 
@@ -39,6 +39,8 @@ function statusLabel(status: string) {
   }
 }
 
+const MAX_ACTIVE = 3;
+
 export default function JourneyPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -58,10 +60,44 @@ export default function JourneyPage() {
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
   const [showAllPrevious, setShowAllPrevious] = useState(false);
 
+  // Archive from list page
+  const [archiveTarget, setArchiveTarget] = useState<DreamJourney | null>(null);
+  const [archiving, setArchiving] = useState(false);
+
+  // Max-3 limit modal
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState<DreamTemplate | null>(null);
+
   const filteredTemplates = useMemo(
     () => templates.filter((t) => categoryMatches(t.category, activeFilter)),
     [templates, activeFilter]
   );
+
+  const activeJourneyCount = (primaryJourney ? 1 : 0) + otherActiveJourneys.length;
+
+  const reloadJourneys = async () => {
+    if (!user) return;
+    const all = await getAllJourneys(user.id);
+    const active = all.filter((j) => j.status === "active");
+    const sortedActive = active.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    const primary = sortedActive[0] || null;
+    setPrimaryJourney(primary);
+    setOtherActiveJourneys(active.filter((j) => j.id !== primary?.id));
+    setPreviousJourneys(all.filter((j) => j.id !== primary?.id && j.status !== "active"));
+
+    if (primary) {
+      getJourneyProgress(user.id, primary.id).then(setPrimaryProgress).catch(() => {});
+    }
+    const progressMap: Record<string, JourneyProgress> = {};
+    await Promise.all(
+      active.filter((j) => j.id !== primary?.id).map((j) =>
+        getJourneyProgress(user.id, j.id).then((p) => { progressMap[j.id] = p; }).catch(() => {})
+      )
+    );
+    setOtherActiveProgress(progressMap);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -70,37 +106,7 @@ export default function JourneyPage() {
     }
     (async () => {
       try {
-        const all = await getAllJourneys(user.id);
-        const active = all.filter((j) => j.status === "active");
-        const sortedActive = active.sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-
-        const primary = sortedActive[0] || null;
-        setPrimaryJourney(primary);
-
-        const otherActive = active.filter((j) => j.id !== primary?.id);
-        setOtherActiveJourneys(otherActive);
-
-        const prev = all.filter((j) => j.id !== primary?.id && j.status !== "active");
-        setPreviousJourneys(prev);
-
-        if (primary) {
-          getJourneyProgress(user.id, primary.id)
-            .then(setPrimaryProgress)
-            .catch(() => {});
-        }
-
-        const progressMap: Record<string, JourneyProgress> = {};
-        await Promise.all(
-          otherActive.map((j) =>
-            getJourneyProgress(user.id, j.id)
-              .then((p) => { progressMap[j.id] = p; })
-              .catch(() => {})
-          )
-        );
-        setOtherActiveProgress(progressMap);
-
+        await reloadJourneys();
         const { supabase } = await import("@/lib/supabase/client");
         if (supabase) {
           const { data } = await supabase
@@ -125,42 +131,57 @@ export default function JourneyPage() {
     })();
   }, [user]);
 
-  const handleStartJourney = async (template: DreamTemplate) => {
-    if (creating) return;
+  const startJourneyFlow = (template: DreamTemplate) => {
+    setOnboardingTemplate(template);
+    setShowOnboarding(true);
+  };
 
-    if (!user) {
-      router.push("/");
+  const handleStartJourney = async (template: DreamTemplate) => {
+    if (creating || !user) return;
+
+    if (activeJourneyCount >= MAX_ACTIVE) {
+      setPendingTemplate(template);
+      setShowLimitModal(true);
       return;
     }
 
     if (!userAge) {
-      setOnboardingTemplate(template);
-      setShowOnboarding(true);
+      startJourneyFlow(template);
       return;
     }
 
-    setCreating(true);
-    setError(null);
-    setSelectedTemplate(template.slug);
+    // Has age → show onboarding with pre-filled age (skips age step)
+    startJourneyFlow(template);
+  };
+
+  const handleArchive = async () => {
+    if (!archiveTarget || archiving) return;
+    setArchiving(true);
     try {
-      const journey = await createJourney(
-        user.id,
-        template.slug,
-        template.title,
-        template.emoji,
-        template.category,
-        userAge
-      );
-      if (journey) {
-          router.push(journeyUrl(journey));
-      } else {
-        setError("Gagal membuat perjalanan. Coba lagi.");
-        setCreating(false);
+      await archiveJourney(archiveTarget.id);
+      await reloadJourneys();
+      setArchiveTarget(null);
+    } catch (e) {
+      console.error("Failed to archive journey", e);
+    } finally {
+      setArchiving(false);
+    }
+  };
+
+  const handleLimitArchive = async (journeyId: string) => {
+    if (archiving) return;
+    setArchiving(true);
+    try {
+      await archiveJourney(journeyId);
+      setShowLimitModal(false);
+      setArchiving(false);
+      if (pendingTemplate) {
+        startJourneyFlow(pendingTemplate);
+        setPendingTemplate(null);
       }
-    } catch (e: any) {
-      console.error("handleStartJourney error:", e);
-      setError(e?.message || "Terjadi kesalahan. Coba lagi.");
-      setCreating(false);
+    } catch (e) {
+      console.error("Failed to archive journey", e);
+      setArchiving(false);
     }
   };
 
@@ -203,10 +224,7 @@ export default function JourneyPage() {
                     <span className="font-semibold text-text-primary">{progressPct}%</span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all duration-500"
-                      style={{ width: `${progressPct}%` }}
-                    />
+                    <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progressPct}%` }} />
                   </div>
                 </div>
 
@@ -251,28 +269,36 @@ export default function JourneyPage() {
                   ? Math.round((p.big_wins_completed / Math.max(p.big_wins_total, 1)) * 100)
                   : 0;
                 return (
-                  <Link key={j.id} href={journeyUrl(j)}>
-                    <Card className="p-4 border border-border hover:border-primary/30 transition-all h-full">
-                      <span className="text-2xl block mb-2">{j.emoji}</span>
-                      <h3 className="text-sm font-bold text-text-primary">{j.title}</h3>
-                      <div className="mt-2 w-full h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-[11px] text-text-secondary">
-                          {p?.big_wins_completed || 0}/{p?.big_wins_total || 0}
-                        </span>
-                        {p && p.streak > 0 && (
-                          <span className="flex items-center gap-0.5 text-[11px] text-orange-500">
-                            <Flame size={11} />{p.streak}
+                  <div key={j.id} className="relative group">
+                    <Link href={journeyUrl(j)}>
+                      <Card className="p-4 border border-border hover:border-primary/30 transition-all h-full">
+                        <span className="text-2xl block mb-2">{j.emoji}</span>
+                        <h3 className="text-sm font-bold text-text-primary">{j.title}</h3>
+                        <div className="mt-2 w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-[11px] text-text-secondary">
+                            {p?.big_wins_completed || 0}/{p?.big_wins_total || 0}
                           </span>
-                        )}
-                      </div>
-                      <div className="mt-3 pt-2 border-t border-border/50 flex justify-end">
-                        <span className="text-xs font-medium text-primary">Lanjutkan →</span>
-                      </div>
-                    </Card>
-                  </Link>
+                          {p && p.streak > 0 && (
+                            <span className="flex items-center gap-0.5 text-[11px] text-orange-500">
+                              <Flame size={11} />{p.streak}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-3 pt-2 border-t border-border/50 flex justify-end">
+                          <span className="text-xs font-medium text-primary">Lanjutkan →</span>
+                        </div>
+                      </Card>
+                    </Link>
+                    <button
+                      onClick={() => setArchiveTarget(j)}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -312,7 +338,7 @@ export default function JourneyPage() {
         )}
 
         {/* ─── JELAJAHI MIMPI LAIN ─── */}
-        <section className={hasJourneys ? "" : ""}>
+        <section>
           {primaryJourney && (
             <>
               <h2 className="text-base font-bold text-text-primary mb-1">Jelajahi Mimpi Lain</h2>
@@ -389,9 +415,77 @@ export default function JourneyPage() {
 
       </div>
 
+      {/* ─── ARCHIVE CONFIRMATION MODAL ─── */}
+      {archiveTarget && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={() => setArchiveTarget(null)}>
+          <div className="w-full max-w-sm bg-surface rounded-t-xl sm:rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-text-primary">Tinggalkan perjalanan ini?</h3>
+            <p className="text-sm text-text-secondary mt-2 leading-relaxed">
+              Progress kamu tetap tersimpan. Kamu bisa lihat riwayatnya di Ceritaku.
+            </p>
+            <p className="text-sm text-text-secondary mt-1 leading-relaxed">
+              Kalau mau, kamu bisa mulai lagi dari awal kapanpun.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <Button variant="secondary" size="lg" className="flex-1" onClick={() => setArchiveTarget(null)}>
+                Batal
+              </Button>
+              <Button variant="destructive" size="lg" className="flex-1" loading={archiving} onClick={handleArchive}>
+                Ya, tinggalkan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MAX 3 LIMIT MODAL ─── */}
+      {showLimitModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={() => { setShowLimitModal(false); setPendingTemplate(null); }}>
+          <div className="w-full max-w-sm bg-surface rounded-t-xl sm:rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-text-primary">Kamu sudah punya 3 perjalanan aktif</h3>
+            <p className="text-sm text-text-secondary mt-2">Tinggalkan salah satu untuk memulai yang baru.</p>
+            <div className="space-y-2 mt-4">
+              {primaryJourney && (
+                <button
+                  onClick={() => handleLimitArchive(primaryJourney.id)}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:border-destructive/50 hover:bg-destructive/5 transition-all cursor-pointer text-left"
+                  disabled={archiving}
+                >
+                  <span className="text-2xl">{primaryJourney.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-text-primary">{primaryJourney.title}</p>
+                    <p className="text-[11px] text-text-secondary">Fokus Utama</p>
+                  </div>
+                  <X size={16} className="text-text-secondary shrink-0" />
+                </button>
+              )}
+              {otherActiveJourneys.map((j) => (
+                <button
+                  key={j.id}
+                  onClick={() => handleLimitArchive(j.id)}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl border border-border hover:border-destructive/50 hover:bg-destructive/5 transition-all cursor-pointer text-left"
+                  disabled={archiving}
+                >
+                  <span className="text-2xl">{j.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-text-primary">{j.title}</p>
+                    <p className="text-[11px] text-text-secondary">Perjalanan Aktif</p>
+                  </div>
+                  <X size={16} className="text-text-secondary shrink-0" />
+                </button>
+              ))}
+            </div>
+            <Button variant="secondary" size="lg" className="w-full mt-4" onClick={() => { setShowLimitModal(false); setPendingTemplate(null); }}>
+              Batal
+            </Button>
+          </div>
+        </div>
+      )}
+
       <JourneyOnboardingModal
         open={showOnboarding && !!onboardingTemplate}
         template={onboardingTemplate!}
+        initialAge={userAge}
         onClose={() => {
           setShowOnboarding(false);
           setOnboardingTemplate(null);
