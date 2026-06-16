@@ -4,11 +4,11 @@ import { use, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Sparkles, ChevronRight, Clock, X } from "lucide-react";
 import { Button } from "@beautifio/ui";
-import { getDreamTemplate, getBenchmarkForTemplate, determineUserPhase, getTemplateFromBenchmarkSlug, TEMPLATE_TO_BENCHMARK_SLUG, generateDailyActivities, ACTIVITY_DETAILS } from "@beautifio/utils";
+import { getDreamTemplate, determineUserPhase, getTemplateFromBenchmarkSlug, TEMPLATE_TO_BENCHMARK_SLUG, generateDailyActivities } from "@beautifio/utils";
 import { DailyActivityCard } from "@/features/journey/daily-activity-card";
 import { getGuestJourney, saveGuestJourney, getCurrentDay, isTrialExpired, todayStr } from "@/lib/guest-journey";
 import { useAuthStore } from "@/stores/auth-store";
-import type { DreamJourney, DailyActivity, DailyActivityDimension } from "@beautifio/types";
+import type { DreamJourney, DailyActivity } from "@beautifio/types";
 
 const DIMENSION_LABELS: Record<string, { label: string; emoji: string }> = {
   spiritual: { label: "Spiritual", emoji: "🕊️" },
@@ -111,7 +111,7 @@ export default function CobaPage({ params }: { params: Promise<{ slug: string }>
 
   // Day 1 trigger: show sheet when completing 3rd activity
   useEffect(() => {
-    if (day !== 1 || day < 1) return;
+    if (day !== 1) return;
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;
       return;

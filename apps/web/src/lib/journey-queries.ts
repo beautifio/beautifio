@@ -250,7 +250,7 @@ export async function createJourney(
             journey_id: journey.id,
             dream_phase_id: phase.phase_id,
             status: phase.behind_schedule_signal
-              ? "in_progress"
+              ? "behind"
               : "in_progress",
           });
         }
@@ -1032,7 +1032,7 @@ export async function getMonthActivities(
       .gte("date", start)
       .lte("date", end),
     db()
-      .from("growth_timeline")
+      .from("growth_timeline_events")
       .select("event_date")
       .eq("user_id", userId)
       .in("event_type", ["small_win_completed", "big_win_completed"])

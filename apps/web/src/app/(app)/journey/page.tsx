@@ -35,7 +35,7 @@ export default function JourneyPage() {
   const { user } = useAuth();
   const [activeJourney, setActiveJourney] = useState<DreamJourney | null>(null);
   const [previousJourneys, setPreviousJourneys] = useState<DreamJourney[]>([]);
-  const [templates] = useState(getAllDreamTemplates());
+  const [templates] = useState(() => getAllDreamTemplates());
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { use, useState } from "react";
-import { Mail, Lock, Eye, EyeOff, UserPlus, User } from "lucide-react";
+import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { Button, Input, Skeleton } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";

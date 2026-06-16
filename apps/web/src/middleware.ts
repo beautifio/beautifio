@@ -51,8 +51,9 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Handle OAuth PKCE code exchange
-  const code = request.nextUrl.searchParams.get("code");
+  // Handle OAuth PKCE code exchange — delegate to /auth/callback route handler
+  const isCallbackRoute = pathname === "/auth/callback";
+  const code = isCallbackRoute ? null : request.nextUrl.searchParams.get("code");
   if (code) {
     const mimpi = request.nextUrl.searchParams.get("mimpi");
     const { error } = await supabase.auth.exchangeCodeForSession(code);
