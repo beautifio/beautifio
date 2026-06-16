@@ -17,10 +17,7 @@ export function getBenchmarkDream(slug: string): BenchmarkDream | undefined {
 
 /** Map dream template slugs (English) to benchmark database slugs (Indonesian) */
 export const TEMPLATE_TO_BENCHMARK_SLUG: Record<string, string> = {
-  "football-player": "pemain-sepak-bola-profesional",
-  "athlete": "atlet-bulu-tangkis-profesional",
-  "golfer": "atlet-bulu-tangkis-profesional",
-  "runner": "atlet-bulu-tangkis-profesional",
+  "pro-footballer": "pemain-sepak-bola-profesional",
   "programmer": "software-engineer",
   "doctor": "dokter-umum",
   "musician": "penyanyi-musisi-profesional",

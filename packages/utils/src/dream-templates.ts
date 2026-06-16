@@ -1,5 +1,6 @@
 import type { DreamTemplate } from "@beautifio/types";
 import { ROADMAP_V3_SEED } from "./roadmap-v3-seed";
+import { ADDITIONAL_TEMPLATES } from "./templates-additional";
 
 const CATEGORY_AGES: Record<string, { min: number; max: number }> = {
   sports: { min: 8, max: 99 },
@@ -80,6 +81,9 @@ export function buildDreamTemplates(): Record<string, DreamTemplate> {
   const templates: Record<string, DreamTemplate> = {};
 
   for (const [slug, roadmap] of Object.entries(ROADMAP_V3_SEED)) {
+    if (!roadmap) continue;
+    if (["runner", "athlete", "golfer"].includes(slug)) continue;
+
     const bigWins = roadmap.bigWins.map((bw) => ({
       title: bw.title,
       description: bw.description,
@@ -138,6 +142,14 @@ export function buildDreamTemplates(): Record<string, DreamTemplate> {
       min_age: ageRange.min,
       max_age: ageRange.max,
     };
+  }
+
+  for (const t of ADDITIONAL_TEMPLATES) {
+    templates[t.slug] = t;
+  }
+
+  if (templates["pro-footballer"] && !templates["football-player"]) {
+    templates["football-player"] = templates["pro-footballer"];
   }
 
   return templates;
