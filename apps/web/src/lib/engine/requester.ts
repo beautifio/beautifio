@@ -10,18 +10,28 @@ export async function createContentRequest(params: {
   if (!supabase) return;
 
   const { topic, keywords, actionType, journeyTemplateSlug, activityTitle } = params;
+  const searchTopic = topic.toLowerCase().trim();
 
-  const existing = await supabase
+  // Find existing pending request with same topic or overlapping keywords
+  const { data: existing } = await supabase
     .from("content_requests")
-    .select("id, request_count")
-    .eq("topic", topic)
+    .select("id, request_count, keywords")
     .eq("status", "pending")
-    .maybeSingle();
+    .or(`topic.ilike.${searchTopic},topic.ilike.${searchTopic.replace(/\s+/g, "-")}`);
 
-  if (existing?.data) {
+  const match = existing?.find((r) => {
+    const rKeywords = (r.keywords || []) as string[];
+    return rKeywords.some((k) => keywords.some((kw) => kw.toLowerCase() === k.toLowerCase()));
+  }) || existing?.[0];
+
+  if (match) {
     await supabase
       .from("content_requests")
-      .update({ request_count: existing.data.request_count + 1 });
+      .update({
+        request_count: (match.request_count || 0) + 1,
+        keywords: [...new Set([...(match.keywords || []), ...keywords])],
+      })
+      .eq("id", match.id);
   } else {
     await supabase.from("content_requests").insert({
       topic,

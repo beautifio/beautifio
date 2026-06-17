@@ -12,11 +12,12 @@ export async function matchCircle(
 
   const nameConditions = words.map((w) => `name.ilike.%${w}%`).join(",");
   const descConditions = words.map((w) => `description.ilike.%${w}%`).join(",");
+  const catConditions = words.map((w) => `goal_category.ilike.%${w}%`).join(",");
 
   let query = supabase
     .from("circles")
-    .select("id, name, description, slug, category")
-    .or(`${nameConditions},${descConditions}`)
+    .select("id, name, description, goal_category")
+    .or(`${nameConditions},${descConditions},${catConditions}`)
     .limit(5);
 
   if (excludeIds.length > 0) {
@@ -29,7 +30,8 @@ export async function matchCircle(
   const scored = data.map((c) => ({
     ...c,
     score: words.filter((w) => c.name.toLowerCase().includes(w.toLowerCase())).length * 2 +
-           words.filter((w) => (c.description || "").toLowerCase().includes(w.toLowerCase())).length,
+           words.filter((w) => (c.description || "").toLowerCase().includes(w.toLowerCase())).length +
+           words.filter((w) => (c.goal_category || "").toLowerCase().includes(w.toLowerCase())).length,
   }));
 
   scored.sort((a, b) => b.score - a.score);
@@ -38,9 +40,9 @@ export async function matchCircle(
   return {
     contentId: best.id,
     contentType: "circle",
-    slug: best.slug || best.id,
+    slug: best.id,
     title: best.name,
-    excerpt: best.description || undefined,
+    excerpt: best.description || best.goal_category || undefined,
     relevanceScore: best.score,
   };
 }

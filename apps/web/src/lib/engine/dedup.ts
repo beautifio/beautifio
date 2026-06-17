@@ -21,10 +21,14 @@ export async function recordSuggestion(
   activityId: string,
 ): Promise<void> {
   if (!supabase) return;
-  await supabase.from("content_suggestions").insert({
-    content_id: contentId,
-    content_type: contentType,
-    journey_id: journeyId,
-    activity_id: activityId,
-  });
+  try {
+    await supabase.from("content_suggestions").insert({
+      content_id: contentId,
+      content_type: contentType,
+      journey_id: journeyId,
+      activity_id: activityId,
+    });
+  } catch {
+    // duplicate — already suggested, skip
+  }
 }

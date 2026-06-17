@@ -56,7 +56,11 @@ export function DailyActivityCard({
   }, [onSaveNote, noteText, activity.id]);
 
   const actionHref = activity.matched_slug
-    ? `/inspirasi/${activity.matched_slug}?from=journey&activity_id=${activity.id}&journey_id=${activity.journey_id}`
+    ? activity.action_type === "join_circle"
+      ? `/circle/${activity.matched_slug}?from=journey`
+      : activity.action_type === "comment_curhat" || activity.action_type === "support_curhat"
+        ? `/curhat/${activity.matched_slug}?from=journey`
+        : `/inspirasi/${activity.matched_slug}?from=journey&activity_id=${activity.id}&journey_id=${activity.journey_id}`
     : null;
 
   return (
