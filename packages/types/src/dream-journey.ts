@@ -164,6 +164,11 @@ export interface SmallWinReflection {
 
 export type ActivityType = 'general' | 'knowledge' | 'physical' | 'social' | 'spiritual' | 'character' | 'dream_skill';
 
+export type ActionType =
+  | 'read_article' | 'comment_curhat' | 'support_curhat'
+  | 'write_curhat' | 'write_journal' | 'join_circle'
+  | 'view_roadmap' | 'view_mentor' | 'do_exercise' | 'manual';
+
 export interface DailyActivity {
   id: string;
   journey_id: string;
@@ -180,6 +185,12 @@ export interface DailyActivity {
   article_id: string | null;
   activity_type: ActivityType;
   estimated_minutes: number | null;
+  action_type: ActionType;
+  match_keywords: string[];
+  matched_content_id: string | null;
+  matched_content_type: string | null;
+  matched_slug: string | null;
+  matched_title: string | null;
 }
 
 /* ─── Article Read Tracking ─── */

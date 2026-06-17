@@ -2,7 +2,10 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { CheckCircle2, Circle, PenLine, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
+import {
+  CheckCircle2, Circle, PenLine, ChevronDown, ChevronUp,
+  BookOpen, MessageSquare, Heart, Users, Sparkles,
+} from "lucide-react";
 import type { DailyActivity } from "@beautifio/types";
 import { ACTIVITY_DETAILS } from "@beautifio/utils";
 import type { ActivityDetail } from "@beautifio/utils";
@@ -17,6 +20,16 @@ interface DailyActivityCardProps {
   isExpanded: boolean;
   onToggleExpand: (id: string) => void;
 }
+
+const ACTION_UI: Record<string, { icon: typeof BookOpen; label: string; color: string; bg: string }> = {
+  read_article: { icon: BookOpen, label: "Baca Artikel", color: "text-blue-600", bg: "bg-blue-50" },
+  comment_curhat: { icon: MessageSquare, label: "Komentari", color: "text-purple-600", bg: "bg-purple-50" },
+  support_curhat: { icon: Heart, label: "Dukung", color: "text-red-500", bg: "bg-red-50" },
+  write_curhat: { icon: PenLine, label: "Tulis Curhat", color: "text-purple-600", bg: "bg-purple-50" },
+  write_journal: { icon: PenLine, label: "Tulis Jurnal", color: "text-emerald-600", bg: "bg-emerald-50" },
+  join_circle: { icon: Users, label: "Gabung Circle", color: "text-orange-600", bg: "bg-orange-50" },
+  view_roadmap: { icon: Sparkles, label: "Lihat Roadmap", color: "text-amber-600", bg: "bg-amber-50" },
+};
 
 export function DailyActivityCard({
   activity,
@@ -33,6 +46,7 @@ export function DailyActivityCard({
 
   const detailKey = `${activity.dimension}::${activity.title.toLowerCase().trim()}`;
   const detail: ActivityDetail | undefined = ACTIVITY_DETAILS[detailKey];
+  const actionUI = activity.action_type ? ACTION_UI[activity.action_type] : null;
 
   const handleSaveNote = useCallback(() => {
     if (onSaveNote && noteText.trim()) {
@@ -40,6 +54,10 @@ export function DailyActivityCard({
     }
     setShowNoteInput(false);
   }, [onSaveNote, noteText, activity.id]);
+
+  const actionHref = activity.matched_slug
+    ? `/inspirasi/${activity.matched_slug}?from=journey&activity_id=${activity.id}&journey_id=${activity.journey_id}`
+    : null;
 
   return (
     <div
@@ -89,7 +107,7 @@ export function DailyActivityCard({
                     {estimatedMinutes} mnt
                   </span>
                 )}
-                {detail && (
+                {(detail || actionHref) && (
                   isExpanded ? (
                     <ChevronUp size={14} className="text-text-secondary/40" />
                   ) : (
@@ -104,60 +122,98 @@ export function DailyActivityCard({
       </div>
 
       {/* Expanded detail section */}
-      {isExpanded && detail && (
+      {isExpanded && (
         <div className="px-4 pb-3 space-y-3 border-t border-border/50 pt-3">
-          <p className="text-[13px] text-text-secondary leading-relaxed">
-            {detail.description}
-          </p>
-
-          {detail.tips.length > 0 && (
-            <div>
-              <p className="text-[11px] font-semibold text-text-primary mb-1">Tips:</p>
-              <ul className="space-y-1">
-                {detail.tips.map((tip, i) => (
-                  <li key={i} className="text-[12px] text-text-secondary leading-relaxed flex items-start gap-1.5">
-                    <span className="text-primary mt-0.5">•</span>
-                    <span>{tip}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Engine-matched action button */}
+          {actionHref && actionUI && !activity.is_completed && (
+            <a
+              href={actionHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-2.5 p-3 rounded-lg ${actionUI.bg} border border-transparent hover:opacity-80 transition-opacity`}
+            >
+              <actionUI.icon size={18} className={actionUI.color} />
+              <div>
+                <p className={`text-[12px] font-semibold ${actionUI.color}`}>
+                  {actionUI.label}
+                </p>
+                {activity.matched_title && (
+                  <p className="text-[11px] text-text-secondary mt-0.5">
+                    {activity.matched_title}
+                  </p>
+                )}
+              </div>
+              <span className="ml-auto text-[18px]">→</span>
+            </a>
           )}
 
-          {detail.warnings && (
-            <div className="p-2.5 rounded-lg" style={{ backgroundColor: "rgba(255, 94, 91, 0.08)" }}>
-              <p className="text-[12px] text-[#FF5E5B] leading-relaxed">
-                ⚠ Perhatikan: {detail.warnings}
+          {/* No match yet — show request status */}
+          {!actionHref && actionUI && !activity.is_completed && (
+            <div className="p-3 rounded-lg bg-muted/30 border border-dashed border-border">
+              <p className="text-[12px] text-text-secondary flex items-center gap-1.5">
+                <Sparkles size={14} className="text-accent" />
+                Mencocokkan konten yang sesuai...
               </p>
             </div>
           )}
 
-          {detail.article_slug && (
-            <div className="p-3 rounded-lg bg-accent/5 border border-accent/15">
-              <div className="flex items-start gap-2.5">
-                <BookOpen size={16} className="text-accent mt-0.5 flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-text-primary">Artikel yang disarankan</p>
-                  <Link
-                    href={`/inspirasi/${detail.article_slug}?from=journey&activity_id=${activity.id}&journey_id=${activity.journey_id}`}
-                    className="inline-flex items-center gap-1 text-[12px] text-primary font-medium hover:underline mt-1"
-                  >
-                    Baca Sekarang →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Manual activity detail (existing) */}
+          {detail && (
+            <>
+              <p className="text-[13px] text-text-secondary leading-relaxed">
+                {detail.description}
+              </p>
 
-          {detail.video_url && detail.video_label && (
-            <a
-              href={detail.video_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-[12px] text-primary font-medium hover:underline"
-            >
-              ▶ {detail.video_label}
-            </a>
+              {detail.tips.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold text-text-primary mb-1">Tips:</p>
+                  <ul className="space-y-1">
+                    {detail.tips.map((tip, i) => (
+                      <li key={i} className="text-[12px] text-text-secondary leading-relaxed flex items-start gap-1.5">
+                        <span className="text-primary mt-0.5">•</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {detail.warnings && (
+                <div className="p-2.5 rounded-lg" style={{ backgroundColor: "rgba(255, 94, 91, 0.08)" }}>
+                  <p className="text-[12px] text-[#FF5E5B] leading-relaxed">
+                    ⚠ Perhatikan: {detail.warnings}
+                  </p>
+                </div>
+              )}
+
+              {detail.article_slug && !actionHref && (
+                <div className="p-3 rounded-lg bg-accent/5 border border-accent/15">
+                  <div className="flex items-start gap-2.5">
+                    <BookOpen size={16} className="text-accent mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold text-text-primary">Artikel yang disarankan</p>
+                      <Link
+                        href={`/inspirasi/${detail.article_slug}?from=journey&activity_id=${activity.id}&journey_id=${activity.journey_id}`}
+                        className="inline-flex items-center gap-1 text-[12px] text-primary font-medium hover:underline mt-1"
+                      >
+                        Baca Sekarang →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {detail.video_url && detail.video_label && (
+                <a
+                  href={detail.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-[12px] text-primary font-medium hover:underline"
+                >
+                  ▶ {detail.video_label}
+                </a>
+              )}
+            </>
           )}
         </div>
       )}

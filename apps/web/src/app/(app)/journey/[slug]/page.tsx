@@ -186,6 +186,16 @@ export default function JourneyDetailPage() {
 
       if (loadedActivities.length > 0) {
         setActivities(loadedActivities);
+        // Run Journey Engine: match unmatched activities in background
+        try {
+          const { matchContent } = await import("@/lib/engine");
+          const ctx = { userId: user.id, journeyId: j.id, templateSlug: j.template_slug };
+          for (const act of loadedActivities) {
+            if (act.action_type !== "manual" && !act.matched_content_id) {
+              matchContent(act.action_type, act.match_keywords || [], act.id, act.title, ctx).catch(() => {});
+            }
+          }
+        } catch {}
       } else {
         const generated = await generateAndInsertActivities(j, sp, undefined);
         setActivities(generated);

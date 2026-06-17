@@ -4,6 +4,7 @@ import type {
   DreamJourney,
   DreamTemplate,
   SpiritualPreferences,
+  ActionType,
 } from "@beautifio/types";
 import { SPIRITUAL_PRACTICES } from "./life-engine-seed";
 import { getDreamTemplate } from "./dream-templates";
@@ -307,6 +308,39 @@ export interface GenerateDailyOptions {
 
 export { getActivitiesForDimension };
 
+// ─── Journey Engine: map dimension → action_type ───
+const DIMENSION_ACTION_MAP: Record<DailyActivityDimension, ActionType> = {
+  knowledge: "read_article",
+  spiritual: "manual",
+  physical: "manual",
+  social: "comment_curhat",
+  character: "manual",
+  dream_skill: "read_article",
+};
+
+// ─── Extract search keywords from activity title ───
+function extractKeywords(title: string): string[] {
+  const stopWords = new Set([
+    "dan", "di", "ke", "dari", "yang", "ini", "itu", "dengan",
+    "untuk", "pada", "adalah", "akan", "telah", "bisa", "dapat",
+    "hari", "baru", "satu", "dalam", "setiap", "atau", "dan",
+    "luangkan", "waktu", "tulis", "buat", "catat", "baca", "lihat",
+    "pelajari", "lakukan", "jangan", "tidak", "minum", "makan",
+    "sapa", "bagikan", "bantu", "selesaikan", "tunda",
+  ]);
+
+  // Remove leading numbers/times like "05:00", "10" etc
+  const cleaned = title.replace(/^[\d\s:,-]+/, "").trim();
+  const words = cleaned.toLowerCase().split(/[\s,()]+/);
+
+  const keywords = words
+    .map((w) => w.replace(/[^a-z0-9]/g, ""))
+    .filter((w) => w.length > 2 && !stopWords.has(w))
+    .slice(0, 4);
+
+  return keywords.length > 0 ? keywords : [cleaned.toLowerCase().slice(0, 20)];
+}
+
 const DIMENSION_ACTIVITIES_BY_CATEGORY: Record<
   string,
   Partial<Record<DailyActivityDimension, string[]>>
@@ -463,6 +497,7 @@ export function generateDailyActivities(
     const detailKey = `${dimension}::${title.toLowerCase().trim()}`;
     const detail = (ACTIVITY_DETAILS as Record<string, any>)[detailKey];
     const activityType = dimension === "knowledge" ? "knowledge" : dimension;
+    const actionType = DIMENSION_ACTION_MAP[dimension];
 
     activities.push({
       journey_id: journey.id,
@@ -479,6 +514,12 @@ export function generateDailyActivities(
       article_id: detail?.article_id ?? null,
       activity_type: activityType,
       estimated_minutes: null,
+      action_type: actionType,
+      match_keywords: extractKeywords(title),
+      matched_content_id: null,
+      matched_content_type: null,
+      matched_slug: null,
+      matched_title: null,
     });
   }
 
