@@ -16,7 +16,8 @@ DECLARE
     'hari','baru','satu','dalam','setiap','atau',
     'luangkan','waktu','tulis','buat','catat','baca','lihat',
     'pelajari','lakukan','jangan','tidak','minum','makan',
-    'sapa','bagikan','bantu','selesaikan','tunda','latihan'
+    'sapa','bagikan','bantu','selesaikan','tunda','latihan',
+    'hal','tentang','satu','baru','orang'
   ];
 BEGIN
   -- Remove leading numbers/times

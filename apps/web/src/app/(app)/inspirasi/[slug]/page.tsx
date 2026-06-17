@@ -143,12 +143,16 @@ function InspirasiDetailPage({
     completedRef.current = true;
     setIsCompleted(true);
 
-    await updateArticleReadProgress(readIdVal, {
-      is_completed: true,
-      completed_at: new Date().toISOString(),
-      scroll_percentage: scrollPctRef.current,
-      time_spent_seconds: timeSpentRef.current,
-    });
+    try {
+      await updateArticleReadProgress(readIdVal, {
+        is_completed: true,
+        completed_at: new Date().toISOString(),
+        scroll_percentage: scrollPctRef.current,
+        time_spent_seconds: timeSpentRef.current,
+      });
+    } catch (e) {
+      console.warn("Failed to update reading progress:", e);
+    }
 
     if (activityId) {
       try {
@@ -174,50 +178,54 @@ function InspirasiDetailPage({
     let cancelled = false;
 
     (async () => {
-      const alreadyRead = await hasCompletedReadForActivity(user.id, activityId, item.id);
-      if (cancelled) return;
+      try {
+        const alreadyRead = await hasCompletedReadForActivity(user.id, activityId, item.id);
+        if (cancelled) return;
 
-      if (alreadyRead) {
-        setArticleAlreadyRead(true);
-        setToastMessage("Kamu sudah pernah baca ini. Aktivitas langsung tercatat ✓");
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+        if (alreadyRead) {
+          setArticleAlreadyRead(true);
+          setToastMessage("Kamu sudah pernah baca ini. Aktivitas langsung tercatat ✓");
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 3000);
 
-        try {
-          await fetch("/api/journey/complete-reading", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ activity_id: activityId }),
-          });
-        } catch {
-          // silent
+          try {
+            await fetch("/api/journey/complete-reading", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ activity_id: activityId }),
+            });
+          } catch {
+            // silent
+          }
+
+          setInitDone(true);
+          return;
         }
 
-        setInitDone(true);
-        return;
-      }
-
-      const now = new Date().toISOString();
-      const newReadId = await upsertArticleRead({
-        user_id: user.id,
-        article_id: item.id,
-        activity_id: activityId,
-        journey_id: journeyId || undefined,
-        started_at: now,
-      });
-      if (cancelled || !newReadId) return;
-
-      setReadId(newReadId);
-      readIdRef.current = newReadId;
-      setInitDone(true);
-
-      timeIntervalRef.current = setInterval(() => {
-        setTimeSpent((prev) => {
-          const next = prev + 1;
-          timeSpentRef.current = next;
-          return next;
+        const now = new Date().toISOString();
+        const newReadId = await upsertArticleRead({
+          user_id: user.id,
+          article_id: item.id,
+          activity_id: activityId,
+          journey_id: journeyId || undefined,
+          started_at: now,
         });
-      }, 1000);
+        if (cancelled || !newReadId) return;
+
+        setReadId(newReadId);
+        readIdRef.current = newReadId;
+        setInitDone(true);
+
+        timeIntervalRef.current = setInterval(() => {
+          setTimeSpent((prev) => {
+            const next = prev + 1;
+            timeSpentRef.current = next;
+            return next;
+          });
+        }, 1000);
+      } catch (e) {
+        console.warn("Journey tracking error:", e);
+      }
     })();
 
     return () => {
