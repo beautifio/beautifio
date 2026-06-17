@@ -70,6 +70,8 @@ export default function JourneyDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const { user } = useAuth();
+  const isAnonymous = user?.is_anonymous === true || user?.app_metadata?.provider === "anonymous";
+  const [trialInfo, setTrialInfo] = useState<{ expires_at: string } | null>(null);
   const [journey, setJourney] = useState<DreamJourney | null>(null);
   const [bigWins, setBigWins] = useState<BigWin[]>([]);
   const [activities, setActivities] = useState<DailyActivity[]>([]);
@@ -92,6 +94,7 @@ export default function JourneyDetailPage() {
   const [sectionTab, setSectionTab] = useState<"today" | "wins" | "timeline" | "story">("today");
   const [expandedActivityId, setExpandedActivityId] = useState<string | null>(null);
   const [circles, setCircles] = useState<any[]>([]);
+  const [recommendedArticles, setRecommendedArticles] = useState<any[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [showArchiveModal, setShowArchiveModal] = useState(false);
@@ -133,6 +136,21 @@ export default function JourneyDetailPage() {
         return;
       }
       setJourney(j);
+
+      // Load trial info for anonymous users
+      if (isAnonymous) {
+        try {
+          const { supabase } = await import("@/lib/supabase/client");
+          if (supabase) {
+            const { data: dbUser } = await supabase
+              .from("users")
+              .select("trial_expires_at")
+              .eq("id", user.id)
+              .single();
+            if (dbUser) setTrialInfo(dbUser as any);
+          }
+        } catch {}
+      }
 
       const [bw, prog, tl, sp, refl, ph] = await Promise.all([
         getBigWins(j.id),
@@ -198,6 +216,18 @@ export default function JourneyDetailPage() {
       const { getCirclesByTemplate } = await import("@/lib/supabase/queries");
       const circleData = await getCirclesByTemplate(j.template_slug).catch(() => []);
       setCircles(circleData);
+
+      // Load recommended articles based on template
+      const { supabase: sb } = await import("@/lib/supabase/client");
+      if (sb) {
+        const { data: articles } = await sb
+          .from("articles")
+          .select("slug, title, excerpt, cover_emoji, cover_image, read_time_minutes, category, type, author, initials")
+          .or(`related_template_slugs.cs.{${j.template_slug}},related_template_slugs.eq.{}`)
+          .eq("is_published", true)
+          .limit(3);
+        if (articles?.length) setRecommendedArticles(articles);
+      }
     } catch (e) {
       console.error("Failed to load journey:", e);
       setError("Koneksi sedang bermasalah. Periksa internetmu, ya.");
@@ -425,6 +455,23 @@ export default function JourneyDetailPage() {
           </button>
         </div>
 
+        {/* Trial banner for anonymous users */}
+        {isAnonymous && trialInfo && (
+          <div className="mb-4 px-4 py-3 rounded-2xl bg-[#FFF7E6] border border-[#FFB627]">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-[#92400E]">
+                🕐 Mode Tamu
+              </p>
+              <p className="text-xs text-[#92400E]">
+                Sisa {Math.max(0, Math.ceil((new Date(trialInfo.expires_at).getTime() - Date.now()) / 86400000))} hari
+              </p>
+            </div>
+            <p className="text-[11px] text-[#92400E]/70 mt-1">
+              Daftar untuk simpan progress selamanya →
+            </p>
+          </div>
+        )}
+
         {/* Dream Context — always visible */}
         <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/10">
           <div className="flex items-start gap-3 mb-3">
@@ -590,6 +637,34 @@ export default function JourneyDetailPage() {
                         <Button variant="primary" size="sm" className="ml-auto" onClick={(e) => { e.stopPropagation(); router.push(`/circle/${c.id}`); }}>
                           Lihat
                         </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recommended Articles */}
+        {recommendedArticles.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-bold text-text-primary mb-3">
+              <span className="mr-1.5">📖</span> Artikel untukmu
+            </h3>
+            <div className="space-y-2">
+              {recommendedArticles.map((art: any) => (
+                <Card key={art.slug} padding="sm" className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => router.push(`/inspirasi/${art.slug}`)}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center flex-shrink-0 text-lg">
+                      {art.cover_emoji || "📄"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-semibold text-text-primary line-clamp-1">{art.title}</h4>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[11px] text-text-secondary">{art.read_time_minutes} menit</span>
+                        <span className="text-[11px] text-text-secondary">·</span>
+                        <span className="text-[11px] text-text-secondary">{art.category}</span>
                       </div>
                     </div>
                   </div>

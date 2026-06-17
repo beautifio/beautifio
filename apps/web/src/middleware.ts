@@ -7,12 +7,16 @@ const PUBLIC_ROUTES = [
   "/login",
   "/register",
   "/mimpi",
-  "/coba",
   "/journey",
   "/inspirasi",
   "/circle",
   "/profil",
   "/auth/callback",
+  "/trial-expired",
+];
+
+const ANONYMOUS_BLOCKED = [
+  "/profil/settings",
 ];
 
 const deprecatedPages: Record<string, string> = {
@@ -90,6 +94,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const isAuth = !!user;
+  const isAnonymous = user?.is_anonymous === true || user?.app_metadata?.provider === "anonymous";
 
   const isPublic = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
@@ -102,13 +107,45 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Check trial expiration for anonymous users
+  if (isAnonymous && user) {
+    try {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("trial_expires_at")
+        .eq("id", user.id)
+        .single();
+
+      if (userData?.trial_expires_at) {
+        const isTrialExpired = new Date() > new Date(userData.trial_expires_at);
+        if (isTrialExpired && pathname !== "/trial-expired") {
+          const url = request.nextUrl.clone();
+          url.pathname = "/trial-expired";
+          return NextResponse.redirect(url);
+        }
+      }
+    } catch {
+      // If the query fails, allow access (degrade gracefully)
+    }
+
+    // Block certain routes for anonymous users
+    if (ANONYMOUS_BLOCKED.some((p) => pathname.startsWith(p))) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Authenticated on landing or auth pages → redirect to home
-  if (isAuth && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/home";
-    const mimpi = request.nextUrl.searchParams.get("mimpi");
-    if (mimpi) url.searchParams.set("mimpi", mimpi);
-    return NextResponse.redirect(url);
+  // Allow anonymous users to access /register or /login with ?upgrade=true
+  if (isAuth && !(isAnonymous && request.nextUrl.searchParams.get("upgrade") === "true")) {
+    if (pathname === "/" || pathname === "/login" || pathname === "/register") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/home";
+      const mimpi = request.nextUrl.searchParams.get("mimpi");
+      if (mimpi) url.searchParams.set("mimpi", mimpi);
+      return NextResponse.redirect(url);
+    }
   }
 
   // Redirect deprecated pages to new Journey system

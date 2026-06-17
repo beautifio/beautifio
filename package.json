@@ -13,7 +13,9 @@
     "clean": "rm -rf apps/web/.next"
   },
   "dependencies": {
-    "next": "^15.4.11"
+    "@supabase/supabase-js": "^2.108.2",
+    "next": "^15.4.11",
+    "playwright": "^1.61.0"
   },
   "devDependencies": {
     "typescript": "^5.8.0"

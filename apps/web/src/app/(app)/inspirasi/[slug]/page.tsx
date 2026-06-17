@@ -8,8 +8,9 @@ import {
   Shield, MessageSquare, Users, Sparkles, BookOpen, PenLine, Quote, X, MapPin,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
-import { CONTENT_TABS, getAllItems } from "@/lib/inspirasi-data";
+import { CONTENT_TABS, getStoredItems } from "@/lib/inspirasi-data";
 import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
+import { supabase } from "@/lib/supabase/client";
 import { SafeSpaceModal, NeedHelpButton } from "@/features/safe-space/SafeSpaceModal";
 import {
   upsertArticleRead,
@@ -58,13 +59,57 @@ function InspirasiDetailPage({
   const activityId = searchParams.get("activity_id");
   const journeyId = searchParams.get("journey_id");
 
-  const item = getAllItems().find((d) => d.slug === slug);
+  const [item, setItem] = useState<InspirasiItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      if (supabase) {
+        const { data } = await supabase
+          .from("articles")
+          .select("*")
+          .eq("slug", slug)
+          .maybeSingle();
+        if (data) {
+          setItem({
+            id: data.id,
+            slug: data.slug,
+            type: data.type,
+            title: data.title,
+            content: data.excerpt || "",
+            full_content: data.content,
+            author: data.author,
+            initials: data.initials,
+            cover_image: data.cover_image,
+            category: data.category,
+            reading_time: data.read_time_minutes,
+            like_count: data.like_count,
+            comment_count: data.comment_count,
+            save_count: data.save_count,
+            related_slugs: data.related_slugs || [],
+          });
+          setLoading(false);
+          return;
+        }
+      }
+      const local = getStoredItems().find((d) => d.slug === slug);
+      if (local) setItem(local);
+      setLoading(false);
+    })();
+  }, [slug]);
 
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(item?.like_count ?? 0);
-  const [saveCount, setSaveCount] = useState(item?.save_count ?? 0);
+  const [likeCount, setLikeCount] = useState(0);
+  const [saveCount, setSaveCount] = useState(0);
   const [showSafeSpace, setShowSafeSpace] = useState(false);
+
+  useEffect(() => {
+    if (item) {
+      setLikeCount(item.like_count);
+      setSaveCount(item.save_count);
+    }
+  }, [item]);
 
   const [readId, setReadId] = useState<string | null>(null);
   const [scrollPercentage, setScrollPercentage] = useState(0);
@@ -272,6 +317,14 @@ function InspirasiDetailPage({
     alert("Laporan telah dikirim. Terima kasih atas partisipasi Anda.");
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
+        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (!item) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 pb-20">
@@ -297,7 +350,33 @@ function InspirasiDetailPage({
   const tab = CONTENT_TABS.find((t) => t.key === item.type)!;
   const TypeIcon = TAB_ICONS[tab.icon]!;
 
-  const relatedItems = getAllItems().filter((d) => item.related_slugs.includes(d.slug));
+  const [relatedItems, setRelatedItems] = useState<InspirasiItem[]>([]);
+
+  useEffect(() => {
+    if (!item || !item.related_slugs.length) return;
+    (async () => {
+      if (supabase) {
+        const { data } = await supabase
+          .from("articles")
+          .select("*")
+          .in("slug", item.related_slugs)
+          .limit(4);
+        if (data?.length) {
+          setRelatedItems(data.map((a) => ({
+            id: a.id, slug: a.slug, type: a.type, title: a.title,
+            content: a.excerpt || "", full_content: a.content,
+            author: a.author, initials: a.initials, cover_image: a.cover_image,
+            category: a.category, reading_time: a.read_time_minutes,
+            like_count: a.like_count, comment_count: a.comment_count,
+            save_count: a.save_count, related_slugs: a.related_slugs || [],
+          })));
+          return;
+        }
+      }
+      const local = getStoredItems().filter((d) => item.related_slugs.includes(d.slug));
+      if (local.length) setRelatedItems(local);
+    })();
+  }, [item]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">

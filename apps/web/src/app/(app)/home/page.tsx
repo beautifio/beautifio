@@ -6,9 +6,9 @@ import { use, useState, useEffect, useRef } from "react";
 import { Sunrise, Sun, CloudSun, Moon, ArrowRight, Flame, Sparkles, Heart } from "lucide-react";
 import { Button } from "@beautifio/ui";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/lib/supabase/client";
 import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
 import { journeyUrl } from "@/lib/journey-queries";
-import { getGuestJourney, isTrialExpired, getCurrentDay, getDaysRemaining, migrateGuestToDB, clearGuestJourney } from "@/lib/guest-journey";
 import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types";
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
@@ -34,30 +34,18 @@ export default function HomeScreen({
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
-  const [migrationTick, setMigrationTick] = useState(0);
+  const [trialInfo, setTrialInfo] = useState<{ started_at: string; expires_at: string } | null>(null);
 
   const mimpiSlug = resolvedParams?.mimpi;
+
+  const isAnonymous = user?.is_anonymous === true || user?.app_metadata?.provider === "anonymous";
 
   const userName =
     user?.user_metadata?.full_name ||
     user?.email?.split("@")[0] ||
-    "Sobat";
+    (isAnonymous ? "Sobat Tamu" : "Sobat");
 
-  const migratedRef = useRef(false);
-
-  // Catch-all migration: handle OAuth login where guest data wasn't migrated
-  useEffect(() => {
-    if (!user || migratedRef.current) return;
-    migratedRef.current = true;
-    (async () => {
-      const guest = getGuestJourney();
-      if (!guest) return;
-      const result = await migrateGuestToDB(user.id, guest);
-      clearGuestJourney();
-      if (result) setMigrationTick((n) => n + 1);
-    })();
-  }, [user, router]);
-
+  // Load trial info + journey for anonymous users
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -72,13 +60,25 @@ export default function HomeScreen({
           const p = await getJourneyProgress(user.id, j.id);
           setProgress(p);
         }
+
+        // Load trial info for anonymous users
+        if (isAnonymous) {
+          const { data: dbUser } = await supabase!
+            .from("users")
+            .select("trial_started_at, trial_expires_at")
+            .eq("id", user.id)
+            .single();
+          if (dbUser) {
+            setTrialInfo(dbUser as any);
+          }
+        }
       } catch (e) {
         console.error("Failed to load journey data", e);
       } finally {
         setLoading(false);
       }
     })();
-  }, [user, migrationTick]);
+  }, [user]);
 
   useEffect(() => {
     if (!loading && !journey && mimpiSlug) {
@@ -91,9 +91,43 @@ export default function HomeScreen({
     }
   }, [loading, journey, mimpiSlug]);
 
+  function calcTrialDays(trialInfo: { started_at: string; expires_at: string }) {
+    const now = new Date();
+    const start = new Date(trialInfo.started_at);
+    const expires = new Date(trialInfo.expires_at);
+    const totalDays = Math.round((expires.getTime() - start.getTime()) / 86400000);
+    const elapsedDays = Math.round((now.getTime() - start.getTime()) / 86400000);
+    const currentDay = Math.min(Math.max(elapsedDays + 1, 1), totalDays);
+    const remaining = Math.max(0, Math.ceil((expires.getTime() - now.getTime()) / 86400000));
+    return { currentDay, totalDays, remaining };
+  }
+
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-6">
+        {/* Trial banner for anonymous users */}
+        {isAnonymous && trialInfo && (
+          <div className="bg-[#FFF7E6] border border-[#FFB627] rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-[#92400E]">
+                🕐 Mode Tamu
+              </p>
+              <p className="text-xs text-[#92400E]">
+                Sisa {calcTrialDays(trialInfo).remaining} hari
+              </p>
+            </div>
+            <div className="w-full bg-[#FFE4A0] rounded-full h-1.5 mb-2">
+              <div
+                className="h-1.5 rounded-full bg-[#FFB627] transition-all"
+                style={{ width: `${(calcTrialDays(trialInfo).currentDay / calcTrialDays(trialInfo).totalDays) * 100}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-[#92400E]/70">
+              Daftar untuk simpan progress selamanya
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 text-lg font-bold text-text-primary">
           {timeGreeting().icon}
           <span>{timeGreeting().text}, {userName} 👋</span>
@@ -149,63 +183,27 @@ export default function HomeScreen({
             </Button>
           </>
         ) : (
-          (() => {
-            const guest = getGuestJourney();
-            if (guest && !isTrialExpired(guest.startDate)) {
-              const template = getDreamTemplate(guest.templateSlug);
-              const day = getCurrentDay(guest.startDate);
-              const remaining = getDaysRemaining(guest.startDate);
-              return (
-                <div className="flex flex-col items-center justify-center pt-12 space-y-6">
-                  <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <span className="text-3xl">{template?.emoji || "🚀"}</span>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-base font-semibold text-text-primary">
-                      {template?.title || "Perjalanan Mimpimu"}
-                    </p>
-                    <p className="text-sm text-text-secondary mt-1">
-                      Hari ke-{day} · {remaining} hari tersisa
-                    </p>
-                  </div>
-                  <div className="w-full max-w-xs bg-muted/50 rounded-full h-2">
-                    <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${(day / 3) * 100}%` }} />
-                  </div>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full"
-                    onClick={() => router.push(`/coba/${guest.templateSlug}`)}
-                  >
-                    <Heart size={16} /> Lanjutkan Trial <ArrowRight size={16} />
-                  </Button>
-                </div>
-              );
-            }
-            return (
-              <div className="flex flex-col items-center justify-center pt-12 space-y-6">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Sparkles size={36} className="text-primary" />
-                </div>
-                <div className="text-center">
-                  <p className="text-base font-semibold text-text-primary">
-                    Kamu belum memulai perjalanan
-                  </p>
-                  <p className="text-sm text-text-secondary mt-1">
-                    Pilih mimpi yang ingin kamu wujudkan
-                  </p>
-                </div>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => router.push("/journey")}
-                >
-                  Mulai Perjalananmu <ArrowRight size={16} />
-                </Button>
-              </div>
-            );
-          })()
+          <div className="flex flex-col items-center justify-center pt-12 space-y-6">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Sparkles size={36} className="text-primary" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-text-primary">
+                Kamu belum memulai perjalanan
+              </p>
+              <p className="text-sm text-text-secondary mt-1">
+                Pilih mimpi yang ingin kamu wujudkan
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={() => router.push("/journey")}
+            >
+              Mulai Perjalananmu <ArrowRight size={16} />
+            </Button>
+          </div>
         )}
       </div>
 

@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Compass } from "lucide-react";
+import { Compass, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/lib/supabase/client";
 import { getAllDreamTemplates, getJmEcosystemByTemplateSlug } from "@beautifio/utils";
+import { Button } from "@beautifio/ui";
 
 const CATEGORY_LABELS: Record<string, string> = {
   sports: "Sports",
@@ -28,14 +30,38 @@ export default function LandingPage() {
   const { user } = useAuth();
   const [templates] = useState(getAllDreamTemplates());
   const [activeFilter, setActiveFilter] = useState<FilterKey>("Semua");
+  const [starting, setStarting] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const justSignedUp = useRef(false);
 
   useEffect(() => {
-    if (user) router.replace("/home");
+    if (user && !justSignedUp.current) router.replace("/home");
   }, [user, router]);
 
   if (user) return null;
 
   const filtered = templates.filter((t) => categoryMatches(t.category, activeFilter));
+
+  async function handleStartAsGuest(templateSlug: string) {
+    if (!supabase) {
+      setError("Koneksi database tidak tersedia.");
+      return;
+    }
+    setStarting(templateSlug);
+    setError("");
+    try {
+      localStorage.setItem("pending_template", templateSlug);
+      const { data, error: signInErr } = await supabase.auth.signInAnonymously();
+      if (signInErr) throw signInErr;
+      justSignedUp.current = true;
+      localStorage.setItem("pending_template", templateSlug);
+      router.replace("/journey");
+    } catch (err: any) {
+      localStorage.removeItem("pending_template");
+      setError(err?.message || "Gagal memulai. Coba lagi.");
+      setStarting(null);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-bg">
@@ -75,15 +101,20 @@ export default function LandingPage() {
           ))}
         </div>
 
+        {error && (
+          <p className="text-sm text-red-500 mb-4 text-center">{error}</p>
+        )}
+
         {/* Template Grid */}
         <div className="grid grid-cols-2 gap-3">
           {filtered.map((t) => {
             const ecosystem = getJmEcosystemByTemplateSlug(t.slug);
             return (
-              <Link
+              <button
                 key={t.slug}
-                href={`/mimpi/${t.slug}`}
-                className="bg-surface rounded-2xl border border-border p-4 hover:border-primary/30 hover:shadow-sm transition-all block"
+                onClick={() => handleStartAsGuest(t.slug)}
+                disabled={starting === t.slug}
+                className="bg-surface rounded-2xl border border-border p-4 hover:border-primary/30 hover:shadow-sm transition-all text-left cursor-pointer disabled:opacity-50"
               >
                 <span className="text-3xl block mb-2">{t.emoji}</span>
                 <h3 className="text-sm font-bold text-text-primary leading-tight">{t.title}</h3>
@@ -102,7 +133,10 @@ export default function LandingPage() {
                     {ecosystem.pivotPoint}
                   </p>
                 )}
-              </Link>
+                {starting === t.slug && (
+                  <p className="text-[10px] text-primary mt-2">Memulai...</p>
+                )}
+              </button>
             );
           })}
         </div>

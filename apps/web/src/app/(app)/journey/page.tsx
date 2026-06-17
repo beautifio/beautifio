@@ -109,6 +109,18 @@ export default function JourneyPage() {
     (async () => {
       try {
         await reloadJourneys();
+
+        // Check for pending template (from anonymous auth flow)
+        const pendingSlug = localStorage.getItem("pending_template");
+        if (pendingSlug) {
+          localStorage.removeItem("pending_template");
+          const t = templates.find((tmpl) => tmpl.slug === pendingSlug);
+          if (t) {
+            setOnboardingTemplate(t);
+            setShowOnboarding(true);
+          }
+        }
+
         const { supabase } = await import("@/lib/supabase/client");
         if (supabase) {
           const { data } = await supabase

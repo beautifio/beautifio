@@ -6,11 +6,12 @@ import Link from "next/link";
 import {
   BookHeart, Clock, Heart, MessageSquare, Flag, Shield,
   Users, Sparkles, BookOpen, PenLine, Quote,
-  Bookmark, Share2, Plus, MapPin,
+  Bookmark, Share2, MapPin,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
-import { CONTENT_TABS, getAllItems } from "@/lib/inspirasi-data";
+import { CONTENT_TABS } from "@/lib/inspirasi-data";
 import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
+import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getPendingJourneyArticleIds } from "@/lib/article-queries";
 
@@ -49,12 +50,14 @@ function ContentTypeBar({
   );
 }
 
-function InspirasiCard({ item, isSuggested }: { item: InspirasiItem; isSuggested?: boolean }) {
+function InspirasiCard({ item, isSuggested, userId }: { item: InspirasiItem; isSuggested?: boolean; userId?: string | null }) {
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(item.like_count);
   const [saveCount, setSaveCount] = useState(item.save_count);
+  const [supportType, setSupportType] = useState<string | null>(null);
+  const [supportCount, setSupportCount] = useState(item.like_count);
 
   const handleLike = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -93,6 +96,19 @@ function InspirasiCard({ item, isSuggested }: { item: InspirasiItem; isSuggested
     e.stopPropagation();
     alert("Laporan telah dikirim. Terima kasih atas partisipasi Anda.");
   }, []);
+
+  const handleSupport = useCallback(async (e: React.MouseEvent, type: string) => {
+    e.stopPropagation();
+    if (!userId || supportType || !supabase) return;
+    try {
+      await supabase
+        .from("curhat_support")
+        .insert({ curhat_id: item.id, user_id: userId, support_type: type });
+      await supabase.rpc("increment_support_count", { p_curhat_id: item.id });
+      setSupportType(type);
+      setSupportCount((c) => c + 1);
+    } catch { /* user already supported or error */ }
+  }, [userId, item.id, supportType]);
 
   const handleCardClick = useCallback(() => {
     router.push(`/inspirasi/${item.slug}`);
@@ -162,30 +178,55 @@ function InspirasiCard({ item, isSuggested }: { item: InspirasiItem; isSuggested
         </div>
 
         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleLike}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-500 transition-colors"
-            >
-              <Heart
-                className={`w-4 h-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
-              />
-              <span>{likeCount}</span>
-            </button>
-            <button className="flex items-center gap-1 text-sm text-gray-500">
-              <MessageSquare className="w-4 h-4" />
-              <span>{item.comment_count}</span>
-            </button>
-            <button
-              onClick={handleSave}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-purple-600 transition-colors"
-            >
-              <Bookmark
-                className={`w-4 h-4 ${isSaved ? "fill-purple-600 text-purple-600" : ""}`}
-              />
-              <span>{saveCount}</span>
-            </button>
-          </div>
+          {item.type === "anonymous" ? (
+            <div className="flex items-center gap-1">
+              {[
+                { type: "hug", label: "🤗", text: "Peluk" },
+                { type: "relate", label: "🙋", text: "Aku juga" },
+                { type: "strength", label: "💪", text: "Semangat" },
+              ].map((s) => (
+                <button
+                  key={s.type}
+                  onClick={(e) => handleSupport(e, s.type)}
+                  disabled={!userId || !!supportType}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    supportType === s.type
+                      ? "bg-purple-100 text-purple-700"
+                      : "text-gray-500 hover:bg-gray-100"
+                  } disabled:opacity-50`}
+                >
+                  <span>{s.label}</span>
+                  <span>{s.text}</span>
+                </button>
+              ))}
+              <span className="text-xs text-gray-400 ml-1">{supportCount}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleLike}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-500 transition-colors"
+              >
+                <Heart
+                  className={`w-4 h-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
+                />
+                <span>{likeCount}</span>
+              </button>
+              <button className="flex items-center gap-1 text-sm text-gray-500">
+                <MessageSquare className="w-4 h-4" />
+                <span>{item.comment_count}</span>
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-purple-600 transition-colors"
+              >
+                <Bookmark
+                  className={`w-4 h-4 ${isSaved ? "fill-purple-600 text-purple-600" : ""}`}
+                />
+                <span>{saveCount}</span>
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <button
               onClick={handleShare}
@@ -223,12 +264,48 @@ function EmptyState({
   );
 }
 
+async function fetchArticles(): Promise<InspirasiItem[]> {
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("is_published", true)
+    .order("created_at", { ascending: false });
+
+  if (!data) return [];
+
+  return data.map((a) => ({
+    id: a.id,
+    slug: a.slug,
+    type: a.type,
+    title: a.title,
+    content: a.excerpt || "",
+    full_content: a.content,
+    author: a.author,
+    initials: a.initials,
+    cover_image: a.cover_image,
+    category: a.category,
+    reading_time: a.read_time_minutes,
+    like_count: a.like_count,
+    comment_count: a.comment_count,
+    save_count: a.save_count,
+    related_slugs: a.related_slugs || [],
+    mentor_title: a.type === "mentor" ? a.author : undefined,
+    community_name: a.type === "community" ? a.author : undefined,
+  }));
+}
+
 export default function InspirasiPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ContentType>("all");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [suggestedIds, setSuggestedIds] = useState<Set<string>>(new Set());
+  const [dbItems, setDbItems] = useState<InspirasiItem[]>([]);
+
+  useEffect(() => {
+    fetchArticles().then(setDbItems);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -242,13 +319,14 @@ export default function InspirasiPage() {
     })();
   }, [user]);
 
+  const allItems = useMemo(() => dbItems, [dbItems]);
+
   const categories = useMemo(() => {
-    const cats = new Set(getAllItems().map((item) => item.category));
+    const cats = new Set(allItems.map((item) => item.category));
     return Array.from(cats).sort();
-  }, []);
+  }, [allItems]);
 
   const filteredItems = useMemo(() => {
-    const allItems = getAllItems();
     let items =
       activeTab === "all"
         ? allItems
@@ -257,7 +335,7 @@ export default function InspirasiPage() {
       items = items.filter((item) => item.category === categoryFilter);
     }
     return items;
-  }, [activeTab, categoryFilter]);
+  }, [activeTab, categoryFilter, allItems]);
 
   const activeTabInfo = CONTENT_TABS.find((t) => t.key === activeTab)!;
 
@@ -309,14 +387,14 @@ export default function InspirasiPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {filteredItems.map((item) => (
-              <InspirasiCard key={item.id} item={item} isSuggested={suggestedIds.has(item.id)} />
+              <InspirasiCard key={item.id} item={item} isSuggested={suggestedIds.has(item.id)} userId={user?.id} />
             ))}
           </div>
         )}
       </div>
 
       <Link
-        href="/inspirasi/post"
+        href="/curhat/post"
         className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-[#084463] text-white shadow-lg hover:bg-[#084463]/90 active:scale-95 transition-all flex items-center justify-center"
       >
         <PenLine size={22} />
