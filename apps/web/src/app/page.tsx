@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
-import { Compass, ArrowRight } from "lucide-react";
+import { Compass } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/client";
 import { getAllDreamTemplates, getJmEcosystemByTemplateSlug } from "@beautifio/utils";
@@ -15,6 +15,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   business: "Business",
   health: "Health",
   tech: "Tech",
+  education: "Education",
+  lifestyle: "Lifestyle",
 };
 
 const FILTER_OPTIONS = ["Semua", ...Object.values(CATEGORY_LABELS)] as const;
@@ -40,7 +42,10 @@ export default function LandingPage() {
 
   if (user) return null;
 
-  const filtered = templates.filter((t) => categoryMatches(t.category, activeFilter));
+  const filtered = useMemo(
+    () => templates.filter((t) => categoryMatches(t.category, activeFilter)),
+    [templates, activeFilter]
+  );
 
   async function handleStartAsGuest(templateSlug: string) {
     if (!supabase) {
@@ -54,7 +59,6 @@ export default function LandingPage() {
       const { data, error: signInErr } = await supabase.auth.signInAnonymously();
       if (signInErr) throw signInErr;
       justSignedUp.current = true;
-      localStorage.setItem("pending_template", templateSlug);
       router.replace("/journey");
     } catch (err: any) {
       localStorage.removeItem("pending_template");
