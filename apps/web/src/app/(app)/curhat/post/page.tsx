@@ -13,7 +13,7 @@ import type { PostingMode } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isSensitiveCategory, getResourcesForCategory } from "@/lib/safe-space-data";
-import { PusatBantuanSheet } from "@/features/bantuan/PusatBantuanSheet";
+import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet";
 
 export default function PostPage() {
   const router = useRouter();
@@ -164,10 +164,9 @@ export default function PostPage() {
           </div>
         </div>
 
-        <PusatBantuanSheet
+        <RuangAmanSheet
           open={showBantuan}
           onClose={() => setShowBantuan(false)}
-          initialTab="bantuan"
         />
       </>
     );

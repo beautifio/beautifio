@@ -11,7 +11,7 @@ import type { PostingMode, ModerationStatus } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isSensitiveCategory } from "@/lib/safe-space-data";
-import { PusatBantuanSheet } from "@/features/bantuan/PusatBantuanSheet";
+import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet";
 
 interface CurhatItem {
   id: string;
@@ -212,10 +212,9 @@ export default function CurhatPage() {
         <PenLine size={22} />
       </Link>
 
-      <PusatBantuanSheet
+      <RuangAmanSheet
         open={showBantuan}
         onClose={() => setShowBantuan(false)}
-        initialTab="bantuan"
       />
     </div>
   );

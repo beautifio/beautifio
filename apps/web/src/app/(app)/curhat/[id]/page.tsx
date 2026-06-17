@@ -11,7 +11,8 @@ import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isSensitiveCategory, getResourcesForCategory } from "@/lib/safe-space-data";
 import { checkProfanity } from "@/lib/profanity";
-import { PusatBantuanSheet } from "@/features/bantuan/PusatBantuanSheet";
+import { detectKategori } from "@/lib/ruang-aman-data";
+import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -549,11 +550,10 @@ export default function CurhatDetailPage({
         </div>
       </div>
 
-      <PusatBantuanSheet
+      <RuangAmanSheet
         open={showBantuan}
         onClose={() => setShowBantuan(false)}
-        initialTab={resources.length > 0 ? "darurat" : "bantuan"}
-        storyCategory={item?.category}
+        initialCategory={item?.category ? detectKategori(item.category + " " + item.content) || undefined : undefined}
       />
     </div>
   );
