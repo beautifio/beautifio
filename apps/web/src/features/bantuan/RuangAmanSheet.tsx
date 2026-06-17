@@ -551,7 +551,7 @@ export function RuangAmanSheet({
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
           {/* Self-harm waiver on contact step */}
           {cat?.id === "self-harm" && step === "kontak" && (
             <div className="p-4 rounded-xl bg-red-50 border border-red-200 mb-4 text-center">
