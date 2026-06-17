@@ -11,6 +11,7 @@ import type { PostingMode, ModerationStatus } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isSensitiveCategory } from "@/lib/safe-space-data";
+import { PusatBantuanSheet } from "@/features/bantuan/PusatBantuanSheet";
 
 interface CurhatItem {
   id: string;
@@ -144,6 +145,7 @@ export default function CurhatPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<CurhatItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showBantuan, setShowBantuan] = useState(false);
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return; }
@@ -179,6 +181,21 @@ export default function CurhatPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+        {/* Bantuan Banner */}
+        <button
+          onClick={() => setShowBantuan(true)}
+          className="w-full flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors text-left"
+        >
+          <div className="w-9 h-9 rounded-full bg-amber-200 flex items-center justify-center shrink-0">
+            <Shield className="w-4 h-4 text-amber-700" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-800">Butuh Bantuan?</p>
+            <p className="text-xs text-amber-600">Kontak darurat & lembaga bantuan</p>
+          </div>
+          <span className="text-lg">→</span>
+        </button>
+
         {items.length === 0 ? (
           <EmptyState />
         ) : (
@@ -194,6 +211,12 @@ export default function CurhatPage() {
       >
         <PenLine size={22} />
       </Link>
+
+      <PusatBantuanSheet
+        open={showBantuan}
+        onClose={() => setShowBantuan(false)}
+        initialTab="bantuan"
+      />
     </div>
   );
 }

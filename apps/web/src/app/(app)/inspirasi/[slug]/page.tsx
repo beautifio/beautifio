@@ -5,13 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, BookHeart, Clock, Heart, Bookmark, Share2, Flag,
-  Shield, MessageSquare, Sparkles, BookOpen, X, MapPin,
+  MessageSquare, Sparkles, BookOpen, X, MapPin,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
 import { SOURCE_TABS, getStoredItems } from "@/lib/inspirasi-data";
 import type { InspirasiItem } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
-import { SafeSpaceModal, NeedHelpButton } from "@/features/safe-space/SafeSpaceModal";
 import {
   upsertArticleRead,
   updateArticleReadProgress,
@@ -109,7 +108,6 @@ function InspirasiDetailPage({
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [saveCount, setSaveCount] = useState(0);
-  const [showSafeSpace, setShowSafeSpace] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -526,14 +524,6 @@ function InspirasiDetailPage({
             {renderContent(item.full_content)}
           </div>
 
-          {/* Need Help Button */}
-          <div className="mb-4">
-            <NeedHelpButton
-              onClick={() => setShowSafeSpace(true)}
-              storyCategory={item.category}
-            />
-          </div>
-
           {/* Action Bar */}
           <div className="flex items-center justify-between py-4 border-t border-b border-gray-100 mb-8">
             <div className="flex items-center gap-4">
@@ -571,14 +561,6 @@ function InspirasiDetailPage({
               >
                 <Flag className="w-4 h-4" />
                 <span className="hidden sm:inline">Laporkan</span>
-              </button>
-              <button
-                onClick={() => setShowSafeSpace(true)}
-                className="flex items-center gap-1 text-xs text-gray-400 hover:text-amber-500 transition-colors"
-                title="Safe Space"
-              >
-                <Shield className="w-4 h-4" />
-                <span className="hidden sm:inline">Safe Space</span>
               </button>
             </div>
           </div>
@@ -658,12 +640,6 @@ function InspirasiDetailPage({
           </div>
         </div>
       )}
-
-      <SafeSpaceModal
-        open={showSafeSpace}
-        onClose={() => setShowSafeSpace(false)}
-        storyCategory={item.category}
-      />
 
     </div>
   );
