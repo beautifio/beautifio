@@ -1,11 +1,12 @@
-export type ContentType = "all" | "story" | "anonymous" | "journal" | "mentor" | "community";
+export type SourceType = "all" | "cerita" | "mentor" | "redaksi";
 export type PostingMode = "anonymous" | "nickname" | "public";
 export type ModerationStatus = "pending" | "approved" | "rejected";
 
 export interface InspirasiItem {
   id: string;
   slug: string;
-  type: ContentType;
+  type: string;
+  source?: string;
   title: string;
   content: string;
   full_content: string;
@@ -26,13 +27,11 @@ export interface InspirasiItem {
   createdAt?: string;
 }
 
-export const CONTENT_TABS: { key: ContentType; label: string; icon: string }[] = [
+export const SOURCE_TABS: { key: SourceType; label: string; icon: string }[] = [
   { key: "all", label: "Semua", icon: "Sparkles" },
-  { key: "story", label: "Cerita", icon: "BookOpen" },
-  { key: "anonymous", label: "Curhat", icon: "PenLine" },
-  { key: "journal", label: "Journal", icon: "BookHeart" },
+  { key: "cerita", label: "Cerita", icon: "BookOpen" },
   { key: "mentor", label: "Mentor", icon: "Quote" },
-  { key: "community", label: "Komunitas", icon: "Users" },
+  { key: "redaksi", label: "Redaksi", icon: "BookHeart" },
 ];
 
 export const ANON_CATEGORIES = [

@@ -4,31 +4,31 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  BookHeart, Clock, Heart, MessageSquare, Flag, Shield,
-  Users, Sparkles, BookOpen, PenLine, Quote,
+  BookHeart, Clock, Heart, MessageSquare, Flag,
+  Sparkles, BookOpen, PenLine, Quote,
   Bookmark, Share2, MapPin,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
-import { CONTENT_TABS } from "@/lib/inspirasi-data";
-import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
+import { SOURCE_TABS } from "@/lib/inspirasi-data";
+import type { SourceType, InspirasiItem } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getPendingJourneyArticleIds } from "@/lib/article-queries";
 
 const TAB_ICONS: Record<string, typeof Sparkles> = {
-  Sparkles, BookOpen, PenLine, BookHeart, Quote, Users,
+  Sparkles, BookOpen, BookHeart, Quote,
 };
 
-function ContentTypeBar({
+function SourceBar({
   active,
   onChange,
 }: {
-  active: ContentType;
-  onChange: (t: ContentType) => void;
+  active: SourceType;
+  onChange: (t: SourceType) => void;
 }) {
   return (
     <div className="flex overflow-x-auto gap-2 px-4 py-3">
-      {CONTENT_TABS.map((tab) => {
+      {SOURCE_TABS.map((tab) => {
         const Icon = TAB_ICONS[tab.icon]!;
         const isActive = tab.key === active;
         return (
@@ -50,14 +50,21 @@ function ContentTypeBar({
   );
 }
 
+const SOURCE_BADGE: Record<string, { bg: string; text: string; label: string }> = {
+  cerita: { bg: "bg-emerald-100", text: "text-emerald-700", label: "Cerita" },
+  mentor: { bg: "bg-purple-100", text: "text-purple-700", label: "Mentor" },
+  redaksi: { bg: "bg-blue-100", text: "text-blue-700", label: "Redaksi" },
+};
+
 function InspirasiCard({ item, isSuggested, userId }: { item: InspirasiItem; isSuggested?: boolean; userId?: string | null }) {
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(item.like_count);
   const [saveCount, setSaveCount] = useState(item.save_count);
-  const [supportType, setSupportType] = useState<string | null>(null);
-  const [supportCount, setSupportCount] = useState(item.like_count);
+
+  const source = item.source || "cerita";
+  const badge = SOURCE_BADGE[source] || SOURCE_BADGE.cerita;
 
   const handleLike = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -97,25 +104,9 @@ function InspirasiCard({ item, isSuggested, userId }: { item: InspirasiItem; isS
     alert("Laporan telah dikirim. Terima kasih atas partisipasi Anda.");
   }, []);
 
-  const handleSupport = useCallback(async (e: React.MouseEvent, type: string) => {
-    e.stopPropagation();
-    if (!userId || supportType || !supabase) return;
-    try {
-      await supabase
-        .from("curhat_support")
-        .insert({ curhat_id: item.id, user_id: userId, support_type: type });
-      await supabase.rpc("increment_support_count", { p_curhat_id: item.id });
-      setSupportType(type);
-      setSupportCount((c) => c + 1);
-    } catch { /* user already supported or error */ }
-  }, [userId, item.id, supportType]);
-
   const handleCardClick = useCallback(() => {
     router.push(`/inspirasi/${item.slug}`);
   }, [router, item.slug]);
-
-  const tab = CONTENT_TABS.find((t) => t.key === item.type)!;
-  const TypeIcon = TAB_ICONS[tab.icon]!;
 
   return (
     <div
@@ -130,15 +121,15 @@ function InspirasiCard({ item, isSuggested, userId }: { item: InspirasiItem; isS
             className="w-full h-full object-cover"
             loading="lazy"
           />
-          <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-xs">
-            {tab.label}
+          <Badge className={`absolute top-2 left-2 ${badge.bg} ${badge.text} text-xs font-semibold`}>
+            {badge.label}
           </Badge>
         </div>
       ) : (
         <div className="aspect-[16/9] relative bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-          <TypeIcon className="w-12 h-12 text-purple-300" />
-          <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-xs">
-            {tab.label}
+          <BookOpen className="w-12 h-12 text-purple-300" />
+          <Badge className={`absolute top-2 left-2 ${badge.bg} ${badge.text} text-xs font-semibold`}>
+            {badge.label}
           </Badge>
         </div>
       )}
@@ -149,12 +140,6 @@ function InspirasiCard({ item, isSuggested, userId }: { item: InspirasiItem; isS
           <span>{item.reading_time} menit baca</span>
           <span className="text-gray-300">|</span>
           <span>{item.category}</span>
-          {item.moderationStatus === "pending" && (
-            <span className="text-amber-600 font-medium">(pending)</span>
-          )}
-          {item.moderationStatus === "rejected" && (
-            <span className="text-red-600 font-medium">(ditolak)</span>
-          )}
         </div>
         {isSuggested && (
           <div className="flex items-center gap-1 text-[11px] font-medium mb-2" style={{ color: "#D94040" }}>
@@ -178,55 +163,30 @@ function InspirasiCard({ item, isSuggested, userId }: { item: InspirasiItem; isS
         </div>
 
         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          {item.type === "anonymous" ? (
-            <div className="flex items-center gap-1">
-              {[
-                { type: "hug", label: "🤗", text: "Peluk" },
-                { type: "relate", label: "🙋", text: "Aku juga" },
-                { type: "strength", label: "💪", text: "Semangat" },
-              ].map((s) => (
-                <button
-                  key={s.type}
-                  onClick={(e) => handleSupport(e, s.type)}
-                  disabled={!userId || !!supportType}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    supportType === s.type
-                      ? "bg-purple-100 text-purple-700"
-                      : "text-gray-500 hover:bg-gray-100"
-                  } disabled:opacity-50`}
-                >
-                  <span>{s.label}</span>
-                  <span>{s.text}</span>
-                </button>
-              ))}
-              <span className="text-xs text-gray-400 ml-1">{supportCount}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleLike}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-500 transition-colors"
-              >
-                <Heart
-                  className={`w-4 h-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
-                />
-                <span>{likeCount}</span>
-              </button>
-              <button className="flex items-center gap-1 text-sm text-gray-500">
-                <MessageSquare className="w-4 h-4" />
-                <span>{item.comment_count}</span>
-              </button>
-              <button
-                onClick={handleSave}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-purple-600 transition-colors"
-              >
-                <Bookmark
-                  className={`w-4 h-4 ${isSaved ? "fill-purple-600 text-purple-600" : ""}`}
-                />
-                <span>{saveCount}</span>
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleLike}
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-500 transition-colors"
+            >
+              <Heart
+                className={`w-4 h-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
+              />
+              <span>{likeCount}</span>
+            </button>
+            <button className="flex items-center gap-1 text-sm text-gray-500">
+              <MessageSquare className="w-4 h-4" />
+              <span>{item.comment_count}</span>
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-purple-600 transition-colors"
+            >
+              <Bookmark
+                className={`w-4 h-4 ${isSaved ? "fill-purple-600 text-purple-600" : ""}`}
+              />
+              <span>{saveCount}</span>
+            </button>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleShare}
@@ -278,6 +238,7 @@ async function fetchArticles(): Promise<InspirasiItem[]> {
     id: a.id,
     slug: a.slug,
     type: a.type,
+    source: a.source || "cerita",
     title: a.title,
     content: a.excerpt || "",
     full_content: a.content,
@@ -290,15 +251,13 @@ async function fetchArticles(): Promise<InspirasiItem[]> {
     comment_count: a.comment_count,
     save_count: a.save_count,
     related_slugs: a.related_slugs || [],
-    mentor_title: a.type === "mentor" ? a.author : undefined,
-    community_name: a.type === "community" ? a.author : undefined,
   }));
 }
 
 export default function InspirasiPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<ContentType>("all");
+  const [activeTab, setActiveTab] = useState<SourceType>("all");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [suggestedIds, setSuggestedIds] = useState<Set<string>>(new Set());
   const [dbItems, setDbItems] = useState<InspirasiItem[]>([]);
@@ -322,22 +281,22 @@ export default function InspirasiPage() {
   const allItems = useMemo(() => dbItems, [dbItems]);
 
   const categories = useMemo(() => {
-    const cats = new Set(allItems.map((item) => item.category));
+    const items = activeTab === "all" ? allItems : allItems.filter((item) => (item.source || "cerita") === activeTab);
+    const cats = new Set(items.map((item) => item.category));
     return Array.from(cats).sort();
-  }, [allItems]);
+  }, [activeTab, allItems]);
 
   const filteredItems = useMemo(() => {
-    let items =
-      activeTab === "all"
-        ? allItems
-        : allItems.filter((item) => item.type === activeTab);
+    let items = activeTab === "all"
+      ? allItems
+      : allItems.filter((item) => (item.source || "cerita") === activeTab);
     if (categoryFilter) {
       items = items.filter((item) => item.category === categoryFilter);
     }
     return items;
   }, [activeTab, categoryFilter, allItems]);
 
-  const activeTabInfo = CONTENT_TABS.find((t) => t.key === activeTab)!;
+  const activeTabInfo = SOURCE_TABS.find((t) => t.key === activeTab)!;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -356,33 +315,46 @@ export default function InspirasiPage() {
               href="/inspirasi/post"
               className="text-xs text-[#084463] font-medium hover:underline shrink-0"
             >
-              Kirim curhatanmu secara anonim &rarr;
+              Bagikan ceritamu &rarr;
             </Link>
           </div>
-          <ContentTypeBar active={activeTab} onChange={setActiveTab} />
+          <SourceBar active={activeTab} onChange={(t) => { setActiveTab(t); setCategoryFilter(""); }} />
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-3">
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          <option value="">Semua Kategori</option>
+        <div className="flex overflow-x-auto gap-2 pb-1">
+          <button
+            onClick={() => setCategoryFilter("")}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              !categoryFilter
+                ? "bg-gray-800 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Semua
+          </button>
           {categories.map((cat) => (
-            <option key={cat} value={cat}>
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                categoryFilter === cat
+                  ? "bg-gray-800 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
               {cat}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 pb-4">
         {filteredItems.length === 0 ? (
           <EmptyState
             icon={TAB_ICONS[activeTabInfo.icon]!}
-            message={`Tidak ada ${activeTabInfo.label.toLowerCase()} yang ditemukan`}
+            message={activeTab === "redaksi" ? "Belum ada tulisan dari Redaksi" : `Tidak ada ${activeTabInfo.label.toLowerCase()} yang ditemukan`}
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -5,11 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, BookHeart, Clock, Heart, Bookmark, Share2, Flag,
-  Shield, MessageSquare, Users, Sparkles, BookOpen, PenLine, Quote, X, MapPin,
+  Shield, MessageSquare, Sparkles, BookOpen, X, MapPin,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
-import { CONTENT_TABS, getStoredItems } from "@/lib/inspirasi-data";
-import type { ContentType, InspirasiItem } from "@/lib/inspirasi-data";
+import { SOURCE_TABS, getStoredItems } from "@/lib/inspirasi-data";
+import type { InspirasiItem } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
 import { SafeSpaceModal, NeedHelpButton } from "@/features/safe-space/SafeSpaceModal";
 import {
@@ -21,7 +21,13 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 
 const TAB_ICONS: Record<string, typeof Sparkles> = {
-  Sparkles, BookOpen, PenLine, BookHeart, Quote, Users,
+  Sparkles, BookOpen, BookHeart,
+};
+
+const SOURCE_BADGE: Record<string, { bg: string; text: string; label: string }> = {
+  cerita: { bg: "bg-emerald-100", text: "text-emerald-700", label: "Cerita" },
+  mentor: { bg: "bg-purple-100", text: "text-purple-700", label: "Mentor" },
+  redaksi: { bg: "bg-blue-100", text: "text-blue-700", label: "Redaksi" },
 };
 
 function renderContent(text: string) {
@@ -75,6 +81,7 @@ function InspirasiDetailPage({
             id: data.id,
             slug: data.slug,
             type: data.type,
+            source: data.source || "cerita",
             title: data.title,
             content: data.excerpt || "",
             full_content: data.content,
@@ -347,8 +354,8 @@ function InspirasiDetailPage({
     );
   }
 
-  const tab = CONTENT_TABS.find((t) => t.key === item.type)!;
-  const TypeIcon = TAB_ICONS[tab.icon]!;
+  const source = item.source || "cerita";
+  const badge = SOURCE_BADGE[source] || SOURCE_BADGE.cerita;
 
   const [relatedItems, setRelatedItems] = useState<InspirasiItem[]>([]);
 
@@ -449,7 +456,7 @@ function InspirasiDetailPage({
           </div>
         ) : (
           <div className="aspect-[16/9] relative bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-            <TypeIcon className="w-20 h-20 text-purple-300" />
+            <BookOpen className="w-20 h-20 text-purple-300" />
           </div>
         )}
 
@@ -457,23 +464,12 @@ function InspirasiDetailPage({
         <div className="px-4 py-5">
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
-            <Badge className="bg-purple-600 text-white text-xs flex items-center gap-1">
-              <TypeIcon className="w-3 h-3" />
-              {tab.label}
+            <Badge className={`${badge.bg} ${badge.text} text-xs font-semibold`}>
+              {badge.label}
             </Badge>
             <Badge className="bg-gray-100 text-gray-700 text-xs">
               {item.category}
             </Badge>
-            {item.moderationStatus === "pending" && (
-              <Badge className="bg-amber-100 text-amber-800 text-xs">
-                Menunggu Moderasi
-              </Badge>
-            )}
-            {item.moderationStatus === "rejected" && (
-              <Badge className="bg-red-100 text-red-800 text-xs">
-                Ditolak
-              </Badge>
-            )}
           </div>
 
           {/* Title */}
@@ -488,11 +484,12 @@ function InspirasiDetailPage({
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">{item.author}</p>
-              {(item.type === "mentor" && item.mentor_title) ? (
-                <p className="text-xs text-gray-500">{item.mentor_title}</p>
-              ) : (item.type === "community" && item.community_name) ? (
-                <p className="text-xs text-gray-500">{item.community_name}</p>
-              ) : null}
+              {source === "mentor" && (
+                <p className="text-xs text-gray-500">Konten Premium Mentor</p>
+              )}
+              {source === "redaksi" && (
+                <p className="text-xs text-gray-500">Tim Beautifio</p>
+              )}
             </div>
           </div>
 
@@ -599,8 +596,8 @@ function InspirasiDetailPage({
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {relatedItems.slice(0, 4).map((related) => {
-                  const relatedTab = CONTENT_TABS.find((t) => t.key === related.type)!;
-                  const RelatedIcon = TAB_ICONS[relatedTab.icon]!;
+                  const relSource = related.source || "cerita";
+                  const relBadge = SOURCE_BADGE[relSource] || SOURCE_BADGE.cerita;
                   return (
                     <Link
                       key={related.id}
@@ -615,15 +612,15 @@ function InspirasiDetailPage({
                             className="w-full h-full object-cover"
                             loading="lazy"
                           />
-                          <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-xs">
-                            {relatedTab.label}
+                          <Badge className={`absolute top-2 left-2 ${relBadge.bg} ${relBadge.text} text-xs font-semibold`}>
+                            {relBadge.label}
                           </Badge>
                         </div>
                       ) : (
                         <div className="aspect-[16/9] bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                          <RelatedIcon className="w-8 h-8 text-purple-300" />
-                          <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-xs">
-                            {relatedTab.label}
+                          <BookOpen className="w-8 h-8 text-purple-300" />
+                          <Badge className={`absolute top-2 left-2 ${relBadge.bg} ${relBadge.text} text-xs font-semibold`}>
+                            {relBadge.label}
                           </Badge>
                         </div>
                       )}
