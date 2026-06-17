@@ -129,42 +129,28 @@ export function RuangAmanSheet({
           placeholder="Apa yang kamu alami? Ceritakan dengan detail jika kamu nyaman..."
           className="w-full h-32 p-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:border-amber-300 focus:ring-1 focus:ring-amber-200"
         />
-        <button
-          onClick={handleCeritaNext}
-          disabled={!cerita.trim()}
-          className="sticky bottom-0 mt-4 w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-        >
-          Lanjut <ChevronRight className="w-4 h-4" />
-        </button>
       </div>
     );
   }
 
   function renderPanduan() {
-    if (!cat || !cat.guide) return null;
+    if (!cat) return null;
     return (
       <div>
         <p className="text-sm text-gray-500 mb-1">
           {cat.emoji} <strong>{cat.label}</strong>
         </p>
-        <p className="text-sm font-semibold text-gray-900 mb-3">📖 Panduan Langkah</p>
-        <ol className="space-y-2 mb-4">
-          {cat.guide.map((step, i) => (
-            <li key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-green-50 border border-green-100">
-              <span className="w-5 h-5 rounded-full bg-green-500 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+        <p className="text-xs text-gray-400 mb-4">Berikut adalah langkah-langkah yang bisa kamu lakukan:</p>
+        <div className="space-y-3">
+          {(cat.guide || []).map((step, i) => (
+            <div key={i} className="flex gap-3 bg-gray-50 p-3 rounded-xl">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold flex items-center justify-center mt-0.5">
                 {i + 1}
               </span>
-              <span className="text-xs text-gray-700 leading-relaxed">{step}</span>
-            </li>
+              <p className="text-sm text-gray-700 leading-relaxed">{step}</p>
+            </div>
           ))}
-        </ol>
-        <button
-          onClick={handlePanduanNext}
-          className="sticky bottom-0 mt-4 w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-all flex items-center justify-center gap-2"
-        >
-          {cat.formFields.length === 0 ? "Lihat Kontak" : "Isi Data "}
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        </div>
       </div>
     );
   }
@@ -303,11 +289,6 @@ export function RuangAmanSheet({
     if (!cat) return null;
     const locationField = cat.formFields.find((f) => f.type === "location");
     const otherFields = cat.formFields.filter((f) => f.type !== "location");
-    const requiredFields = cat.formFields.filter((f) => f.required);
-    const allFilled = requiredFields.every((f) => {
-      if (f.type === "location") return selectedRS !== null || rsList.length === 0;
-      return getFormValue(f).trim().length > 0;
-    });
 
     return (
       <div>
@@ -326,14 +307,6 @@ export function RuangAmanSheet({
           {locationField && renderFormField(locationField)}
           {otherFields.map((f) => renderFormField(f))}
         </div>
-
-        <button
-          onClick={handleFormNext}
-          disabled={!allFilled}
-          className="sticky bottom-0 mt-4 w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-        >
-          Hubungi Lembaga Bantuan <ChevronRight className="w-4 h-4" />
-        </button>
       </div>
     );
   }
@@ -411,44 +384,88 @@ export function RuangAmanSheet({
             <p className="text-[10px] text-gray-400 mb-3">
               Data kamu akan dikirim ke tim Beautifio Care untuk ditindaklanjuti.
             </p>
-            <button
-              onClick={async () => {
-                const payload = {
-                  category: cat.id,
-                  story: cerita,
-                  form_data: allFormData,
-                  partner_type: cat.carePartnerType,
-                };
-                try {
-                  const res = await fetch("/api/beautifio-care/ticket", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                  });
-                  if (res.ok) {
-                    alert("✓ Permintaan kamu sudah terkirim. Tim Beautifio Care akan menghubungimu dalam 1×24 jam.");
-                    onClose();
-                  } else {
-                    alert("Gagal mengirim. Coba lagi nanti.");
-                  }
-                } catch {
-                  alert("Gagal mengirim. Cek koneksi internet kamu.");
-                }
-              }}
-              className="sticky bottom-0 w-full py-3 rounded-xl bg-[#084463] text-white text-sm font-semibold hover:bg-[#084463]/90 flex items-center justify-center gap-2"
-            >
-              <Send className="w-4 h-4" /> Kirim ke Beautifio Care
-            </button>
           </div>
         )}
+      </div>
+    );
+  }
 
-        {cat.emergency && (
-          <div className="sticky bottom-0 pt-2 pb-4 bg-white">
-            <div className="px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-center">
-              <p className="text-xs text-red-700">
-                🆘 Darurat? Segera hubungi <strong className="text-red-600">{cat.emergency}</strong>
-              </p>
-            </div>
+  function renderBottomBar() {
+    if (step === "kategori") return null;
+    return (
+      <div className="shrink-0 px-6 py-3 border-t border-gray-100 bg-white space-y-2">
+        {step === "cerita" && cat && (
+          <button
+            onClick={handleCeritaNext}
+            disabled={!cerita.trim()}
+            className="w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          >
+            Lanjut <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
+        {step === "panduan" && cat && (
+          <button
+            onClick={handlePanduanNext}
+            className="w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-all flex items-center justify-center gap-2"
+          >
+            Lanjut <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
+        {step === "form" && cat && (() => {
+          const requiredFields = cat.formFields.filter((f) => f.required);
+          const allFilled = requiredFields.every((f) => {
+            if (f.type === "location") {
+              const rs = getRekomendasiRS(selectedProv, selectedKota);
+              return selectedRS !== null || rs.length === 0;
+            }
+            return (formData[f.id] || "").trim().length > 0;
+          });
+          return (
+            <button
+              onClick={handleFormNext}
+              disabled={!allFilled}
+              className="w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            >
+              Hubungi Lembaga Bantuan <ChevronRight className="w-4 h-4" />
+            </button>
+          );
+        })()}
+        {step === "kontak" && cat && cat.carePartnerType && (
+          <button
+            onClick={async () => {
+              const allFormData = { ...formData, deskripsi: formData.deskripsi || cerita };
+              const payload = {
+                category: cat.id,
+                story: cerita,
+                form_data: allFormData,
+                partner_type: cat.carePartnerType,
+              };
+              try {
+                const res = await fetch("/api/beautifio-care/ticket", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload),
+                });
+                if (res.ok) {
+                  alert("✓ Permintaan kamu sudah terkirim. Tim Beautifio Care akan menghubungimu dalam 1×24 jam.");
+                  onClose();
+                } else {
+                  alert("Gagal mengirim. Coba lagi nanti.");
+                }
+              } catch {
+                alert("Gagal mengirim. Cek koneksi internet kamu.");
+              }
+            }}
+            className="w-full py-3 rounded-xl bg-[#084463] text-white text-sm font-semibold hover:bg-[#084463]/90 flex items-center justify-center gap-2"
+          >
+            <Send className="w-4 h-4" /> Kirim ke Beautifio Care
+          </button>
+        )}
+        {step === "kontak" && cat?.emergency && (
+          <div className="px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-center">
+            <p className="text-xs text-red-700">
+              🆘 Darurat? Segera hubungi <strong className="text-red-600">{cat.emergency}</strong>
+            </p>
           </div>
         )}
       </div>
@@ -544,6 +561,8 @@ export function RuangAmanSheet({
           )}
           {renderStep()}
         </div>
+
+        {renderBottomBar()}
       </div>
     </div>
   );
