@@ -374,27 +374,33 @@ export default function CurhatDetailPage({
           </div>
         )}
 
-        <div className="flex items-center gap-2 py-4 border-t border-gray-100">
+        <div className="flex flex-wrap items-center gap-2 py-4 border-t border-gray-100">
           {[
             { type: "hug", label: "🤗", text: "Peluk" },
             { type: "relate", label: "🙋", text: "Aku juga" },
             { type: "strength", label: "💪", text: "Semangat" },
+            { type: "love", label: "❤️", text: "Sayang" },
+            { type: "warm", label: "🫂", text: "Hangat" },
+            { type: "solid", label: "🤝", text: "Solidaritas" },
+            { type: "sad", label: "😢", text: "Turut sedih" },
+            { type: "pray", label: "🙏", text: "Doa" },
+            { type: "inspire", label: "✨", text: "Inspirasi" },
           ].map((s) => (
             <button
               key={s.type}
               onClick={() => handleSupport(s.type)}
               disabled={!user?.id || !!supportType}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                 supportType === s.type
-                  ? "bg-purple-100 text-purple-700"
+                  ? "bg-purple-100 text-purple-700 ring-2 ring-purple-300"
                   : "text-gray-500 hover:bg-gray-100"
               } disabled:opacity-50`}
             >
-              <span>{s.label}</span>
+              <span className="text-base">{s.label}</span>
               <span>{s.text}</span>
             </button>
           ))}
-          <span className="text-sm text-gray-400 ml-1">{supportCount} dukungan</span>
+          <span className="text-sm text-gray-400 w-full text-center mt-1">{supportCount} dukungan</span>
         </div>
 
         {/* Comments Section (only for story mode) */}
