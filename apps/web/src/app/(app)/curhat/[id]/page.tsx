@@ -48,6 +48,7 @@ interface Comment {
   user_id: string;
   content: string;
   created_at: string;
+  parent_id: string | null;
 }
 
 export default function CurhatDetailPage({
@@ -71,6 +72,7 @@ export default function CurhatDetailPage({
   const [commentError, setCommentError] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [profanityWarn, setProfanityWarn] = useState("");
+  const [replyToId, setReplyToId] = useState<string | null>(null);
 
   const [pollData, setPollData] = useState<{ id: string; options: string[] } | null>(null);
   const [pollVotes, setPollVotes] = useState<number[]>([]);
@@ -151,7 +153,7 @@ export default function CurhatDetailPage({
     (async () => {
       const { data } = await supabase
         .from("curhat_comments")
-        .select("id, user_id, content, created_at")
+        .select("id, user_id, content, created_at, parent_id")
         .eq("curhat_id", id)
         .eq("status", "visible")
         .order("created_at", { ascending: true });
@@ -192,14 +194,18 @@ export default function CurhatDetailPage({
     setCommentSubmitting(true);
     setCommentError("");
 
+    const insertPayload: Record<string, any> = { curhat_id: id, user_id: user.id, content: text };
+    if (replyToId) insertPayload.parent_id = replyToId;
+
     const { error } = await supabase
       .from("curhat_comments")
-      .insert({ curhat_id: id, user_id: user.id, content: text });
+      .insert(insertPayload);
 
     if (error) {
       setCommentError(error.message);
     } else {
       setNewComment("");
+      setReplyToId(null);
     }
     setCommentSubmitting(false);
   };
@@ -404,20 +410,85 @@ export default function CurhatDetailPage({
                   Belum ada komentar. Jadilah yang pertama berbagi cerita.
                 </p>
               )}
-              {comments.map((c) => (
-                <div key={c.id} className="bg-white p-3 rounded-lg border border-gray-100">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-500">
-                      AN
+              {(() => {
+                const topComments = comments.filter((c) => !c.parent_id);
+                const childMap = new Map<string, Comment[]>();
+                for (const c of comments) {
+                  if (c.parent_id) {
+                    const arr = childMap.get(c.parent_id) || [];
+                    arr.push(c);
+                    childMap.set(c.parent_id, arr);
+                  }
+                }
+                return topComments.map((c) => {
+                  const children = childMap.get(c.id) || [];
+                  return (
+                    <div key={c.id}>
+                      <div className="bg-white p-3 rounded-lg border border-gray-100">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-500">
+                            AN
+                          </div>
+                          <span className="text-xs text-gray-400">ANON · {timeAgo(c.created_at)}</span>
+                        </div>
+                        <p className="text-sm text-gray-700">{c.content}</p>
+                        {user?.id && (
+                          <button
+                            onClick={() => setReplyToId(replyToId === c.id ? null : c.id)}
+                            className="text-xs text-gray-400 hover:text-[#084463] mt-1 transition-colors"
+                          >
+                            {replyToId === c.id ? "Batal balas" : "Balas"}
+                          </button>
+                        )}
+                      </div>
+                      {replyToId === c.id && (
+                        <div className="ml-6 mt-2 mb-2">
+                          <form onSubmit={handleCommentSubmit} className="flex gap-2">
+                            <input
+                              type="text"
+                              value={newComment}
+                              onChange={(e) => {
+                                setNewComment(e.target.value);
+                                if (profanityWarn) {
+                                  const { hasProfanity } = checkProfanity(e.target.value);
+                                  if (!hasProfanity) setProfanityWarn("");
+                                }
+                              }}
+                              placeholder="Tulis balasan..."
+                              className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#084463] focus:border-transparent"
+                              disabled={commentSubmitting}
+                              autoFocus
+                            />
+                            <button
+                              type="submit"
+                              disabled={commentSubmitting || !newComment.trim()}
+                              className="px-4 py-2 bg-[#084463] text-white rounded-xl text-sm font-medium hover:bg-[#084463]/90 disabled:opacity-50 flex items-center gap-1"
+                            >
+                              <Send className="w-4 h-4" />
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                      {children.map((child) => (
+                        <div key={child.id} className="ml-6 mt-2">
+                          <div className="bg-gray-50/50 p-3 rounded-lg border border-gray-100">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-500">
+                                AN
+                              </div>
+                              <span className="text-xs text-gray-400">ANON · {timeAgo(child.created_at)}</span>
+                            </div>
+                            <p className="text-sm text-gray-700">{child.content}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <span className="text-xs text-gray-400">ANON · {timeAgo(c.created_at)}</span>
-                  </div>
-                  <p className="text-sm text-gray-700">{c.content}</p>
-                </div>
-              ))}
+                  );
+                });
+              })()}
             </div>
 
-            {user?.id ? (
+            {user?.id && !replyToId && (
               <form onSubmit={handleCommentSubmit} className="flex gap-2">
                 <input
                   type="text"
@@ -441,7 +512,8 @@ export default function CurhatDetailPage({
                   <Send className="w-4 h-4" />
                 </button>
               </form>
-            ) : (
+            )}
+            {!user?.id && (
               <p className="text-xs text-gray-400 text-center">
                 <Link href="/login" className="text-[#084463] font-medium">Masuk</Link> untuk berkomentar
               </p>
