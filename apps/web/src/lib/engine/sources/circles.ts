@@ -21,7 +21,7 @@ export async function matchCircle(
     .limit(5);
 
   if (excludeIds.length > 0) {
-    query = query.not("id", "in", `(${excludeIds.map((id) => `"${id}"`).join(",")})`);
+    query = query.not("id", "in", `(${excludeIds.join(",")})`);
   }
 
   const { data } = await query;

@@ -23,6 +23,7 @@ import type {
   JourneyDailyReflection, JourneyProgress, GrowthTimelineEvent,
   SpiritualPreferences,
 } from "@beautifio/types";
+import type { MatchOutput } from "@/lib/engine";
 import { DailyActivityCard } from "@/features/journey/daily-activity-card";
 import { BigWinCard } from "@/features/journey/big-win-card";
 import { JourneyTimeline } from "@/features/journey/journey-timeline";
@@ -190,12 +191,28 @@ export default function JourneyDetailPage() {
         try {
           const { matchContent } = await import("@/lib/engine");
           const ctx = { userId: user.id, journeyId: j.id, templateSlug: j.template_slug };
-          for (const act of loadedActivities) {
+          const updated: DailyActivity[] = [...loadedActivities];
+          let changed = false;
+          for (let i = 0; i < loadedActivities.length; i++) {
+            const act = loadedActivities[i];
             if (act.action_type !== "manual" && !act.matched_content_id) {
-              matchContent(act.action_type, act.match_keywords || [], act.id, act.title, ctx).catch(() => {});
+              const result = await matchContent(act.action_type, act.match_keywords || [], act.id, act.title, ctx).catch(() => ({ found: false } as MatchOutput));
+              if (result.found && result.result) {
+                updated[i] = {
+                  ...updated[i],
+                  matched_content_id: result.result.contentId,
+                  matched_content_type: result.result.contentType,
+                  matched_slug: result.result.slug,
+                  matched_title: result.result.title,
+                };
+                changed = true;
+              }
             }
           }
-        } catch {}
+          if (changed) setActivities(updated);
+        } catch (e) {
+          console.warn("Journey Engine match error:", e);
+        }
       } else {
         const generated = await generateAndInsertActivities(j, sp, undefined);
         setActivities(generated);

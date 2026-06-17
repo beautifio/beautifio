@@ -21,14 +21,19 @@ export async function matchArticle(
   const titleConditions = words.map((w) => `title.ilike.%${w}%`).join(",");
   const contentConditions = words.map((w) => `content.ilike.%${w}%`).join(",");
 
-  const { data } = await supabase
+  let query = supabase
     .from("articles")
     .select("id, slug, title, excerpt, source, category")
     .eq("is_published", true)
-    .not("id", "in", `(${excludeIds.map((id) => `"${id}"`).join(",") || '""'})`)
     .or(`${titleConditions},${contentConditions}`)
     .order("like_count", { ascending: false })
     .limit(5);
+
+  if (excludeIds.length > 0) {
+    query = query.not("id", "in", `(${excludeIds.join(",")})`);
+  }
+
+  const { data } = await query;
 
   if (!data || data.length === 0) return null;
 
