@@ -132,7 +132,7 @@ export function RuangAmanSheet({
         <button
           onClick={handleCeritaNext}
           disabled={!cerita.trim()}
-          className="mt-4 w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          className="sticky bottom-0 mt-4 w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
         >
           Lanjut <ChevronRight className="w-4 h-4" />
         </button>
@@ -160,7 +160,7 @@ export function RuangAmanSheet({
         </ol>
         <button
           onClick={handlePanduanNext}
-          className="w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-all flex items-center justify-center gap-2"
+          className="sticky bottom-0 mt-4 w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-all flex items-center justify-center gap-2"
         >
           {cat.formFields.length === 0 ? "Lihat Kontak" : "Isi Data "}
           <ChevronRight className="w-4 h-4" />
@@ -330,7 +330,7 @@ export function RuangAmanSheet({
         <button
           onClick={handleFormNext}
           disabled={!allFilled}
-          className="mt-4 w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          className="sticky bottom-0 mt-4 w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
         >
           Hubungi Lembaga Bantuan <ChevronRight className="w-4 h-4" />
         </button>
@@ -435,7 +435,7 @@ export function RuangAmanSheet({
                   alert("Gagal mengirim. Cek koneksi internet kamu.");
                 }
               }}
-              className="w-full py-3 rounded-xl bg-[#084463] text-white text-sm font-semibold hover:bg-[#084463]/90 flex items-center justify-center gap-2"
+              className="sticky bottom-0 w-full py-3 rounded-xl bg-[#084463] text-white text-sm font-semibold hover:bg-[#084463]/90 flex items-center justify-center gap-2"
             >
               <Send className="w-4 h-4" /> Kirim ke Beautifio Care
             </button>
@@ -443,10 +443,12 @@ export function RuangAmanSheet({
         )}
 
         {cat.emergency && (
-          <div className="px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-center">
-            <p className="text-xs text-red-700">
-              🆘 Darurat? Segera hubungi <strong className="text-red-600">{cat.emergency}</strong>
-            </p>
+          <div className="sticky bottom-0 pt-2 pb-4 bg-white">
+            <div className="px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-center">
+              <p className="text-xs text-red-700">
+                🆘 Darurat? Segera hubungi <strong className="text-red-600">{cat.emergency}</strong>
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -474,9 +476,9 @@ export function RuangAmanSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-white rounded-t-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+      <div className="relative w-full max-w-lg bg-white rounded-t-2xl max-h-[calc(100dvh-5rem)] flex flex-col animate-in slide-in-from-bottom duration-300">
         {/* Header */}
-        <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             {step !== "kategori" && (
               <button onClick={handleBack} className="p-1 -ml-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
@@ -532,7 +534,7 @@ export function RuangAmanSheet({
         )}
 
         {/* Content */}
-        <div className="px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           {/* Self-harm waiver on contact step */}
           {cat?.id === "self-harm" && step === "kontak" && (
             <div className="p-4 rounded-xl bg-red-50 border border-red-200 mb-4 text-center">
