@@ -13,6 +13,7 @@ import type { PostingMode } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isSensitiveCategory, getResourcesForCategory } from "@/lib/safe-space-data";
+import { BantuanSheet } from "@/features/bantuan/BantuanSheet";
 
 export default function PostPage() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function PostPage() {
   const [showResources, setShowResources] = useState(false);
   const [resources, setResources] = useState<any[]>([]);
   const [pendingSubmit, setPendingSubmit] = useState(false);
+  const [showBantuan, setShowBantuan] = useState(false);
   const [responseMode, setResponseMode] = useState<"story" | "polling">("story");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
 
@@ -120,39 +122,54 @@ export default function PostPage() {
 
   if (showResources) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 pb-20">
-        <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-          <Shield className="w-10 h-10 text-amber-600" />
-        </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2 text-center">
-          Kami Peduli dengan Kamu
-        </h2>
-        <p className="text-gray-500 text-center mb-6 max-w-sm">
-          Kami mendeteksi bahwa ceritamu mungkin berkaitan dengan topik sensitif.
-          Berikut beberapa sumber bantuan yang mungkin berguna:
-        </p>
-        <div className="space-y-3 w-full max-w-md mb-8">
-          {resources.map((r: any) => (
-            <div key={r.id} className="bg-white p-4 rounded-xl border border-gray-200">
-              <h3 className="font-semibold text-gray-900 text-sm">{r.title}</h3>
-              <p className="text-xs text-gray-500 mt-1">{r.description}</p>
+      <>
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 pb-20">
+          <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+            <Shield className="w-10 h-10 text-amber-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2 text-center">
+            Kami Peduli dengan Kamu
+          </h2>
+          <p className="text-gray-500 text-center mb-6 max-w-sm">
+            Kami mendeteksi bahwa ceritamu mungkin berkaitan dengan topik sensitif.
+            Berikut beberapa sumber bantuan yang mungkin berguna:
+          </p>
+          <div className="space-y-3 w-full max-w-md mb-8">
+            {resources.map((r: any) => (
+              <div key={r.id} className="bg-white p-4 rounded-xl border border-gray-200">
+                <h3 className="font-semibold text-gray-900 text-sm">{r.title}</h3>
+                <p className="text-xs text-gray-500 mt-1">{r.description}</p>
+              </div>
+            ))}
+            <button
+              onClick={() => setShowBantuan(true)}
+              className="w-full py-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-sm font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-2"
+            >
+              <Shield className="w-4 h-4" />
+              📞 Hubungi Lembaga Bantuan
+            </button>
+            <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+              <p className="text-xs text-amber-800 font-medium">
+                ☎️ Butuh bantuan segera? Hubungi hotline Kesehatan Mental Kemenkes: <strong>119 (ekstensi 8)</strong>
+              </p>
             </div>
-          ))}
-          <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
-            <p className="text-xs text-amber-800 font-medium">
-              ☎️ Butuh bantuan segera? Hubungi hotline Kesehatan Mental Kemenkes: <strong>119 (ekstensi 8)</strong>
-            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button onClick={handleSendAnyway} disabled={submitting} className="px-6 py-2.5 bg-[#084463] text-white rounded-full text-sm font-medium">
+              {submitting ? "Mengirim..." : "Kirim Tetap"}
+            </Button>
+            <Link href="/curhat" className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-full text-sm font-medium">
+              Kembali
+            </Link>
           </div>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={handleSendAnyway} disabled={submitting} className="px-6 py-2.5 bg-[#084463] text-white rounded-full text-sm font-medium">
-            {submitting ? "Mengirim..." : "Kirim Tetap"}
-          </Button>
-          <Link href="/curhat" className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-full text-sm font-medium">
-            Kembali
-          </Link>
-        </div>
-      </div>
+
+        <BantuanSheet
+          open={showBantuan}
+          onClose={() => setShowBantuan(false)}
+          initialCategory="perlindungan"
+        />
+      </>
     );
   }
 

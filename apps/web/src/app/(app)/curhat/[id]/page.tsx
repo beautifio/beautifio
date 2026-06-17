@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isSensitiveCategory, getResourcesForCategory } from "@/lib/safe-space-data";
 import { checkProfanity } from "@/lib/profanity";
+import { BantuanSheet } from "@/features/bantuan/BantuanSheet";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -75,6 +76,7 @@ export default function CurhatDetailPage({
   const [pollVotes, setPollVotes] = useState<number[]>([]);
   const [userVote, setUserVote] = useState<number | null>(null);
   const [voteSubmitting, setVoteSubmitting] = useState(false);
+  const [showBantuan, setShowBantuan] = useState(false);
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return; }
@@ -98,6 +100,7 @@ export default function CurhatDetailPage({
       isSensitiveCategory(item.title + " " + item.content);
     if (sensitive) {
       setResources(getResourcesForCategory("bullying"));
+      setShowBantuan(true);
     }
   }, [item]);
 
@@ -455,7 +458,24 @@ export default function CurhatDetailPage({
             )}
           </div>
         )}
+
+        {/* Bantuan Button */}
+        <div className="mt-4">
+          <button
+            onClick={() => setShowBantuan(true)}
+            className="w-full py-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-sm font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-2"
+          >
+            <Shield className="w-4 h-4" />
+            🆘 Butuh Bantuan?
+          </button>
+        </div>
       </div>
+
+      <BantuanSheet
+        open={showBantuan}
+        onClose={() => setShowBantuan(false)}
+        initialCategory={resources.length > 0 ? "perlindungan" : undefined}
+      />
     </div>
   );
 }

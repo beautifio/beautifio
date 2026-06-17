@@ -10,6 +10,7 @@ import { Badge } from "@beautifio/ui";
 import type { PostingMode, ModerationStatus } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { isSensitiveCategory } from "@/lib/safe-space-data";
 
 interface CurhatItem {
   id: string;
@@ -71,6 +72,11 @@ function CurhatCard({ item, userId }: { item: CurhatItem; userId?: string | null
           <Badge className="bg-purple-100 text-purple-700 text-xs">
             {item.category}
           </Badge>
+          {isSensitiveCategory(item.category) && (
+            <Badge className="bg-red-100 text-red-700 text-xs flex items-center gap-0.5">
+              🆘
+            </Badge>
+          )}
           <span className="text-xs text-gray-400">{timeAgo(item.created_at)}</span>
           {item.response_mode === "polling" && (
             <Badge className="bg-blue-100 text-blue-700 text-xs">📊 Polling</Badge>
