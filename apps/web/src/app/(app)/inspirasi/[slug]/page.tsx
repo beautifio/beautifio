@@ -301,6 +301,34 @@ function InspirasiDetailPage({
     };
   }, []);
 
+  const [relatedItems, setRelatedItems] = useState<InspirasiItem[]>([]);
+
+  useEffect(() => {
+    if (!item || !item.related_slugs.length) return;
+    (async () => {
+      if (supabase) {
+        const { data } = await supabase
+          .from("articles")
+          .select("*")
+          .in("slug", item.related_slugs)
+          .limit(4);
+        if (data?.length) {
+          setRelatedItems(data.map((a) => ({
+            id: a.id, slug: a.slug, type: a.type, title: a.title,
+            content: a.excerpt || "", full_content: a.content,
+            author: a.author, initials: a.initials, cover_image: a.cover_image,
+            category: a.category, reading_time: a.read_time_minutes,
+            like_count: a.like_count, comment_count: a.comment_count,
+            save_count: a.save_count, related_slugs: a.related_slugs || [],
+          })));
+          return;
+        }
+      }
+      const local = getStoredItems().filter((d) => item.related_slugs.includes(d.slug));
+      if (local.length) setRelatedItems(local);
+    })();
+  }, [item]);
+
   const handleLike = useCallback(() => {
     setIsLiked((prev) => {
       setLikeCount((c) => (prev ? c - 1 : c + 1));
@@ -364,34 +392,6 @@ function InspirasiDetailPage({
 
   const source = item.source || "cerita";
   const badge = SOURCE_BADGE[source] || SOURCE_BADGE.cerita;
-
-  const [relatedItems, setRelatedItems] = useState<InspirasiItem[]>([]);
-
-  useEffect(() => {
-    if (!item || !item.related_slugs.length) return;
-    (async () => {
-      if (supabase) {
-        const { data } = await supabase
-          .from("articles")
-          .select("*")
-          .in("slug", item.related_slugs)
-          .limit(4);
-        if (data?.length) {
-          setRelatedItems(data.map((a) => ({
-            id: a.id, slug: a.slug, type: a.type, title: a.title,
-            content: a.excerpt || "", full_content: a.content,
-            author: a.author, initials: a.initials, cover_image: a.cover_image,
-            category: a.category, reading_time: a.read_time_minutes,
-            like_count: a.like_count, comment_count: a.comment_count,
-            save_count: a.save_count, related_slugs: a.related_slugs || [],
-          })));
-          return;
-        }
-      }
-      const local = getStoredItems().filter((d) => item.related_slugs.includes(d.slug));
-      if (local.length) setRelatedItems(local);
-    })();
-  }, [item]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
