@@ -47,9 +47,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           return;
         }
         const { data: profile } = await res.json();
-        const userRole = profile?.role || "user";
-        setRole(userRole);
-        if (userRole === "user" || userRole === "mentor") {
+        setRole(profile?.role || "user");
+        if (profile?.role === "user" || profile?.role === "mentor" || !profile?.role) {
           router.replace("/");
           return;
         }

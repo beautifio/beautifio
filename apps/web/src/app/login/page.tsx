@@ -37,11 +37,25 @@ export default function LoginPage({
     }
   }, []);
 
-  // If already logged in, redirect to / (middleware handles role-based redirect)
+  // If already logged in, redirect to role-appropriate page
   useEffect(() => {
-    if (user && !user.is_anonymous && user.app_metadata?.provider !== "anonymous") {
-      router.replace("/");
-    }
+    if (!user || user.is_anonymous || user.app_metadata?.provider === "anonymous") return;
+    (async () => {
+      let dest = "/";
+      try {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        if (profile?.role === "superadmin" || profile?.role === "admin") {
+          dest = "/admin/familia";
+        } else if (profile?.role === "redaksi") {
+          dest = "/admin/konten/posts";
+        }
+      } catch { /* fallback to / */ }
+      router.replace(dest);
+    })();
   }, [user, router]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -89,7 +103,23 @@ export default function LoginPage({
           localStorage.removeItem("beautifio_remember_email");
         }
 
-        const dest = mimpiSlug ? `/?mimpi=${mimpiSlug}` : "/";
+        let dest = "/";
+        try {
+          const { data: profile } = await supabase
+            .from("users")
+            .select("role")
+            .eq("id", data.session.user.id)
+            .single();
+          if (profile?.role === "superadmin" || profile?.role === "admin") {
+            dest = "/admin/familia";
+          } else if (profile?.role === "redaksi") {
+            dest = "/admin/konten/posts";
+          } else if (mimpiSlug) {
+            dest = `/?mimpi=${mimpiSlug}`;
+          }
+        } catch {
+          dest = mimpiSlug ? `/?mimpi=${mimpiSlug}` : "/";
+        }
         router.push(dest);
       }
     } catch {
