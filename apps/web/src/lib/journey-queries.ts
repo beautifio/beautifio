@@ -419,13 +419,26 @@ export async function getActivitiesForDate(
 }
 
 export async function completeActivity(id: string): Promise<void> {
-  await db()
+  const { data: activity } = await db()
     .from("daily_activities")
     .update({
       is_completed: true,
       completed_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("dimension, user_id, journey_id")
+    .single();
+
+  if (activity?.dimension) {
+    await db().from("life_capital_points").insert({
+      user_id: activity.user_id,
+      dimension: activity.dimension,
+      points: 10,
+      source_type: "daily_activity",
+      source_id: id,
+      journey_id: activity.journey_id,
+    });
+  }
 }
 
 export async function saveActivityNote(

@@ -39,8 +39,9 @@ export default function UsersPage() {
     } catch (e) { console.error("Create user failed", e); } finally { setSaving(false); }
   }
 
-  async function updateRole(id: string, role: string) {
-    try { await fetch(`/api/admin/users/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role }) }); await fetchUsers(); } catch (e) { console.error("Update role failed", e); }
+  async function updateRole(id: string, newRole: string, email: string) {
+    if (!confirm(`Ubah role ${email} jadi ${newRole}?${newRole === 'superadmin' ? ' Role ini punya akses penuh ke seluruh sistem.' : ''}`)) return;
+    try { await fetch(`/api/admin/users/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: newRole }) }); await fetchUsers(); } catch (e) { console.error("Update role failed", e); }
   }
 
   async function deleteUser(id: string, email: string) {
@@ -75,7 +76,7 @@ export default function UsersPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-900 truncate">{u.full_name || "—"}</span>
-                  <select value={u.role} onChange={(e) => updateRole(u.id, e.target.value)}
+                  <select value={u.role} onChange={(e) => updateRole(u.id, e.target.value, u.email)}
                     className="text-[10px] px-1.5 py-0.5 rounded border border-gray-200 bg-white font-medium focus:outline-none focus:border-amber-400 cursor-pointer">
                     {Object.entries(ROLE_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
                   </select>

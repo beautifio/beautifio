@@ -13,7 +13,6 @@ const PUBLIC_ROUTES = [
   "/profil",
   "/auth/callback",
   "/trial-expired",
-  "/admin",
 ];
 
 const ANONYMOUS_BLOCKED = [
@@ -132,6 +131,38 @@ export async function middleware(request: NextRequest) {
     if (ANONYMOUS_BLOCKED.some((p) => pathname.startsWith(p))) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Admin routes → require admin/superadmin/redaksi role
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
+  if (isAdminRoute) {
+    if (!isAuth) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+    // Anonymous users cannot access admin
+    if (isAnonymous) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+    try {
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      if (!profile || !["admin", "superadmin", "redaksi"].includes(profile.role)) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/";
+        return NextResponse.redirect(url);
+      }
+    } catch {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
       return NextResponse.redirect(url);
     }
   }

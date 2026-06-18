@@ -128,7 +128,10 @@ export default function CurhatModerationPage() {
                     </button>
                   )}
                   {p.status !== "removed" && (
-                    <button onClick={() => updateStatus("posts", p.id, "removed")}
+                    <button onClick={() => {
+                      if (!confirm("Hapus post ini dari curhat? Aksi ini akan menyembunyikan post dari publik.")) return;
+                      updateStatus("posts", p.id, "removed");
+                    }}
                       className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center cursor-pointer" title="Remove">
                       <Trash2 className="w-3.5 h-3.5 text-red-400" />
                     </button>
@@ -170,7 +173,10 @@ export default function CurhatModerationPage() {
                     </button>
                   )}
                   {c.status !== "removed" && (
-                    <button onClick={() => updateStatus("comments", c.id, "removed")}
+                    <button onClick={() => {
+                      if (!confirm("Hapus komentar ini? Aksi ini akan menyembunyikan komentar dari publik.")) return;
+                      updateStatus("comments", c.id, "removed");
+                    }}
                       className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center cursor-pointer" title="Remove">
                       <Trash2 className="w-3.5 h-3.5 text-red-400" />
                     </button>

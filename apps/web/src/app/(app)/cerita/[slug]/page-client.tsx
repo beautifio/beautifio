@@ -163,15 +163,15 @@ export default function CeritaDetailPage({ params }: { params: Promise<{ slug: s
       .map((o) => ({ id: o.id, type: "opportunity" as const, title: o.title, subtitle: o.organization, href: `/opportunity/${o.slug}` }));
 
     const relatedFamilia: EcosystemItem[] = [
-      { id: "fv1", type: "familia-voucher" as const, title: "Voucher Merchant Partner", subtitle: "Klaim voucher dari berbagai merchant", href: "/familia/vouchers" },
-      { id: "fd1", type: "familia-deal" as const, title: "Affiliate Deals", subtitle: "Penawaran spesial anggota Familia", href: "/familia/deals" },
-      { id: "fr1", type: "familia-reward" as const, title: "Achievement Rewards", subtitle: "Dapatkan reward dengan menyelesaikan aktivitas", href: "/familia/rewards" },
+      { id: "fv1", type: "familia-voucher" as const, title: "Voucher Merchant Partner", subtitle: "Klaim voucher dari berbagai merchant", href: "/voucher" },
+      { id: "fd1", type: "familia-deal" as const, title: "Deals Belanja", subtitle: "Penawaran spesial dari partner", href: "/belanja" },
+      { id: "fr1", type: "familia-reward" as const, title: "Pencapaian & Reward", subtitle: "Lihat pencapaian dan rewardmu", href: "/profil" },
     ];
 
     const groups: { title: string; items: EcosystemItem[] }[] = [];
     if (relatedMentors.length) groups.push({ title: "Mentor Terkait", items: relatedMentors });
     if (relatedOpps.length) groups.push({ title: "Peluang Terkait", items: relatedOpps });
-    groups.push({ title: "Benefit Familia", items: relatedFamilia });
+    groups.push({ title: "Benefit Eksklusif", items: relatedFamilia });
     return groups;
   }, [story, slug]);
 

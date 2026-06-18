@@ -117,11 +117,11 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
         ],
       },
       {
-        title: "Benefit Familia",
+        title: "Benefit Eksklusif",
         items: [
-          { id: `ef-${slug}-1`, type: "familia-reward" as const, title: "Achievement Rewards", subtitle: "Dapatkan reward untuk pencapaian", href: "/familia/rewards" },
-          { id: `ef-${slug}-2`, type: "familia-deal" as const, title: "Deals Terkait", subtitle: "Penawaran khusus pengembang diri", href: "/familia/deals" },
-          { id: `ef-${slug}-3`, type: "familia-voucher" as const, title: "Voucher Spesial", subtitle: "Voucher eksklusif anggota Familia", href: "/familia/vouchers" },
+          { id: `ef-${slug}-1`, type: "familia-reward" as const, title: "Pencapaian & Reward", subtitle: "Lihat pencapaian dan rewardmu", href: "/profil" },
+          { id: `ef-${slug}-2`, type: "familia-deal" as const, title: "Deals Belanja", subtitle: "Penawaran khusus pengembang diri", href: "/belanja" },
+          { id: `ef-${slug}-3`, type: "familia-voucher" as const, title: "Voucher Spesial", subtitle: "Voucher eksklusif untuk members", href: "/voucher" },
         ],
       },
     ];
@@ -353,8 +353,8 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
     {
       title: "Benefit Familia",
       items: [
-        { id: `rf-${slug}-1`, type: "familia-reward" as const, title: "Achievement Rewards", subtitle: "Dapatkan reward untuk pencapaian roadmap", href: "/familia/rewards" },
-        { id: `rf-${slug}-2`, type: "familia-deal" as const, title: "Deals Terkait", subtitle: "Penawaran khusus untuk pengembang diri", href: "/familia/deals" },
+        { id: `rf-${slug}-1`, type: "familia-reward" as const, title: "Pencapaian & Reward", subtitle: "Lihat pencapaian dan reward roadmapmu", href: "/profil" },
+        { id: `rf-${slug}-2`, type: "familia-deal" as const, title: "Deals Belanja", subtitle: "Penawaran khusus untuk pengembang diri", href: "/belanja" },
       ],
     },
   ];
