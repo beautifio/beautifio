@@ -13,7 +13,6 @@ const PUBLIC_ROUTES = [
   "/profil",
   "/auth/callback",
   "/trial-expired",
-  "/api/test",
 ];
 
 const ANONYMOUS_BLOCKED = [
