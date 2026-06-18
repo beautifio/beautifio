@@ -216,6 +216,11 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
       setQaList((prev) => [qa, ...prev]);
       setShowAskForm(false);
       setQuestionText("");
+      fetch("/api/familia/achievements/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trigger_type: "mentor_program" }),
+      }).catch((e) => console.error("Failed to report mentor_program", e));
     } catch (e) {
       console.error("Failed to ask mentor", e);
     } finally {

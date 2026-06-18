@@ -47,7 +47,22 @@ export function QuoteCard({ userName }: { userName: string }) {
     setSaved(nowSaved);
   }
 
-  if (!quote) return null;
+  if (!quote) {
+    const greeting = timeGreeting();
+    return (
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100">
+        <div className="flex items-center gap-2 text-amber-700 mb-3">
+          {greeting.icon}
+          <span className="text-sm font-semibold">{greeting.text}, {userName}.</span>
+        </div>
+        <div className="animate-pulse space-y-3">
+          <div className="h-4 bg-amber-100 rounded w-3/4" />
+          <div className="h-4 bg-amber-100 rounded w-1/2" />
+          <div className="h-3 bg-amber-50 rounded w-1/3 mt-4" />
+        </div>
+      </div>
+    );
+  }
 
   const greeting = timeGreeting();
 

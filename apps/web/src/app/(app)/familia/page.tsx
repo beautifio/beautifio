@@ -1,36 +1,68 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Gift, Ticket, ShoppingBag, Calendar, Trophy, ChevronRight,
-  Star, Zap, Users, Sparkles, ExternalLink, Clock, ShieldCheck,
-  Heart, Home, BookHeart, MapPin, BookOpen, User,
+  Star, Sparkles, ExternalLink, MessageCircle,
 } from "lucide-react";
-import { Badge, Card, CardHeader, CardTitle, CardContent } from "@beautifio/ui";
+import { Badge } from "@beautifio/ui";
 
-import {
-  FAMILIA_MERCHANTS, FAMILIA_AFFILIATE_DEALS, FAMILIA_ACHIEVEMENT_REWARDS,
-  FAMILIA_EVENT_BENEFITS, FAMILIA_CATEGORIES, VOUCHER_TYPE_EMOJIS, VOUCHER_TYPE_LABELS,
-} from "@beautifio/utils";
+import { FAMILIA_CATEGORIES, VOUCHER_TYPE_EMOJIS, VOUCHER_TYPE_LABELS } from "@beautifio/utils";
 import { VoucherClaimModal } from "@/features/familia/components/VoucherClaimModal";
 import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
 import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
-import type { FamiliaMerchant } from "@beautifio/types";
+import type { FamiliaMerchant, FamiliaAffiliateDeal, FamiliaAchievementReward, FamiliaEventBenefit } from "@beautifio/types";
 
 export default function FamiliaPage() {
   const router = useRouter();
 
+  const [merchants, setMerchants] = useState<FamiliaMerchant[]>([]);
+  const [deals, setDeals] = useState<FamiliaAffiliateDeal[]>([]);
+  const [rewards, setRewards] = useState<FamiliaAchievementReward[]>([]);
+  const [events, setEvents] = useState<FamiliaEventBenefit[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedMerchant, setSelectedMerchant] = useState<FamiliaMerchant | null>(null);
   const [showClaim, setShowClaim] = useState(false);
   const [dealCategory, setDealCategory] = useState("all");
 
-  const featuredDeals = FAMILIA_AFFILIATE_DEALS.filter((d) => d.is_featured);
+  useEffect(() => {
+    (async () => {
+      try {
+        const [merchRes, dealRes, rewRes, evRes] = await Promise.all([
+          fetch("/api/familia/merchants"),
+          fetch("/api/familia/deals"),
+          fetch("/api/familia/rewards"),
+          fetch("/api/familia/events"),
+        ]);
+        if (merchRes.ok) {
+          const { data } = await merchRes.json();
+          setMerchants(data || []);
+        }
+        if (dealRes.ok) {
+          const { data } = await dealRes.json();
+          setDeals(data || []);
+        }
+        if (rewRes.ok) {
+          const { data } = await rewRes.json();
+          setRewards(data || []);
+        }
+        if (evRes.ok) {
+          const { data } = await evRes.json();
+          setEvents(data || []);
+        }
+      } catch (e) {
+        console.error("Failed to load Familia data", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const featuredDeals = deals.filter((d) => d.is_featured);
   const filteredDeals = dealCategory === "all"
-    ? FAMILIA_AFFILIATE_DEALS.slice(0, 4)
-    : FAMILIA_AFFILIATE_DEALS.filter((d) => d.category === dealCategory).slice(0, 4);
-  const events = FAMILIA_EVENT_BENEFITS;
-  const achievements = FAMILIA_ACHIEVEMENT_REWARDS;
+    ? deals.slice(0, 4)
+    : deals.filter((d) => d.category === dealCategory).slice(0, 4);
 
   const ecosystemGroups: { title: string; items: EcosystemItem[] }[] = [
     { title: "Goals Terkait", items: [{ id: "fg-goals", type: "goal" as const, title: "Lihat Goals Aktifmu", subtitle: "Selesaikan goals untuk buka reward", href: "/profil" }] },
@@ -39,9 +71,21 @@ export default function FamiliaPage() {
   ];
 
   const dealCategories = useMemo(() => {
-    const cats = new Set(FAMILIA_AFFILIATE_DEALS.map((d) => d.category));
+    const cats = new Set(deals.map((d) => d.category));
     return [{ key: "all", label: "Semua" }, ...Array.from(cats).map((c) => ({ key: c, label: c }))];
-  }, []);
+  }, [deals]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white pb-24">
+        <div className="max-w-content mx-auto px-6 pt-12 space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white pb-24">
@@ -60,9 +104,9 @@ export default function FamiliaPage() {
 
           <div className="grid grid-cols-3 gap-2 mt-6">
             {[
-              { icon: Ticket, label: "Voucher", value: `${FAMILIA_MERCHANTS.length} Merchant`, href: "/familia/vouchers" },
-              { icon: ShoppingBag, label: "Deals", value: `${FAMILIA_AFFILIATE_DEALS.length} Penawaran`, href: "/familia/deals" },
-              { icon: Trophy, label: "Rewards", value: `${achievements.length} Pencapaian`, href: "/familia/rewards" },
+              { icon: Ticket, label: "Voucher", value: `${merchants.length} Merchant`, href: "/familia/vouchers" },
+              { icon: ShoppingBag, label: "Deals", value: `${deals.length} Penawaran`, href: "/familia/deals" },
+              { icon: Trophy, label: "Rewards", value: `${rewards.length} Pencapaian`, href: "/familia/rewards" },
             ].map((item) => (
               <button
                 key={item.label}
@@ -90,7 +134,7 @@ export default function FamiliaPage() {
               </button>
             </div>
             <div className="space-y-3">
-              {FAMILIA_MERCHANTS.slice(0, 3).map((m) => (
+              {merchants.slice(0, 3).map((m) => (
                 <button
                   key={m.id}
                   onClick={() => { setSelectedMerchant(m); setShowClaim(true); }}
@@ -103,7 +147,7 @@ export default function FamiliaPage() {
                     <p className="text-sm font-semibold text-gray-900">{m.name}</p>
                     <p className="text-xs text-gray-500 mt-0.5">{m.description}</p>
                     <div className="flex items-center gap-2 mt-1.5">
-                      {m.voucher_types.slice(0, 3).map((vt) => (
+                      {(m.voucher_types || []).slice(0, 3).map((vt) => (
                         <span key={vt} className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                           {VOUCHER_TYPE_EMOJIS[vt]} {VOUCHER_TYPE_LABELS[vt]}
                         </span>
@@ -212,7 +256,7 @@ export default function FamiliaPage() {
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {achievements.map((ar) => (
+              {rewards.map((ar) => (
                 <div key={ar.id} className="p-4 rounded-xl bg-white border border-gray-100 hover:border-emerald-200 hover:shadow-sm transition-all">
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${ar.color || "from-emerald-500 to-teal-500"} flex items-center justify-center`}>
@@ -232,7 +276,6 @@ export default function FamiliaPage() {
       </div>
 
       <VoucherClaimModal merchant={selectedMerchant} open={showClaim} onClose={() => { setShowClaim(false); setSelectedMerchant(null); }} />
-
     </div>
   );
 }

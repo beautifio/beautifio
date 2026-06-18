@@ -58,7 +58,7 @@ export interface Database {
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
-      user_role: "user" | "mentor" | "admin";
+      user_role: "user" | "mentor" | "admin" | "redaksi" | "superadmin";
       user_status: "active" | "suspended" | "banned";
       goal_category: "karir" | "pendidikan" | "skill" | "bisnis";
       goal_status: "active" | "completed" | "archived";

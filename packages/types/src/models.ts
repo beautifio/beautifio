@@ -1,6 +1,6 @@
 import type { Json } from "./database";
 
-export type UserRole = "user" | "mentor" | "admin";
+export type UserRole = "user" | "mentor" | "admin" | "redaksi" | "superadmin";
 export type UserStatus = "active" | "suspended" | "banned";
 export type GoalCategory = "karir" | "pendidikan" | "skill" | "bisnis";
 export type GoalStatus = "active" | "completed" | "archived";

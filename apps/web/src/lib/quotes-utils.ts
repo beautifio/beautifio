@@ -13,7 +13,9 @@ export function getDailyQuote(): Quote {
       const parsed = JSON.parse(cached);
       if (parsed.date === today) return parsed.quote;
     }
-  } catch {}
+  } catch (e) {
+    console.error("getDailyQuote: cache read failed", e);
+  }
 
   const dayOfYear = Math.floor(
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
@@ -22,7 +24,9 @@ export function getDailyQuote(): Quote {
 
   try {
     localStorage.setItem(TODAY_KEY, JSON.stringify({ date: today, quote }));
-  } catch {}
+  } catch (e) {
+    console.error("getDailyQuote: cache write failed", e);
+  }
   return quote;
 }
 
@@ -48,7 +52,9 @@ export function getSavedQuoteIds(): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
+  } catch (e) {
+    console.error("getSavedQuoteIds: parse failed", e);
+  }
   return [];
 }
 
@@ -78,7 +84,9 @@ export function getSeenQuoteIds(): string[] {
   try {
     const raw = localStorage.getItem(SEEN_KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
+  } catch (e) {
+    console.error("getSeenQuoteIds: parse failed", e);
+  }
   return [];
 }
 
@@ -86,6 +94,10 @@ export function markQuoteSeen(id: string) {
   const seen = getSeenQuoteIds();
   if (!seen.includes(id)) {
     seen.push(id);
+    // prune when seen exceeds total quotes
+    if (seen.length > ALL_QUOTES.length) {
+      seen.splice(0, Math.floor(ALL_QUOTES.length / 2));
+    }
     localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
   }
 }

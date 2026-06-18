@@ -1,27 +1,52 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ShoppingBag, ExternalLink, Star, TrendingUp } from "lucide-react";
 import { Badge } from "@beautifio/ui";
 
-import { FAMILIA_AFFILIATE_DEALS } from "@beautifio/utils";
 import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
 import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
+import type { FamiliaAffiliateDeal } from "@beautifio/types";
+
+const PLATFORM_COLORS: Record<string, string> = {
+  tokopedia: "bg-green-100 text-green-700 border-green-200",
+  shopee: "bg-orange-100 text-orange-700 border-orange-200",
+  tiktok: "bg-black text-white border-black",
+  website: "bg-blue-100 text-blue-700 border-blue-200",
+};
 
 export default function DealsPage() {
   const router = useRouter();
 
+  const [deals, setDeals] = useState<FamiliaAffiliateDeal[]>([]);
+  const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("all");
 
-  const categories = useMemo(() => {
-    const cats = new Set(FAMILIA_AFFILIATE_DEALS.map((d) => d.category));
-    return [{ key: "all", label: "Semua", emoji: "✨" }, ...Array.from(cats).map((c) => ({ key: c, label: c, emoji: "" }))];
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/familia/deals");
+        if (res.ok) {
+          const { data } = await res.json();
+          setDeals(data || []);
+        }
+      } catch (e) {
+        console.error("Failed to load deals", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
+  const categories = useMemo(() => {
+    const cats = new Set(deals.map((d) => d.category));
+    return [{ key: "all", label: "Semua", emoji: "✨" }, ...Array.from(cats).map((c) => ({ key: c, label: c, emoji: "" }))];
+  }, [deals]);
+
   const filtered = category === "all"
-    ? FAMILIA_AFFILIATE_DEALS
-    : FAMILIA_AFFILIATE_DEALS.filter((d) => d.category === category);
+    ? deals
+    : deals.filter((d) => d.category === category);
 
   const ecosystemGroups: { title: string; items: EcosystemItem[] }[] = [
     { title: "Jelajahi Juga", items: [
@@ -31,12 +56,19 @@ export default function DealsPage() {
     ]},
   ];
 
-  const PLATFORM_COLORS: Record<string, string> = {
-    tokopedia: "bg-green-100 text-green-700 border-green-200",
-    shopee: "bg-orange-100 text-orange-700 border-orange-200",
-    tiktok: "bg-black text-white border-black",
-    website: "bg-blue-100 text-blue-700 border-blue-200",
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white pb-24">
+        <div className="max-w-content mx-auto px-6 pt-6 space-y-4">
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-52 rounded-xl bg-gray-100 animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white pb-24">
@@ -52,7 +84,7 @@ export default function DealsPage() {
           </div>
           <div className="flex items-center gap-1 text-xs text-blue-600 font-medium">
             <TrendingUp className="w-4 h-4" />
-            <span>{FAMILIA_AFFILIATE_DEALS.length} Deals</span>
+            <span>{deals.length} Deals</span>
           </div>
         </div>
 
@@ -77,7 +109,7 @@ export default function DealsPage() {
           {filtered.map((deal) => (
             <a
               key={deal.id}
-              href={deal.partner_url}
+              href={`/api/familia/deals/${deal.id}/click`}
               target="_blank"
               rel="noopener noreferrer"
               className="block bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md hover:border-blue-200 transition-all group"

@@ -13,9 +13,11 @@ interface CurhatPost {
 
 export function CurhatFeed() {
   const [posts, setPosts] = useState<CurhatPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       try {
         const { supabase } = await import("@/lib/supabase/client");
         if (!supabase) return;
@@ -26,9 +28,28 @@ export function CurhatFeed() {
           .order("created_at", { ascending: false })
           .limit(2);
         if (data) setPosts(data);
-      } catch {}
+      } catch (e) {
+        console.error("CurhatFeed: fetch failed", e);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
+
+  if (loading) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold text-gray-900">Curhat Terbaru</h2>
+        </div>
+        <div className="space-y-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="animate-pulse h-16 rounded-xl bg-gray-100" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (posts.length === 0) return null;
 

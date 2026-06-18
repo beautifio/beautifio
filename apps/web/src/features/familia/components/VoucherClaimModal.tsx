@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X, Clock, Shield, CheckCircle2, AlertCircle, Gift } from "lucide-react";
-import type { FamiliaMerchant, FamiliaVoucherSession } from "@beautifio/types";
-import { VOUCHER_TYPE_EMOJIS, VOUCHER_TYPE_LABELS, generateVoucherCode, saveVoucherSession, getActiveVoucherForMerchant, hasRedeemedToday, recordRedemption } from "@beautifio/utils";
+import type { FamiliaMerchant } from "@beautifio/types";
+import { VOUCHER_TYPE_EMOJIS, VOUCHER_TYPE_LABELS } from "@beautifio/utils";
 
 type Step = "confirm" | "activated" | "redeem" | "success" | "expired" | "error";
 
@@ -18,10 +18,11 @@ export function VoucherClaimModal({
 }) {
   const [step, setStep] = useState<Step>("confirm");
   const [voucherCode, setVoucherCode] = useState("");
-  const [session, setSession] = useState<FamiliaVoucherSession | null>(null);
+  const [voucherId, setVoucherId] = useState<string | null>(null);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");
   const [remaining, setRemaining] = useState(900);
+  const [errorMsg, setErrorMsg] = useState("");
   const [claimedToday, setClaimedToday] = useState(false);
 
   useEffect(() => {
@@ -29,35 +30,45 @@ export function VoucherClaimModal({
       setStep("confirm");
       setPin("");
       setPinError("");
-      setClaimedToday(hasRedeemedToday(merchant.id));
+      setErrorMsg("");
+      setClaimedToday(false);
     }
   }, [open, merchant]);
 
-  const handleActivate = useCallback(() => {
+  const handleActivate = useCallback(async () => {
     if (!merchant) return;
-    const code = generateVoucherCode();
-    const now = new Date();
-    const expires = new Date(now.getTime() + 15 * 60 * 1000);
-    const newSession: FamiliaVoucherSession = {
-      id: `vs-${Date.now()}`,
-      user_id: "u-user",
-      merchant_id: merchant.id,
-      voucher_code: code,
-      status: "active",
-      pin_required: merchant.daily_pin,
-      activated_at: now.toISOString(),
-      expires_at: expires.toISOString(),
-      created_at: now.toISOString(),
-    };
-    saveVoucherSession(newSession);
-    setSession(newSession);
-    setVoucherCode(code);
-    setRemaining(900);
-    setStep("activated");
+    try {
+      const res = await fetch("/api/familia/vouchers/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: merchant.id }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          setClaimedToday(true);
+          setErrorMsg(json.error);
+          return;
+        }
+        setErrorMsg(json.error || "Gagal klaim voucher");
+        setStep("error");
+        return;
+      }
+
+      setVoucherCode(json.data.voucher_code);
+      setVoucherId(json.data.id);
+      setRemaining(900);
+      setStep("activated");
+    } catch (e) {
+      console.error("Claim voucher failed", e);
+      setErrorMsg("Terjadi kesalahan jaringan");
+      setStep("error");
+    }
   }, [merchant]);
 
   useEffect(() => {
-    if (step !== "activated" || !session) return;
+    if (step !== "activated" || !voucherId) return;
     const timer = setInterval(() => {
       setRemaining((prev) => {
         if (prev <= 1) {
@@ -69,7 +80,7 @@ export function VoucherClaimModal({
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [step, session]);
+  }, [step, voucherId]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -77,20 +88,32 @@ export function VoucherClaimModal({
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const handleRedeem = useCallback(() => {
-    if (!merchant || !session) return;
-    if (pin === merchant.daily_pin) {
-      recordRedemption(merchant.id);
+  const handleRedeem = useCallback(async () => {
+    if (!merchant || !voucherId) return;
+    try {
+      const res = await fetch("/api/familia/vouchers/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: voucherId, pin }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        setPinError(json.error || "Gagal verifikasi PIN");
+        return;
+      }
+
       setStep("success");
-    } else {
-      setPinError("PIN salah. Silakan coba lagi.");
+    } catch (e) {
+      console.error("Redeem voucher failed", e);
+      setPinError("Terjadi kesalahan jaringan");
     }
-  }, [merchant, session, pin]);
+  }, [merchant, voucherId, pin]);
 
   if (!open || !merchant) return null;
 
-  const voucherEmoji = merchant.voucher_types[0] ? VOUCHER_TYPE_EMOJIS[merchant.voucher_types[0]] : "🎫";
-  const voucherLabel = merchant.voucher_types[0] ? VOUCHER_TYPE_LABELS[merchant.voucher_types[0]] : "Voucher";
+  const voucherEmoji = merchant.voucher_types?.[0] ? VOUCHER_TYPE_EMOJIS[merchant.voucher_types[0]] : "🎫";
+  const voucherLabel = merchant.voucher_types?.[0] ? VOUCHER_TYPE_LABELS[merchant.voucher_types[0]] : "Voucher";
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -109,13 +132,19 @@ export function VoucherClaimModal({
             <p className="text-sm text-gray-500 mt-1">{merchant.name}</p>
             <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
               <p className="text-xs text-amber-800">
-                Voucher akan aktif selama <strong>15 menit</strong>. Jika tidak digunakan dalam 15 menit, voucher akan otomatis hangus. Kuota merchant tidak akan berkurang sampai voucher berhasil digunakan.
+                Voucher akan aktif selama <strong>15 menit</strong>. Jika tidak digunakan dalam 15 menit, voucher akan otomatis hangus.
               </p>
             </div>
             {claimedToday && (
               <div className="mt-2 p-2.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-red-700">Kamu sudah klaim voucher hari ini. Satu voucher per merchant per hari.</p>
+                <p className="text-xs text-red-700">{errorMsg || "Kamu sudah klaim voucher hari ini."}</p>
+              </div>
+            )}
+            {errorMsg && !claimedToday && (
+              <div className="mt-2 p-2.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-700">{errorMsg}</p>
               </div>
             )}
             <div className="flex gap-3 mt-5">
@@ -159,7 +188,7 @@ export function VoucherClaimModal({
                 Tutup
               </button>
               <button
-                onClick={() => setStep("redeem")}
+                onClick={() => { setStep("redeem"); setPin(""); setPinError(""); }}
                 className="flex-1 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold hover:from-green-600 hover:to-emerald-600 transition-all cursor-pointer"
               >
                 Saya Sudah di Merchant
@@ -226,10 +255,28 @@ export function VoucherClaimModal({
             </div>
             <h2 className="text-lg font-bold text-gray-900">Voucher Hangus</h2>
             <p className="text-sm text-gray-500 mt-1">Waktu klaim telah habis</p>
-            <p className="text-xs text-gray-400 mt-4">Kuota merchant tidak berkurang. Kamu bisa klaim ulang kapan saja.</p>
+            <p className="text-xs text-gray-400 mt-4">Kamu bisa klaim ulang kapan saja.</p>
             <button onClick={onClose} className="mt-5 w-full py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
               Tutup
             </button>
+          </div>
+        )}
+
+        {step === "error" && (
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <X className="w-8 h-8 text-red-500" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">Gagal</h2>
+            <p className="text-sm text-gray-500 mt-1">{errorMsg || "Terjadi kesalahan"}</p>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => { setStep("confirm"); setErrorMsg(""); }} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                Coba Lagi
+              </button>
+              <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-gray-500 text-white text-sm font-semibold hover:bg-gray-600 transition-all cursor-pointer">
+                Tutup
+              </button>
+            </div>
           </div>
         )}
       </div>

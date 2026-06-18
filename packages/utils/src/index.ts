@@ -29,11 +29,8 @@ export type { Mood } from "@beautifio/types";
 
 export {
   FAMILIA_MERCHANTS, FAMILIA_AFFILIATE_DEALS,
-  FAMILIA_ACHIEVEMENT_REWARDS, FAMILIA_EVENT_BENEFITS,
+  FAMILIA_ACHIEVEMENT_REWARDS,
   VOUCHER_TYPE_LABELS, VOUCHER_TYPE_EMOJIS, FAMILIA_CATEGORIES,
-  getVoucherSessions, saveVoucherSession, updateVoucherSession,
-  getActiveVoucherForMerchant, hasRedeemedToday, recordRedemption,
-  generateVoucherCode,
 } from "./familia-seed";
 
 export {

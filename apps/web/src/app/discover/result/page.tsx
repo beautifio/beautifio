@@ -89,6 +89,15 @@ export default function DiscoverResultPage() {
     }
   }, [router]);
 
+  useEffect(() => {
+    if (!result) return;
+    fetch("/api/familia/achievements/progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trigger_type: "discovery_complete" }),
+    }).catch((e) => console.error("Failed to report discovery_complete", e));
+  }, [result]);
+
   const handleRedo = () => {
     localStorage.removeItem(STORAGE_KEY);
     router.push("/discover");

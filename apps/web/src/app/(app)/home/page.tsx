@@ -2,18 +2,19 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/client";
 import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
 import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types";
 import { QuoteCard } from "./components/QuoteCard";
 import { JourneyResume } from "./components/JourneyResume";
-import { GuestCTA, GuestLandingCTA } from "./components/GuestCTA";
+import { GuestCTA } from "./components/GuestCTA";
 import { ArticlePick } from "./components/ArticlePick";
 import { CurhatFeed } from "./components/CurhatFeed";
 import { QuickActions } from "./components/QuickActions";
 import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet";
+import { AchievementNotif } from "@/features/familia/components/AchievementNotif";
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
 
@@ -42,6 +43,18 @@ export default function HomeScreen({
     user?.email?.split("@")[0] ||
     (isAnonymous ? "Sobat Tamu" : "Sobat");
 
+  const trialDays = useMemo(() => {
+    if (!trialInfo) return null;
+    const now = new Date();
+    const start = new Date(trialInfo.started_at);
+    const expires = new Date(trialInfo.expires_at);
+    const totalDays = Math.round((expires.getTime() - start.getTime()) / 86400000);
+    const elapsedDays = Math.round((now.getTime() - start.getTime()) / 86400000);
+    const currentDay = Math.min(Math.max(elapsedDays + 1, 1), totalDays);
+    const remaining = Math.max(0, Math.ceil((expires.getTime() - now.getTime()) / 86400000));
+    return { currentDay, totalDays, remaining };
+  }, [trialInfo]);
+
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -57,14 +70,19 @@ export default function HomeScreen({
           setProgress(p);
         }
 
-        if (isAnonymous) {
-          const { data: dbUser } = await supabase!
+        const isAnon = user?.is_anonymous === true || user?.app_metadata?.provider === "anonymous";
+        if (isAnon) {
+          if (!supabase) return;
+          const { data: dbUser } = await supabase
             .from("users")
             .select("trial_started_at, trial_expires_at")
             .eq("id", user.id)
             .single();
-          if (dbUser) {
-            setTrialInfo(dbUser as any);
+          if (dbUser?.trial_started_at && dbUser?.trial_expires_at) {
+            setTrialInfo({
+              started_at: dbUser.trial_started_at,
+              expires_at: dbUser.trial_expires_at,
+            });
           }
         }
       } catch (e) {
@@ -86,31 +104,20 @@ export default function HomeScreen({
     }
   }, [loading, journey, mimpiSlug]);
 
-  function calcTrialDays(trialInfo: { started_at: string; expires_at: string }) {
-    const now = new Date();
-    const start = new Date(trialInfo.started_at);
-    const expires = new Date(trialInfo.expires_at);
-    const totalDays = Math.round((expires.getTime() - start.getTime()) / 86400000);
-    const elapsedDays = Math.round((now.getTime() - start.getTime()) / 86400000);
-    const currentDay = Math.min(Math.max(elapsedDays + 1, 1), totalDays);
-    const remaining = Math.max(0, Math.ceil((expires.getTime() - now.getTime()) / 86400000));
-    return { currentDay, totalDays, remaining };
-  }
-
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-5">
         {/* Trial banner */}
-        {isAnonymous && trialInfo && (
+        {trialDays && (
           <div className="bg-[#FFF7E6] border border-[#FFB627] rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-semibold text-[#92400E]">🕐 Mode Tamu</p>
-              <p className="text-xs text-[#92400E]">Sisa {calcTrialDays(trialInfo).remaining} hari</p>
+              <p className="text-xs text-[#92400E]">Sisa {trialDays.remaining} hari</p>
             </div>
             <div className="w-full bg-[#FFE4A0] rounded-full h-1.5 mb-2">
               <div
                 className="h-1.5 rounded-full bg-[#FFB627] transition-all"
-                style={{ width: `${(calcTrialDays(trialInfo).currentDay / calcTrialDays(trialInfo).totalDays) * 100}%` }}
+                style={{ width: `${(trialDays.currentDay / trialDays.totalDays) * 100}%` }}
               />
             </div>
             <p className="text-[11px] text-[#92400E]/70">Daftar untuk simpan progress selamanya</p>
@@ -135,13 +142,15 @@ export default function HomeScreen({
             )}
           </>
         ) : (
-          <GuestLandingCTA />
+          <GuestCTA variant="landing" />
         )}
 
         <ArticlePick journey={journey} />
         <CurhatFeed />
         <QuickActions onRuangAman={() => setRuangAmanOpen(true)} />
       </div>
+
+      <AchievementNotif />
 
       {onboardingTemplate && (
         <JourneyOnboardingModal

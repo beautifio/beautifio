@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Trophy, CheckCircle2, Circle, Gift, Sparkles, Users, Heart, BookOpen } from "lucide-react";
+import { ArrowLeft, Trophy, CheckCircle2, Gift, Sparkles, Users, Heart, BookOpen } from "lucide-react";
 import { ProgressBar } from "@beautifio/ui";
 
-import { FAMILIA_ACHIEVEMENT_REWARDS, FAMILIA_MERCHANTS } from "@beautifio/utils";
 import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
 import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
+import type { FamiliaAchievementReward } from "@beautifio/types";
 
 const ICON_MAP: Record<string, typeof Sparkles> = {
   Sparkles, Trophy, Users, Heart, BookOpen,
@@ -22,17 +22,34 @@ const TRIGGER_LABELS: Record<string, string> = {
   story_posted: "Posting Cerita",
 };
 
-const TRIGGER_PROGRESS: Record<string, { current: number; total: number }> = {
-  discovery_complete: { current: 1, total: 1 },
-  roadmap_milestones: { current: 4, total: 10 },
-  circle_days: { current: 15, total: 30 },
-  mentor_program: { current: 1, total: 1 },
-  journal_entries: { current: 12, total: 20 },
-};
+interface AchievementWithProgress extends FamiliaAchievementReward {
+  progress: number;
+  is_completed: boolean;
+  completed_at: string | null;
+  user_achievement_id: string | null;
+}
 
 export default function RewardsPage() {
   const router = useRouter();
 
+  const [achievements, setAchievements] = useState<AchievementWithProgress[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/familia/achievements/progress");
+        if (res.ok) {
+          const { data } = await res.json();
+          setAchievements(data || []);
+        }
+      } catch (e) {
+        console.error("Failed to load achievement progress", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const ecosystemGroups: { title: string; items: EcosystemItem[] }[] = [
     { title: "Jelajahi Juga", items: [
@@ -41,6 +58,18 @@ export default function RewardsPage() {
       { id: "jr-goals", type: "goal" as const, title: "Goals Aktifmu", subtitle: "Selesaikan goals untuk unlock reward", href: "/profil" },
     ]},
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white pb-24">
+        <div className="max-w-content mx-auto px-6 pt-6 space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white pb-24">
@@ -56,22 +85,20 @@ export default function RewardsPage() {
           </div>
           <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
             <Trophy className="w-4 h-4" />
-            <span>{FAMILIA_ACHIEVEMENT_REWARDS.length} Reward</span>
+            <span>{achievements.length} Reward</span>
           </div>
         </div>
 
         <div className="space-y-4 mt-5">
-          {FAMILIA_ACHIEVEMENT_REWARDS.map((reward) => {
+          {achievements.map((reward) => {
             const IconComponent = reward.icon ? ICON_MAP[reward.icon] : Trophy;
-            const progress = TRIGGER_PROGRESS[reward.trigger_type] || { current: 0, total: reward.trigger_value };
-            const pct = Math.min(100, Math.round((progress.current / progress.total) * 100));
-            const isComplete = progress.current >= progress.total;
+            const pct = Math.min(100, Math.round((reward.progress / reward.trigger_value) * 100));
 
             return (
               <div
                 key={reward.id}
                 className={`p-4 rounded-xl border transition-all ${
-                  isComplete
+                  reward.is_completed
                     ? "bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200"
                     : "bg-white border-gray-100 hover:border-emerald-200"
                 }`}
@@ -83,13 +110,13 @@ export default function RewardsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-gray-900">{reward.title}</span>
-                      {isComplete && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                      {reward.is_completed && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">{reward.description}</p>
                     <div className="mt-2">
                       <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1">
                         <span>{TRIGGER_LABELS[reward.trigger_type] || reward.trigger_type}</span>
-                        <span>{progress.current}/{progress.total}</span>
+                        <span>{reward.progress}/{reward.trigger_value}</span>
                       </div>
                       <ProgressBar value={pct} size="sm" variant="accent" />
                     </div>
@@ -102,10 +129,17 @@ export default function RewardsPage() {
               </div>
             );
           })}
+
+          {achievements.length === 0 && (
+            <div className="text-center py-12">
+              <Trophy className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">Belum ada pencapaian</p>
+              <p className="text-xs text-gray-400 mt-1">Mulai aktivitas untuk membuka reward</p>
+            </div>
+          )}
         </div>
         <EcosystemLinks groups={ecosystemGroups} />
       </div>
-
     </div>
   );
 }
