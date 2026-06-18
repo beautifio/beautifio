@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Heart, MessageCircle } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 
 interface CurhatPost {
   id: string;
   content: string;
   support_count: number;
-  comment_count: number;
 }
 
 export function CurhatFeed() {
@@ -23,7 +22,7 @@ export function CurhatFeed() {
         if (!supabase) return;
         const { data } = await supabase
           .from("curhat_posts")
-          .select("id, content, support_count, comment_count")
+          .select("id, content, support_count")
           .eq("status", "visible")
           .order("created_at", { ascending: false })
           .limit(2);
@@ -77,9 +76,6 @@ export function CurhatFeed() {
             <div className="flex items-center gap-3 text-xs text-gray-400">
               <span className="flex items-center gap-1">
                 <Heart size={12} /> {p.support_count ?? 0}
-              </span>
-              <span className="flex items-center gap-1">
-                <MessageCircle size={12} /> {p.comment_count ?? 0}
               </span>
             </div>
           </Link>

@@ -1,10 +1,21 @@
 -- ============================================================================
--- 00022_seed_remaining_benchmark_phases.sql
--- Auto-generated from BENCHMARK_DATABASE
+-- Migration: recover_dream_phases
+-- Memulihkan dream_phases + small_win_templates untuk 28 template
+-- (football-player dari 00019 ikut disertakan karena data hilang oleh TRUNCATE CASCADE)
+-- Idempotent: DELETE lalu INSERT ulang
 -- ============================================================================
 
-TRUNCATE small_win_templates, dream_phases RESTART IDENTITY CASCADE;
+-- Hapus data lama untuk slug yang akan di-seed ulang
+DELETE FROM small_win_templates
+WHERE phase_id IN (
+  SELECT id FROM dream_phases
+  WHERE dream_template_slug IN ('badminton-player','esports-player','doctor','programmer','content-creator','ui-ux-designer','game-developer','psychologist','pilot','entrepreneur','digital-marketer','dentist','chef','youtuber','teacher','musician','actor','swimmer','basketball-player','photographer','graphic-designer','data-scientist','ai-specialist','social-media-manager','event-organizer','financial-planner','pharmacist','fashion-designer','football-player')
+);
 
+DELETE FROM dream_phases
+WHERE dream_template_slug IN ('badminton-player','esports-player','doctor','programmer','content-creator','ui-ux-designer','game-developer','psychologist','pilot','entrepreneur','digital-marketer','dentist','chef','youtuber','teacher','musician','actor','swimmer','basketball-player','photographer','graphic-designer','data-scientist','ai-specialist','social-media-manager','event-organizer','financial-planner','pharmacist','fashion-designer','football-player');
+
+-- ============================================================
 -- Atlet Bulu Tangkis Profesional
 -- benchmark: atlet-bulu-tangkis-profesional => template: badminton-player
 -- 4 phases
@@ -1859,7 +1870,7 @@ BEGIN
     industry_benchmark, over_achievement, behind_schedule_signal,
     sort_order
   ) VALUES (
-    'fashion-designer', 1, 'Belajar & Koleksi Pertama', '15', '19', 'Kuasai pola dasar dan selesaikan 5 desain', NULL, 'Kuasai pola dasar, teknik menjahit, dan selesaikan 5 desain', 'Portofolio 10 desain, tampil di 1 fashion show lokal', 'Belum punya 1 desain jadi di usia 18+', 1)
+    'fashion-designer','football-player', 1, 'Belajar & Koleksi Pertama', '15', '19', 'Kuasai pola dasar dan selesaikan 5 desain', NULL, 'Kuasai pola dasar, teknik menjahit, dan selesaikan 5 desain', 'Portofolio 10 desain, tampil di 1 fashion show lokal', 'Belum punya 1 desain jadi di usia 18+', 1)
   RETURNING id INTO v_phase_id;
 
   -- SW 1.1
@@ -1882,7 +1893,7 @@ BEGIN
     industry_benchmark, over_achievement, behind_schedule_signal,
     sort_order
   ) VALUES (
-    'fashion-designer', 2, 'Produk & Brand', '19', '25', 'Produk terjual dengan revenue >5 juta/bulan', NULL, 'Brand dikenal, revenue >5 juta/bulan, media coverage', '50+ pcs terjual, kolaborasi dengan 1 brand lain', 'Belum ada penjualan produk di usia 23+', 2)
+    'fashion-designer','football-player', 2, 'Produk & Brand', '19', '25', 'Produk terjual dengan revenue >5 juta/bulan', NULL, 'Brand dikenal, revenue >5 juta/bulan, media coverage', '50+ pcs terjual, kolaborasi dengan 1 brand lain', 'Belum ada penjualan produk di usia 23+', 2)
   RETURNING id INTO v_phase_id;
 
   -- SW 2.1
@@ -1901,7 +1912,7 @@ BEGIN
     industry_benchmark, over_achievement, behind_schedule_signal,
     sort_order
   ) VALUES (
-    'fashion-designer', 3, 'Brand Established', '24', '40', 'Revenue >50 juta/bulan dan ekspor', NULL, 'Brand established dengan revenue >50 juta/bulan', 'Hadir di Indonesia Fashion Week, punya tim 5+', 'Revenue masih <10 juta/bulan di usia 28+', 3)
+    'fashion-designer','football-player', 3, 'Brand Established', '24', '40', 'Revenue >50 juta/bulan dan ekspor', NULL, 'Brand established dengan revenue >50 juta/bulan', 'Hadir di Indonesia Fashion Week, punya tim 5+', 'Revenue masih <10 juta/bulan di usia 28+', 3)
   RETURNING id INTO v_phase_id;
 
   -- SW 3.1
@@ -1915,3 +1926,81 @@ BEGIN
 END $$;
 
 -- Total: 83 phases, 172 small_wins
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Football Player — phases (recovered from 00019, lost by 00021 TRUNCATE CASCADE)
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+DO $$
+DECLARE
+  v_phase_id UUID;
+BEGIN
+
+INSERT INTO dream_phases (dream_template_slug, phase_number, phase_name, age_min, age_max, big_win_title, big_win_description, industry_benchmark, over_achievement, behind_schedule_signal, sort_order)
+VALUES ('football-player', 1, 'Fondasi', 8, 12, 'Bergabung dan aktif di SSB atau akademi junior lokal', 'Mulai latihan terstruktur di Sekolah Sepak Bola (SSB) atau akademi usia muda.', 'Di usia 12, pemain berbakat di Indonesia sudah aktif di SSB minimal 2 tahun (PSSI Grassroots Program).', 'Terpilih di seleksi tim daerah (POPDA/O2SN) sebelum 12', 'Belum punya tim/SSB di usia 11+', 1)
+RETURNING id INTO v_phase_id;
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Kuasai teknik dasar bola', 'Jugling, passing, kontrol bola dasar', '50 jugling berturut-turut, passing akurasi 7/10 jarak 10m', NULL, 'Hitung sendiri dan catat video', 1);
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Stamina dasar', 'Daya tahan lari', 'Lari 1.2km tanpa berhenti (Cooper Test >1.600m/12 menit)', NULL, 'Test Cooper di lapangan', 2);
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Ikut pertandingan resmi pertama', 'Pengalaman bertanding resmi', 'Minimal 5 pertandingan resmi dalam setahun', 'pertandingan', 'Catat nama kompetisi dan tanggal', 3);
+
+INSERT INTO dream_phases (dream_template_slug, phase_number, phase_name, age_min, age_max, big_win_title, big_win_description, industry_benchmark, over_achievement, behind_schedule_signal, sort_order)
+VALUES ('football-player', 2, 'Pengembangan', 12, 15, 'Masuk akademi resmi klub Liga atau tim daerah kompetitif', 'Bergabung dengan akademi resmi klub Liga 1/Liga 2 yang terstruktur.', 'Akademi Liga 1 rekrut pemain U-13 dan U-15. Di usia 14, pemain top sudah di akademi top.', 'Dipanggil seleksi timnas U-14 atau U-15 PSSI', 'Di usia 15 belum pernah ikut seleksi akademi manapun', 2)
+RETURNING id INTO v_phase_id;
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'VO2 Max standar', 'Kapasitas aerobik', '46-48 ml/kg/min', 'ml/kg/min', 'Beep Test 20m shuttle run', 1);
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Sprint 30m', 'Kecepatan sprint', '< 5.0 detik', 'detik', 'Stopwatch, 3 percobaan', 2);
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Akurasi passing', 'Passing jarak 15-20m', '75% akurasi (15 dari 20 umpan)', '%', 'Latihan dengan rekan', 3);
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Kompetisi regional', 'Tampil di kompetisi tingkat daerah', 'Minimal 1 kompetisi kabupaten/kota', 'kompetisi', 'Nama turnamen + dokumentasi', 4);
+
+INSERT INTO dream_phases (dream_template_slug, phase_number, phase_name, age_min, age_max, big_win_title, big_win_description, industry_benchmark, over_achievement, behind_schedule_signal, sort_order)
+VALUES ('football-player', 3, 'Elite Junior', 15, 17, 'Bergabung tim Elite Pro U-17/U-18 atau mewakili provinsi di tingkat nasional', 'Masuk jenjang tertinggi akademi Indonesia.', 'Liga 1 Elite Pro Academy (EPA) adalah jenjang tertinggi akademi Indonesia.', 'Dipanggil timnas U-16/U-17 PSSI; Garuda Select', 'Di usia 17 belum pernah tampil di kompetisi resmi', 3)
+RETURNING id INTO v_phase_id;
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'VO2 Max elite junior', 'Level elite', '52-55 ml/kg/min', 'ml/kg/min', 'Beep Test level 10+', 1);
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Konsistensi performa', 'Jumlah pertandingan resmi', 'Minimal 15 pertandingan resmi per musim', 'pertandingan', 'Log pertandingan', 2);
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Keunggulan teknis terukur', 'Spesialisasi posisi', 'Kiper: clean sheet >40%; Striker: 1 gol/3 match; Bek: aerial duel >60%', NULL, 'Statistik pertandingan resmi', 3);
+
+INSERT INTO dream_phases (dream_template_slug, phase_number, phase_name, age_min, age_max, big_win_title, big_win_description, industry_benchmark, over_achievement, behind_schedule_signal, sort_order)
+VALUES ('football-player', 4, 'Kontrak Pro Pertama', 18, 21, 'Menandatangani kontrak profesional pertama dengan klub Liga 1, Liga 2, atau Liga 3', 'Transisi dari junior ke profesional dengan kontrak resmi.', 'Rata-rata pemain Indonesia kontrak pro pertama usia 19-21.', 'Kontrak pro sebelum 18; langsung di Liga 1', 'Di usia 22 belum pernah dapat tawaran kontrak', 4)
+RETURNING id INTO v_phase_id;
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Debut tim senior', 'Masuk skuad senior', 'Masuk skuad minimal 5 pertandingan resmi', 'pertandingan', 'Dokumentasi match sheet', 1);
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Fisik setara standar pro', 'Kondisi fisik profesional', 'VO2Max >58; sprint 30m <4.5 detik', NULL, 'Tes fisik resmi', 2);
+
+INSERT INTO dream_phases (dream_template_slug, phase_number, phase_name, age_min, age_max, big_win_title, big_win_description, industry_benchmark, over_achievement, behind_schedule_signal, sort_order)
+VALUES ('football-player', 5, 'Karier Profesional', 21, 35, 'Debut resmi di Liga 1 Indonesia / kontrak internasional', 'Puncak karir — bermain di liga tertinggi Indonesia.', 'Puncak karir pemain sepak bola profesional.', 'Dipanggil timnas senior sebelum 22; kontrak luar negeri', 'Di usia 25 belum pernah masuk skuad Liga 1', 5)
+RETURNING id INTO v_phase_id;
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Debut Liga 1', 'Penampilan pertama', 'Debut resmi di Liga 1 Indonesia', NULL, 'Match sheet resmi', 1);
+
+INSERT INTO small_win_templates (phase_id, title, description, target_value, target_unit, how_to_measure, sort_order)
+VALUES (v_phase_id, 'Menit bermain konsisten', 'Waktu bermain reguler', 'Akumulasi >500 menit bermain per musim', 'menit', 'Statistik resmi Liga 1', 2);
+
+END $$;
+
+-- Verifikasi akhir
+SELECT dream_template_slug, COUNT(*) as phase_count FROM dream_phases GROUP BY dream_template_slug ORDER BY dream_template_slug;
+SELECT COUNT(*) as total_phases FROM dream_phases;
+SELECT COUNT(*) as total_small_wins FROM small_win_templates;
