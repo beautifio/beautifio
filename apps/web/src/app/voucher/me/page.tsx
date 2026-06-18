@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Clock, CheckCircle2, XCircle, Gift, Ticket, Trophy } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle2, XCircle, Ticket, Trophy, X, AlertCircle } from "lucide-react";
 
 import { VOUCHER_TYPE_EMOJIS, VOUCHER_TYPE_LABELS } from "@beautifio/utils";
 
@@ -47,6 +47,105 @@ function Countdown({ expiresAt }: { expiresAt: string }) {
   );
 }
 
+function PinModal({
+  voucher,
+  onConfirm,
+  onCancel,
+  redeeming,
+  error,
+}: {
+  voucher: VoucherItem;
+  onConfirm: (sessionId: string, pin: string) => void;
+  onCancel: () => void;
+  redeeming: boolean;
+  error: string;
+}) {
+  const [pin, setPin] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPin("");
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, [voucher.id]);
+
+  const handleSubmit = () => {
+    if (pin.length < 4) return;
+    onConfirm(voucher.id, pin);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
+      <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl">
+        <button onClick={onCancel} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-all">
+          <X className="w-4 h-4 text-gray-500" />
+        </button>
+
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-4">
+          <Ticket className="w-6 h-6 text-amber-600" />
+        </div>
+
+        <h2 className="text-lg font-bold text-gray-900 text-center">Gunakan Voucher</h2>
+        <p className="text-xs text-gray-500 text-center mt-1">{voucher.merchant?.name || "Merchant"}</p>
+
+        <div className="mt-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
+          <p className="text-[10px] text-gray-500 font-medium">Kode Voucher</p>
+          <p className="text-sm font-mono font-bold text-gray-900 mt-0.5">{voucher.voucher_code}</p>
+        </div>
+
+        <div className="mt-4 p-3 rounded-xl bg-blue-50 border border-blue-100">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+            <p className="text-[10px] text-blue-700 leading-relaxed">
+              Minta PIN harian dari kasir/{voucher.merchant?.name || "merchant"}, lalu masukkan di bawah ini untuk menukarkan voucher.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="text-[10px] text-gray-500 font-medium block mb-1">PIN Harian</label>
+          <input
+            ref={inputRef}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={4}
+            value={pin}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+              setPin(v);
+            }}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+            placeholder="****"
+            className="w-full text-center text-2xl font-mono font-bold tracking-[0.5em] px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition-all placeholder:text-gray-200"
+            disabled={redeeming}
+          />
+        </div>
+
+        {error && (
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+            <XCircle className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="flex gap-2 mt-5">
+          <button onClick={onCancel} disabled={redeeming} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-semibold hover:bg-gray-200 transition-all disabled:opacity-50 cursor-pointer">
+            Batal
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={pin.length < 4 || redeeming}
+            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            {redeeming ? "Memproses..." : "Konfirmasi"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MyVouchersPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("active");
@@ -55,47 +154,51 @@ export default function MyVouchersPage() {
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<string | null>(null);
   const [achievementCount, setAchievementCount] = useState(0);
+  const [pinModalVoucher, setPinModalVoucher] = useState<VoucherItem | null>(null);
+  const [redeemError, setRedeemError] = useState("");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [activeRes, historyRes] = await Promise.all([
-          fetch("/api/familia/vouchers/active"),
-          fetch("/api/familia/vouchers/history"),
-        ]);
-        if (activeRes.ok) {
-          const { data } = await activeRes.json();
-          setActive(data || []);
-        }
-        if (historyRes.ok) {
-          const { data } = await historyRes.json();
-          setHistory(data || []);
-        }
-
-        const achRes = await fetch("/api/familia/achievements/progress");
-        if (achRes.ok) {
-          const { data } = await achRes.json();
-          setAchievementCount((data || []).filter((a: any) => a.is_completed).length);
-        }
-      } catch (e) {
-        console.error("Failed to load vouchers", e);
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    try {
+      const [activeRes, historyRes] = await Promise.all([
+        fetch("/api/familia/vouchers/active"),
+        fetch("/api/familia/vouchers/history"),
+      ]);
+      if (activeRes.ok) {
+        const { data } = await activeRes.json();
+        setActive(data || []);
       }
-    })();
-  }, []);
+      if (historyRes.ok) {
+        const { data } = await historyRes.json();
+        setHistory(data || []);
+      }
 
-  const handleRedeem = async (sessionId: string) => {
+      const achRes = await fetch("/api/familia/achievements/progress");
+      if (achRes.ok) {
+        const { data } = await achRes.json();
+        setAchievementCount((data || []).filter((a: any) => a.is_completed).length);
+      }
+    } catch (e) {
+      console.error("Failed to load vouchers", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleRedeem = async (sessionId: string, pin: string) => {
     setRedeeming(sessionId);
+    setRedeemError("");
     try {
       const res = await fetch("/api/familia/vouchers/redeem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, pin: "0000" }),
+        body: JSON.stringify({ session_id: sessionId, pin }),
       });
+      const json = await res.json();
       if (res.ok) {
+        setPinModalVoucher(null);
         setActive((prev) => prev.filter((v) => v.id !== sessionId));
-        const json = await res.json();
         setHistory((prev) => [
           {
             id: sessionId,
@@ -112,9 +215,11 @@ export default function MyVouchersPage() {
           },
           ...prev,
         ]);
+      } else {
+        setRedeemError(json.error || "Gagal menukarkan voucher");
       }
     } catch (e) {
-      console.error("Redeem failed", e);
+      setRedeemError("Terjadi kesalahan jaringan");
     } finally {
       setRedeeming(null);
     }
@@ -191,7 +296,7 @@ export default function MyVouchersPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleRedeem(v.id)}
+                  onClick={() => setPinModalVoucher(v)}
                   disabled={redeeming === v.id}
                   className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 cursor-pointer"
                 >
@@ -235,6 +340,26 @@ export default function MyVouchersPage() {
           </div>
         )}
       </div>
+
+      {pinModalVoucher && (
+        <PinModal
+          voucher={pinModalVoucher}
+          onConfirm={handleRedeem}
+          onCancel={() => { setPinModalVoucher(null); setRedeemError(""); }}
+          redeeming={redeeming === pinModalVoucher.id}
+          error={redeemError}
+        />
+      )}
+
+      {redeemError && !pinModalVoucher && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 shadow-lg text-xs text-red-700">
+          <XCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{redeemError}</span>
+          <button onClick={() => setRedeemError("")} className="ml-2 cursor-pointer">
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
