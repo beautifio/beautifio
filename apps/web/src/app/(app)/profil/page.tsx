@@ -281,7 +281,7 @@ function AdminPanelSection() {
           return;
         }
         const body = await res.json();
-        console.log("AdminPanelSection: role data", body);
+        console.log("AdminPanelSection: role data.role =", body?.data?.role, "| full body =", JSON.stringify(body));
         setRole(body?.data?.role || null);
       } catch (e) {
         console.warn("AdminPanelSection: fetch failed", e);
