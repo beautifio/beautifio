@@ -13,6 +13,7 @@ const PUBLIC_ROUTES = [
   "/profil",
   "/auth/callback",
   "/trial-expired",
+  "/admin",
 ];
 
 const ANONYMOUS_BLOCKED = [
@@ -59,13 +60,19 @@ export async function middleware(request: NextRequest) {
   const isCallbackRoute = pathname === "/auth/callback";
   const code = isCallbackRoute ? null : request.nextUrl.searchParams.get("code");
   if (code) {
-    const mimpi = request.nextUrl.searchParams.get("mimpi");
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       return NextResponse.redirect(new URL("/login?error=auth_failed", request.url));
     }
-    const dest = mimpi ? `/home?mimpi=${mimpi}` : "/home";
-    return NextResponse.redirect(new URL(dest, request.url));
+    const { data: profile } = await supabase.from("users").select("role").eq("id", (await supabase.auth.getUser()).data.user?.id).single();
+    if (profile?.role === "admin" || profile?.role === "superadmin") {
+      return NextResponse.redirect(new URL("/admin/familia", request.url));
+    }
+    if (profile?.role === "redaksi") {
+      return NextResponse.redirect(new URL("/admin/konten/posts", request.url));
+    }
+    const mimpi = request.nextUrl.searchParams.get("mimpi");
+    return NextResponse.redirect(new URL(mimpi ? `/home?mimpi=${mimpi}` : "/home", request.url));
   }
 
   // Try getUser with retry for transient failures (cookie propagation race)
