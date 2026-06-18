@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -42,6 +44,9 @@ export async function GET() {
     return NextResponse.json({ data: active });
   } catch (error) {
     console.error("GET /api/familia/vouchers/active:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({
+      error: "Internal server error",
+      detail: error instanceof Error ? error.message : String(error),
+    }, { status: 500 });
   }
 }

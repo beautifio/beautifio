@@ -39,7 +39,7 @@ export default function LoginPage({
 
   // If already logged in, redirect to role-appropriate page
   useEffect(() => {
-    if (!user || user.is_anonymous || user.app_metadata?.provider === "anonymous") return;
+    if (!supabase || !user || user.is_anonymous || user.app_metadata?.provider === "anonymous") return;
     (async () => {
       let dest = "/";
       try {
@@ -90,7 +90,7 @@ export default function LoginPage({
         setUser(data.session.user);
 
         // If upgrading from anonymous, update profile
-        if (isUpgrade) {
+        if (isUpgrade && supabase) {
           await supabase.from("users").update({
             is_anonymous: false,
             trial_expires_at: null,
@@ -104,21 +104,23 @@ export default function LoginPage({
         }
 
         let dest = "/";
-        try {
-          const { data: profile } = await supabase
-            .from("users")
-            .select("role")
-            .eq("id", data.session.user.id)
-            .single();
-          if (profile?.role === "superadmin" || profile?.role === "admin") {
-            dest = "/admin/familia";
-          } else if (profile?.role === "redaksi") {
-            dest = "/admin/konten/posts";
-          } else if (mimpiSlug) {
-            dest = `/?mimpi=${mimpiSlug}`;
+        if (supabase) {
+          try {
+            const { data: profile } = await supabase
+              .from("users")
+              .select("role")
+              .eq("id", data.session.user.id)
+              .single();
+            if (profile?.role === "superadmin" || profile?.role === "admin") {
+              dest = "/admin/familia";
+            } else if (profile?.role === "redaksi") {
+              dest = "/admin/konten/posts";
+            } else if (mimpiSlug) {
+              dest = `/?mimpi=${mimpiSlug}`;
+            }
+          } catch {
+            dest = mimpiSlug ? `/?mimpi=${mimpiSlug}` : "/";
           }
-        } catch {
-          dest = mimpiSlug ? `/?mimpi=${mimpiSlug}` : "/";
         }
         router.push(dest);
       }
