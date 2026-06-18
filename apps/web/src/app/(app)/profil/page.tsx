@@ -7,7 +7,7 @@ import {
   Compass, ArrowRight,
   Settings, LogOut, LogIn, User, UserPlus,
   BookOpen, BookHeart, History,
-  ChevronRight, BookMarked,
+  ChevronRight, BookMarked, Shield,
 } from "lucide-react";
 import {
   Card, CardHeader, CardTitle, CardContent, Avatar,
@@ -268,6 +268,50 @@ function SettingsSection() {
   );
 }
 
+function AdminPanelSection() {
+  const [role, setRole] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const { data: profile } = await res.json();
+          setRole(profile?.role || null);
+        }
+      } catch {
+        // silent
+      }
+    })();
+  }, []);
+
+  if (!role || !["superadmin", "admin", "redaksi"].includes(role)) return null;
+
+  return (
+    <div className="px-6">
+      <Card padding="lg" className="border-amber-200 bg-amber-50/30">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Shield size={18} className="text-amber-600" />
+            <CardTitle>Admin Panel</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <button
+            onClick={() => router.push("/admin/familia")}
+            className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-amber-100 hover:bg-amber-200 transition-colors text-left cursor-pointer border border-amber-200"
+          >
+            <Shield size={16} className="text-amber-700" />
+            <span className="text-sm font-semibold text-amber-800 flex-1">Buka Admin Panel</span>
+            <ChevronRight size={16} className="text-amber-500" />
+          </button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function LoginPrompt() {
   return (
     <div className="flex flex-col items-center justify-center pt-16 pb-8 px-6 min-h-screen bg-bg">
@@ -444,6 +488,7 @@ export default function ProfileScreen() {
         <CharacterJourney summary={summary} />
         <StoryLink />
         <LifeTimeline entries={timeline} />
+        <AdminPanelSection />
         <SettingsSection />
       </div>
     </div>
