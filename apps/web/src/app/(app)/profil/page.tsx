@@ -7,7 +7,7 @@ import {
   Compass, ArrowRight,
   Settings, LogOut, LogIn, User, UserPlus,
   BookOpen, BookHeart, History,
-  ChevronRight, BookMarked, Shield,
+  ChevronRight, BookMarked, Shield, Sparkles,
 } from "lucide-react";
 import {
   Card, CardHeader, CardTitle, CardContent, Avatar,
@@ -17,6 +17,8 @@ import { useAuth } from "@/hooks/use-auth";
 import type { DreamJourney, JourneyProgress, DailyActivity } from "@beautifio/types";
 import type { LifeTimelineEntry, DimensionSummary } from "@/lib/journey-queries";
 import { journeyUrl } from "@/lib/journey-queries";
+import { getLifeEngineData, DIMENSION_LABELS, ALL_DIMENSIONS, calculateLevel } from "@/lib/life-engine";
+import type { LifeEngineResult } from "@/lib/life-engine";
 
 
 function ProfileHero({ journey }: { journey: DreamJourney | null }) {
@@ -106,39 +108,218 @@ function JourneyIdentity({ journey, progress }: { journey: DreamJourney | null; 
   );
 }
 
-function CharacterJourney({ summary }: { summary: DimensionSummary[] }) {
-  if (summary.length === 0) return null;
+function RadarChart({ data }: { data: Record<string, number> }) {
+  const size = 200;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = size / 2 - 20;
+  const sides = ALL_DIMENSIONS.length;
+  const maxVal = Math.max(...Object.values(data), 1);
+
+  const angleStep = (2 * Math.PI) / sides;
+
+  const gridLevels = [0.25, 0.5, 0.75, 1];
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="mx-auto">
+      {gridLevels.map((level) => {
+        const r = radius * level;
+        const points = ALL_DIMENSIONS.map((_, i) => {
+          const a = angleStep * i - Math.PI / 2;
+          return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+        }).join(" ");
+        return (
+          <polygon
+            key={level}
+            points={points}
+            fill="none"
+            stroke="#E5E7EB"
+            strokeWidth={1}
+          />
+        );
+      })}
+
+      {ALL_DIMENSIONS.map((_, i) => {
+        const a = angleStep * i - Math.PI / 2;
+        const x2 = cx + radius * Math.cos(a);
+        const y2 = cy + radius * Math.sin(a);
+        return (
+          <line
+            key={i}
+            x1={cx}
+            y1={cy}
+            x2={x2}
+            y2={y2}
+            stroke="#E5E7EB"
+            strokeWidth={1}
+          />
+        );
+      })}
+
+      <polygon
+        points={ALL_DIMENSIONS
+          .map((dim, i) => {
+            const a = angleStep * i - Math.PI / 2;
+            const val = data[dim] || 0;
+            const r = radius * (val / maxVal);
+            return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+          })
+          .join(" ")}
+        fill="rgba(255, 94, 91, 0.15)"
+        stroke="#FF5E5B"
+        strokeWidth={2}
+      />
+
+      {ALL_DIMENSIONS.map((dim, i) => {
+        const a = angleStep * i - Math.PI / 2;
+        const labelRadius = radius + 18;
+        const x = cx + labelRadius * Math.cos(a);
+        const y = cy + labelRadius * Math.sin(a);
+        const info = DIMENSION_LABELS[dim];
+        return (
+          <text
+            key={dim}
+            x={x}
+            y={y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={9}
+            fill="#6B7280"
+            fontWeight={500}
+          >
+            {info.emoji}
+          </text>
+        );
+      })}
+
+      {ALL_DIMENSIONS.map((dim, i) => {
+        const a = angleStep * i - Math.PI / 2;
+        const labelRadius = radius + 32;
+        const x = cx + labelRadius * Math.cos(a);
+        const y = cy + labelRadius * Math.sin(a);
+        const info = DIMENSION_LABELS[dim];
+        return (
+          <text
+            key={`label-${dim}`}
+            x={x}
+            y={y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={8}
+            fill="#9CA3AF"
+          >
+            {info.label}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+function LifeEngineWidget({ userId }: { userId: string }) {
+  const [data, setData] = useState<LifeEngineResult | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const result = await getLifeEngineData(userId);
+        setData(result);
+      } catch {
+        // silent
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="px-6">
+        <Card padding="lg">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Sparkles size={18} className="text-primary" />
+              <CardTitle>Life Engine</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="w-full h-48 rounded-xl" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const hasPoints = data && data.totalPoints > 0;
+  const growthInfo = data?.growthZone ? DIMENSION_LABELS[data.growthZone] : null;
 
   return (
     <div className="px-6">
-      <Card padding="lg">
+      <Card padding="lg" style={hasPoints ? { background: "linear-gradient(135deg, #FFF7F3 0%, #FFFFFF 100%)" } : undefined}>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Compass size={18} className="text-primary" />
-            <CardTitle>Perjalanan Karakter</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles size={18} style={{ color: "#FF5E5B" }} />
+              <CardTitle>Life Engine</CardTitle>
+            </div>
+            {data && (
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: "#FFF0EF" }}>
+                <span className="text-xs font-bold" style={{ color: "#FF5E5B" }}>Level {data.level}</span>
+              </div>
+            )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {summary.map((s) => (
-            <div key={s.dimension} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
-              <span className="text-xl">{s.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-text-primary">{s.label}</p>
-                  <span className="text-xs text-text-secondary">
-                    {s.completed} aktivitas selesai
-                  </span>
-                </div>
-                <p className="text-[11px] text-text-secondary/60 mt-0.5">
-                  {s.completed === 0
-                    ? "Belum ada aktivitas"
-                    : s.completed === 1
-                    ? "1 aktivitas dalam 30 hari terakhir"
-                    : `${s.completed} aktivitas dalam 30 hari terakhir`}
-                </p>
-              </div>
+        <CardContent>
+          {!hasPoints ? (
+            <div className="text-center py-6">
+              <Sparkles size={32} className="mx-auto mb-3" style={{ color: "#FFB627" }} />
+              <p className="text-sm font-semibold text-text-primary">
+                Life Engine-mu masih kosong
+              </p>
+              <p className="text-xs text-text-secondary mt-1 max-w-xs mx-auto leading-relaxed">
+                Mulai selesaikan aktivitas harian untuk lihat Life Engine-mu tumbuh! 🌱
+              </p>
             </div>
-          ))}
+          ) : (
+            <>
+              <RadarChart
+                data={Object.fromEntries(
+                  Object.entries(data.capitals).map(([dim, cap]) => [dim, cap.total_points])
+                )}
+              />
+
+              <div className="mt-4">
+                <div className="flex flex-wrap justify-center gap-2">
+                  {ALL_DIMENSIONS.map((dim) => {
+                    const info = DIMENSION_LABELS[dim];
+                    const cap = data.capitals[dim];
+                    return (
+                      <div
+                        key={dim}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium"
+                        style={{ background: `${info.color}12`, color: info.color }}
+                      >
+                        <span>{info.emoji}</span>
+                        <span>{cap.total_points}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {growthInfo && (
+                <div className="mt-4 p-3 rounded-xl" style={{ background: "#FFF0EF", border: "1px solid #FFE4E2" }}>
+                  <p className="text-xs font-semibold" style={{ color: "#FF5E5B" }}>
+                    🎯 Growth Zone: {growthInfo.label}
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "#D94A47" }}>
+                    Capital ini paling butuh perhatian sekarang.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -384,7 +565,6 @@ export default function ProfileScreen() {
   const [journey, setJourney] = useState<DreamJourney | null>(null);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [timeline, setTimeline] = useState<LifeTimelineEntry[]>([]);
-  const [summary, setSummary] = useState<DimensionSummary[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
 
@@ -393,15 +573,11 @@ export default function ProfileScreen() {
     setDataLoading(true);
     setDataError(null);
     try {
-      const { getActiveJourney, getJourneyProgress, getLifeTimeline, getActivitySummary } = await import("@/lib/journey-queries");
+      const { getActiveJourney, getJourneyProgress, getLifeTimeline } = await import("@/lib/journey-queries");
       const j = await getActiveJourney(user.id);
       setJourney(j);
-      const [tl, s] = await Promise.all([
-        getLifeTimeline(user.id),
-        getActivitySummary(user.id),
-      ]);
+      const tl = await getLifeTimeline(user.id);
       setTimeline(tl);
-      setSummary(s);
       if (j) {
         const p = await getJourneyProgress(user.id, j.id);
         setProgress(p);
@@ -488,7 +664,7 @@ export default function ProfileScreen() {
         )}
         <JourneyIdentity journey={journey} progress={progress} />
         <ReadingStats user={user} />
-        <CharacterJourney summary={summary} />
+        <LifeEngineWidget userId={user.id} />
         <StoryLink />
         <LifeTimeline entries={timeline} />
         <AdminPanelSection />
