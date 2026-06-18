@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const nextRaw = searchParams.get("next") ?? "/home";
+  const nextRaw = searchParams.get("next") ?? "/";
   const next = nextRaw.startsWith("/") ? nextRaw : "/home";
 
   if (code) {
@@ -22,19 +22,8 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error && data?.user) {
-      const { data: profile } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
-      if (profile?.role === "admin" || profile?.role === "superadmin") {
-        return NextResponse.redirect(`${origin}/admin/familia`);
-      }
-      if (profile?.role === "redaksi") {
-        return NextResponse.redirect(`${origin}/admin/konten/posts`);
-      }
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

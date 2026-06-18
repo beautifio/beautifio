@@ -37,20 +37,10 @@ export default function LoginPage({
     }
   }, []);
 
-  async function getAdminRedirect(userId: string): Promise<string | null> {
-    if (!supabase) return null;
-    const { data } = await supabase.from("users").select("role").eq("id", userId).single();
-    if (data?.role === "admin" || data?.role === "superadmin") return "/admin/familia";
-    if (data?.role === "redaksi") return "/admin/konten/posts";
-    return null;
-  }
-
-  // If already logged in, redirect based on role
+  // If already logged in, redirect to / (middleware handles role-based redirect)
   useEffect(() => {
     if (user && !user.is_anonymous && user.app_metadata?.provider !== "anonymous") {
-      getAdminRedirect(user.id).then((adminDest) => {
-        router.replace(adminDest || "/home");
-      });
+      router.replace("/");
     }
   }, [user, router]);
 
@@ -99,8 +89,7 @@ export default function LoginPage({
           localStorage.removeItem("beautifio_remember_email");
         }
 
-        const adminDest = await getAdminRedirect(data.session.user.id);
-        const dest = adminDest || (mimpiSlug ? `/home?mimpi=${mimpiSlug}` : "/home");
+        const dest = mimpiSlug ? `/?mimpi=${mimpiSlug}` : "/";
         router.push(dest);
       }
     } catch {

@@ -60,19 +60,12 @@ export async function middleware(request: NextRequest) {
   const isCallbackRoute = pathname === "/auth/callback";
   const code = isCallbackRoute ? null : request.nextUrl.searchParams.get("code");
   if (code) {
+    const mimpi = request.nextUrl.searchParams.get("mimpi");
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       return NextResponse.redirect(new URL("/login?error=auth_failed", request.url));
     }
-    const { data: profile } = await supabase.from("users").select("role").eq("id", (await supabase.auth.getUser()).data.user?.id).single();
-    if (profile?.role === "admin" || profile?.role === "superadmin") {
-      return NextResponse.redirect(new URL("/admin/familia", request.url));
-    }
-    if (profile?.role === "redaksi") {
-      return NextResponse.redirect(new URL("/admin/konten/posts", request.url));
-    }
-    const mimpi = request.nextUrl.searchParams.get("mimpi");
-    return NextResponse.redirect(new URL(mimpi ? `/home?mimpi=${mimpi}` : "/home", request.url));
+    return NextResponse.redirect(new URL(mimpi ? `/?mimpi=${mimpi}` : "/", request.url));
   }
 
   // Try getUser with retry for transient failures (cookie propagation race)
@@ -143,14 +136,28 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Authenticated on landing or auth pages → redirect to home
+  // Authenticated on landing or auth pages → redirect based on role
   // Allow anonymous users to access /register or /login with ?upgrade=true
   if (isAuth && !(isAnonymous && request.nextUrl.searchParams.get("upgrade") === "true")) {
     if (pathname === "/" || pathname === "/login" || pathname === "/register") {
+      // Check admin role for role-based redirect
+      let profile: { role: string } | null = null;
+      try {
+        const { data: p } = await supabase.from("users").select("role").eq("id", user.id).single();
+        profile = p;
+      } catch {
+        // ignore query failure
+      }
       const url = request.nextUrl.clone();
-      url.pathname = "/home";
-      const mimpi = request.nextUrl.searchParams.get("mimpi");
-      if (mimpi) url.searchParams.set("mimpi", mimpi);
+      if (profile?.role === "admin" || profile?.role === "superadmin") {
+        url.pathname = "/admin/familia";
+      } else if (profile?.role === "redaksi") {
+        url.pathname = "/admin/konten/posts";
+      } else {
+        url.pathname = "/home";
+        const mimpi = request.nextUrl.searchParams.get("mimpi");
+        if (mimpi) url.searchParams.set("mimpi", mimpi);
+      }
       return NextResponse.redirect(url);
     }
   }
