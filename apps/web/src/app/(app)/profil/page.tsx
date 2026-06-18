@@ -276,12 +276,15 @@ function AdminPanelSection() {
     (async () => {
       try {
         const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const { data: profile } = await res.json();
-          setRole(profile?.role || null);
+        if (!res.ok) {
+          console.warn("AdminPanelSection: /api/auth/me returned", res.status);
+          return;
         }
-      } catch {
-        // silent
+        const body = await res.json();
+        console.log("AdminPanelSection: role data", body);
+        setRole(body?.data?.role || null);
+      } catch (e) {
+        console.warn("AdminPanelSection: fetch failed", e);
       }
     })();
   }, []);
