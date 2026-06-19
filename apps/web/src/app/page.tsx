@@ -16,7 +16,8 @@ export default function LandingPage() {
     supabase.from("app_settings").select("key, value")
       .in("key", ["hero_image_url", "hero_image_mobile_url", "logo_url"])
       .then(({ data }) => {
-        data?.forEach((row: any) => {
+        if (!data) return;
+        data.forEach((row: any) => {
           if (row.key === "hero_image_url") setHeroUrl(row.value || "");
           if (row.key === "hero_image_mobile_url") setMobileHeroUrl(row.value || "");
           if (row.key === "logo_url") setLogoUrl(row.value || "");
@@ -31,7 +32,10 @@ export default function LandingPage() {
     return () => window.removeEventListener("resize", handler);
   }, []);
 
-  const activeHero = isMobile ? (mobileHeroUrl || heroUrl) : (heroUrl || mobileHeroUrl);
+  // FIX 1: Mobile URL sebagai primary (209x209 desktop terlalu kecil)
+  const activeHero = mobileHeroUrl || heroUrl;
+
+  console.log("LANDING DEBUG:", { heroUrl, mobileHeroUrl, activeHero, isMobile });
 
   async function handleStart() {
     setLoading(true);
@@ -47,7 +51,8 @@ export default function LandingPage() {
     <div style={{
       position: "relative",
       minHeight: "100svh",
-      overflow: "hidden",
+      overflowY: "auto",
+      overflowX: "hidden",
       background: "#084463",
     }}>
       {/* Hero Image */}
@@ -82,56 +87,47 @@ export default function LandingPage() {
         minHeight: "100svh",
         display: "flex",
         flexDirection: "column",
-        padding: "0 24px",
+        padding: "56px 24px 0",
         maxWidth: 480,
         margin: "0 auto",
         width: "100%",
       }}>
-        {/* Logo — center, atas */}
-        <div style={{
-          paddingTop: 52,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}>
+        {/* 1. LOGO — center, atas */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
           {logoUrl ? (
             <img
               src={logoUrl}
               alt="Beautifio"
               style={{
-                height: 48,
-                maxWidth: 200,
+                height: 56,
+                maxWidth: 220,
                 objectFit: "contain",
-                filter: "brightness(0) invert(1)",
               }}
             />
           ) : (
             <span style={{
               fontFamily: "'Poppins', sans-serif",
-              fontSize: 28,
-              fontWeight: 700,
+              fontSize: 36,
+              fontWeight: 800,
               color: "#FFFFFF",
               letterSpacing: "-0.5px",
-              textShadow: "0 2px 8px rgba(0,0,0,0.3)",
+              textShadow: "0 2px 12px rgba(0,0,0,0.6)",
             }}>
               beautifio
             </span>
           )}
         </div>
 
-        {/* Spacer — dorong konten ke bawah */}
-        <div style={{ flex: 1, minHeight: 120 }} />
-
-        {/* Headline */}
-        <div style={{ marginBottom: 24 }}>
+        {/* 2. TEKS HEADLINE — langsung di bawah logo */}
+        <div style={{ marginBottom: 16 }}>
           <h1 style={{
             fontFamily: "'Poppins', sans-serif",
-            fontSize: "clamp(28px, 7vw, 40px)",
+            fontSize: "clamp(30px, 8vw, 44px)",
             fontWeight: 700,
             color: "#FFFFFF",
             lineHeight: 1.2,
-            margin: "0 0 12px 0",
-            textShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            margin: "0 0 10px 0",
+            textShadow: "0 2px 8px rgba(0,0,0,0.4)",
           }}>
             Masa Depan<br />Dimulai Hari Ini
           </h1>
@@ -147,16 +143,19 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* Card Tombol */}
+        {/* 3. SPACER — dorong tombol ke bawah */}
+        <div style={{ flex: 1 }} />
+
+        {/* 4. CARD TOMBOL — paling bawah */}
         <div style={{
           background: "rgba(255,255,255,0.96)",
           borderRadius: 24,
           padding: "20px",
-          marginBottom: "max(32px, env(safe-area-inset-bottom, 32px))",
+          marginBottom: "max(40px, env(safe-area-inset-bottom, 40px))",
           display: "flex",
           flexDirection: "column",
           gap: 10,
-          boxShadow: "0 -8px 32px rgba(0,0,0,0.15)",
+          boxShadow: "0 -8px 32px rgba(0,0,0,0.2)",
         }}>
           <button onClick={handleStart} disabled={loading}
             style={{
