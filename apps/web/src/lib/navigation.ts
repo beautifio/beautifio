@@ -1,4 +1,4 @@
-import { Home, Map, Book, User, type LucideIcon } from "lucide-react";
+import { Home, Map, User, type LucideIcon } from "lucide-react";
 
 export interface NavTab {
   id: string;
@@ -9,13 +9,11 @@ export interface NavTab {
 export const NAV_TABS: NavTab[] = [
   { id: "home",    label: "Beranda", icon: Home },
   { id: "journey", label: "Journey", icon: Map },
-  { id: "jurnal",  label: "Jurnal",  icon: Book },
   { id: "profil",  label: "Profil",  icon: User },
 ];
 
 export function navRoute(id: string): string {
   if (id === "home") return "/home";
   if (id === "journey") return "/journey";
-  if (id === "jurnal") return "/jurnal";
   return `/${id}`;
 }

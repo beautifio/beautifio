@@ -27,8 +27,7 @@ import type {
 import type { MatchOutput } from "@/lib/engine";
 import { DailyActivityCard } from "@/features/journey/daily-activity-card";
 import { BigWinCard } from "@/features/journey/big-win-card";
-import { JourneyTimeline } from "@/features/journey/journey-timeline";
-import { JourneyStory } from "@/features/journey/journey-story";
+import { ChevronDown } from "lucide-react";
 
 const ReflectionModal = dynamic(() => import("@/features/journey/reflection-modal").then(m => ({ default: m.ReflectionModal })), { ssr: false });
 const FailureModal = dynamic(() => import("@/features/journey/failure-modal").then(m => ({ default: m.FailureModal })), { ssr: false });
@@ -68,6 +67,62 @@ const ESTIMATED_MINUTES: Record<string, number> = {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function DayLogCard({ dayNumber, dateLabel, reflection }: {
+  dayNumber: number; dateLabel: string; reflection: JourneyDailyReflection;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const hasMood = !!reflection.mood;
+  const hasLearned = !!reflection.learned;
+  const hasGrateful = !!reflection.grateful;
+  const hasImprove = !!reflection.improve;
+
+  return (
+    <div className="border border-border rounded-xl overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer"
+      >
+        <span className="text-xs font-medium text-text-secondary w-16 flex-shrink-0">
+          Hari ke-{dayNumber}
+        </span>
+        <span className="text-xs text-text-secondary flex-1">{dateLabel}</span>
+        {hasLearned && <span className="text-xs text-green-600">✓</span>}
+        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+
+      {expanded && (
+        <div className="border-t border-border px-4 py-3 flex flex-col gap-2">
+          {hasMood && (
+            <div className="flex items-center gap-2 text-xs text-text-secondary">
+              <span>Mood:</span>
+              <span className="font-medium text-text-primary">{reflection.mood}</span>
+            </div>
+          )}
+          {hasLearned && (
+            <div>
+              <p className="text-[11px] font-medium text-text-secondary uppercase tracking-wide">Dipetik</p>
+              <p className="text-xs text-text-primary mt-0.5">{reflection.learned}</p>
+            </div>
+          )}
+          {hasGrateful && (
+            <div>
+              <p className="text-[11px] font-medium text-text-secondary uppercase tracking-wide">Disyukuri</p>
+              <p className="text-xs text-text-primary mt-0.5">{reflection.grateful}</p>
+            </div>
+          )}
+          {hasImprove && (
+            <div>
+              <p className="text-[11px] font-medium text-text-secondary uppercase tracking-wide">Perbaikan</p>
+              <p className="text-xs text-text-primary mt-0.5">{reflection.improve}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function JourneyDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
@@ -93,7 +148,7 @@ export default function JourneyDetailPage() {
   const [failureBigWin, setFailureBigWin] = useState<BigWin | null>(null);
   const [celebrationBigWin, setCelebrationBigWin] = useState<BigWin | null>(null);
   const [showAllBigWins, setShowAllBigWins] = useState(false);
-  const [sectionTab, setSectionTab] = useState<"today" | "wins" | "timeline" | "story">("today");
+  const [sectionTab, setSectionTab] = useState<"today" | "wins" | "story">("today");
   const [expandedActivityId, setExpandedActivityId] = useState<string | null>(null);
   const [circles, setCircles] = useState<any[]>([]);
   const [recommendedArticles, setRecommendedArticles] = useState<any[]>([]);
@@ -674,68 +729,6 @@ export default function JourneyDetailPage() {
           </Card>
         )}
 
-        {/* Circle Recommendation */}
-        {circles.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-bold text-text-primary mb-3">
-              <span className="mr-1.5">👥</span> Gabung Circle Terkait
-            </h3>
-            <div className="space-y-3">
-              {circles.slice(0, 2).map((c: any) => (
-                <Card key={c.id} padding="md" className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => router.push(`/circle/${c.id}`)}>
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
-                      {c.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-text-primary">{c.name}</h4>
-                      {c.description && (
-                        <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{c.description}</p>
-                      )}
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[11px] text-text-secondary">
-                          👤 {c.member_count}/{c.capacity} anggota
-                        </span>
-                        <Button variant="primary" size="sm" className="ml-auto" onClick={(e) => { e.stopPropagation(); router.push(`/circle/${c.id}`); }}>
-                          Lihat
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recommended Articles */}
-        {recommendedArticles.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-bold text-text-primary mb-3">
-              <span className="mr-1.5">📖</span> Artikel untukmu
-            </h3>
-            <div className="space-y-2">
-              {recommendedArticles.map((art: any) => (
-                <Card key={art.slug} padding="sm" className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => router.push(`/inspirasi/${art.slug}`)}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center flex-shrink-0 text-lg">
-                      {art.cover_emoji || "📄"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold text-text-primary line-clamp-1">{art.title}</h4>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[11px] text-text-secondary">{art.read_time_minutes} menit</span>
-                        <span className="text-[11px] text-text-secondary">·</span>
-                        <span className="text-[11px] text-text-secondary">{art.category}</span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Tab Navigation */}
         <div className="flex gap-1 mb-6 p-1 bg-muted rounded-xl">
           <button
@@ -767,16 +760,6 @@ export default function JourneyDetailPage() {
             }`}
           >
             Cerita
-          </button>
-          <button
-            onClick={() => setSectionTab("timeline")}
-            className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
-              sectionTab === "timeline"
-                ? "bg-bg text-text-primary shadow-sm"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            Riwayat
           </button>
         </div>
 
@@ -884,64 +867,171 @@ export default function JourneyDetailPage() {
 
         {/* Tab: Wins */}
         {sectionTab === "wins" && (
-          <div className="space-y-3">
-            <h2 className="text-base font-bold text-text-primary mb-1">Big Wins</h2>
-            <p className="text-xs text-text-secondary mb-4 -mt-2">
-              {progress?.big_wins_completed}/{progress?.big_wins_total} selesai
-            </p>
+          <div className="flex flex-col gap-6 py-4">
+            {/* Big Wins */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-text-primary">Big Win</h3>
+                <span className="text-xs text-text-secondary">
+                  {bigWins.filter((bw) => bw.is_completed).length}/{bigWins.length} tercapai
+                </span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {(showAllBigWins ? bigWins : (() => {
+                  const sorted = [...bigWins].sort((a, b) => a.order_index - b.order_index);
+                  const firstIncomplete = sorted.findIndex((bw) => !bw.is_completed && !bw.is_failed);
+                  const start = firstIncomplete === -1 ? Math.max(0, sorted.length - 3) : firstIncomplete;
+                  return sorted.slice(start, start + 3);
+                })()).map((bw) => (
+                  <BigWinCard
+                    key={bw.id}
+                    bigWin={bw}
+                    onCompleteSmallWin={handleCompleteSmallWin}
+                    onFail={() => setFailureBigWin(bw)}
+                    onUndoFail={() => handleUndoFailBigWin(bw.id)}
+                  />
+                ))}
+              </div>
+              {bigWins.length > 3 && !showAllBigWins && (
+                <button onClick={() => setShowAllBigWins(true)} className="w-full py-3 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer text-center">
+                  Lihat Semua Langkah ({bigWins.length} langkah)
+                </button>
+              )}
+              {showAllBigWins && (
+                <button onClick={() => setShowAllBigWins(false)} className="w-full py-3 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors cursor-pointer text-center">
+                  Lihat Lebih Sedikit
+                </button>
+              )}
+            </section>
 
-            {(showAllBigWins ? bigWins : (() => {
-              const sorted = [...bigWins].sort((a, b) => a.order_index - b.order_index);
-              const firstIncomplete = sorted.findIndex((bw) => !bw.is_completed && !bw.is_failed);
-              const start = firstIncomplete === -1 ? Math.max(0, sorted.length - 3) : firstIncomplete;
-              return sorted.slice(start, start + 3);
-            })()).map((bw) => (
-              <BigWinCard
-                key={bw.id}
-                bigWin={bw}
-                onCompleteSmallWin={handleCompleteSmallWin}
-                onFail={() => setFailureBigWin(bw)}
-                onUndoFail={() => handleUndoFailBigWin(bw.id)}
-              />
-            ))}
+            <div className="border-t border-border" />
 
-            {bigWins.length > 3 && !showAllBigWins && (
-              <button
-                onClick={() => setShowAllBigWins(true)}
-                className="w-full py-3 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer text-center"
-              >
-                Lihat Semua Langkah ({bigWins.length} langkah)
-              </button>
-            )}
-
-            {showAllBigWins && (
-              <button
-                onClick={() => setShowAllBigWins(false)}
-                className="w-full py-3 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors cursor-pointer text-center"
-              >
-                Lihat Lebih Sedikit
-              </button>
-            )}
+            {/* Small Wins */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-text-primary">Small Win</h3>
+                <span className="text-xs text-text-secondary">
+                  {bigWins.flatMap((bw) => bw.small_wins || []).filter((sw) => sw.is_completed).length} tercapai
+                </span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {(() => {
+                  const allSmallWins = bigWins.flatMap((bw) => bw.small_wins || []);
+                  if (allSmallWins.length === 0) {
+                    return (
+                      <p className="text-xs text-text-secondary text-center py-4">
+                        Belum ada small win. Terus semangat!
+                      </p>
+                    );
+                  }
+                  return allSmallWins.map((sw) => (
+                    <div key={sw.id} className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border">
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${sw.is_completed ? 'bg-green-500' : 'border-2 border-border'}`}>
+                        {sw.is_completed && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary">{sw.title}</p>
+                        {sw.completed_at && (
+                          <p className="text-[11px] text-text-secondary">{new Date(sw.completed_at).toLocaleDateString('id-ID')}</p>
+                        )}
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </section>
           </div>
         )}
 
-        {/* Tab: Story */}
+        {/* Tab: Story — day log collapsible */}
         {sectionTab === "story" && (
-          <div>
-            <h2 className="text-base font-bold text-text-primary mb-4">Cerita Perjalananku</h2>
-            <JourneyStory reflections={allReflections} />
+          <div className="flex flex-col gap-2 py-4">
+            <h2 className="text-base font-bold text-text-primary mb-2">Catatan Harian</h2>
+            {allReflections.length === 0 ? (
+              <p className="text-xs text-text-secondary text-center py-8">
+                Mulai aktivitas hari ini untuk membuat catatan pertamamu.
+              </p>
+            ) : (
+              allReflections.map((refl, idx) => {
+                const dayNumber = allReflections.length - idx;
+                const dateLabel = new Date(refl.date).toLocaleDateString('id-ID', {
+                  weekday: 'long', day: 'numeric', month: 'short',
+                });
+                return (
+                  <DayLogCard
+                    key={refl.id || idx}
+                    dayNumber={dayNumber}
+                    dateLabel={dateLabel}
+                    reflection={refl}
+                  />
+                );
+              })
+            )}
           </div>
         )}
 
-        {/* Tab: Timeline */}
-        {sectionTab === "timeline" && (
-          <div>
-            <h2 className="text-base font-bold text-text-primary mb-4">Riwayat Perjalanan</h2>
-            <JourneyTimeline events={timeline} />
+        {/* Circle + Artikel — dipindah ke bawah tabs */}
+        {circles.length > 0 && (
+          <div className="mt-6 mb-6">
+            <h3 className="text-sm font-bold text-text-primary mb-3">
+              <span className="mr-1.5">👥</span> Gabung Circle Terkait
+            </h3>
+            <div className="space-y-3">
+              {circles.slice(0, 2).map((c: any) => (
+                <Card key={c.id} padding="md" className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => router.push(`/circle/${c.id}`)}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                      {c.name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-text-primary">{c.name}</h4>
+                      {c.description && (
+                        <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{c.description}</p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[11px] text-text-secondary">👤 {c.member_count}/{c.capacity} anggota</span>
+                        <Button variant="primary" size="sm" className="ml-auto" onClick={(e) => { e.stopPropagation(); router.push(`/circle/${c.id}`); }}>
+                          Lihat
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Alternative Futures shown in FailureModal only */}
+        {recommendedArticles.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-bold text-text-primary mb-3">
+              <span className="mr-1.5">📖</span> Artikel untukmu
+            </h3>
+            <div className="space-y-2">
+              {recommendedArticles.map((art: any) => (
+                <Card key={art.slug} padding="sm" className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => router.push(`/inspirasi/${art.slug}`)}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center flex-shrink-0 text-lg">
+                      {art.cover_emoji || "📄"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-semibold text-text-primary line-clamp-1">{art.title}</h4>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[11px] text-text-secondary">{art.read_time_minutes} menit</span>
+                        <span className="text-[11px] text-text-secondary">·</span>
+                        <span className="text-[11px] text-text-secondary">{art.category}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {showReflection && (

@@ -288,7 +288,7 @@ addDetails("dream_skill", "Tidur Sebelum 22:00", {
   video_label: null,
 });
 
-addDetails("dream_skill", "Jurnal Harian", {
+  addDetails("dream_skill", "Refleksi Harian", {
   description: "Catat progres latihan dan perasaan hari ini. Jurnal membantu melacak pola dan menjaga motivasi jangka panjang.",
   tips: [
     "Tulis 3 hal: apa yang dilatih, bagaimana rasanya, satu hal yang dipelajari",

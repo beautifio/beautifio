@@ -10,7 +10,7 @@ import {
 import { Badge, Button, ProgressBar } from "@beautifio/ui";
 import {
   ROADMAP_TEMPLATES, ROADMAP_SEED_MILESTONES, ROADMAP_SEED_RECOMMENDATIONS,
-  ROADMAP_CATEGORIES, getStoredJournals, MOCK_JOURNALS, getRoadmapV3,
+  ROADMAP_CATEGORIES, getRoadmapV3,
   getLifeProfile, ZONE_INFO, STAGE_INFO, updateZone,
   generateDailyWins, executePivot,
 } from "@beautifio/utils";
@@ -404,67 +404,6 @@ export default function RoadmapDetailPage({ params }: { params: Promise<{ slug: 
 
         <div className="px-6 pt-6 pb-24 space-y-8">
           <MilestoneTimeline milestones={milestones} slug={slug} />
-
-          {(() => {
-            const allJournals = [...MOCK_JOURNALS, ...getStoredJournals()];
-            const linkedJournal = allJournals.find((j) => j.roadmap_slug === slug);
-            return linkedJournal ? (
-              <div className="p-4 rounded-xl bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <BookOpen size={20} className="text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-text-secondary">Jurnal Perjalanan</p>
-                    <p className="text-sm font-semibold text-text-primary">{linkedJournal.title}</p>
-                    <p className="text-[11px] text-text-secondary">{linkedJournal.entry_count} entri · {linkedJournal.follower_count} pengikut</p>
-                  </div>
-                  <Button onClick={() => router.push(`/jurnal/${linkedJournal.slug}`)} size="sm" variant="secondary">
-                    <BookOpen size={12} />
-                    <span>Buka</span>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-xl bg-muted/30 border border-dashed border-border text-center">
-                <BookOpen size={20} className="mx-auto text-text-secondary/40 mb-2" />
-                <p className="text-sm font-medium text-text-primary">Catat Perjalananmu</p>
-                <p className="text-xs text-text-secondary mt-1">Buat jurnal untuk mendokumentasikan progres roadmap ini</p>
-                <button
-                  onClick={() => {
-                    const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
-                    const now = new Date().toISOString();
-                    const jSlug = `${slugify(template!.title)}-${Date.now()}`.slice(0, 60);
-                    try {
-                      const existing = JSON.parse(localStorage.getItem("beautifio_journals") || "[]");
-                      existing.unshift({
-                        id: `jrnl-user-${Date.now()}`,
-                        user_id: "u-user",
-                        title: `Perjalanan ${template!.title}`,
-                        slug: jSlug,
-                        description: `Dokumentasi perjalanan saya mengikuti roadmap ${template!.title}`,
-                        goal_category: template!.category === "health" ? "pendidikan" : template!.category === "sports" ? "kesehatan" : template!.category === "business" ? "bisnis" : template!.category === "tech" ? "skill" : "personal",
-                        roadmap_slug: slug,
-                        is_public: true,
-                        entry_count: 0,
-                        follower_count: 0,
-                        reaction_count: 0,
-                        created_at: now,
-                        updated_at: now,
-                        author_name: "Kamu",
-                        author_initials: "KM",
-                      });
-                      localStorage.setItem("beautifio_journals", JSON.stringify(existing));
-                      router.push(`/jurnal/${jSlug}`);
-                    } catch {}
-                  }}
-                  className="mt-3 text-xs font-medium text-primary hover:underline cursor-pointer"
-                >
-                  Buat Jurnal Perjalanan
-                </button>
-              </div>
-            );
-          })()}
 
           <RoadmapRecommendations recommendations={recommendations} />
           <EcosystemLinks groups={ecosystemGroups} />
