@@ -6,7 +6,7 @@ import {
   BarChart3, Gift, ShoppingBag, Trophy, FileText,
   Users, Quote, MessageCircle, HeartHandshake,
   FileSpreadsheet, BookOpen, Briefcase, Menu, X,
-  LayoutDashboard, Shield,
+  LayoutDashboard, Shield, Image,
 } from "lucide-react";
 
 type NavItem = {
@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { href: "/admin/konten/posts", label: "Inspirasi", icon: FileSpreadsheet, roles: ["redaksi", "superadmin"] },
   { href: "/admin/konten/stories", label: "Stories", icon: BookOpen, roles: ["redaksi", "superadmin"] },
   { href: "/admin/konten/quotes", label: "Quotes", icon: Quote, roles: ["redaksi", "superadmin"] },
+  { href: "/admin/konten/hero", label: "Hero Landing", icon: Image, roles: ["redaksi", "superadmin"] },
   { href: "/admin/opportunities", label: "Opportunities", icon: Briefcase, roles: ["superadmin"] },
 ];
 

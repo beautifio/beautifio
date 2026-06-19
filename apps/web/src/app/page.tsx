@@ -32,6 +32,7 @@ export default function LandingPage() {
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [stories, setStories] = useState<{ slug: string; title: string; excerpt: string; author: string }[]>([]);
+  const [heroUrl, setHeroUrl] = useState("");
   const justSignedUp = useRef(false);
 
   const featured = allTemplates.filter((t: any) => FEATURED_SLUGS.includes(t.slug));
@@ -50,6 +51,18 @@ export default function LandingPage() {
       .limit(2)
       .then(({ data }) => {
         if (data) setStories(data);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "hero_image_url")
+      .single()
+      .then(({ data }) => {
+        if (data?.value) setHeroUrl(data.value);
       });
   }, []);
 
@@ -89,30 +102,35 @@ export default function LandingPage() {
         )}
 
         {/* ─────── SECTION 1: HERO ─────── */}
-        <section className="relative px-5 pt-10 pb-8 overflow-hidden">
-          <svg className="absolute -top-16 -right-12 w-64 h-64 opacity-20" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="100" cy="100" r="100" fill="#6BB9D4" />
-          </svg>
-          <svg className="absolute -bottom-10 -left-10 w-40 h-40 opacity-15" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="100" cy="100" r="100" fill="#FFC64F" />
-          </svg>
+        <section
+          className="relative px-5 pt-10 pb-8 overflow-hidden bg-cover bg-center"
+          style={{
+            backgroundColor: "#084463",
+            backgroundImage: heroUrl ? `url(${heroUrl})` : undefined,
+          }}
+        >
+          <div className="absolute inset-0" style={{
+            background: heroUrl
+              ? "linear-gradient(to bottom, rgba(8,68,99,0.6) 0%, rgba(8,68,99,0.85) 100%)"
+              : undefined,
+          }} />
 
           <div className="relative z-10">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "#084463" }}>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "#6BB9D4" }}>
               Beautifio
             </p>
-            <h1 className="text-[28px] font-semibold leading-tight tracking-tight font-poppins" style={{ color: "#1E2938" }}>
+            <h1 className="text-[28px] font-semibold leading-tight tracking-tight font-poppins text-white">
               Masa depan dimulai{" "}
               <span style={{ color: "#FFC64F" }}>hari ini.</span>
             </h1>
-            <p className="text-[15px] mt-4 leading-relaxed" style={{ color: "#647488" }}>
+            <p className="text-[15px] mt-4 leading-relaxed text-white/80">
               Platform yang nemenin kamu nemuin mimpi, tumbuh tiap hari, dan nggak sendirian menjalaninya.
             </p>
             <div className="flex items-center gap-4 mt-8">
               <button
                 onClick={scrollToTemplates}
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-lg transition-all cursor-pointer"
-                style={{ backgroundColor: "#084463", color: "#FFFFFF" }}
+                style={{ backgroundColor: "#FFC64F", color: "#1E2938" }}
               >
                 Mulai Perjalananku
                 <span>→</span>
@@ -121,7 +139,7 @@ export default function LandingPage() {
             <Link
               href="/login"
               className="inline-block mt-4 text-sm font-medium transition-colors"
-              style={{ color: "#6BB9D4" }}
+              style={{ color: "#FFFFFF" }}
             >
               Sudah punya akun? Masuk
             </Link>
