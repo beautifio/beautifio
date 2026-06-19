@@ -12,12 +12,26 @@ const STATUS_COLORS: Record<string, string> = {
   archived: "bg-yellow-100 text-yellow-700",
 };
 
+const CATEGORIES = [
+  "Karir", "Pendidikan", "Bisnis", "Kesehatan Mental",
+  "Percintaan", "Self Reflection", "Personal Growth",
+  "Public Speaking", "Personal Branding", "Finance",
+  "Writing", "Teknologi", "Gaming", "Alam & Petualangan",
+  "Menulis & Literasi",
+];
+
+function postStatus(p: any): string {
+  if (p.status) return p.status;
+  if (p.is_published === true) return "published";
+  return "draft";
+}
+
 export default function InspirasiPostsPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<any>({ title: "", content: "", excerpt: "", category: "artikel", tags: [], cover_image: "", author_name: "", meta_title: "", meta_description: "", og_image: "", slug: "" });
+  const [form, setForm] = useState<any>({ title: "", content: "", excerpt: "", category: "Karir", cover_image: "", author_name: "", read_time_minutes: 5, slug: "" });
   const [saving, setSaving] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
 
@@ -32,13 +46,22 @@ export default function InspirasiPostsPage() {
 
   function startEdit(p: any) {
     setEditId(p.id);
-    setForm({ title: p.title, content: p.content, excerpt: p.excerpt || "", category: p.category, tags: p.tags || [], cover_image: p.cover_image || "", author_name: p.author_name || "", meta_title: p.meta_title || "", meta_description: p.meta_description || "", og_image: p.og_image || "", slug: p.slug || "" });
+    setForm({
+      title: p.title,
+      content: p.content,
+      excerpt: p.excerpt || "",
+      category: CATEGORIES.includes(p.category) ? p.category : "Karir",
+      cover_image: p.cover_image || "",
+      author_name: p.author || p.author_name || "",
+      read_time_minutes: p.read_time_minutes || 5,
+      slug: p.slug || "",
+    });
     setShowAdd(true);
   }
 
   function startNew() {
     setEditId(null);
-    setForm({ title: "", content: "", excerpt: "", category: "artikel", tags: [], cover_image: "", author_name: "", meta_title: "", meta_description: "", og_image: "", slug: "" });
+    setForm({ title: "", content: "", excerpt: "", category: "Karir", cover_image: "", author_name: "", read_time_minutes: 5, slug: "" });
     setShowAdd(true);
   }
 
@@ -46,10 +69,11 @@ export default function InspirasiPostsPage() {
     if (!form.title || !form.content) return;
     setSaving(true);
     try {
+      const body = { ...form, status: editId ? undefined : "draft" };
       if (editId) {
-        await fetch(`/api/admin/konten/posts/${editId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        await fetch(`/api/admin/konten/posts/${editId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       } else {
-        await fetch("/api/admin/konten/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        await fetch("/api/admin/konten/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       }
       setShowAdd(false);
       setEditId(null);
@@ -97,34 +121,38 @@ export default function InspirasiPostsPage() {
       ) : (
         <div className="space-y-2">
           {posts.length === 0 && <p className="text-sm text-gray-500 text-center py-8">Belum ada post</p>}
-          {posts.map((p) => (
-            <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[p.status] || "bg-gray-100 text-gray-700"}`}>{STATUS_LABELS[p.status] || p.status}</span>
-                    <Badge variant="accent" className="text-[10px]">{p.category}</Badge>
-                    {p.tags?.length > 0 && p.tags.slice(0, 3).map((t: string) => <span key={t} className="text-[10px] text-gray-400">#{t}</span>)}
+          {posts.map((p) => {
+            const st = postStatus(p);
+            return (
+              <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[st] || "bg-gray-100 text-gray-700"}`}>{STATUS_LABELS[st] || st}</span>
+                      <Badge variant="accent" className="text-[10px]">{p.category}</Badge>
+                      {p.source === "redaksi" && <span className="text-[10px] text-blue-500 font-medium">Redaksi</span>}
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">{p.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{p.excerpt || p.content?.slice(0, 100)}</p>
+                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400">
+                      <span>{p.author || p.author_name || "—"}</span>
+                      <span>{new Date(p.created_at).toLocaleString("id-ID")}</span>
+                      {p.published_at && <span>Terbit {new Date(p.published_at).toLocaleString("id-ID")}</span>}
+                      {p.read_time_minutes && <span>{p.read_time_minutes} menit</span>}
+                      {p.slug && <span className="font-mono">/{p.slug}</span>}
+                    </div>
                   </div>
-                  <p className="text-sm font-semibold text-gray-900">{p.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{p.excerpt || p.content?.slice(0, 100)}</p>
-                  <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400">
-                    <span>{p.author_name || p.author?.full_name || "—"}</span>
-                    <span>{new Date(p.created_at).toLocaleString("id-ID")}</span>
-                    {p.published_at && <span>Terbit {new Date(p.published_at).toLocaleString("id-ID")}</span>}
-                    {p.slug && <span className="font-mono">/{p.slug}</span>}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => startEdit(p)} className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center cursor-pointer" title="Edit"><FileText className="w-3.5 h-3.5 text-gray-400" /></button>
+                    {st === "draft" && <button onClick={() => updateStatus(p.id, "published")} className="w-7 h-7 rounded-lg hover:bg-green-50 flex items-center justify-center cursor-pointer" title="Publish"><Send className="w-3.5 h-3.5 text-green-500" /></button>}
+                    {st === "published" && <button onClick={() => updateStatus(p.id, "archived")} className="w-7 h-7 rounded-lg hover:bg-yellow-50 flex items-center justify-center cursor-pointer" title="Archive"><Archive className="w-3.5 h-3.5 text-yellow-500" /></button>}
+                    {st === "archived" && <button onClick={() => updateStatus(p.id, "draft")} className="w-7 h-7 rounded-lg hover:bg-gray-50 flex items-center justify-center cursor-pointer" title="Unarchive"><EyeOff className="w-3.5 h-3.5 text-gray-500" /></button>}
+                    <button onClick={() => remove(p.id)} className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center cursor-pointer" title="Delete"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
                   </div>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => startEdit(p)} className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center cursor-pointer" title="Edit"><FileText className="w-3.5 h-3.5 text-gray-400" /></button>
-                  {p.status === "draft" && <button onClick={() => updateStatus(p.id, "published")} className="w-7 h-7 rounded-lg hover:bg-green-50 flex items-center justify-center cursor-pointer" title="Publish"><Send className="w-3.5 h-3.5 text-green-500" /></button>}
-                  {p.status === "published" && <button onClick={() => updateStatus(p.id, "archived")} className="w-7 h-7 rounded-lg hover:bg-yellow-50 flex items-center justify-center cursor-pointer" title="Archive"><Archive className="w-3.5 h-3.5 text-yellow-500" /></button>}
-                  {p.status === "archived" && <button onClick={() => updateStatus(p.id, "draft")} className="w-7 h-7 rounded-lg hover:bg-gray-50 flex items-center justify-center cursor-pointer" title="Unarchive"><EyeOff className="w-3.5 h-3.5 text-gray-500" /></button>}
-                  <button onClick={() => remove(p.id)} className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center cursor-pointer" title="Delete"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -152,7 +180,7 @@ export default function InspirasiPostsPage() {
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Excerpt</label><input value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Category</label>
                   <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
-                    {["artikel", "motivasi", "edukasi", "inspirasi", "kisah", "tips"].map((c) => <option key={c} value={c}>{c}</option>)}
+                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
@@ -162,34 +190,30 @@ export default function InspirasiPostsPage() {
                   <input value={form.author_name} onChange={(e) => setForm((prev: any) => ({ ...prev, author_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Cover Image</label>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm cursor-pointer hover:bg-gray-50">
-                      <Upload className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-500">{uploadingCover ? "Uploading..." : form.cover_image ? "Ganti" : "Upload"}</span>
-                      <input type="file" accept="image/*" className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); e.target.value = ""; }} />
-                    </label>
-                    {form.cover_image && (
-                      <button onClick={() => setForm((prev: any) => ({ ...prev, cover_image: "" }))}
-                        className="text-xs text-red-500 hover:text-red-700 cursor-pointer">Hapus</button>
-                    )}
-                  </div>
-                  {form.cover_image && (
-                    <div className="mt-2 aspect-[16/9] rounded-lg overflow-hidden bg-gray-100">
-                      <img src={form.cover_image} alt="Cover preview" className="w-full h-full object-cover" />
-                    </div>
-                  )}
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Read Time (menit)</label>
+                  <input type="number" min={1} max={60} value={form.read_time_minutes} onChange={(e) => setForm((prev: any) => ({ ...prev, read_time_minutes: parseInt(e.target.value) || 5 }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
                 </div>
               </div>
-              <details className="group">
-                <summary className="text-xs font-medium text-gray-500 cursor-pointer hover:text-gray-700">SEO Settings</summary>
-                <div className="space-y-3 mt-3">
-                  <div><label className="text-xs font-medium text-gray-600 block mb-1">Meta Title</label><input value={form.meta_title} onChange={(e) => setForm({ ...form, meta_title: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
-                  <div><label className="text-xs font-medium text-gray-600 block mb-1">Meta Description</label><textarea value={form.meta_description} onChange={(e) => setForm({ ...form, meta_description: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm resize-none" /></div>
-                  <div><label className="text-xs font-medium text-gray-600 block mb-1">OG Image URL</label><input value={form.og_image} onChange={(e) => setForm({ ...form, og_image: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Cover Image</label>
+                <div className="flex items-center gap-2">
+                  <label className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm cursor-pointer hover:bg-gray-50">
+                    <Upload className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-500">{uploadingCover ? "Uploading..." : form.cover_image ? "Ganti" : "Upload"}</span>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); e.target.value = ""; }} />
+                  </label>
+                  {form.cover_image && (
+                    <button onClick={() => setForm((prev: any) => ({ ...prev, cover_image: "" }))}
+                      className="text-xs text-red-500 hover:text-red-700 cursor-pointer">Hapus</button>
+                  )}
                 </div>
-              </details>
+                {form.cover_image && (
+                  <div className="mt-2 aspect-[16/9] rounded-lg overflow-hidden bg-gray-100">
+                    <img src={form.cover_image} alt="Cover preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex gap-2 mt-5">
               <Button variant="ghost" size="sm" className="flex-1 cursor-pointer" onClick={() => setShowAdd(false)} disabled={saving}>Batal</Button>

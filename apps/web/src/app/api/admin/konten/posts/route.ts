@@ -16,8 +16,8 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { data, error } = await supabase
-      .from("inspirasi_posts")
-      .select("*, author:author_id(full_name, email), creator:created_by(full_name, email)")
+      .from("articles")
+      .select("*")
       .order("created_at", { ascending: false })
       .limit(100);
 
@@ -43,8 +43,21 @@ export async function POST(req: NextRequest) {
     const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
 
     const { data, error } = await supabase
-      .from("inspirasi_posts")
-      .insert({ ...body, slug, created_by: user.id })
+      .from("articles")
+      .insert({
+        slug,
+        type: "story",
+        title: body.title,
+        content: body.content,
+        excerpt: body.excerpt || "",
+        category: body.category || "artikel",
+        cover_image: body.cover_image || "",
+        author: body.author_name || user.email || "",
+        initials: (body.author_name || user.email || "").charAt(0).toUpperCase(),
+        source: "redaksi",
+        is_published: body.status === "published",
+        read_time_minutes: body.read_time_minutes || 5,
+      })
       .select()
       .single();
 

@@ -18,13 +18,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { id } = await params;
     const body = await req.json();
 
-    if (body.status === "published" && !body.published_at) {
-      body.published_at = new Date().toISOString();
+    const updateData: Record<string, any> = {};
+
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.content !== undefined) updateData.content = body.content;
+    if (body.excerpt !== undefined) updateData.excerpt = body.excerpt;
+    if (body.category !== undefined) updateData.category = body.category;
+    if (body.cover_image !== undefined) updateData.cover_image = body.cover_image;
+    if (body.author_name !== undefined) updateData.author = body.author_name;
+    if (body.initials !== undefined) updateData.initials = body.initials;
+    if (body.read_time_minutes !== undefined) updateData.read_time_minutes = body.read_time_minutes;
+    if (body.slug !== undefined) updateData.slug = body.slug;
+    if (body.status !== undefined) {
+      updateData.is_published = body.status === "published";
+      if (body.status === "published") updateData.published_at = new Date().toISOString();
     }
 
     const { data, error } = await supabase
-      .from("inspirasi_posts")
-      .update(body)
+      .from("articles")
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();
@@ -44,7 +56,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { id } = await params;
-    const { error } = await supabase.from("inspirasi_posts").delete().eq("id", id);
+    const { error } = await supabase.from("articles").delete().eq("id", id);
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error: any) {
