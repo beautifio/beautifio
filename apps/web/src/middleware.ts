@@ -181,7 +181,7 @@ export async function middleware(request: NextRequest) {
       }
       const url = request.nextUrl.clone();
       if (profile?.role === "admin" || profile?.role === "superadmin") {
-        url.pathname = "/admin/familia";
+        url.pathname = "/admin";
       } else if (profile?.role === "redaksi") {
         url.pathname = "/admin/konten/posts";
       } else {

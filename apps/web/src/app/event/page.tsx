@@ -181,10 +181,9 @@ export default function EventPage() {
             <p className="text-xs text-gray-400 mt-1">Nantikan event menarik lainnya</p>
           </div>
         )}
+        <EcosystemLinks groups={ecosystemGroups} />
+        <div className="h-4" />
       </div>
-
-      <EcosystemLinks groups={ecosystemGroups} />
-      <div className="h-4" />
     </div>
   );
 }

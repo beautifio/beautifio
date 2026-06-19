@@ -157,10 +157,10 @@ export default function BelanjaPage() {
             </a>
           ))}
         </div>
-      </div>
 
-      <EcosystemLinks groups={ecosystemGroups} />
-      <div className="h-4" />
+        <EcosystemLinks groups={ecosystemGroups} />
+        <div className="h-4" />
+      </div>
     </div>
   );
 }

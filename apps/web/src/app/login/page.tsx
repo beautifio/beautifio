@@ -49,7 +49,7 @@ export default function LoginPage({
           .eq("id", user.id)
           .single();
         if (profile?.role === "superadmin" || profile?.role === "admin") {
-          dest = "/admin/familia";
+          dest = "/admin";
         } else if (profile?.role === "redaksi") {
           dest = "/admin/konten/posts";
         }
@@ -112,7 +112,7 @@ export default function LoginPage({
               .eq("id", data.session.user.id)
               .single();
             if (profile?.role === "superadmin" || profile?.role === "admin") {
-              dest = "/admin/familia";
+              dest = "/admin";
             } else if (profile?.role === "redaksi") {
               dest = "/admin/konten/posts";
             } else if (mimpiSlug) {

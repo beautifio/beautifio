@@ -26,10 +26,10 @@ const NAV_CARDS: NavCard[] = [
   { emoji: "👥", title: "Users", desc: "Manajemen pengguna", href: "/admin/users", group: "Komunitas" },
   { emoji: "🗣️", title: "Curhat", desc: "Moderasi curhat", href: "/admin/curhat", group: "Komunitas" },
   { emoji: "🎫", title: "Care Tickets", desc: "Tiket bantuan", href: "/admin/care", group: "Komunitas" },
-  { emoji: "🏪", title: "Merchants", desc: "Kelola merchant", href: "/admin/familia/merchants", group: "Familia" },
-  { emoji: "🏷️", title: "Deals", desc: "Kelola deals", href: "/admin/familia/deals", group: "Familia" },
-  { emoji: "🏆", title: "Rewards", desc: "Kelola rewards", href: "/admin/familia/rewards", group: "Familia" },
-  { emoji: "📋", title: "Redemption Log", desc: "Riwayat redeem", href: "/admin/familia/redemption-log", group: "Familia" },
+  { emoji: "🏪", title: "Merchants", desc: "Kelola merchant", href: "/admin/merchants", group: "Familia" },
+  { emoji: "🏷️", title: "Deals", desc: "Kelola deals", href: "/admin/deals", group: "Familia" },
+  { emoji: "🏆", title: "Rewards", desc: "Kelola rewards", href: "/admin/rewards", group: "Familia" },
+  { emoji: "📋", title: "Redemption Log", desc: "Riwayat redeem", href: "/admin/redemption-log", group: "Familia" },
   { emoji: "💼", title: "Opportunities", desc: "Kelola peluang", href: "/admin/opportunities", group: "Lainnya" },
 ];
 

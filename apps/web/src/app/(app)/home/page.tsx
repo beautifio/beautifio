@@ -14,6 +14,7 @@ import { GuestCTA } from "./components/GuestCTA";
 import { ArticlePick } from "./components/ArticlePick";
 import { CurhatFeed } from "./components/CurhatFeed";
 import { QuickActions } from "./components/QuickActions";
+import { BannerCarousel } from "./components/BannerCarousel";
 import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet";
 import { AchievementNotif } from "@/features/familia/components/AchievementNotif";
 
@@ -141,6 +142,9 @@ export default function HomeScreen({
 
         {/* Quote Card — semua state */}
         <QuoteCard userName={user ? userName : "Sobat"} />
+
+        {/* Banner Carousel — only if banners exist */}
+        <BannerCarousel />
 
         {loading ? (
           <div className="space-y-4">

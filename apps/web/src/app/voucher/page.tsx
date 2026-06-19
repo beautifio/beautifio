@@ -165,9 +165,9 @@ export default function VoucherPage() {
             </button>
           ))}
         </div>
-      </div>
 
-      <EcosystemLinks groups={ecosystemGroups} />
+        <EcosystemLinks groups={ecosystemGroups} />
+      </div>
 
       <VoucherClaimModal merchant={selectedMerchant} open={showClaim} onClose={() => { setShowClaim(false); setSelectedMerchant(null); }} />
     </div>

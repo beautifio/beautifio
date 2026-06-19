@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
 import {
-  BarChart3, Gift, ShoppingBag, Trophy, FileText,
+  Gift, ShoppingBag, Trophy, FileText,
   Users, Quote, MessageCircle, HeartHandshake,
   FileSpreadsheet, BookOpen, Briefcase, Menu, X,
   LayoutDashboard, Shield, Image,
@@ -18,18 +19,17 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "superadmin"] },
-  { href: "/admin/familia", label: "Familia", icon: BarChart3, roles: ["admin", "superadmin"] },
-  { href: "/admin/familia/merchants", label: "Merchants", icon: Gift, roles: ["admin", "superadmin"] },
-  { href: "/admin/familia/deals", label: "Deals", icon: ShoppingBag, roles: ["admin", "superadmin"] },
-  { href: "/admin/familia/rewards", label: "Rewards", icon: Trophy, roles: ["admin", "superadmin"] },
-  { href: "/admin/familia/redemption-log", label: "Redemption Log", icon: FileText, roles: ["admin", "superadmin"] },
+  { href: "/admin/merchants", label: "Merchants", icon: Gift, roles: ["admin", "superadmin"] },
+  { href: "/admin/deals", label: "Deals", icon: ShoppingBag, roles: ["admin", "superadmin"] },
+  { href: "/admin/rewards", label: "Rewards", icon: Trophy, roles: ["admin", "superadmin"] },
+  { href: "/admin/redemption-log", label: "Redemption Log", icon: FileText, roles: ["admin", "superadmin"] },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["superadmin"] },
   { href: "/admin/curhat", label: "Curhat", icon: MessageCircle, roles: ["admin", "superadmin", "redaksi"] },
   { href: "/admin/care", label: "Care Tickets", icon: HeartHandshake, roles: ["admin", "superadmin"] },
   { href: "/admin/konten/posts", label: "Inspirasi", icon: FileSpreadsheet, roles: ["redaksi", "superadmin"] },
   { href: "/admin/konten/stories", label: "Stories", icon: BookOpen, roles: ["redaksi", "superadmin"] },
   { href: "/admin/konten/quotes", label: "Quotes", icon: Quote, roles: ["redaksi", "superadmin"] },
-  { href: "/admin/konten/hero", label: "Hero Landing", icon: Image, roles: ["redaksi", "superadmin"] },
+  { href: "/admin/konten/hero", label: "Media Manager", icon: Image, roles: ["redaksi", "superadmin"] },
   { href: "/admin/opportunities", label: "Opportunities", icon: Briefcase, roles: ["superadmin"] },
 ];
 
@@ -39,6 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -50,6 +51,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
         const { data: profile } = await res.json();
         setRole(profile?.role || "user");
+        const { data: logoData } = await supabase!.from("app_settings").select("value").eq("key", "logo_url").single();
+        if (logoData?.value) setLogoUrl(logoData.value);
         if (profile?.role === "user" || profile?.role === "mentor" || !profile?.role) {
           router.replace("/");
           return;
@@ -86,8 +89,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 lg:relative lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-amber-500" />
-            <span className="text-sm font-bold text-gray-900">Admin Panel</span>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="h-7 w-auto" />
+            ) : (
+              <>
+                <Shield className="w-5 h-5 text-amber-500" />
+                <span className="text-sm font-bold text-gray-900">Admin Panel</span>
+              </>
+            )}
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden cursor-pointer">
             <X className="w-5 h-5 text-gray-400" />
@@ -125,7 +134,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <button onClick={() => setSidebarOpen(true)} className="cursor-pointer">
             <Menu className="w-5 h-5 text-gray-600" />
           </button>
-          <span className="text-sm font-bold text-gray-900">Admin Panel</span>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="h-6 w-auto" />
+          ) : (
+            <span className="text-sm font-bold text-gray-900">Admin Panel</span>
+          )}
         </div>
         <div className="p-4 lg:p-6">{children}</div>
       </main>

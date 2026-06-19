@@ -492,7 +492,7 @@ function AdminPanelSection() {
         </CardHeader>
         <CardContent>
           <button
-            onClick={() => router.push("/admin/familia")}
+            onClick={() => router.push("/admin")}
             className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-amber-100 hover:bg-amber-200 transition-colors text-left cursor-pointer border border-amber-200"
           >
             <Shield size={16} className="text-amber-700" />
