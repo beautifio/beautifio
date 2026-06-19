@@ -4,33 +4,28 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Heart, Compass, ChevronDown, ChevronUp, Flame, X } from "lucide-react";
+import { Sparkles, ArrowRight, Compass, ChevronDown, ChevronUp, Flame, X } from "lucide-react";
 import { Button, Card, Skeleton } from "@beautifio/ui";
-import { getAllDreamTemplates, getJmEcosystemByTemplateSlug } from "@beautifio/utils";
+import { getAllDreamTemplates } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
 import { useAuth } from "@/hooks/use-auth";
+import JourneyCard from "@/components/journey/JourneyCard";
 
-import { getAllJourneys, createJourney, journeyUrl, getJourneyProgress, archiveJourney } from "@/lib/journey-queries";
+import { getAllJourneys, journeyUrl, getJourneyProgress, archiveJourney } from "@/lib/journey-queries";
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
 
-const CATEGORY_LABELS: Record<string, string> = {
-  sports: "Sports",
-  creative: "Creative",
-  business: "Business",
-  health: "Health",
-  tech: "Tech",
-  education: "Education",
-  lifestyle: "Lifestyle",
-};
+const FILTER_CHIPS = [
+  { label: "Semua", value: "" },
+  { label: "Olahraga", value: "sports" },
+  { label: "Karir", value: "career" },
+  { label: "Bisnis", value: "business" },
+  { label: "Seni", value: "creative" },
+  { label: "Akademik", value: "education" },
+  { label: "Kesehatan", value: "health" },
+] as const
 
-const FILTER_OPTIONS = ["Semua", ...Object.values(CATEGORY_LABELS)] as const;
-type FilterKey = (typeof FILTER_OPTIONS)[number];
-
-function categoryMatches(category: string, filter: FilterKey): boolean {
-  if (filter === "Semua") return true;
-  return CATEGORY_LABELS[category] === filter;
-}
+type FilterKey = (typeof FILTER_CHIPS)[number]["value"]
 
 function statusLabel(status: string) {
   switch (status) {
@@ -57,10 +52,14 @@ export default function JourneyPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [userAge, setUserAge] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterKey>("Semua");
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
   const [showAllPrevious, setShowAllPrevious] = useState(false);
+  const [templatePhases, setTemplatePhases] = useState<Record<string, { id: string; phase_name: string }[]>>({})
+  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({})
+  const [userJourneyMap, setUserJourneyMap] = useState<Record<string, DreamJourney>>({})
+  const [startedPhaseIds, setStartedPhaseIds] = useState<Set<string>>(new Set())
 
   // Archive from list page
   const [archiveTarget, setArchiveTarget] = useState<DreamJourney | null>(null);
@@ -71,7 +70,7 @@ export default function JourneyPage() {
   const [pendingTemplate, setPendingTemplate] = useState<DreamTemplate | null>(null);
 
   const filteredTemplates = useMemo(
-    () => templates.filter((t) => categoryMatches(t.category, activeFilter)),
+    () => templates.filter((t) => !activeFilter || t.category === activeFilter),
     [templates, activeFilter]
   );
 
@@ -134,6 +133,49 @@ export default function JourneyPage() {
                 (365.25 * 24 * 60 * 60 * 1000)
             );
             setUserAge(age);
+          }
+
+          // Load phases for all templates
+          const phaseResults = await Promise.all(
+            templates.map(t =>
+              supabase
+                .from("dream_phases")
+                .select("id, phase_name, sort_order")
+                .eq("dream_template_slug", t.slug)
+                .order("sort_order", { ascending: true })
+                .then(({ data: d }) => ({ slug: t.slug, phases: d || [] }))
+            )
+          )
+          const phaseMap: Record<string, { id: string; phase_name: string }[]> = {}
+          phaseResults.forEach(r => { phaseMap[r.slug] = r.phases })
+          setTemplatePhases(phaseMap)
+
+          // Participant counts per template
+          const { data: allJourneys } = await supabase
+            .from("dream_journeys")
+            .select("template_slug")
+          const countMap: Record<string, number> = {}
+          allJourneys?.forEach(j => {
+            countMap[j.template_slug] = (countMap[j.template_slug] || 0) + 1
+          })
+          setParticipantCounts(countMap)
+
+          // User's journeys & phase statuses
+          const userJourneys = await getAllJourneys(user.id)
+          const journeyMap: Record<string, DreamJourney> = {}
+          userJourneys.forEach(j => {
+            if (!journeyMap[j.template_slug] || j.status === "active")
+              journeyMap[j.template_slug] = j
+          })
+          setUserJourneyMap(journeyMap)
+
+          const activeJourneyIds = userJourneys.filter(j => j.status === "active").map(j => j.id)
+          if (activeJourneyIds.length > 0) {
+            const { data: userPhases } = await supabase
+              .from("user_phase_status")
+              .select("dream_phase_id")
+              .in("journey_id", activeJourneyIds)
+            setStartedPhaseIds(new Set(userPhases?.map(p => p.dream_phase_id) || []))
           }
         }
       } catch (e) {
@@ -370,56 +412,32 @@ export default function JourneyPage() {
           )}
 
           <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
-            {FILTER_OPTIONS.map((f) => (
+            {FILTER_CHIPS.map((chip) => (
               <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
+                key={chip.label}
+                onClick={() => setActiveFilter(chip.value)}
                 className={`shrink-0 px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
-                  activeFilter === f
-                    ? "bg-[#FF5E5B] text-white shadow-sm"
+                  activeFilter === chip.value
+                    ? "bg-purple-50 border border-purple-400 text-purple-700"
                     : "bg-muted text-text-secondary hover:text-text-primary"
                 }`}
               >
-                {f}
+                {chip.label}
               </button>
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {filteredTemplates.map((t) => {
-              const ecosystem = getJmEcosystemByTemplateSlug(t.slug);
-              return (
-                <Card key={t.slug} className="p-3 hover:border-primary/30 transition-all">
-                  <div className="flex flex-col gap-2">
-                    <span className="text-2xl">{t.emoji}</span>
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-bold text-text-primary leading-tight">{t.title}</h3>
-                      <p className="text-[11px] text-text-secondary mt-1 line-clamp-2 leading-relaxed">{t.description}</p>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-text-secondary capitalize">{t.category}</span>
-                        <span className="text-[10px] text-text-secondary">{t.duration}</span>
-                      </div>
-                      {ecosystem && (
-                        <p className="text-[10px] text-accent mt-1.5 leading-tight">
-                          <Compass size={10} className="inline mr-0.5 -mt-0.5" />
-                          {ecosystem.pivotPoint}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="w-full mt-3 text-xs"
-                    onClick={() => handleStartJourney(t)}
-                    loading={creating && selectedTemplate === t.slug}
-                    disabled={creating}
-                  >
-                    <Heart size={12} /> Pilih
-                  </Button>
-                </Card>
-              );
-            })}
+          <div className="flex flex-col gap-3">
+            {filteredTemplates.map((t) => (
+              <JourneyCard
+                key={t.slug}
+                template={t}
+                phases={templatePhases[t.slug] || []}
+                participantCount={participantCounts[t.slug] || 0}
+                userJourney={userJourneyMap[t.slug] || null}
+                startedPhaseIds={startedPhaseIds}
+              />
+            ))}
           </div>
         </section>
 

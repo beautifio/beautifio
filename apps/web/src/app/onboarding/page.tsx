@@ -391,7 +391,14 @@ export default function OnboardingPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-3 mt-6 pt-6 border-t border-border">
+        </div>
+
+        <div className="h-24" /> {/* spacer untuk fixed bottom */}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-bg/95 backdrop-blur-sm">
+        <div className="max-w-content mx-auto px-6 py-3">
+          <div className="flex items-center gap-3">
             {step > 0 && (
               <Button
                 variant="ghost"
@@ -416,11 +423,10 @@ export default function OnboardingPage() {
               {!saving && <ArrowRight size={16} />}
             </Button>
           </div>
+          <p className="text-xs text-text-secondary text-center mt-2">
+            Langkah {step + 1} dari {steps.length}
+          </p>
         </div>
-
-        <p className="text-xs text-text-secondary text-center mt-4">
-          Langkah {step + 1} dari {steps.length}
-        </p>
       </div>
     </div>
   );
