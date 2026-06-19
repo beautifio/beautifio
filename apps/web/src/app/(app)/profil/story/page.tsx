@@ -149,7 +149,7 @@ export default function StoryPage() {
   if (authLoading || !user) return null;
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg pb-24">
       <div className="max-w-content mx-auto px-4 py-6">
         <button
           onClick={() => router.push("/profil")}

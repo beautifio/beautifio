@@ -1,124 +1,132 @@
-"use client";
+"use client"
 
-import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
-import { use, useEffect, useState, useMemo } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/lib/supabase/client";
-import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
-import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types";
-import { getLifeEngineData, DIMENSION_LABELS, ALL_DIMENSIONS } from "@/lib/life-engine";
-import { QuoteCard } from "./components/QuoteCard";
-import { JourneyResume } from "./components/JourneyResume";
-import { GuestCTA } from "./components/GuestCTA";
-import { ArticlePick } from "./components/ArticlePick";
-import { CurhatFeed } from "./components/CurhatFeed";
-import { QuickActions } from "./components/QuickActions";
-import { BannerCarousel } from "./components/BannerCarousel";
-import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet";
-import { AchievementNotif } from "@/features/familia/components/AchievementNotif";
+import dynamic from "next/dynamic"
+import { useRouter } from "next/navigation"
+import { use, useEffect, useState, useMemo } from "react"
+import { useAuth } from "@/hooks/use-auth"
+import { supabase } from "@/lib/supabase/client"
+import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils"
+import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types"
+import { getLifeEngineData, DIMENSION_LABELS, ALL_DIMENSIONS } from "@/lib/life-engine"
+import { HeroCards } from "@/components/beranda/HeroCards"
+import { JourneySnapshot } from "@/components/beranda/JourneySnapshot"
+import { QuickLinks } from "@/components/beranda/QuickLinks"
+import { journeyUrl } from "@/lib/journey-queries"
+import { QuoteCard } from "./components/QuoteCard"
+import { GuestCTA } from "./components/GuestCTA"
+import { ArticlePick } from "./components/ArticlePick"
+import { CurhatFeed } from "./components/CurhatFeed"
+import { BannerCarousel } from "./components/BannerCarousel"
+import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet"
+import { AchievementNotif } from "@/features/familia/components/AchievementNotif"
 
-const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
+const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false })
 
 export default function HomeScreen({
   searchParams,
 }: {
-  searchParams: Promise<{ mimpi?: string }>;
+  searchParams: Promise<{ mimpi?: string }>
 }) {
-  const router = useRouter();
-  const resolvedParams = use(searchParams);
-  const { user } = useAuth();
+  const router = useRouter()
+  const resolvedParams = use(searchParams)
+  const { user } = useAuth()
 
-  const [journey, setJourney] = useState<DreamJourney | null>(null);
-  const [progress, setProgress] = useState<JourneyProgress | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
-  const [trialInfo, setTrialInfo] = useState<{ started_at: string; expires_at: string } | null>(null);
-  const [ruangAmanOpen, setRuangAmanOpen] = useState(false);
-  const [growthZone, setGrowthZone] = useState<string | null>(null);
+  const [journey, setJourney] = useState<DreamJourney | null>(null)
+  const [progress, setProgress] = useState<JourneyProgress | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null)
+  const [trialInfo, setTrialInfo] = useState<{ started_at: string; expires_at: string } | null>(null)
+  const [ruangAmanOpen, setRuangAmanOpen] = useState(false)
+  const [growthZone, setGrowthZone] = useState<string | null>(null)
 
-  const mimpiSlug = resolvedParams?.mimpi;
+  const mimpiSlug = resolvedParams?.mimpi
 
-  const isAnonymous = user?.is_anonymous === true || user?.app_metadata?.provider === "anonymous";
+  const isAnonymous = user?.is_anonymous === true || user?.app_metadata?.provider === "anonymous"
 
   const userName =
     user?.user_metadata?.full_name ||
     user?.email?.split("@")[0] ||
-    (isAnonymous ? "Sobat Tamu" : "Sobat");
+    (isAnonymous ? "Sobat Tamu" : "Sobat")
 
   const trialDays = useMemo(() => {
-    if (!trialInfo) return null;
-    const now = new Date();
-    const start = new Date(trialInfo.started_at);
-    const expires = new Date(trialInfo.expires_at);
-    const totalDays = Math.round((expires.getTime() - start.getTime()) / 86400000);
-    const elapsedDays = Math.round((now.getTime() - start.getTime()) / 86400000);
-    const currentDay = Math.min(Math.max(elapsedDays + 1, 1), totalDays);
-    const remaining = Math.max(0, Math.ceil((expires.getTime() - now.getTime()) / 86400000));
-    return { currentDay, totalDays, remaining };
-  }, [trialInfo]);
+    if (!trialInfo) return null
+    const now = new Date()
+    const start = new Date(trialInfo.started_at)
+    const expires = new Date(trialInfo.expires_at)
+    const totalDays = Math.round((expires.getTime() - start.getTime()) / 86400000)
+    const elapsedDays = Math.round((now.getTime() - start.getTime()) / 86400000)
+    const currentDay = Math.min(Math.max(elapsedDays + 1, 1), totalDays)
+    const remaining = Math.max(0, Math.ceil((expires.getTime() - now.getTime()) / 86400000))
+    return { currentDay, totalDays, remaining }
+  }, [trialInfo])
 
   useEffect(() => {
     if (!user) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
-    (async () => {
+    ;(async () => {
       try {
-        const { getActiveJourney, getJourneyProgress } = await import("@/lib/journey-queries");
-        const j = await getActiveJourney(user.id);
-        setJourney(j);
+        const { getActiveJourney, getJourneyProgress } = await import("@/lib/journey-queries")
+        const j = await getActiveJourney(user.id)
+        setJourney(j)
         if (j) {
-          const p = await getJourneyProgress(user.id, j.id);
-          setProgress(p);
+          const p = await getJourneyProgress(user.id, j.id)
+          setProgress(p)
         }
 
-        // Growth Zone notification (1x/week via localStorage)
         if (j) {
-          const lastShown = localStorage.getItem("growth_zone_last_shown");
-          const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          const lastShown = localStorage.getItem("growth_zone_last_shown")
+          const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
           if (!lastShown || parseInt(lastShown) < weekAgo) {
-            const engineData = await getLifeEngineData(user.id);
+            const engineData = await getLifeEngineData(user.id)
             if (engineData?.growthZone) {
-              setGrowthZone(engineData.growthZone);
-              localStorage.setItem("growth_zone_last_shown", String(Date.now()));
+              setGrowthZone(engineData.growthZone)
+              localStorage.setItem("growth_zone_last_shown", String(Date.now()))
             }
           }
         }
 
-        const isAnon = user?.is_anonymous === true || user?.app_metadata?.provider === "anonymous";
+        const isAnon = user?.is_anonymous === true || user?.app_metadata?.provider === "anonymous"
         if (isAnon) {
-          if (!supabase) return;
+          if (!supabase) return
           const { data: dbUser } = await supabase
             .from("users")
             .select("trial_started_at, trial_expires_at")
             .eq("id", user.id)
-            .single();
+            .single()
           if (dbUser?.trial_started_at && dbUser?.trial_expires_at) {
             setTrialInfo({
               started_at: dbUser.trial_started_at,
               expires_at: dbUser.trial_expires_at,
-            });
+            })
           }
         }
       } catch (e) {
-        console.error("Failed to load journey data", e);
+        console.error("Failed to load journey data", e)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    })();
-  }, [user]);
+    })()
+  }, [user])
 
   useEffect(() => {
     if (!loading && !journey && mimpiSlug) {
-      let t = getDreamTemplate(mimpiSlug);
+      let t = getDreamTemplate(mimpiSlug)
       if (!t) {
-        const templateSlug = getTemplateFromBenchmarkSlug(mimpiSlug);
-        if (templateSlug) t = getDreamTemplate(templateSlug);
+        const templateSlug = getTemplateFromBenchmarkSlug(mimpiSlug)
+        if (templateSlug) t = getDreamTemplate(templateSlug)
       }
-      if (t) setOnboardingTemplate(t);
+      if (t) setOnboardingTemplate(t)
     }
-  }, [loading, journey, mimpiSlug]);
+  }, [loading, journey, mimpiSlug])
+
+  const journeyActivity = journey && progress ? {
+    title: journey.title || "Perjalanan",
+    completed: progress.big_wins_completed || 0,
+    total: progress.big_wins_total || 1,
+    href: journeyUrl(journey),
+  } : null
 
   return (
     <div className="min-h-screen bg-bg">
@@ -140,11 +148,14 @@ export default function HomeScreen({
           </div>
         )}
 
-        {/* Quote Card — semua state */}
+        {/* Quote Card */}
         <QuoteCard userName={user ? userName : "Sobat"} />
 
-        {/* Banner Carousel — only if banners exist */}
+        {/* Banner Carousel */}
         <BannerCarousel />
+
+        {/* Hero Cards — Bisik & Tebak Aku */}
+        <HeroCards />
 
         {loading ? (
           <div className="space-y-4">
@@ -154,11 +165,7 @@ export default function HomeScreen({
           </div>
         ) : user ? (
           <>
-            {journey ? (
-              <JourneyResume journey={journey} progress={progress} />
-            ) : (
-              <GuestCTA />
-            )}
+            <JourneySnapshot activity={journey ? journeyActivity : null} />
           </>
         ) : (
           <GuestCTA variant="landing" />
@@ -168,7 +175,7 @@ export default function HomeScreen({
         <CurhatFeed />
 
         {growthZone && (() => {
-          const dimInfo = DIMENSION_LABELS[growthZone];
+          const dimInfo = DIMENSION_LABELS[growthZone]
           return (
             <div className="p-5 rounded-2xl bg-gradient-to-br from-accent/10 to-primary/10 border border-accent/20">
               <h3 className="text-sm font-bold text-text-primary mb-1">🌱 Zona Tumbuhmu</h3>
@@ -177,10 +184,10 @@ export default function HomeScreen({
                 Fokus kembangkan dimensi <strong>{dimInfo?.label || growthZone}</strong> untuk menaikkan level Life Engine-mu!
               </p>
             </div>
-          );
+          )
         })()}
 
-        <QuickActions onRuangAman={() => setRuangAmanOpen(true)} />
+        <QuickLinks />
       </div>
 
       <AchievementNotif />
@@ -195,5 +202,5 @@ export default function HomeScreen({
 
       <RuangAmanSheet open={ruangAmanOpen} onClose={() => setRuangAmanOpen(false)} />
     </div>
-  );
+  )
 }

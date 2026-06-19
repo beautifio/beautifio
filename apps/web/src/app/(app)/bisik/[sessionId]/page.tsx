@@ -53,7 +53,7 @@ export default function BisikSessionPage({ params }: { params: Promise<{ session
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
+      <div className="min-h-screen bg-bg flex items-center justify-center pb-24">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     )
@@ -61,14 +61,14 @@ export default function BisikSessionPage({ params }: { params: Promise<{ session
 
   if (!matched) {
     return (
-      <div className="min-h-screen bg-bg">
+      <div className="min-h-screen bg-bg pb-24">
         <BisikWaiting sessionId={sessionId} onMatched={handleMatched} onCancel={() => router.push("/bisik")} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg pb-24">
       <ChatRoom
         sessionId={sessionId}
         participants={participants}
