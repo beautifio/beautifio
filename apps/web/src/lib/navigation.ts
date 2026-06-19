@@ -11,7 +11,7 @@ export const NAV_TABS: NavTab[] = [
   { id: "home",      label: "Beranda",  icon: Home,     href: "/home" },
   { id: "journey",   label: "Journey",  icon: Map,      href: "/journey" },
   { id: "inspirasi", label: "Inspirasi", icon: BookOpen, href: "/inspirasi" },
-  { id: "circles",   label: "Circles",  icon: Users,    href: "/circles" },
+  { id: "circle",    label: "Circles",  icon: Users,    href: "/circle" },
 ];
 
 export function navRoute(id: string): string {

@@ -13,7 +13,7 @@ export function BottomNav() {
   const activeTab = (() => {
     if (pathname.startsWith("/journey")) return "journey"
     if (pathname.startsWith("/inspirasi")) return "inspirasi"
-    if (pathname.startsWith("/circles")) return "circles"
+    if (pathname.startsWith("/circle")) return "circle"
     if (pathname.startsWith("/home") || pathname === "/") return "home"
     for (const tab of NAV_TABS) {
       if (pathname === tab.href || pathname.startsWith(tab.href + "/")) return tab.id
@@ -50,7 +50,7 @@ export function BottomNav() {
         <NavItem tab={NAV_TABS[2]} active={activeTab === "inspirasi"} />
 
         {/* Circles */}
-        <NavItem tab={NAV_TABS[3]} active={activeTab === "circles"} />
+        <NavItem tab={NAV_TABS[3]} active={activeTab === "circle"} />
       </div>
     </nav>
   )

@@ -8,7 +8,6 @@ import { supabase } from "@/lib/supabase/client"
 import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils"
 import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types"
 import { getLifeEngineData, DIMENSION_LABELS } from "@/lib/life-engine"
-import { HeroCards } from "@/components/beranda/HeroCards"
 import { JourneySnapshot } from "@/components/beranda/JourneySnapshot"
 import { QuoteCard } from "./components/QuoteCard"
 import { GuestCTA } from "./components/GuestCTA"
@@ -17,7 +16,7 @@ import { CurhatFeed } from "./components/CurhatFeed"
 import { BannerCarousel } from "./components/BannerCarousel"
 import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet"
 import { AchievementNotif } from "@/features/familia/components/AchievementNotif"
-import { Ticket, ShoppingBag, Calendar, Briefcase, Gift, Shield } from "lucide-react"
+import { Ticket, ShoppingBag, Calendar, Briefcase } from "lucide-react"
 import { journeyUrl } from "@/lib/journey-queries"
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false })
@@ -27,8 +26,6 @@ const FEATURE_BUTTONS = [
   { href: "/belanja",     label: "Deals",      icon: ShoppingBag, color: "bg-blue-100 text-blue-700" },
   { href: "/event",       label: "Event",      icon: Calendar,    color: "bg-purple-100 text-purple-700" },
   { href: "/opportunity", label: "Peluang",    icon: Briefcase,   color: "bg-green-100 text-green-700" },
-  { href: "/circle",      label: "Circle",     icon: Gift,        color: "bg-pink-100 text-pink-700" },
-  { href: "/voucher",     label: "Familia",    icon: Shield,      color: "bg-red-100 text-red-700" },
 ]
 
 export default function HomeScreen({
@@ -157,23 +154,20 @@ export default function HomeScreen({
           </div>
         )}
 
-        {/* Hero Cards — Bisik & Tebak Aku */}
-        <HeroCards />
-
-        {/* Feature Buttons — 3 per row */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* Feature Buttons — 4 kolom */}
+        <div className="grid grid-cols-4 gap-2">
           {FEATURE_BUTTONS.map((btn) => {
             const Icon = btn.icon
             return (
               <button
                 key={btn.href}
                 onClick={() => router.push(btn.href)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface border border-border hover:bg-muted transition-colors cursor-pointer"
+                className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-surface border border-border hover:bg-muted transition-colors cursor-pointer"
               >
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center ${btn.color}`}>
-                  <Icon size={16} />
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${btn.color}`}>
+                  <Icon size={14} />
                 </div>
-                <span className="text-[11px] font-medium text-text-primary">{btn.label}</span>
+                <span className="text-[9px] font-medium text-text-primary">{btn.label}</span>
               </button>
             )
           })}
