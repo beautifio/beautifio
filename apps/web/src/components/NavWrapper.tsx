@@ -57,15 +57,19 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
     [router],
   );
 
+  const isLanding = pathname === "/";
+  const isAdmin = pathname.startsWith("/admin");
+  const hideNav = isLanding || isAdmin;
+
   return (
-    <div className="min-h-screen bg-bg pb-16">
+    <div className={`min-h-screen bg-bg ${hideNav ? "" : "pb-16"}`}>
       {children}
-      <BottomNavigation
+      {!hideNav && <BottomNavigation
         items={NAV_TABS}
         activeTab={activeTab}
         onTabChange={onTabChange}
         onTabHover={onTabHover}
-      />
+      />}
 
       {/* Guest sheet for anonymous profil */}
       {showGuestSheet && (
