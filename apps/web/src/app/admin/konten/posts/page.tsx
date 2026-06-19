@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload } from "lucide-react";
 import { Button, Badge } from "@beautifio/ui";
+import { RichTextEditor } from "@/features/editor/RichTextEditor";
 
 const STATUS_LABELS: Record<string, string> = { draft: "Draft", published: "Published", archived: "Archived" };
 const STATUS_COLORS: Record<string, string> = {
@@ -18,6 +19,7 @@ export default function InspirasiPostsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<any>({ title: "", content: "", excerpt: "", category: "artikel", tags: [], cover_image: "", author_name: "", meta_title: "", meta_description: "", og_image: "", slug: "" });
   const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -62,6 +64,25 @@ export default function InspirasiPostsPage() {
   async function remove(id: string) {
     if (!confirm("Hapus post ini?")) return;
     try { await fetch(`/api/admin/konten/posts/${id}`, { method: "DELETE" }); await fetchPosts(); } catch (e) { console.error("Delete failed", e); }
+  }
+
+  async function handleCoverUpload(file: File) {
+    setUploadingCover(true);
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      if (!supabase) throw new Error("No client");
+      const ext = file.name.split(".").pop();
+      const filename = `cover-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("landing-assets").upload(`artikel/${filename}`, file, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("landing-assets").getPublicUrl(`artikel/${filename}`);
+      setForm((prev: any) => ({ ...prev, cover_image: urlData.publicUrl }));
+    } catch {
+      alert("Upload cover gagal");
+    } finally {
+      setUploadingCover(false);
+    }
   }
 
   return (
@@ -119,7 +140,14 @@ export default function InspirasiPostsPage() {
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Title</label><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Slug</label><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" placeholder="Auto-generated" /></div>
               </div>
-              <div><label className="text-xs font-medium text-gray-600 block mb-1">Content</label><textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm resize-none" /></div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Content</label>
+                <RichTextEditor
+                  content={form.content}
+                  onChange={(html) => setForm((prev: any) => ({ ...prev, content: html }))}
+                  placeholder="Tulis konten artikel di sini..."
+                />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Excerpt</label><input value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Category</label>
@@ -129,8 +157,30 @@ export default function InspirasiPostsPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs font-medium text-gray-600 block mb-1">Author Name</label><input value={form.author_name} onChange={(e) => setForm({ ...form, author_name: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
-                <div><label className="text-xs font-medium text-gray-600 block mb-1">Cover Image URL</label><input value={form.cover_image} onChange={(e) => setForm({ ...form, cover_image: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Author Name</label>
+                  <input value={form.author_name} onChange={(e) => setForm((prev: any) => ({ ...prev, author_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Cover Image</label>
+                  <div className="flex items-center gap-2">
+                    <label className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm cursor-pointer hover:bg-gray-50">
+                      <Upload className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-500">{uploadingCover ? "Uploading..." : form.cover_image ? "Ganti" : "Upload"}</span>
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); e.target.value = ""; }} />
+                    </label>
+                    {form.cover_image && (
+                      <button onClick={() => setForm((prev: any) => ({ ...prev, cover_image: "" }))}
+                        className="text-xs text-red-500 hover:text-red-700 cursor-pointer">Hapus</button>
+                    )}
+                  </div>
+                  {form.cover_image && (
+                    <div className="mt-2 aspect-[16/9] rounded-lg overflow-hidden bg-gray-100">
+                      <img src={form.cover_image} alt="Cover preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
               </div>
               <details className="group">
                 <summary className="text-xs font-medium text-gray-500 cursor-pointer hover:text-gray-700">SEO Settings</summary>

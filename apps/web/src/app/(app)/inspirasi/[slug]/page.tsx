@@ -29,27 +29,6 @@ const SOURCE_BADGE: Record<string, { bg: string; text: string; label: string }> 
   redaksi: { bg: "bg-blue-100", text: "text-blue-700", label: "Redaksi" },
 };
 
-function renderContent(text: string) {
-  const paragraphs = text.split("\n\n");
-  return paragraphs.map((para, i) => {
-    const parts = para.split(/(\*\*[^*]+\*\*)/g);
-    return (
-      <p key={i} className="mb-4 text-gray-700 leading-relaxed">
-        {parts.map((part, j) => {
-          if (part.startsWith("**") && part.endsWith("**")) {
-            return (
-              <strong key={j} className="font-semibold text-gray-900">
-                {part.slice(2, -2)}
-              </strong>
-            );
-          }
-          return part;
-        })}
-      </p>
-    );
-  });
-}
-
 function InspirasiDetailPage({
   params,
 }: {
@@ -520,9 +499,9 @@ function InspirasiDetailPage({
           </div>
 
           {/* Full Content */}
-          <div className="mb-8">
-            {renderContent(item.full_content)}
-          </div>
+          <div className="mb-8 article-content"
+            dangerouslySetInnerHTML={{ __html: item.full_content || "" }}
+          />
 
           {/* Action Bar */}
           <div className="flex items-center justify-between py-4 border-t border-b border-gray-100 mb-8">
@@ -640,6 +619,31 @@ function InspirasiDetailPage({
           </div>
         </div>
       )}
+
+      <style>{`
+        .article-content h1 { font-size: 1.8em; font-weight: 700; margin: 24px 0 12px; color: #1e293b; }
+        .article-content h2 { font-size: 1.4em; font-weight: 600; margin: 20px 0 10px; color: #1e293b; }
+        .article-content h3 { font-size: 1.15em; font-weight: 600; margin: 16px 0 8px; color: #1e293b; }
+        .article-content p { margin: 0 0 12px; line-height: 1.75; color: #475569; }
+        .article-content ul { list-style: disc; padding-left: 24px; margin: 12px 0; }
+        .article-content ol { list-style: decimal; padding-left: 24px; margin: 12px 0; }
+        .article-content li { margin-bottom: 4px; line-height: 1.6; color: #475569; }
+        .article-content blockquote {
+          border-left: 4px solid #084463; padding: 12px 20px; margin: 16px 0;
+          color: #64748b; font-style: italic; background: #f8fafc;
+          border-radius: 0 12px 12px 0;
+        }
+        .article-content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+        .article-content th, .article-content td {
+          border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; color: #475569;
+        }
+        .article-content th { background: #f8fafc; font-weight: 600; color: #1e293b; }
+        .article-content hr { border: none; border-top: 2px solid #e2e8f0; margin: 28px 0; }
+        .article-content img { max-width: 100%; border-radius: 12px; margin: 16px 0; }
+        .article-content iframe { width: 100%; aspect-ratio: 16/9; border-radius: 12px; margin: 16px 0; }
+        .article-content a { color: #2563eb; text-decoration: underline; }
+        .article-content strong { color: #1e293b; }
+      `}</style>
 
     </div>
   );
