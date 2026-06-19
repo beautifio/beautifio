@@ -40,6 +40,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState("");
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -51,6 +53,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
         const { data: profile } = await res.json();
         setRole(profile?.role || "user");
+        setUserName(profile?.full_name || "");
+        setUserEmail(profile?.email || "");
         const { data: logoData } = await supabase!.from("app_settings").select("value").eq("key", "logo_url").single();
         if (logoData?.value) setLogoUrl(logoData.value);
         if (profile?.role === "user" || profile?.role === "mentor" || !profile?.role) {
@@ -86,8 +90,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 lg:relative lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 lg:relative lg:translate-x-0 flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2">
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" className="h-7 w-auto" />
@@ -102,7 +106,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
-        <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-64px)]">
+        <nav className="p-3 space-y-1 overflow-y-auto flex-1">
           {visibleItems.map((item) => {
             const active = item.href === "/admin"
               ? pathname === "/admin"
@@ -123,6 +127,61 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             );
           })}
         </nav>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: '#E2E8F0', margin: '8px 0' }} />
+
+        {/* Profile */}
+        <div
+          onClick={() => { router.push('/profil'); setSidebarOpen(false); }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '10px 12px', borderRadius: 8,
+            cursor: 'pointer', margin: '0 8px',
+          }}
+          className="hover:bg-gray-50 transition-colors"
+        >
+          <div style={{
+            width: 32, height: 32, borderRadius: '50%',
+            background: '#084463', color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 13, fontWeight: 600, flexShrink: 0,
+          }}>
+            {userName?.charAt(0)?.toUpperCase() || 'A'}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              fontSize: 13, fontWeight: 500, color: '#1E2938',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {userName || 'Admin'}
+            </div>
+            <div style={{ fontSize: 11, color: '#647488' }}>{role}</div>
+          </div>
+        </div>
+
+        {/* Keluar */}
+        <div style={{ padding: '4px 8px 12px' }}>
+          <button
+            onClick={async () => {
+              if (!confirm('Yakin mau keluar?')) return;
+              const { createClient } = await import('@/lib/supabase/client');
+              const supabase = createClient();
+              await supabase?.auth.signOut();
+              router.push('/');
+            }}
+            style={{
+              width: '100%', padding: '10px 12px',
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'none', border: 'none', borderRadius: 8,
+              cursor: 'pointer', color: '#DC2626', fontSize: 13, fontWeight: 500,
+              textAlign: 'left',
+            }}
+            className="hover:bg-red-50 transition-colors"
+          >
+            <span>🚪</span> Keluar
+          </button>
+        </div>
       </aside>
 
       {sidebarOpen && (
