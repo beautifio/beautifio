@@ -57,6 +57,9 @@ export async function POST(req: NextRequest) {
         source: "redaksi",
         is_published: body.status === "published",
         read_time_minutes: body.read_time_minutes || 5,
+        meta_title: body.meta_title || "",
+        meta_description: body.meta_description || "",
+        og_image: body.og_image || "",
       })
       .select()
       .single();

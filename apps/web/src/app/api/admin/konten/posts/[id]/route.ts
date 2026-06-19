@@ -29,6 +29,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.initials !== undefined) updateData.initials = body.initials;
     if (body.read_time_minutes !== undefined) updateData.read_time_minutes = body.read_time_minutes;
     if (body.slug !== undefined) updateData.slug = body.slug;
+    if (body.meta_title !== undefined) updateData.meta_title = body.meta_title;
+    if (body.meta_description !== undefined) updateData.meta_description = body.meta_description;
+    if (body.og_image !== undefined) updateData.og_image = body.og_image;
     if (body.status !== undefined) {
       updateData.is_published = body.status === "published";
       if (body.status === "published") updateData.published_at = new Date().toISOString();

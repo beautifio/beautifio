@@ -31,7 +31,7 @@ export default function InspirasiPostsPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<any>({ title: "", content: "", excerpt: "", category: "Karir", cover_image: "", author_name: "", read_time_minutes: 5, slug: "" });
+  const [form, setForm] = useState<any>({ title: "", content: "", excerpt: "", category: "Karir", cover_image: "", author_name: "", read_time_minutes: 5, slug: "", meta_title: "", meta_description: "", og_image: "" });
   const [saving, setSaving] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
 
@@ -55,13 +55,16 @@ export default function InspirasiPostsPage() {
       author_name: p.author || p.author_name || "",
       read_time_minutes: p.read_time_minutes || 5,
       slug: p.slug || "",
+      meta_title: p.meta_title || "",
+      meta_description: p.meta_description || "",
+      og_image: p.og_image || "",
     });
     setShowAdd(true);
   }
 
   function startNew() {
     setEditId(null);
-    setForm({ title: "", content: "", excerpt: "", category: "Karir", cover_image: "", author_name: "", read_time_minutes: 5, slug: "" });
+    setForm({ title: "", content: "", excerpt: "", category: "Karir", cover_image: "", author_name: "", read_time_minutes: 5, slug: "", meta_title: "", meta_description: "", og_image: "" });
     setShowAdd(true);
   }
 
@@ -214,6 +217,14 @@ export default function InspirasiPostsPage() {
                   </div>
                 )}
               </div>
+              <details className="group">
+                <summary className="text-xs font-medium text-gray-500 cursor-pointer hover:text-gray-700">SEO Settings</summary>
+                <div className="space-y-3 mt-3">
+                  <div><label className="text-xs font-medium text-gray-600 block mb-1">Meta Title</label><input value={form.meta_title || ""} onChange={(e) => setForm((prev: any) => ({ ...prev, meta_title: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
+                  <div><label className="text-xs font-medium text-gray-600 block mb-1">Meta Description</label><textarea value={form.meta_description || ""} onChange={(e) => setForm((prev: any) => ({ ...prev, meta_description: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm resize-none" /></div>
+                  <div><label className="text-xs font-medium text-gray-600 block mb-1">OG Image URL</label><input value={form.og_image || ""} onChange={(e) => setForm((prev: any) => ({ ...prev, og_image: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
+                </div>
+              </details>
             </div>
             <div className="flex gap-2 mt-5">
               <Button variant="ghost" size="sm" className="flex-1 cursor-pointer" onClick={() => setShowAdd(false)} disabled={saving}>Batal</Button>
