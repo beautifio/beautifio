@@ -17,7 +17,8 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: "/admin/familia", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "superadmin"] },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "superadmin"] },
+  { href: "/admin/familia", label: "Familia", icon: BarChart3, roles: ["admin", "superadmin"] },
   { href: "/admin/familia/merchants", label: "Merchants", icon: Gift, roles: ["admin", "superadmin"] },
   { href: "/admin/familia/deals", label: "Deals", icon: ShoppingBag, roles: ["admin", "superadmin"] },
   { href: "/admin/familia/rewards", label: "Rewards", icon: Trophy, roles: ["admin", "superadmin"] },
@@ -94,7 +95,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-64px)]">
           {visibleItems.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            const active = item.href === "/admin"
+              ? pathname === "/admin"
+              : pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <a
                 key={item.href}
