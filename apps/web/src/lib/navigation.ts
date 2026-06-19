@@ -4,20 +4,17 @@ export interface NavTab {
   id: string;
   label: string;
   icon: LucideIcon;
-  isSheet?: boolean; // tabs that open a sheet instead of navigating
+  href: string;
 }
 
 export const NAV_TABS: NavTab[] = [
-  { id: "home",      label: "Beranda",  icon: Home,     isSheet: true },
-  { id: "journey",   label: "Journey",  icon: Map },
-  // FAB slot here
-  { id: "inspirasi", label: "Inspirasi", icon: BookOpen },
-  { id: "circles",   label: "Circles",  icon: Users,    isSheet: true },
+  { id: "home",      label: "Beranda",  icon: Home,     href: "/home" },
+  { id: "journey",   label: "Journey",  icon: Map,      href: "/journey" },
+  { id: "inspirasi", label: "Inspirasi", icon: BookOpen, href: "/inspirasi" },
+  { id: "circles",   label: "Circles",  icon: Users,    href: "/circles" },
 ];
 
 export function navRoute(id: string): string {
-  if (id === "home") return "/home";
-  if (id === "journey") return "/journey";
-  if (id === "inspirasi") return "/inspirasi";
-  return `/${id}`;
+  const tab = NAV_TABS.find((t) => t.id === id)
+  return tab?.href ?? `/${id}`
 }
