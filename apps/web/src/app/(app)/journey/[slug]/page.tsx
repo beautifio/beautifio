@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Sparkles, BookOpen, Heart,
-  Target, ArrowLeft, MapPin, MoreVertical,
+  Target, ArrowLeft, MapPin, MoreVertical, Compass,
 } from "lucide-react";
 import { Button, Card, Skeleton } from "@beautifio/ui";
 import dynamic from "next/dynamic";
@@ -18,6 +18,7 @@ import {
   saveActivityNote, getJourneyReflections, getActivePhaseWithBenchmarks,
   archiveJourney,
 } from "@/lib/journey-queries";
+import { getPivotCoachMessage, getBenchmarkStatusMessage } from "@/lib/ai-coach";
 import type {
   DreamJourney, BigWin, SmallWin, DailyActivity,
   JourneyDailyReflection, JourneyProgress, GrowthTimelineEvent,
@@ -100,6 +101,9 @@ export default function JourneyDetailPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [showPivotCoach, setShowPivotCoach] = useState(false);
+  const [pivotCoachData, setPivotCoachData] = useState<{ message: string; transferableSkills: string[] } | null>(null);
+  const [benchmarkStatus, setBenchmarkStatus] = useState<{ status: string; message: string } | null>(null);
 
   const handleToggleExpand = useCallback((id: string) => {
     setExpandedActivityId((prev) => (prev === id ? null : id));
@@ -162,6 +166,8 @@ export default function JourneyDetailPage() {
         getActivePhaseWithBenchmarks(j.id, user.id),
       ]);
       setActivePhase(ph);
+
+      getBenchmarkStatusMessage(user.id, j.id).then(setBenchmarkStatus).catch(() => {});
 
       const { getDreamTemplate, getActivitiesForDimension: validatePool } = await import("@beautifio/utils");
 
@@ -368,7 +374,16 @@ export default function JourneyDetailPage() {
 
   const handleArchive = async () => {
     if (!journey || archiving) return;
+    setShowArchiveModal(false);
+    const msg = await getPivotCoachMessage(journey.template_slug);
+    setPivotCoachData(msg);
+    setShowPivotCoach(true);
+  };
+
+  const handlePivotCoachConfirm = async () => {
+    if (!journey || archiving) return;
     setArchiving(true);
+    setShowPivotCoach(false);
     try {
       await archiveJourney(journey.id);
       router.refresh();
@@ -377,7 +392,6 @@ export default function JourneyDetailPage() {
       console.error("Failed to archive journey", e);
     } finally {
       setArchiving(false);
-      setShowArchiveModal(false);
     }
   };
 
@@ -532,6 +546,27 @@ export default function JourneyDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Benchmark Status Badge */}
+        {benchmarkStatus && benchmarkStatus.status !== "unknown" && (
+          <div className={`mb-4 px-4 py-3 rounded-2xl border flex items-center gap-3 ${
+            benchmarkStatus.status === "ahead"
+              ? "bg-green-50 border-green-300"
+              : benchmarkStatus.status === "behind"
+              ? "bg-red-50 border-red-300"
+              : "bg-blue-50 border-blue-300"
+          }`}>
+            <span className={`text-lg ${
+              benchmarkStatus.status === "ahead" ? "text-green-600" : benchmarkStatus.status === "behind" ? "text-red-500" : "text-blue-500"
+            }`}>
+              {benchmarkStatus.status === "ahead" ? "🚀" : benchmarkStatus.status === "behind" ? "💪" : "✅"}
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary/60">Status di Jalur</p>
+              <p className="text-sm font-medium text-text-primary mt-0.5">{benchmarkStatus.message}</p>
+            </div>
+          </div>
+        )}
 
         {/* Active Phase */}
         {activePhase && (
@@ -973,6 +1008,52 @@ export default function JourneyDetailPage() {
                 onClick={handleArchive}
               >
                 Ya, tinggalkan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pivot Coach Interstitial */}
+      {showPivotCoach && pivotCoachData && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm bg-surface rounded-t-xl sm:rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                <Compass size={28} className="text-accent" />
+              </div>
+              <h2 className="text-lg font-bold text-text-primary">Setiap langkah berarti</h2>
+              <p className="text-sm text-text-secondary mt-2 leading-relaxed">{pivotCoachData.message}</p>
+            </div>
+            {pivotCoachData.transferableSkills.length > 0 && (
+              <div className="p-4 rounded-xl bg-success/5 border border-success/20 mb-4">
+                <h3 className="text-sm font-bold text-text-primary mb-3">Skill yang bisa kamu bawa:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {pivotCoachData.transferableSkills.map((s) => (
+                    <span key={s} className="text-xs px-3 py-1.5 rounded-full bg-success/10 text-success font-medium">
+                      ✅ {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1"
+                onClick={() => { setShowPivotCoach(false); setShowArchiveModal(true); }}
+              >
+                Kembali
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                className="flex-1"
+                loading={archiving}
+                onClick={handlePivotCoachConfirm}
+              >
+                Lanjutkan
               </Button>
             </div>
           </div>

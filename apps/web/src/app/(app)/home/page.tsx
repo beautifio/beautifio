@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/client";
 import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils";
 import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types";
+import { getLifeEngineData, DIMENSION_LABELS, ALL_DIMENSIONS } from "@/lib/life-engine";
 import { QuoteCard } from "./components/QuoteCard";
 import { JourneyResume } from "./components/JourneyResume";
 import { GuestCTA } from "./components/GuestCTA";
@@ -33,6 +34,7 @@ export default function HomeScreen({
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null);
   const [trialInfo, setTrialInfo] = useState<{ started_at: string; expires_at: string } | null>(null);
   const [ruangAmanOpen, setRuangAmanOpen] = useState(false);
+  const [growthZone, setGrowthZone] = useState<string | null>(null);
 
   const mimpiSlug = resolvedParams?.mimpi;
 
@@ -68,6 +70,19 @@ export default function HomeScreen({
         if (j) {
           const p = await getJourneyProgress(user.id, j.id);
           setProgress(p);
+        }
+
+        // Growth Zone notification (1x/week via localStorage)
+        if (j) {
+          const lastShown = localStorage.getItem("growth_zone_last_shown");
+          const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          if (!lastShown || parseInt(lastShown) < weekAgo) {
+            const engineData = await getLifeEngineData(user.id);
+            if (engineData?.growthZone) {
+              setGrowthZone(engineData.growthZone);
+              localStorage.setItem("growth_zone_last_shown", String(Date.now()));
+            }
+          }
         }
 
         const isAnon = user?.is_anonymous === true || user?.app_metadata?.provider === "anonymous";
@@ -147,6 +162,20 @@ export default function HomeScreen({
 
         <ArticlePick journey={journey} />
         <CurhatFeed />
+
+        {growthZone && (() => {
+          const dimInfo = DIMENSION_LABELS[growthZone];
+          return (
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-accent/10 to-primary/10 border border-accent/20">
+              <h3 className="text-sm font-bold text-text-primary mb-1">🌱 Zona Tumbuhmu</h3>
+              <p className="text-lg font-bold text-accent mt-1">{dimInfo?.emoji} {dimInfo?.label || growthZone}</p>
+              <p className="text-sm text-text-secondary mt-1 leading-relaxed">
+                Fokus kembangkan dimensi <strong>{dimInfo?.label || growthZone}</strong> untuk menaikkan level Life Engine-mu!
+              </p>
+            </div>
+          );
+        })()}
+
         <QuickActions onRuangAman={() => setRuangAmanOpen(true)} />
       </div>
 

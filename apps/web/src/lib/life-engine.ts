@@ -61,7 +61,7 @@ export async function getLifeEngineData(userId: string): Promise<LifeEngineResul
 
   const totalPoints = Object.values(capitalMap).reduce((sum, c) => sum + c.total_points, 0);
   const level = calculateLevel(totalPoints);
-  const growthZone = findGrowthZone(capitalMap);
+  const growthZone = totalPoints === 0 ? null : findGrowthZone(capitalMap);
 
   return { capitals: capitalMap, totalPoints, level, growthZone, labels: DIMENSION_LABELS };
 }

@@ -308,13 +308,22 @@ function LifeEngineWidget({ userId }: { userId: string }) {
                 </div>
               </div>
 
-              {growthInfo && (
+              {growthInfo ? (
                 <div className="mt-4 p-3 rounded-xl" style={{ background: "#FFF0EF", border: "1px solid #FFE4E2" }}>
                   <p className="text-xs font-semibold" style={{ color: "#FF5E5B" }}>
                     🎯 Growth Zone: {growthInfo.label}
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: "#D94A47" }}>
                     Capital ini paling butuh perhatian sekarang.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 p-3 rounded-xl" style={{ background: "#E8F5E9", border: "1px solid #C8E6C9" }}>
+                  <p className="text-xs font-semibold" style={{ color: "#2E7D32" }}>
+                    ✨ Semua dimensi berkembang seimbang!
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "#388E3C" }}>
+                    Pertahankan konsistensimu.
                   </p>
                 </div>
               )}

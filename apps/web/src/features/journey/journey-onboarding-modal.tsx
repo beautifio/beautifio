@@ -361,13 +361,13 @@ export function JourneyOnboardingModal({
 
                 {Object.keys(answers).length > 0 && (
                   <div className="p-4 rounded-xl bg-surface border border-border">
-                    <p className="text-xs text-text-secondary mb-2">Jawaban Kamu</p>
-                    <div className="space-y-1.5">
+                    <p className="text-xs text-text-secondary mb-3 font-semibold">Jawaban Kamu</p>
+                    <div className="space-y-3">
                       {questions.map((q) => (
                         answers[q.id] && (
-                          <div key={q.id} className="flex items-start gap-2 text-sm">
-                            <span className="text-text-secondary shrink-0">{q.label}</span>
-                            <span className="text-text-primary font-medium">: {answers[q.id]}</span>
+                          <div key={q.id}>
+                            <p className="text-xs text-text-secondary leading-relaxed">{q.label}</p>
+                            <p className="text-sm text-text-primary font-medium mt-0.5">{answers[q.id]}</p>
                           </div>
                         )
                       ))}

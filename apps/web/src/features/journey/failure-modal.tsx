@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { AlertTriangle, Heart, ArrowRight, Compass } from "lucide-react";
+import { AlertTriangle, Heart, ArrowRight, Compass, BookOpen } from "lucide-react";
 import { Button, Card } from "@beautifio/ui";
 import type { BigWin } from "@beautifio/types";
 import {
@@ -9,6 +9,7 @@ import {
   getJmTransferableSkills,
   getJmCareerPaths,
 } from "@beautifio/utils";
+import { getFailureReframeMessage } from "@/lib/ai-coach";
 
 interface FailureModalProps {
   bigWin: BigWin;
@@ -114,7 +115,28 @@ export function FailureModal({ bigWin, dreamSlug, developedSkills, onConfirm, on
           )}
         </Card>
 
-        <div className="flex gap-3 mt-6">
+        {(() => {
+          const reframe = getFailureReframeMessage();
+          return (
+            <Card className="p-4 mb-4 bg-primary/5 border-primary/20">
+              <div className="flex items-center gap-2 mb-2">
+                <BookOpen size={16} className="text-primary" />
+                <h3 className="text-sm font-bold text-text-primary">Perspektif baru</h3>
+              </div>
+              <p className="text-sm text-text-secondary italic leading-relaxed">{reframe.message}</p>
+              <a
+                href={`/inspirasi/${reframe.articleSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                Baca cerita yang relate <ArrowRight size={12} />
+              </a>
+            </Card>
+          );
+        })()}
+
+        <div className="flex gap-3 mt-2">
           <Button
             variant="ghost"
             size="lg"
