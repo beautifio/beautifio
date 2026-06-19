@@ -7,11 +7,9 @@ import { useAuth } from "@/hooks/use-auth"
 import { supabase } from "@/lib/supabase/client"
 import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils"
 import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types"
-import { getLifeEngineData, DIMENSION_LABELS, ALL_DIMENSIONS } from "@/lib/life-engine"
+import { getLifeEngineData, DIMENSION_LABELS } from "@/lib/life-engine"
 import { HeroCards } from "@/components/beranda/HeroCards"
 import { JourneySnapshot } from "@/components/beranda/JourneySnapshot"
-import { QuickLinks } from "@/components/beranda/QuickLinks"
-import { journeyUrl } from "@/lib/journey-queries"
 import { QuoteCard } from "./components/QuoteCard"
 import { GuestCTA } from "./components/GuestCTA"
 import { ArticlePick } from "./components/ArticlePick"
@@ -19,8 +17,19 @@ import { CurhatFeed } from "./components/CurhatFeed"
 import { BannerCarousel } from "./components/BannerCarousel"
 import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet"
 import { AchievementNotif } from "@/features/familia/components/AchievementNotif"
+import { Ticket, ShoppingBag, Calendar, Briefcase, Gift, Shield } from "lucide-react"
+import { journeyUrl } from "@/lib/journey-queries"
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false })
+
+const FEATURE_BUTTONS = [
+  { href: "/voucher",     label: "Voucher",   icon: Ticket,      color: "bg-amber-100 text-amber-700" },
+  { href: "/belanja",     label: "Deals",      icon: ShoppingBag, color: "bg-blue-100 text-blue-700" },
+  { href: "/event",       label: "Event",      icon: Calendar,    color: "bg-purple-100 text-purple-700" },
+  { href: "/opportunity", label: "Peluang",    icon: Briefcase,   color: "bg-green-100 text-green-700" },
+  { href: "/circle",      label: "Circle",     icon: Gift,        color: "bg-pink-100 text-pink-700" },
+  { href: "/voucher",     label: "Familia",    icon: Shield,      color: "bg-red-100 text-red-700" },
+]
 
 export default function HomeScreen({
   searchParams,
@@ -148,14 +157,32 @@ export default function HomeScreen({
           </div>
         )}
 
+        {/* Hero Cards — Bisik & Tebak Aku */}
+        <HeroCards />
+
+        {/* Feature Buttons — 3 per row */}
+        <div className="grid grid-cols-3 gap-2">
+          {FEATURE_BUTTONS.map((btn) => {
+            const Icon = btn.icon
+            return (
+              <button
+                key={btn.href}
+                onClick={() => router.push(btn.href)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface border border-border hover:bg-muted transition-colors cursor-pointer"
+              >
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center ${btn.color}`}>
+                  <Icon size={16} />
+                </div>
+                <span className="text-[11px] font-medium text-text-primary">{btn.label}</span>
+              </button>
+            )
+          })}
+        </div>
+
         {/* Quote Card */}
         <QuoteCard userName={user ? userName : "Sobat"} />
 
-        {/* Banner Carousel */}
         <BannerCarousel />
-
-        {/* Hero Cards — Bisik & Tebak Aku */}
-        <HeroCards />
 
         {loading ? (
           <div className="space-y-4">
@@ -164,9 +191,7 @@ export default function HomeScreen({
             ))}
           </div>
         ) : user ? (
-          <>
-            <JourneySnapshot activity={journey ? journeyActivity : null} />
-          </>
+          <JourneySnapshot activity={journey ? journeyActivity : null} />
         ) : (
           <GuestCTA variant="landing" />
         )}
@@ -181,13 +206,11 @@ export default function HomeScreen({
               <h3 className="text-sm font-bold text-text-primary mb-1">🌱 Zona Tumbuhmu</h3>
               <p className="text-lg font-bold text-accent mt-1">{dimInfo?.emoji} {dimInfo?.label || growthZone}</p>
               <p className="text-sm text-text-secondary mt-1 leading-relaxed">
-                Fokus kembangkan dimensi <strong>{dimInfo?.label || growthZone}</strong> untuk menaikkan level Life Engine-mu!
+                Fokus kembangkan dimensi <strong>{dimInfo?.label || growthZone}</strong>
               </p>
             </div>
           )
         })()}
-
-        <QuickLinks />
       </div>
 
       <AchievementNotif />
