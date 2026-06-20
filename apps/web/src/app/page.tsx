@@ -35,8 +35,6 @@ export default function LandingPage() {
   // FIX 1: Mobile URL sebagai primary (209x209 desktop terlalu kecil)
   const activeHero = mobileHeroUrl || heroUrl;
 
-  console.log("LANDING DEBUG:", { heroUrl, mobileHeroUrl, activeHero, isMobile });
-
   async function handleStart() {
     setLoading(true);
     await supabase?.auth.signInAnonymously();

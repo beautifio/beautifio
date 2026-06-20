@@ -51,6 +51,7 @@ export default function BisikHome() {
   const [isMatching, setIsMatching] = useState(false)
   const [showLimitModal, setShowLimitModal] = useState(false)
   const [maxAllowed, setMaxAllowed] = useState(5)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (authLoading || !user || !supabase) return
@@ -59,94 +60,98 @@ export default function BisikHome() {
 
   const loadData = async () => {
     if (!supabase || !user) return
+    setError(null)
     setLoading(true)
+    try {
+      const [topicsRes, profileRes, cardsRes] = await Promise.all([
+        supabase.from("bisik_topics").select("id, name, emoji").eq("is_active", true).order("display_order"),
+        supabase.from("users").select("bisik_topic_ids").eq("id", user.id).single(),
+        supabase.from("bisik_cards").select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle(),
+      ])
 
-    const [topicsRes, profileRes, cardsRes] = await Promise.all([
-      supabase.from("bisik_topics").select("id, name, emoji").eq("is_active", true).order("display_order"),
-      supabase.from("users").select("bisik_topic_ids").eq("id", user.id).single(),
-      supabase.from("bisik_cards").select("id").eq("user_id", user.id).eq("is_active", true).maybeSingle(),
-    ])
+      setTopics(topicsRes.data ?? [])
+      setMyActiveCard(profileRes.data?.bisik_topic_ids ?? null)
 
-    setTopics(topicsRes.data ?? [])
-    setMyActiveCard(profileRes.data?.bisik_topic_ids ?? null)
+      const topicIds = (profileRes.data?.bisik_topic_ids as string[]) ?? []
+      setUserTopicIds(topicIds)
+      setSelectedTopics(topicIds)
+      setMyActiveCard(cardsRes.data ?? null)
 
-    const topicIds = (profileRes.data?.bisik_topic_ids as string[]) ?? []
-    setUserTopicIds(topicIds)
-    setSelectedTopics(topicIds)
-    setMyActiveCard(cardsRes.data ?? null)
-
-    if (topicIds.length === 0 && tab === "temukan") {
-      setShowTopicModal(true)
-      setLoading(false)
-      return
-    }
-
-    if (tab === "temukan" && topicIds.length > 0) {
-      const { data: cardsData } = await supabase
-        .from("bisik_cards")
-        .select("*, topic:bisik_topics(name, emoji)")
-        .in("topic_id", topicIds)
-        .eq("is_active", true)
-        .gt("expires_at", new Date().toISOString())
-        .neq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(20)
-
-      const { data: swiped } = await supabase
-        .from("bisik_swipes")
-        .select("card_id")
-        .eq("swiper_id", user.id)
-      const swipedIds = swiped?.map((s) => s.card_id) ?? []
-      setCards((cardsData ?? []).filter((c) => !swipedIds.includes(c.id)) as CardWithTopic[])
-    }
-
-    if (tab === "obrolan") {
-      const { data: chatsData } = await supabase
-        .from("bisik_chats")
-        .select("*, card:bisik_cards(content)")
-        .or(`initiator_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .in("status", ["pending", "active"])
-        .order("created_at", { ascending: false })
-
-      setChats(chatsData ?? [])
-    }
-
-    if (tab === "menunggumu") {
-      const { data: myCards } = await supabase
-        .from("bisik_cards")
-        .select("id, content, topic:bisik_topics(name, emoji)")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-
-      const myCardIds = myCards?.map((c) => c.id) ?? []
-
-      if (myCardIds.length > 0) {
-        const { data: swipes } = await supabase
-          .from("bisik_swipes")
-          .select("card_id, created_at, swiper_id")
-          .in("card_id", myCardIds)
-          .eq("direction", "right")
-
-        const { data: existingChats } = await supabase
-          .from("bisik_chats")
-          .select("card_id")
-          .in("card_id", myCardIds)
-
-        const existingCardIds = existingChats?.map((c) => c.card_id) ?? []
-
-        const newSwipes = (swipes ?? []).filter(
-          (s) => !existingCardIds.includes(s.card_id),
-        )
-
-        setPendingMatches(
-          newSwipes.map((s) => {
-            const card = myCards?.find((c) => c.id === s.card_id)
-            return { ...s, card }
-          }),
-        )
+      if (topicIds.length === 0 && tab === "temukan") {
+        setShowTopicModal(true)
+        setLoading(false)
+        return
       }
-    }
 
+      if (tab === "temukan" && topicIds.length > 0) {
+        const { data: cardsData } = await supabase
+          .from("bisik_cards")
+          .select("*, topic:bisik_topics(name, emoji)")
+          .in("topic_id", topicIds)
+          .eq("is_active", true)
+          .gt("expires_at", new Date().toISOString())
+          .neq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(20)
+
+        const { data: swiped } = await supabase
+          .from("bisik_swipes")
+          .select("card_id")
+          .eq("swiper_id", user.id)
+        const swipedIds = swiped?.map((s) => s.card_id) ?? []
+        setCards((cardsData ?? []).filter((c) => !swipedIds.includes(c.id)) as CardWithTopic[])
+      }
+
+      if (tab === "obrolan") {
+        const { data: chatsData } = await supabase
+          .from("bisik_chats")
+          .select("*, card:bisik_cards(content)")
+          .or(`initiator_id.eq.${user.id},receiver_id.eq.${user.id}`)
+          .in("status", ["pending", "active"])
+          .order("created_at", { ascending: false })
+
+        setChats(chatsData ?? [])
+      }
+
+      if (tab === "menunggumu") {
+        const { data: myCards } = await supabase
+          .from("bisik_cards")
+          .select("id, content, topic:bisik_topics(name, emoji)")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+
+        const myCardIds = myCards?.map((c) => c.id) ?? []
+
+        if (myCardIds.length > 0) {
+          const { data: swipes } = await supabase
+            .from("bisik_swipes")
+            .select("card_id, created_at, swiper_id")
+            .in("card_id", myCardIds)
+            .eq("direction", "right")
+
+          const { data: existingChats } = await supabase
+            .from("bisik_chats")
+            .select("card_id")
+            .in("card_id", myCardIds)
+
+          const existingCardIds = existingChats?.map((c) => c.card_id) ?? []
+
+          const newSwipes = (swipes ?? []).filter(
+            (s) => !existingCardIds.includes(s.card_id),
+          )
+
+          setPendingMatches(
+            newSwipes.map((s) => {
+              const card = myCards?.find((c) => c.id === s.card_id)
+              return { ...s, card }
+            }),
+          )
+        }
+      }
+    } catch (err) {
+      console.error("Bisik loadData error:", err)
+      setError("Gagal memuat data. Coba lagi.")
+    }
     setLoading(false)
   }
 
@@ -241,6 +246,21 @@ export default function BisikHome() {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-4 px-6">
+        <AlertTriangle size={32} className="text-red-400" />
+        <p className="text-sm text-text-secondary text-center">{error}</p>
+        <button
+          onClick={loadData}
+          className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium cursor-pointer"
+        >
+          Coba Lagi
+        </button>
       </div>
     )
   }
