@@ -38,7 +38,7 @@ export default function BisikDiscover({
     if (!current) return
     setError("")
     try {
-      await swipeLeft(userId, current.id)
+      await swipeLeft(userId, current.id, current.user_id)
       setCards((prev) => prev.slice(1))
     } catch {
       setError("Gagal, coba lagi")
@@ -61,12 +61,8 @@ export default function BisikDiscover({
         return
       }
 
-      if (result.chatId) {
-        setMatchedNickname("")
-        setTimeout(() => {
-          router.push(`/bisik/chat/${result.chatId}`)
-        }, 1500)
-      }
+      // Mutual match — trigger handles chat creation, realtime will show popup
+      setMatchedNickname("")
     } catch {
       setError("Gagal, coba lagi")
       setIsMatching(false)

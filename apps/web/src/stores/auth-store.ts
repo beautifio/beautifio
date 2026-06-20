@@ -5,9 +5,13 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  bisikMatchCount: number;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
   setLoading: (loading: boolean) => void;
+  setBisikMatchCount: (count: number) => void;
+  incrementBisikMatch: () => void;
+  clearBisikMatch: () => void;
   signOut: () => Promise<void>;
   reset: () => void;
 }
@@ -16,6 +20,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   isLoading: true,
+  bisikMatchCount: 0,
   setUser: (user) => {
     set((state) => {
       if (state.user?.id === user?.id) return state;
@@ -34,6 +39,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       return { isLoading };
     });
   },
+  setBisikMatchCount: (bisikMatchCount) => set({ bisikMatchCount }),
+  incrementBisikMatch: () => set((s) => ({ bisikMatchCount: s.bisikMatchCount + 1 })),
+  clearBisikMatch: () => set({ bisikMatchCount: 0 }),
   signOut: async () => {
     try {
       const { supabase } = await import("@/lib/supabase/client");
@@ -43,9 +51,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       // Proceed with local cleanup even if Supabase call fails
     }
-    set({ user: null, session: null, isLoading: false });
+    set({ user: null, session: null, isLoading: false, bisikMatchCount: 0 });
   },
   reset: () => {
-    set({ user: null, session: null, isLoading: false });
+    set({ user: null, session: null, isLoading: false, bisikMatchCount: 0 });
   },
 }));

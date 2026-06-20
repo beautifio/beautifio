@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
 
-type Tab = "cards" | "topics"
+type Tab = "cards" | "topics" | "names"
 
 interface BisikCard {
   id: string
@@ -39,6 +39,50 @@ export default function AdminBisik() {
   const [topicActive, setTopicActive] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+
+  // Names tab
+  interface NameUser {
+    id: string
+    email: string
+    bisik_anonymous_name: string
+    bisik_custom_name: string | null
+  }
+  const [nameUsers, setNameUsers] = useState<NameUser[]>([])
+  const [nameSearch, setNameSearch] = useState("")
+  const [nameWordCount, setNameWordCount] = useState(0)
+  const [nameTotalUsers, setNameTotalUsers] = useState(0)
+  const [nameLoading, setNameLoading] = useState(false)
+  const [resetting, setResetting] = useState<string | null>(null)
+
+  const loadNames = async () => {
+    if (!supabase) return
+    setNameLoading(true)
+    const [{ count: wc }, { count: uc }, { data: users }] = await Promise.all([
+      supabase.from("bisik_name_words").select("*", { count: "exact", head: true }),
+      supabase.from("users").select("*", { count: "exact", head: true }).not("bisik_anonymous_name", "is", null),
+      supabase
+        .from("users")
+        .select("id, email, bisik_anonymous_name, bisik_custom_name")
+        .not("bisik_anonymous_name", "is", null)
+        .order("bisik_anonymous_name", { ascending: true }),
+    ])
+    setNameWordCount(wc ?? 0)
+    setNameTotalUsers(uc ?? 0)
+    setNameUsers(users ?? [])
+    setNameLoading(false)
+  }
+
+  const resetName = async (userId: string) => {
+    if (!confirm("Generate ulang anonymous name untuk user ini?")) return
+    if (!supabase) return
+    setResetting(userId)
+    const { data: newName } = await supabase.rpc("generate_bisik_anonymous_name")
+    if (newName) {
+      await supabase.from("users").update({ bisik_anonymous_name: newName }).eq("id", userId)
+    }
+    setResetting(null)
+    loadNames()
+  }
 
   useEffect(() => {
     loadData()
@@ -162,6 +206,14 @@ export default function AdminBisik() {
           >
             Topik ({topics.length})
           </button>
+          <button
+            onClick={() => { setTab("names"); loadNames() }}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              tab === "names" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            }`}
+          >
+            Anonymous Names
+          </button>
         </div>
       </div>
 
@@ -265,6 +317,74 @@ export default function AdminBisik() {
           >
             + Tambah Topik Baru
           </button>
+        </div>
+      )}
+
+      {tab === "names" && (
+        <div>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex gap-3 text-xs">
+              <span className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700">
+                Kata tersedia: {nameWordCount}
+              </span>
+              <span className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700">
+                User dengan nama: {nameTotalUsers}
+              </span>
+            </div>
+          </div>
+
+          <input
+            value={nameSearch}
+            onChange={(e) => setNameSearch(e.target.value)}
+            placeholder="Cari anonymous name..."
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-amber-400 mb-4"
+          />
+
+          {nameLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Email</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Anonymous Name</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Custom Name</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {nameUsers
+                    .filter((u) =>
+                      !nameSearch ||
+                      u.bisik_anonymous_name.toLowerCase().includes(nameSearch.toLowerCase()) ||
+                      u.email?.toLowerCase().includes(nameSearch.toLowerCase())
+                    )
+                    .map((u) => (
+                      <tr key={u.id} className="border-b border-gray-100">
+                        <td className="py-3 px-2 text-gray-700 max-w-[200px] truncate">{u.email || "(no email)"}</td>
+                        <td className="py-3 px-2 text-gray-700 font-mono">{u.bisik_anonymous_name}</td>
+                        <td className="py-3 px-2 text-gray-700 font-mono">{u.bisik_custom_name || "—"}</td>
+                        <td className="py-3 px-2">
+                          <button
+                            onClick={() => resetName(u.id)}
+                            disabled={resetting === u.id}
+                            className="px-2 py-1 rounded bg-amber-50 text-amber-700 text-[10px] font-medium hover:bg-amber-100 disabled:opacity-40 cursor-pointer"
+                          >
+                            {resetting === u.id ? "..." : "Reset Nama"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              {nameUsers.length === 0 && (
+                <p className="text-sm text-gray-500 py-8 text-center">Tidak ada data</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

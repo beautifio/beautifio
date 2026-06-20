@@ -4,11 +4,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { MessageCircle, MessageCircleHeart } from "lucide-react"
 import { NAV_TABS } from "@/lib/navigation"
+import { useAuthStore } from "@/stores/auth-store"
 
 export const BISIK_TAB = { id: "bisik", label: "Bisik", icon: MessageCircleHeart, href: "/bisik" }
 
 export function BottomNav() {
   const pathname = usePathname()
+  const bisikMatchCount = useAuthStore((s) => s.bisikMatchCount)
+  const clearBisikMatch = useAuthStore((s) => s.clearBisikMatch)
 
   const hideFAB = ["/bisik", "/tebak", "/admin", "/connect"].some((p) => pathname.startsWith(p))
 
@@ -33,8 +36,13 @@ export function BottomNav() {
         {/* Journey */}
         <NavItem tab={NAV_TABS[1]} active={activeTab === "journey"} />
 
-        {/* Bisik */}
-        <NavItem tab={BISIK_TAB} active={activeTab === "bisik"} />
+        {/* Bisik with badge */}
+        <NavItem
+          tab={BISIK_TAB}
+          active={activeTab === "bisik"}
+          badge={bisikMatchCount}
+          onBadgeClick={clearBisikMatch}
+        />
 
         {/* FAB tengah */}
         <div className="flex flex-col items-center -mt-4">
@@ -62,20 +70,35 @@ export function BottomNav() {
   )
 }
 
-function NavItem({ tab, active }: { tab: typeof NAV_TABS[number]; active: boolean }) {
+function NavItem({
+  tab, active, badge, onBadgeClick,
+}: {
+  tab: typeof NAV_TABS[number];
+  active: boolean;
+  badge?: number;
+  onBadgeClick?: () => void;
+}) {
   const Icon = tab.icon
   return (
     <Link
       href={tab.href}
+      onClick={badge && onBadgeClick ? () => onBadgeClick() : undefined}
       className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all relative"
     >
       {active && (
         <span className="absolute -top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-primary rounded-full" />
       )}
-      <Icon
-        size={20}
-        className={`transition-transform ${active ? "scale-110 text-primary" : "text-text-secondary"}`}
-      />
+      <div className="relative">
+        <Icon
+          size={20}
+          className={`transition-transform ${active ? "scale-110 text-primary" : "text-text-secondary"}`}
+        />
+        {badge && badge > 0 ? (
+          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+            {badge > 9 ? "9+" : badge}
+          </span>
+        ) : null}
+      </div>
       <span className={`text-[10px] font-medium ${active ? "text-primary font-semibold" : "text-text-secondary"}`}>
         {tab.label}
       </span>

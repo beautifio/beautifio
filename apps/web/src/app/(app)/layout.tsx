@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Search, User } from "lucide-react"
+import { BisikMatchNotifier } from "@/components/bisik/MatchNotifier"
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -10,7 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const hideTopBar =
     pathname === "/" ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/bisik/") ||
+    pathname.startsWith("/bisik") ||
     pathname.startsWith("/tebak/") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/register")
@@ -33,6 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </header>
       )}
+      <BisikMatchNotifier />
       {children}
     </>
   )

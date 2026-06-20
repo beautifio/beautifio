@@ -2,7 +2,10 @@
 
 import { useState, useEffect, use, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Send, Flag, PhoneOff, ArrowLeft, Loader2 } from "lucide-react"
+import {
+  Send, Flag, PhoneOff, ArrowLeft, Loader2,
+  ChevronDown, ChevronUp,
+} from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { createClient } from "@/lib/supabase/client"
 import { getBisikChat, getBisikMessages } from "@/lib/bisik/queries"
@@ -21,6 +24,9 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
   const [sending, setSending] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showEndConfirm, setShowEndConfirm] = useState(false)
+  const [otherName, setOtherName] = useState("Anonymous")
+  const [showContext, setShowContext] = useState(true)
+  const [contextCard, setContextCard] = useState<{ content: string; topic?: { name: string; emoji: string } | null } | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -30,6 +36,28 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       if (!c) { router.replace("/bisik"); return }
       if (c.status === "ended") { router.replace("/bisik"); return }
       setChat(c)
+
+      // Fetch context card
+      const cardData = c as any
+      if (cardData.card_id) {
+        const { data: card } = await supabase!
+          .from("bisik_cards")
+          .select("content, topic:bisik_topics(name, emoji)")
+          .eq("id", cardData.card_id)
+          .single()
+        setContextCard(card as any)
+      }
+
+      // Fetch other user's name
+      const isInitiator = c.initiator_id === user.id
+      const otherId = isInitiator ? c.receiver_id : c.initiator_id
+      const { data: otherUser } = await supabase!
+        .from("users")
+        .select("bisik_anonymous_name, bisik_custom_name")
+        .eq("id", otherId)
+        .single()
+      setOtherName(otherUser?.bisik_custom_name || otherUser?.bisik_anonymous_name || "Anonymous")
+
       const msgs = await getBisikMessages(chatId)
       setMessages(msgs)
       setLoading(false)
@@ -66,7 +94,6 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
   }, [messages])
 
   const isInitiator = chat?.initiator_id === user?.id
-  const otherId = isInitiator ? chat?.receiver_id : chat?.initiator_id
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || sending || !supabase || !user) return
@@ -103,6 +130,9 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
   const timeStr = (d: string) =>
     new Date(d).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
 
+  const getInitials = (name: string) =>
+    name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "AN"
+
   if (loading) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
@@ -123,10 +153,10 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
             <ArrowLeft size={18} />
           </button>
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-            AN
+            {getInitials(otherName)}
           </div>
           <div>
-            <p className="text-sm font-semibold text-text-primary">Anonymous</p>
+            <p className="text-sm font-semibold text-text-primary">{otherName}</p>
             <p className="text-[10px] text-text-secondary">Private chat</p>
           </div>
         </div>
@@ -149,6 +179,26 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
           )}
         </div>
       </div>
+
+      {/* Context card */}
+      {contextCard && (
+        <div
+          className="mx-4 mt-3 px-4 py-3 rounded-xl border border-primary/20 bg-primary/5 cursor-pointer"
+          onClick={() => setShowContext(!showContext)}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-primary">
+              {contextCard.topic?.emoji} {contextCard.topic?.name}
+            </span>
+            {showContext ? <ChevronUp size={14} className="text-text-secondary" /> : <ChevronDown size={14} className="text-text-secondary" />}
+          </div>
+          {showContext && (
+            <p className="text-xs text-text-secondary leading-relaxed">
+              &ldquo;{contextCard.content}&rdquo;
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">

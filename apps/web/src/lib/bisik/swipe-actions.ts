@@ -67,12 +67,16 @@ export async function getDiscoverCards(
   return (data ?? []) as BisikCard[]
 }
 
-export async function swipeLeft(swiperId: string, cardId: string): Promise<void> {
+export async function swipeLeft(
+  swiperId: string,
+  cardId: string,
+  cardOwnerId: string,
+): Promise<void> {
   const supabase = await createClient()
   await supabase.from("bisik_swipes").insert({
     swiper_id: swiperId,
     card_id: cardId,
-    card_owner_id: "",
+    card_owner_id: cardOwnerId,
     direction: "left",
   })
 }
@@ -80,7 +84,7 @@ export async function swipeLeft(swiperId: string, cardId: string): Promise<void>
 export async function swipeRight(
   swiperId: string,
   card: BisikCard,
-): Promise<{ chatId?: string; error: string | null; maxAllowed?: number }> {
+): Promise<{ error: string | null; maxAllowed?: number }> {
   const supabase = await createClient()
 
   const { data: maxChats } = await supabase
@@ -103,16 +107,5 @@ export async function swipeRight(
     direction: "right",
   })
 
-  const { data: chat } = await supabase
-    .from("bisik_chats")
-    .insert({
-      card_id: card.id,
-      initiator_id: swiperId,
-      receiver_id: card.user_id,
-      status: "pending",
-    })
-    .select("id")
-    .single()
-
-  return { chatId: chat!.id, error: null }
+  return { error: null }
 }
