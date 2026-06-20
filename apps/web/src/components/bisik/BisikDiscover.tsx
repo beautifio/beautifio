@@ -73,7 +73,7 @@ export default function BisikDiscover({
     return (
       <div className="fixed inset-0 z-50 flex items-end justify-center">
         <div className="absolute inset-0 bg-black/40" onClick={() => setShowLimitModal(false)} />
-        <div className="relative w-full max-w-content bg-surface rounded-t-2xl px-6 pt-6 pb-8 animate-in slide-in-from-bottom">
+        <div className="relative w-full max-w-content bg-surface rounded-t-2xl px-6 pt-6 pb-24 animate-in slide-in-from-bottom">
           <div className="text-center mb-6">
             <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
               <Crown size={22} className="text-amber-500" />
