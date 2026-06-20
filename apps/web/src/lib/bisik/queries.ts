@@ -1,49 +1,71 @@
 import { createClient } from "@/lib/supabase/client"
 
-export interface BisikSession {
+export interface BisikChat {
   id: string
-  category: string
+  card_id: string | null
+  initiator_id: string
+  receiver_id: string
   status: string
-  created_at: string
-  matched_at: string | null
+  expires_at: string | null
+  initiated_at: string
+  activated_at: string | null
   ended_at: string | null
-  end_reason: string | null
-}
-
-export interface BisikParticipant {
-  id: string
-  session_id: string
-  user_id: string
-  nickname: string
-  mood_check: string
-  joined_at: string
+  ended_by: string | null
+  created_at: string
 }
 
 export interface BisikMessage {
   id: string
-  session_id: string
+  chat_id: string
   sender_id: string
   content: string
+  is_read: boolean
   created_at: string
 }
 
-export async function getBisikSession(sessionId: string): Promise<BisikSession | null> {
+export interface BisikParticipant {
+  id: string
+  user_id: string
+  nickname: string
+}
+
+export async function getBisikChat(chatId: string): Promise<BisikChat | null> {
   const supabase = createClient()
   if (!supabase) return null
-  const { data } = await supabase.from('bisik_sessions').select('*').eq('id', sessionId).single()
+  const { data } = await supabase.from("bisik_chats").select("*").eq("id", chatId).single()
   return data
 }
 
-export async function getBisikParticipants(sessionId: string): Promise<BisikParticipant[]> {
+export async function getBisikMessages(chatId: string): Promise<BisikMessage[]> {
   const supabase = createClient()
   if (!supabase) return []
-  const { data } = await supabase.from('bisik_participants').select('*').eq('session_id', sessionId)
+  const { data } = await supabase
+    .from("bisik_messages")
+    .select("*")
+    .eq("chat_id", chatId)
+    .order("created_at", { ascending: true })
   return data || []
 }
 
-export async function getBisikMessages(sessionId: string): Promise<BisikMessage[]> {
+export async function getBisikParticipants(chatId: string): Promise<BisikParticipant[]> {
   const supabase = createClient()
   if (!supabase) return []
-  const { data } = await supabase.from('bisik_messages').select('*').eq('session_id', sessionId).order('created_at', { ascending: true })
-  return data || []
+  const { data: chat } = await supabase
+    .from("bisik_chats")
+    .select("initiator_id, receiver_id")
+    .eq("id", chatId)
+    .single()
+  if (!chat) return []
+
+  const { data: users } = await supabase
+    .from("users")
+    .select("id, full_name")
+    .in("id", [chat.initiator_id, chat.receiver_id])
+  return (
+    users?.map((u) => ({
+      id: u.id,
+      user_id: u.id,
+      nickname: u.full_name || "Anonymous",
+    })) || []
+  )
 }

@@ -2,8 +2,10 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { MessageCircle } from "lucide-react"
+import { MessageCircle, MessageCircleHeart } from "lucide-react"
 import { NAV_TABS } from "@/lib/navigation"
+
+export const BISIK_TAB = { id: "bisik", label: "Bisik", icon: MessageCircleHeart, href: "/bisik" }
 
 export function BottomNav() {
   const pathname = usePathname()
@@ -11,6 +13,7 @@ export function BottomNav() {
   const hideFAB = ["/bisik", "/tebak", "/admin", "/connect"].some((p) => pathname.startsWith(p))
 
   const activeTab = (() => {
+    if (pathname.startsWith("/bisik")) return "bisik"
     if (pathname.startsWith("/journey")) return "journey"
     if (pathname.startsWith("/inspirasi")) return "inspirasi"
     if (pathname.startsWith("/circle")) return "circle"
@@ -29,6 +32,9 @@ export function BottomNav() {
 
         {/* Journey */}
         <NavItem tab={NAV_TABS[1]} active={activeTab === "journey"} />
+
+        {/* Bisik */}
+        <NavItem tab={BISIK_TAB} active={activeTab === "bisik"} />
 
         {/* FAB tengah */}
         <div className="flex flex-col items-center -mt-4">

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Send, Flag, PhoneOff, AlertTriangle } from "lucide-react"
-import { subscribeToBisikSession } from "@/lib/bisik/realtime"
-import { sendBisikMessage, endBisikSession, reportBisikSession } from "@/lib/bisik/actions"
+import { createClient } from "@/lib/supabase/client"
 import type { BisikMessage, BisikParticipant } from "@/lib/bisik/queries"
 
 type Props = {
@@ -33,14 +32,29 @@ export function ChatRoom({ sessionId, participants, currentUserId, initialMessag
   const otherNickname = other?.nickname || "Lawan bicara"
 
   useEffect(() => {
-    const unsub = subscribeToBisikSession(
-      sessionId,
-      (status) => {
-        if (status === "ended" || status === "reported") onEnded()
-      },
-      (msg) => setMessages((prev) => [...prev, msg])
-    )
-    return unsub
+    if (!createClient()) return () => {}
+
+    const supabase = createClient()!
+    const channel = supabase
+      .channel(`bisik-chat-${sessionId}`)
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "bisik_chats",
+        filter: `id=eq.${sessionId}`,
+      }, (payload) => {
+        const s = payload.new as { status: string }
+        if (s.status === "ended") onEnded()
+      })
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "bisik_messages",
+        filter: `chat_id=eq.${sessionId}`,
+      }, (payload) => setMessages((prev) => [...prev, payload.new as BisikMessage]))
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [sessionId, onEnded])
 
   useEffect(() => {
@@ -51,7 +65,13 @@ export function ChatRoom({ sessionId, participants, currentUserId, initialMessag
     if (!input.trim() || sending || !me) return
     setSending(true)
     try {
-      await sendBisikMessage(sessionId, me.id, input.trim())
+      const supabase = createClient()
+      if (!supabase) return
+      await supabase.from("bisik_messages").insert({
+        chat_id: sessionId,
+        sender_id: me.id,
+        content: input.trim(),
+      })
       setInput("")
     } catch {} finally {
       setSending(false)
@@ -59,13 +79,27 @@ export function ChatRoom({ sessionId, participants, currentUserId, initialMessag
   }, [input, sending, me, sessionId])
 
   const handleEnd = async () => {
-    await endBisikSession(sessionId, "user_exit")
+    const supabase = createClient()
+    if (supabase) {
+      await supabase.from("bisik_chats").update({
+        status: "ended",
+        ended_at: new Date().toISOString(),
+        ended_by: me?.id,
+      }).eq("id", sessionId)
+    }
     onEnded()
   }
 
   const handleReport = async () => {
     if (!me || !reportReason) return
-    await reportBisikSession(sessionId, me.id, reportReason, reportDetail)
+    const supabase = createClient()
+    if (supabase) {
+      await supabase.from("bisik_chats").update({
+        status: "ended",
+        ended_at: new Date().toISOString(),
+        ended_by: me?.id,
+      }).eq("id", sessionId)
+    }
     onEnded()
   }
 

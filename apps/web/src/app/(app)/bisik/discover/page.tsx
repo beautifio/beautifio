@@ -1,34 +1,61 @@
 "use client"
 
+import { Suspense } from "react"
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { getDiscoverCards } from "@/lib/bisik/swipe-actions"
 import BisikDiscover from "@/components/bisik/BisikDiscover"
-import type { BisikQueueCard } from "@/lib/bisik/swipe-actions"
-import type { BisikCategory } from "@/lib/bisik/actions"
+import type { BisikCard } from "@/lib/bisik/swipe-actions"
 
-export default function BisikDiscoverPage() {
+export default function DiscoverPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100svh",
+          }}
+        >
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      }
+    >
+      <BisikDiscoverWrapper />
+    </Suspense>
+  )
+}
+
+function BisikDiscoverWrapper() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { user, isLoading } = useAuth()
-  const [cards, setCards] = useState<BisikQueueCard[]>([])
+  const [cards, setCards] = useState<BisikCard[]>([])
   const [loading, setLoading] = useState(true)
 
-  const queueId = searchParams.get("queueId")
-  const category = searchParams.get("category") as BisikCategory
+  const topicIdsStr = searchParams.get("topicIds")
+  const topicIds = topicIdsStr ? topicIdsStr.split(",") : []
 
   useEffect(() => {
     if (isLoading) return
-    if (!user) { router.replace("/login"); return }
-    if (!queueId || !category) { router.replace("/bisik"); return }
+    if (!user) {
+      router.replace("/login")
+      return
+    }
+    if (topicIds.length === 0) {
+      router.replace("/bisik")
+      return
+    }
 
-    getDiscoverCards(category).then(data => {
+    getDiscoverCards(user.id, topicIds).then((data) => {
       setCards(data)
       setLoading(false)
     })
-  }, [user, isLoading, queueId, category, router])
+  }, [user, isLoading, topicIds, router])
 
   if (isLoading || loading) {
     return (
@@ -40,11 +67,7 @@ export default function BisikDiscoverPage() {
 
   return (
     <main className="min-h-screen bg-bg pb-24 flex flex-col">
-      <BisikDiscover
-        initialCards={cards}
-        myQueueId={queueId!}
-        category={category!}
-      />
+      <BisikDiscover userId={user!.id} topicIds={topicIds} />
     </main>
   )
 }

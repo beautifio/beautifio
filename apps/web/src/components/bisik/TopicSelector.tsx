@@ -1,122 +1,168 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 import { enterBisikQueue } from "@/lib/bisik/swipe-actions"
-import type { BisikCategory, BisikMood } from "@/lib/bisik/actions"
+import { useAuth } from "@/hooks/use-auth"
 
-const CATEGORIES = [
-  { value: "karir" as BisikCategory, label: "💼 Karir" },
-  { value: "keluarga" as BisikCategory, label: "👨‍👩‍👧 Keluarga" },
-  { value: "percintaan" as BisikCategory, label: "💕 Percintaan" },
-  { value: "pendidikan" as BisikCategory, label: "📚 Pendidikan" },
-  { value: "kesehatan_mental" as BisikCategory, label: "🧠 Mental" },
-  { value: "keuangan" as BisikCategory, label: "💰 Keuangan" },
-]
-
-const MOODS = [
-  { value: "didengar" as BisikMood, label: "🗣 Mau cerita / didengar" },
-  { value: "mendengarkan" as BisikMood, label: "👂 Siap mendengarkan" },
-  { value: "keduanya" as BisikMood, label: "🤝 Keduanya oke" },
-]
+interface BisikTopic {
+  id: string
+  name: string
+  emoji: string
+}
 
 export default function TopicSelector() {
   const router = useRouter()
-  const [category, setCategory] = useState<BisikCategory | null>(null)
-  const [mood, setMood] = useState<BisikMood | null>(null)
-  const [hint, setHint] = useState("")
+  const { user } = useAuth()
+  const [topics, setTopics] = useState<BisikTopic[]>([])
+  const [step, setStep] = useState<"loading" | "topics" | "content">("loading")
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([])
+  const [content, setContent] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
+  useEffect(() => {
+    if (!user) return
+    ;(async () => {
+      const supabase = createClient()
+      if (!supabase) return
+
+      const [{ data: topicsData }, { data: profile }] = await Promise.all([
+        supabase.from("bisik_topics").select("id, name, emoji").eq("is_active", true).order("display_order"),
+        supabase.from("users").select("bisik_topic_ids").eq("id", user.id).single(),
+      ])
+
+      setTopics(topicsData ?? [])
+
+      if (profile && profile.bisik_topic_ids?.length > 0) {
+        setSelectedTopicIds(profile.bisik_topic_ids)
+        setStep("content")
+      } else {
+        setStep("topics")
+      }
+    })()
+  }, [user])
+
+  const toggleTopic = (id: string) => {
+    setSelectedTopicIds((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
+    )
+  }
+
+  const handleContinueFromTopics = async () => {
+    if (selectedTopicIds.length === 0) return
+    const supabase = createClient()
+    if (!supabase) return
+    await supabase.from("users").update({ bisik_topic_ids: selectedTopicIds }).eq("id", user!.id)
+    setStep("content")
+  }
+
   const handleSubmit = async () => {
-    if (!category || !mood) return
+    if (selectedTopicIds.length === 0) return
     setSubmitting(true)
     setError("")
+
     try {
-      const { queueId } = await enterBisikQueue(category, mood, hint.trim() || undefined)
-      router.push(`/bisik/discover?queueId=${queueId}&category=${category}`)
+      const { cardId } = await enterBisikQueue(selectedTopicIds[0], content.trim())
+      router.push(`/bisik/waiting?cardId=${cardId}`)
     } catch {
       setError("Gagal masuk antrian. Coba lagi.")
       setSubmitting(false)
     }
   }
 
-  return (
-    <div className="flex flex-col gap-5 px-4 py-6">
-      <div>
-        <h1 className="text-base font-medium">Bisik</h1>
-        <p className="text-xs text-text-secondary mt-1">Mau ngobrol tentang apa?</p>
+  if (step === "loading") {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
+    )
+  }
 
-      <section>
-        <p className="text-xs font-medium text-primary mb-2">TOPIK</p>
-        <div className="grid grid-cols-2 gap-2">
-          {CATEGORIES.map(cat => (
+  return (
+    <div className="min-h-screen bg-bg flex flex-col">
+      <div className="flex-1 max-w-content mx-auto w-full px-4 py-6 flex flex-col gap-6">
+        <div>
+          <h1 className="text-xl font-bold text-text-primary">Bisik</h1>
+          <p className="text-sm text-text-secondary mt-1">Ngobrol anonim dengan orang baru</p>
+        </div>
+
+        {step === "topics" && (
+          <>
+            <div>
+              <p className="text-xs font-medium text-primary mb-3">PILIH TOPIK (min 1)</p>
+              <div className="flex flex-wrap gap-2">
+                {topics.map((t) => {
+                  const isSelected = selectedTopicIds.includes(t.id)
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => toggleTopic(t.id)}
+                      className={`px-4 py-2.5 rounded-xl text-sm border transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-primary/10 border-primary/30 text-primary font-medium"
+                          : "border-border bg-surface text-text-secondary hover:border-primary/30"
+                      }`}
+                    >
+                      {t.emoji} {t.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <button
-              key={cat.value}
-              onClick={() => setCategory(cat.value)}
-              className={`rounded-xl py-3 px-3 text-xs text-left border transition-colors ${
-                category === cat.value
-                  ? "bg-primary/10 border-primary/30 text-primary font-medium"
-                  : "border-border"
-              }`}
+              onClick={handleContinueFromTopics}
+              disabled={selectedTopicIds.length === 0}
+              className="w-full bg-primary text-white rounded-full py-3 text-sm font-medium disabled:opacity-40 mt-auto"
             >
-              {cat.label}
+              Lanjut
             </button>
-          ))}
-        </div>
-      </section>
+          </>
+        )}
 
-      <section>
-        <p className="text-xs font-medium text-primary mb-2">POSISI KAMU</p>
-        <div className="flex flex-col gap-2">
-          {MOODS.map(m => (
+        {step === "content" && (
+          <>
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium text-primary">CERITAKAN</p>
+                <button
+                  onClick={() => setStep("topics")}
+                  className="text-xs text-primary hover:underline cursor-pointer"
+                >
+                  Ubah topik
+                </button>
+              </div>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Ceritakan singkat apa yang mau kamu obrolkan..."
+                maxLength={300}
+                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-secondary/50 outline-none focus:border-primary transition-colors resize-none h-24"
+              />
+              <p className="text-right text-xs text-text-secondary mt-1">
+                {content.length}/300
+              </p>
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600">
+                {error}
+              </div>
+            )}
+
             <button
-              key={m.value}
-              onClick={() => setMood(m.value)}
-              className={`rounded-xl py-3 px-4 text-xs text-left border transition-colors ${
-                mood === m.value
-                  ? "bg-primary/10 border-primary/30 text-primary font-medium"
-                  : "border-border"
-              }`}
+              onClick={handleSubmit}
+              disabled={submitting || content.trim().length < 10}
+              className="w-full bg-primary text-white rounded-full py-3 text-sm font-medium disabled:opacity-40 mt-auto"
             >
-              {m.label}
+              {submitting ? "Memproses..." : "Cari teman ngobrol →"}
             </button>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <p className="text-xs font-medium text-primary mb-2">
-          HINT TOPIK{" "}
-          <span className="font-normal text-text-secondary">
-            (opsional, maks 60 karakter)
-          </span>
-        </p>
-        <input
-          type="text"
-          maxLength={60}
-          value={hint}
-          onChange={e => setHint(e.target.value)}
-          placeholder="Contoh: soal interview kerja besok..."
-          className="w-full rounded-xl bg-muted px-4 py-3 text-xs border-none outline-none"
-        />
-        <p className="text-right text-xs text-text-secondary mt-1">{hint.length}/60</p>
-      </section>
-
-      {error && (
-        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600">
-          {error}
-        </div>
-      )}
-
-      <button
-        onClick={handleSubmit}
-        disabled={!category || !mood || submitting}
-        className="w-full bg-primary text-white rounded-full py-3 text-sm font-medium disabled:opacity-40"
-      >
-        {submitting ? "Memproses..." : "Cari lawan ngobrol →"}
-      </button>
+          </>
+        )}
+      </div>
     </div>
   )
 }

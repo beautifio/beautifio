@@ -7,7 +7,7 @@ import {
   Gift, ShoppingBag, Trophy, FileText,
   Users, Quote, MessageCircle, HeartHandshake,
   FileSpreadsheet, BookOpen, Briefcase, Menu, X,
-  LayoutDashboard, Shield, Image,
+  LayoutDashboard, Shield, Image, Radio, CreditCard,
 } from "lucide-react";
 
 type NavItem = {
@@ -31,6 +31,8 @@ const navItems: NavItem[] = [
   { href: "/admin/konten/quotes", label: "Quotes", icon: Quote, roles: ["redaksi", "superadmin"] },
   { href: "/admin/konten/hero", label: "Media Manager", icon: Image, roles: ["redaksi", "superadmin"] },
   { href: "/admin/opportunities", label: "Opportunities", icon: Briefcase, roles: ["superadmin"] },
+  { href: "/admin/bisik", label: "Bisik", icon: Radio, roles: ["admin", "superadmin"] },
+  { href: "/admin/subscriptions", label: "Subscription", icon: CreditCard, roles: ["admin", "superadmin"] },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

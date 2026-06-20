@@ -31,6 +31,8 @@ const NAV_CARDS: NavCard[] = [
   { emoji: "🏆", title: "Rewards", desc: "Kelola rewards", href: "/admin/rewards", group: "Familia" },
   { emoji: "📋", title: "Redemption Log", desc: "Riwayat redeem", href: "/admin/redemption-log", group: "Familia" },
   { emoji: "💼", title: "Opportunities", desc: "Kelola peluang", href: "/admin/opportunities", group: "Lainnya" },
+  { emoji: "📡", title: "Bisik", desc: "Moderasi kartu & topik", href: "/admin/bisik", group: "Komunitas" },
+  { emoji: "💳", title: "Subscription", desc: "Kelola plan & subscriber", href: "/admin/subscriptions", group: "Lainnya" },
 ];
 
 const GROUP_ORDER = ["Konten", "Komunitas", "Familia", "Lainnya"];
@@ -52,13 +54,19 @@ export default function AdminDashboard() {
       supabase.from("articles").select("*", { count: "exact", head: true }).eq("is_published", true),
       supabase.from("familia_voucher_sessions").select("*", { count: "exact", head: true }).eq("status", "active"),
       supabase.from("opportunities").select("*", { count: "exact", head: true }),
+      supabase.from("bisik_cards").select("*", { count: "exact", head: true }).eq("is_active", true),
+      supabase.from("bisik_chats").select("*", { count: "exact", head: true }).eq("status", "active"),
+      supabase.from("user_subscriptions").select("*", { count: "exact", head: true }).eq("status", "active"),
     ])
-      .then(([users, journeys, curhat, articles, vouchers, opportunities]) => {
+      .then(([users, journeys, curhat, articles, vouchers, opportunities, bisikCards, bisikChats, subs]) => {
         setStats([
           { label: "Total Users", value: users.count ?? 0, icon: "👥" },
           { label: "Journey Aktif", value: journeys.count ?? 0, icon: "🎯" },
           { label: "Curhat Posts", value: curhat.count ?? 0, icon: "🗣️" },
           { label: "Artikel Terbit", value: articles.count ?? 0, icon: "📝" },
+          { label: "Bisik Aktif", value: bisikCards.count ?? 0, icon: "📡" },
+          { label: "Chat Aktif", value: bisikChats.count ?? 0, icon: "💬" },
+          { label: "Subscriber", value: subs.count ?? 0, icon: "💳" },
           { label: "Voucher Aktif", value: vouchers.count ?? 0, icon: "🎫" },
           { label: "Opportunities", value: opportunities.count ?? 0, icon: "💼" },
         ]);

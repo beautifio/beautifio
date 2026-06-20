@@ -1,146 +1,118 @@
 'use server'
 
 import { createClient } from "@/lib/supabase/server"
-import { generateNickname } from "@/lib/anonymous"
-import type { BisikCategory, BisikMood } from "./actions"
 
-export interface BisikQueueCard {
+export interface BisikCard {
   id: string
-  nickname: string
-  category: BisikCategory
-  mood_check: BisikMood
-  topic_hint: string | null
+  user_id: string
+  topic_id: string
+  content: string
+  is_active: boolean
+  view_count: number
+  swipe_count: number
   created_at: string
+  expires_at: string
+  topic?: { name: string; emoji: string } | null
 }
 
 export async function enterBisikQueue(
-  category: BisikCategory,
-  moodCheck: BisikMood,
-  topicHint?: string
-): Promise<{ queueId: string }> {
+  topicId: string,
+  content: string,
+): Promise<{ cardId: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
-  await supabase.from("bisik_queue").delete().eq("user_id", user.id)
-
-  const { data: queue } = await supabase
-    .from("bisik_queue")
+  const { data: card } = await supabase
+    .from("bisik_cards")
     .insert({
       user_id: user.id,
-      category,
-      mood_check: moodCheck,
-      topic_hint: topicHint || null,
-      nickname: generateNickname(),
+      topic_id: topicId,
+      content,
     })
     .select("id")
     .single()
 
-  return { queueId: queue!.id }
+  return { cardId: card!.id }
 }
 
 export async function getDiscoverCards(
-  category: BisikCategory,
-): Promise<BisikQueueCard[]> {
+  userId: string,
+  topicIds: string[],
+): Promise<BisikCard[]> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
 
-  const { data: swipedIds } = await supabase
+  const { data: swiped } = await supabase
     .from("bisik_swipes")
-    .select("target_id")
-    .eq("swiper_id", user.id)
+    .select("card_id")
+    .eq("swiper_id", userId)
 
-  const alreadySwiped = swipedIds?.map(s => s.target_id) || []
+  const swipedCardIds = swiped?.map((s) => s.card_id) ?? []
 
   let query = supabase
-    .from("bisik_queue")
-    .select("id, nickname, category, mood_check, topic_hint, created_at")
-    .eq("category", category)
-    .eq("status", "waiting")
-    .neq("user_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(10)
+    .from("bisik_cards")
+    .select("*, topic:bisik_topics(name, emoji)")
+    .eq("is_active", true)
+    .gt("expires_at", new Date().toISOString())
+    .neq("user_id", userId)
+    .in("topic_id", topicIds)
+    .order("created_at", { ascending: false })
+    .limit(20)
 
-  if (alreadySwiped.length > 0) {
-    query = query.not("id", "in", `(${alreadySwiped.join(",")})`)
+  if (swipedCardIds.length > 0) {
+    query = query.not("id", "in", `(${swipedCardIds.join(",")})`)
   }
 
   const { data } = await query
-  return (data || []) as BisikQueueCard[]
+  return (data ?? []) as BisikCard[]
 }
 
-export async function swipeLeft(targetQueueId: string): Promise<void> {
+export async function swipeLeft(swiperId: string, cardId: string): Promise<void> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
-
   await supabase.from("bisik_swipes").insert({
-    swiper_id: user.id,
-    target_id: targetQueueId,
+    swiper_id: swiperId,
+    card_id: cardId,
+    card_owner_id: "",
     direction: "left",
   })
 }
 
 export async function swipeRight(
-  targetQueueId: string,
-  myQueueId: string,
-): Promise<{ sessionId: string }> {
+  swiperId: string,
+  card: BisikCard,
+): Promise<{ chatId?: string; error: string | null; maxAllowed?: number }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
 
-  const { data: target } = await supabase
-    .from("bisik_queue")
-    .select("id, user_id, category, mood_check, topic_hint, nickname")
-    .eq("id", targetQueueId)
-    .eq("status", "waiting")
-    .single()
+  const { data: maxChats } = await supabase
+    .rpc("get_user_max_chats", { p_user_id: swiperId })
 
-  if (!target) throw new Error("ALREADY_MATCHED")
+  const { count: activeCount } = await supabase
+    .from("bisik_chats")
+    .select("*", { count: "exact", head: true })
+    .or(`initiator_id.eq.${swiperId},receiver_id.eq.${swiperId}`)
+    .in("status", ["pending", "active"])
 
-  const { data: myQueue } = await supabase
-    .from("bisik_queue")
-    .select("nickname, topic_hint")
-    .eq("id", myQueueId)
-    .single()
+  if ((activeCount ?? 0) >= (maxChats ?? 5)) {
+    return { error: "CHAT_LIMIT_REACHED", maxAllowed: maxChats ?? 5 }
+  }
 
-  const { data: session } = await supabase
-    .from("bisik_sessions")
+  await supabase.from("bisik_swipes").insert({
+    swiper_id: swiperId,
+    card_id: card.id,
+    card_owner_id: card.user_id,
+    direction: "right",
+  })
+
+  const { data: chat } = await supabase
+    .from("bisik_chats")
     .insert({
-      category: target.category,
-      topic_hint: target.topic_hint || myQueue?.topic_hint,
-      status: "active",
-      matched_at: new Date().toISOString(),
+      card_id: card.id,
+      initiator_id: swiperId,
+      receiver_id: card.user_id,
+      status: "pending",
     })
     .select("id")
     .single()
 
-  await supabase.from("bisik_participants").insert([
-    {
-      session_id: session!.id,
-      user_id: user.id,
-      nickname: myQueue?.nickname || generateNickname(),
-      mood_check: target.mood_check,
-    },
-    {
-      session_id: session!.id,
-      user_id: target.user_id,
-      nickname: target.nickname,
-      mood_check: target.mood_check,
-    },
-  ])
-
-  await supabase
-    .from("bisik_queue")
-    .update({ status: "matched" })
-    .in("id", [targetQueueId, myQueueId])
-
-  await supabase.from("bisik_swipes").insert({
-    swiper_id: user.id,
-    target_id: targetQueueId,
-    direction: "right",
-  })
-
-  return { sessionId: session!.id }
+  return { chatId: chat!.id, error: null }
 }
