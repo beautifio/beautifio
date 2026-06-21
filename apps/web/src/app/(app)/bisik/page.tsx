@@ -248,12 +248,6 @@ export default function BisikHome() {
         .single()
 
       const topicIds = (profile?.bisik_topic_ids as string[]) ?? []
-      if (topicIds.length === 0) {
-        setSwipeCards([])
-        setLoading(false)
-        return
-      }
-
       const cards = await getDiscoverCards(user.id, topicIds)
       setSwipeCards(cards as unknown as BisikCard[])
     } catch (err) {

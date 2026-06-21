@@ -56,9 +56,12 @@ export async function getDiscoverCards(
     .eq("is_active", true)
     .gt("expires_at", new Date().toISOString())
     .neq("user_id", userId)
-    .in("topic_id", topicIds)
     .order("created_at", { ascending: false })
     .limit(20)
+
+  if (topicIds.length > 0) {
+    query = query.in("topic_id", topicIds)
+  }
 
   if (swipedCardIds.length > 0) {
     query = query.not("id", "in", `(${swipedCardIds.join(",")})`)
