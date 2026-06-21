@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
 
-type Tab = "cards" | "topics" | "names"
+type Tab = "cards" | "topics" | "names" | "violations" | "bans"
 
 interface BisikCard {
   id: string
@@ -53,6 +53,61 @@ export default function AdminBisik() {
   const [nameTotalUsers, setNameTotalUsers] = useState(0)
   const [nameLoading, setNameLoading] = useState(false)
   const [resetting, setResetting] = useState<string | null>(null)
+
+  // Violations & bans tab
+  interface Violation {
+    id: string
+    user_id: string
+    chat_id: string
+    message_id: string
+    violation_type: string
+    original_snippet: string
+    created_at: string
+    user?: { email: string; bisik_anonymous_name: string }
+  }
+  interface BanUser {
+    id: string
+    user_id: string
+    reason: string
+    banned_until: string
+    ban_count: number
+    created_at: string
+    user?: { email: string; bisik_anonymous_name: string }
+  }
+  const [violations, setViolations] = useState<Violation[]>([])
+  const [bannedUsers, setBannedUsers] = useState<BanUser[]>([])
+  const [violationFilter, setViolationFilter] = useState("")
+  const [vLoading, setVLoading] = useState(false)
+
+  const loadViolations = async () => {
+    if (!supabase) return
+    setVLoading(true)
+    const { data } = await supabase
+      .from("bisik_violations")
+      .select("*, user:users(email, bisik_anonymous_name)")
+      .order("created_at", { ascending: false })
+      .limit(50)
+    setViolations(data ?? [])
+    setVLoading(false)
+  }
+
+  const loadBans = async () => {
+    if (!supabase) return
+    setVLoading(true)
+    const { data } = await supabase
+      .from("bisik_bans")
+      .select("*, user:users(email, bisik_anonymous_name)")
+      .order("created_at", { ascending: false })
+    setBannedUsers(data ?? [])
+    setVLoading(false)
+  }
+
+  const unbanUser = async (userId: string) => {
+    if (!confirm("Cabut ban user ini?")) return
+    if (!supabase) return
+    await supabase.from("bisik_bans").update({ banned_until: new Date().toISOString() }).eq("user_id", userId)
+    loadBans()
+  }
 
   const loadNames = async () => {
     if (!supabase) return
@@ -212,7 +267,23 @@ export default function AdminBisik() {
               tab === "names" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
             }`}
           >
-            Anonymous Names
+            Names
+          </button>
+          <button
+            onClick={() => { setTab("violations"); loadViolations() }}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              tab === "violations" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            }`}
+          >
+            Pelanggaran
+          </button>
+          <button
+            onClick={() => { setTab("bans"); loadBans() }}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              tab === "bans" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            }`}
+          >
+            Banned
           </button>
         </div>
       </div>
@@ -382,6 +453,130 @@ export default function AdminBisik() {
               </table>
               {nameUsers.length === 0 && (
                 <p className="text-sm text-gray-500 py-8 text-center">Tidak ada data</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "violations" && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs">
+              Total: {violations.length}
+            </span>
+            <select
+              value={violationFilter}
+              onChange={(e) => setViolationFilter(e.target.value)}
+              className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs outline-none"
+            >
+              <option value="">Semua tipe</option>
+              <option value="phone">Phone</option>
+              <option value="email">Email</option>
+              <option value="real_name">Real Name</option>
+            </select>
+          </div>
+
+          {vLoading ? (
+            <Loader2 className="w-5 h-5 text-amber-500 animate-spin mx-auto py-8" />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">User</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Tipe</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Snippet</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Waktu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {violations
+                    .filter((v) => !violationFilter || v.violation_type === violationFilter)
+                    .map((v) => (
+                      <tr key={v.id} className="border-b border-gray-100">
+                        <td className="py-3 px-2 text-gray-700 max-w-[150px] truncate">
+                          {v.user?.bisik_anonymous_name || v.user?.email || "(unknown)"}
+                        </td>
+                        <td className="py-3 px-2">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            v.violation_type === "phone" ? "bg-red-50 text-red-700" :
+                            v.violation_type === "email" ? "bg-amber-50 text-amber-700" :
+                            "bg-blue-50 text-blue-700"
+                          }`}>
+                            {v.violation_type}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2 text-gray-500 font-mono max-w-[200px] truncate">
+                          {v.original_snippet}
+                        </td>
+                        <td className="py-3 px-2 text-gray-400">
+                          {new Date(v.created_at).toLocaleString("id-ID")}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              {violations.length === 0 && (
+                <p className="text-sm text-gray-500 py-8 text-center">Belum ada pelanggaran</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "bans" && (
+        <div>
+          {vLoading ? (
+            <Loader2 className="w-5 h-5 text-amber-500 animate-spin mx-auto py-8" />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">User</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Alasan</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Ban ke-</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Sisa Waktu</th>
+                    <th className="text-left py-3 px-2 font-medium text-gray-500">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bannedUsers
+                    .filter((b) => new Date(b.banned_until) > new Date())
+                    .map((b) => {
+                      const remaining = Math.ceil((new Date(b.banned_until).getTime() - Date.now()) / 60000)
+                      return (
+                        <tr key={b.id} className="border-b border-gray-100">
+                          <td className="py-3 px-2 text-gray-700 max-w-[150px] truncate">
+                            {b.user?.bisik_anonymous_name || b.user?.email || "(unknown)"}
+                          </td>
+                          <td className="py-3 px-2 text-gray-700 max-w-[200px] truncate">{b.reason || "—"}</td>
+                          <td className="py-3 px-2 text-gray-700">{b.ban_count}</td>
+                          <td className="py-3 px-2">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                              remaining > 60 ? "bg-green-50 text-green-700" :
+                              remaining > 10 ? "bg-amber-50 text-amber-700" :
+                              "bg-red-50 text-red-700"
+                            }`}>
+                              {remaining} menit
+                            </span>
+                          </td>
+                          <td className="py-3 px-2">
+                            <button
+                              onClick={() => unbanUser(b.user_id)}
+                              className="px-2 py-1 rounded bg-green-50 text-green-700 text-[10px] font-medium hover:bg-green-100 cursor-pointer"
+                            >
+                              Cabut Ban
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              </table>
+              {bannedUsers.filter((b) => new Date(b.banned_until) > new Date()).length === 0 && (
+                <p className="text-sm text-gray-500 py-8 text-center">Tidak ada user yang dibanned</p>
               )}
             </div>
           )}

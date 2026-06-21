@@ -4,7 +4,7 @@ import { useState, useEffect, use, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import {
   Send, Flag, PhoneOff, ArrowLeft, Loader2,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, AlertTriangle, Ban,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { createClient } from "@/lib/supabase/client"
@@ -29,6 +29,14 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
   const [contextCard, setContextCard] = useState<{ content: string; topic?: { name: string; emoji: string } | null } | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  // Ban state
+  const [banInfo, setBanInfo] = useState<{ isBanned: boolean; message: string; bannedUntil: string } | null>(null)
+  const [banCount, setBanCount] = useState(0)
+  const [sensorNotif, setSensorNotif] = useState<string | null>(null)
+
+  // Track sent content to detect server-side masking
+  const sentContentRef = useRef<Map<string, string>>(new Map())
+
   useEffect(() => {
     if (!user || !supabase) return
     ;(async () => {
@@ -37,7 +45,6 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       if (c.status === "ended") { router.replace("/bisik"); return }
       setChat(c)
 
-      // Fetch context card
       const cardData = c as any
       if (cardData.card_id) {
         const { data: card } = await supabase!
@@ -48,7 +55,6 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
         setContextCard(card as any)
       }
 
-      // Fetch other user's name
       const isInitiator = c.initiator_id === user.id
       const otherId = isInitiator ? c.receiver_id : c.initiator_id
       const { data: otherUser } = await supabase!
@@ -62,7 +68,37 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       setMessages(msgs)
       setLoading(false)
     })()
+
+    // Check ban status
+    checkBan()
   }, [chatId, user, router])
+
+  const checkBan = async () => {
+    if (!supabase || !user) return
+    const { data: ban } = await supabase
+      .from("bisik_bans")
+      .select("banned_until, ban_count")
+      .eq("user_id", user.id)
+      .single()
+
+    if (ban && new Date(ban.banned_until) > new Date()) {
+      const remainingMs = new Date(ban.banned_until).getTime() - Date.now()
+      const remainingMins = Math.ceil(remainingMs / 60000)
+      setBanInfo({
+        isBanned: true,
+        message: `Kamu tidak bisa mengirim pesan selama ${remainingMins} menit lagi karena membagikan informasi pribadi.`,
+        bannedUntil: ban.banned_until,
+      })
+      setBanCount(ban.ban_count)
+    }
+    // Also get current violation count for sensor notifications
+    const { count } = await supabase
+      .from("bisik_violations")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gt("created_at", new Date(Date.now() - 86400000).toISOString())
+    setBanCount(count ?? 0)
+  }
 
   useEffect(() => {
     if (!supabase) return
@@ -74,7 +110,22 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
         table: "bisik_messages",
         filter: `chat_id=eq.${chatId}`,
       }, (payload) => {
-        setMessages((prev) => [...prev, payload.new as BisikMessage])
+        const msg = payload.new as BisikMessage
+        setMessages((prev) => [...prev, msg])
+
+        // Check if our own message was modified by server-side masking
+        if (msg.sender_id === user?.id) {
+          const originalContent = sentContentRef.current.get(msg.id)
+          if (originalContent && originalContent !== msg.content) {
+            setSensorNotif(
+              `⚠️ Informasi pribadi terdeteksi dan disensor. ` +
+              `Peringatan ke-${banCount + 1}/3. Setelah 3x kamu akan dibanned 3 jam.`
+            )
+            setTimeout(() => setSensorNotif(null), 8000)
+            checkBan()
+          }
+          sentContentRef.current.delete(msg.id)
+        }
       })
       .on("postgres_changes", {
         event: "UPDATE",
@@ -87,7 +138,7 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [chatId, router])
+  }, [chatId, router, user?.id, banCount])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -97,13 +148,25 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || sending || !supabase || !user) return
+    if (banInfo?.isBanned) return
+
+    const originalContent = input.trim()
     setSending(true)
     try {
-      await supabase.from("bisik_messages").insert({
-        chat_id: chatId,
-        sender_id: user.id,
-        content: input.trim(),
-      })
+      const { data: msg } = await supabase
+        .from("bisik_messages")
+        .insert({
+          chat_id: chatId,
+          sender_id: user.id,
+          content: originalContent,
+        })
+        .select("id")
+        .single()
+
+      // Track sent content for masking detection
+      if (msg?.id) {
+        sentContentRef.current.set(msg.id, originalContent)
+      }
 
       if (isInitiator && !chat?.expires_at) {
         await supabase
@@ -116,7 +179,7 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
     } catch {} finally {
       setSending(false)
     }
-  }, [input, sending, supabase, user, chatId, isInitiator, chat])
+  }, [input, sending, supabase, user, chatId, isInitiator, chat, banInfo])
 
   const handleEnd = async () => {
     if (!supabase) return
@@ -200,6 +263,23 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
         </div>
       )}
 
+      {/* Sensor notification */}
+      {sensorNotif && (
+        <div className="mx-4 mt-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2">
+          <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700">{sensorNotif}</p>
+          <button onClick={() => setSensorNotif(null)} className="text-xs text-amber-500 cursor-pointer shrink-0">Tutup</button>
+        </div>
+      )}
+
+      {/* Ban warning */}
+      {banInfo?.isBanned && (
+        <div className="mx-4 mt-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2">
+          <Ban size={16} className="text-red-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-red-700">{banInfo.message}</p>
+        </div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.length === 0 && (
@@ -236,13 +316,14 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-            placeholder="Tulis pesan..."
+            placeholder={banInfo?.isBanned ? "Kamu sedang dibanned..." : "Tulis pesan..."}
             maxLength={1000}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-bg text-sm text-text-primary placeholder:text-text-secondary/50 outline-none focus:border-primary transition-colors"
+            disabled={banInfo?.isBanned}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-bg text-sm text-text-primary placeholder:text-text-secondary/50 outline-none focus:border-primary transition-colors disabled:opacity-50"
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim() || sending}
+            disabled={!input.trim() || sending || !!banInfo?.isBanned}
             className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
           >
             <Send size={18} />
