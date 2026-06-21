@@ -171,7 +171,6 @@ export async function middleware(request: NextRequest) {
   // Allow anonymous users to access /register or /login with ?upgrade=true
   if (isAuth && !(isAnonymous && request.nextUrl.searchParams.get("upgrade") === "true")) {
     if (pathname === "/" || pathname === "/login" || pathname === "/register") {
-      // Check admin role for role-based redirect
       let profile: { role: string } | null = null;
       try {
         const { data: p } = await supabase.from("users").select("role").eq("id", user.id).single();

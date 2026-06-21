@@ -54,7 +54,7 @@ export default function LoginPage({
           dest = "/admin/konten/posts";
         }
       } catch { /* fallback to / */ }
-      router.replace(dest);
+      window.location.href = dest;
     })();
   }, [user, router]);
 
@@ -103,7 +103,7 @@ export default function LoginPage({
           localStorage.removeItem("beautifio_remember_email");
         }
 
-        let dest = "/";
+        let dest = "/home";
         if (supabase) {
           try {
             const { data: profile } = await supabase
@@ -119,10 +119,12 @@ export default function LoginPage({
               dest = `/?mimpi=${mimpiSlug}`;
             }
           } catch {
-            dest = mimpiSlug ? `/?mimpi=${mimpiSlug}` : "/";
+            dest = mimpiSlug ? `/?mimpi=${mimpiSlug}` : "/home";
           }
         }
-        router.push(dest);
+        // Full page navigation ensures middleware sees fresh auth cookies
+        window.location.href = dest;
+        return;
       }
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
