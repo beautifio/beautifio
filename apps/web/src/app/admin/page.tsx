@@ -57,8 +57,10 @@ export default function AdminDashboard() {
       supabase.from("bisik_cards").select("*", { count: "exact", head: true }).eq("is_active", true),
       supabase.from("bisik_chats").select("*", { count: "exact", head: true }).eq("status", "active"),
       supabase.from("user_subscriptions").select("*", { count: "exact", head: true }).eq("status", "active"),
+      supabase.from("bisik_name_words").select("*", { count: "exact", head: true }),
+      supabase.from("users").select("*", { count: "exact", head: true }).not("bisik_anonymous_name", "is", null),
     ])
-      .then(([users, journeys, curhat, articles, vouchers, opportunities, bisikCards, bisikChats, subs]) => {
+      .then(([users, journeys, curhat, articles, vouchers, opportunities, bisikCards, bisikChats, subs, nameWords, namedUsers]) => {
         setStats([
           { label: "Total Users", value: users.count ?? 0, icon: "👥" },
           { label: "Journey Aktif", value: journeys.count ?? 0, icon: "🎯" },
@@ -69,6 +71,8 @@ export default function AdminDashboard() {
           { label: "Subscriber", value: subs.count ?? 0, icon: "💳" },
           { label: "Voucher Aktif", value: vouchers.count ?? 0, icon: "🎫" },
           { label: "Opportunities", value: opportunities.count ?? 0, icon: "💼" },
+          { label: "Nama Anonymous", value: namedUsers.count ?? 0, icon: "🕵️" },
+          { label: "Kata Tersedia", value: nameWords.count ?? 0, icon: "📖" },
         ]);
       })
       .catch(() => {})
