@@ -268,6 +268,85 @@ export async function getMyRsvps(userId: string) {
   return new Set((data || []).map((r: any) => r.session_id));
 }
 
+export async function sendAttachment(msg: {
+  circle_id: string;
+  sender_id: string;
+  message: string;
+  attachment_url: string;
+}) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("messages")
+    .insert({ ...msg, message_type: "image" })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Message;
+}
+
+export async function reportAttachment(messageId: string, circleId: string, reporterId: string, reason?: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("attachment_reports")
+    .insert({ message_id: messageId, circle_id: circleId, reporter_id: reporterId, reason: reason || "" })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getReportStatus(messageId: string, circleId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .rpc("get_report_count", { p_message_id: messageId, p_circle_id: circleId });
+  if (error) return { report_count: 0, member_count: 0, threshold: 0, should_hide: false };
+  return data?.[0] || { report_count: 0, member_count: 0, threshold: 0, should_hide: false };
+}
+
+export async function checkBanStatus(circleId: string, userId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .rpc("is_user_banned", { p_circle_id: circleId, p_user_id: userId });
+  if (error || !data || data.length === 0) return null;
+  return data[0] as { is_banned: boolean; ban_reason: string; expires_at: string | null; is_permanent: boolean };
+}
+
+export async function autoBanMember(circleId: string, userId: string) {
+  const client = requireClient();
+  await client.rpc("auto_ban_member", { p_circle_id: circleId, p_user_id: userId });
+}
+
+export async function getMemberViolationCount(circleId: string, userId: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("attachment_reports")
+    .select("id, messages!inner(sender_id)", { count: "exact", head: true })
+    .eq("circle_id", circleId)
+    .eq("messages.sender_id", userId);
+  if (error) return 0;
+  return data?.length || 0;
+}
+
+export async function uploadAttachment(file: File, userId: string, circleId: string) {
+  const client = requireClient();
+  const ext = file.name.split(".").pop();
+  const filePath = `circles/${circleId}/${userId}/${Date.now()}.${ext}`;
+  const { error: uploadError } = await client.storage
+    .from("circle-attachments")
+    .upload(filePath, file, { upsert: true });
+  if (uploadError) throw uploadError;
+  const { data: urlData } = client.storage.from("circle-attachments").getPublicUrl(filePath);
+  return urlData?.publicUrl || "";
+}
+
+export async function hideAttachment(messageId: string) {
+  const client = requireClient();
+  await client
+    .from("messages")
+    .update({ attachment_url: null })
+    .eq("id", messageId);
+}
+
 export async function createCircle(data: {
   name: string;
   description?: string;

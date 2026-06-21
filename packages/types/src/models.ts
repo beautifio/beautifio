@@ -27,7 +27,7 @@ export interface Profile { id: string; email: string; full_name: string; role: U
 export interface Goal { id: string; user_id: string; goal_name: string; goal_category: GoalCategory; target_date?: string; status: GoalStatus; progress: number; created_at: string; }
 export interface Circle { id: string; name: string; description?: string; goal_category: string; mentor_id?: string; cover_url?: string; capacity: number; member_count: number; status: CircleStatus; template_slug?: string; created_by?: string; created_at: string; }
 export interface CircleMember { id: string; circle_id: string; user_id: string; role: MemberRole; joined_at: string; left_at?: string; }
-export interface Message { id: string; circle_id: string; sender_id?: string; parent_id?: string; message: string; message_type: MessageType; is_pinned: boolean; created_at: string; }
+export interface Message { id: string; circle_id: string; sender_id?: string; parent_id?: string; message: string; message_type: MessageType; is_pinned: boolean; attachment_url?: string; created_at: string; }
 export interface CircleSession { id: string; circle_id: string; title: string; description?: string; scheduled_at: string; meet_url?: string; notes?: string; recording_url?: string; created_by?: string; created_at: string; }
 export interface CircleMentorQA { id: string; circle_id: string; question_text: string; asked_by?: string; answer_text?: string; answered_by?: string; is_answered: boolean; is_pinned: boolean; created_at: string; answered_at?: string; }
 export interface CircleSessionRsvp { id: string; session_id: string; user_id: string; status: string; created_at: string; }
