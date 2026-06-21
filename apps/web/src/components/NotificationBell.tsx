@@ -1,0 +1,135 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { Bell } from "lucide-react"
+import { supabase } from "@/lib/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+
+interface Notification {
+  id: string
+  type: string
+  title: string
+  body: string | null
+  data: any
+  is_read: boolean
+  created_at: string
+}
+
+export function NotificationBell() {
+  const { user } = useAuth()
+  const router = useRouter()
+  const [unread, setUnread] = useState(0)
+  const [notifs, setNotifs] = useState<Notification[]>([])
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!user || !supabase) return
+    const sb = supabase
+
+    const load = async () => {
+      const { data } = await sb
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10)
+      if (data) {
+        setNotifs(data)
+        setUnread(data.filter((n) => !n.is_read).length)
+      }
+    }
+    load()
+
+    // Realtime
+    const channel = sb
+      .channel("notif-" + user.id)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, (payload) => {
+        const n = payload.new as Notification
+        setNotifs((prev) => [n, ...prev].slice(0, 10))
+        setUnread((prev) => prev + 1)
+      })
+      .subscribe()
+
+    // Click outside
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => {
+      sb.removeChannel(channel)
+      document.removeEventListener("mousedown", handleClick)
+    }
+  }, [user])
+
+  const handleMarkRead = async (notif: Notification) => {
+    if (!supabase || notif.is_read) return
+    await supabase.from("notifications").update({ is_read: true }).eq("id", notif.id)
+    setNotifs((prev) => prev.map((n) => n.id === notif.id ? { ...n, is_read: true } : n))
+    setUnread((prev) => Math.max(0, prev - 1))
+  }
+
+  const handleClick = (notif: Notification) => {
+    handleMarkRead(notif)
+    if (notif.type === "circle_approved" && notif.data?.circle_id) {
+      router.push(`/circle/${notif.data.circle_id}`)
+    }
+    setOpen(false)
+  }
+
+  if (!user) return null
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors relative cursor-pointer"
+      >
+        <Bell size={16} className="text-text-secondary" />
+        {unread > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center">
+            {unread > 9 ? "9+" : unread}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-10 w-80 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <h3 className="text-sm font-bold text-text-primary">Notifikasi</h3>
+          </div>
+
+          {notifs.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <Bell size={20} className="mx-auto text-text-secondary/30 mb-2" />
+              <p className="text-xs text-text-secondary">Belum ada notifikasi</p>
+            </div>
+          ) : (
+            <div className="max-h-80 overflow-y-auto">
+              {notifs.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => handleClick(n)}
+                  className={`w-full text-left px-4 py-3 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer ${n.is_read ? "" : "bg-primary/5"}`}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.is_read ? "bg-transparent" : "bg-primary"}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-text-primary">{n.title}</p>
+                      {n.body && <p className="text-[10px] text-text-secondary mt-0.5 line-clamp-2">{n.body}</p>}
+                      <p className="text-[9px] text-text-secondary/50 mt-1">
+                        {new Date(n.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

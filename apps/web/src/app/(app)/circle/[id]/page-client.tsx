@@ -229,6 +229,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
   const [uploading, setUploading] = useState(false)
   const [reportingMsgId, setReportingMsgId] = useState<string | null>(null)
   const [reportCounts, setReportCounts] = useState<Record<string, { count: number; threshold: number }>>({})
+  const [myRole, setMyRole] = useState<string>("member")
   const chatEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
@@ -253,7 +254,9 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
       setQaList(qa)
       setMyRsvpSessionIds(rsvpIds)
       setBanStatus(ban)
-      setIsMember(membs.some((m: any) => m.user_id === user.id))
+      const myMem = membs.find((m: any) => m.user_id === user.id)
+      setMyRole(myMem?.role || "member")
+      setIsMember(!!myMem)
     } catch (e) {
       console.error("Failed to load circle", e)
     } finally {
@@ -413,6 +416,34 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
       console.error("Failed to RSVP", e)
     } finally {
       setRegistering(null)
+    }
+  }
+
+  const handleToggleCohost = async (targetUserId: string) => {
+    if (!user) return
+    try {
+      await supabase!.rpc("set_circle_cohost", {
+        p_circle_id: id, p_host_id: user.id, p_target_user_id: targetUserId,
+      })
+      setMembers((prev) => prev.map((m) =>
+        m.user_id === targetUserId
+          ? { ...m, role: m.role === "co-host" ? "member" : "co-host" }
+          : m
+      ))
+    } catch (e) {
+      console.error("Failed to toggle co-host", e)
+    }
+  }
+
+  const handleRemoveMember = async (targetUserId: string) => {
+    if (!user) return
+    try {
+      await supabase!.rpc("remove_circle_member", {
+        p_circle_id: id, p_actor_id: user.id, p_target_id: targetUserId,
+      })
+      setMembers((prev) => prev.filter((m) => m.user_id !== targetUserId))
+    } catch (e) {
+      console.error("Failed to remove member", e)
     }
   }
 
@@ -712,22 +743,55 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       <div className="space-y-0.5">
-        {members.map((m) => (
-          <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface/50 transition-colors">
-            <Avatar initials={(m.users?.full_name || "?").charAt(0)} size="md" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-text-primary">
-                  {m.users?.full_name || "User"}
-                  {m.user_id === user?.id && <span className="text-text-secondary font-normal"> (Kamu)</span>}
-                </span>
-                {m.role === "co-host" && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-none">Co-Host</Badge>
-                )}
+        {members.map((m) => {
+          const canManage = myRole === "host" && m.user_id !== user?.id
+          const canRemove = (myRole === "host" || (myRole === "co-host" && m.role === "member")) && m.user_id !== user?.id
+          return (
+            <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface/50 transition-colors">
+              <Avatar initials={(m.users?.full_name || "?").charAt(0)} size="md" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-text-primary">
+                    {m.users?.full_name || "User"}
+                    {m.user_id === user?.id && <span className="text-text-secondary font-normal"> (Kamu)</span>}
+                  </span>
+                  {m.role === "host" && (
+                    <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none bg-amber-100 text-amber-800">Host</Badge>
+                  )}
+                  {m.role === "co-host" && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-none">Co-Host</Badge>
+                  )}
+                </div>
               </div>
+              {canManage && (
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    onClick={() => handleToggleCohost(m.user_id)}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
+                      m.role === "co-host" ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : "bg-primary/10 text-primary hover:bg-primary/20"
+                    }`}
+                  >
+                    {m.role === "co-host" ? "Hapus Admin" : "Jadikan Admin"}
+                  </button>
+                  <button
+                    onClick={() => handleRemoveMember(m.user_id)}
+                    className="px-2 py-1 rounded-lg text-[10px] font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors cursor-pointer"
+                  >
+                    Keluarkan
+                  </button>
+                </div>
+              )}
+              {!canManage && canRemove && (
+                <button
+                  onClick={() => handleRemoveMember(m.user_id)}
+                  className="px-2 py-1 rounded-lg text-[10px] font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors cursor-pointer shrink-0"
+                >
+                  Keluarkan
+                </button>
+              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

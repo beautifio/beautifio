@@ -189,7 +189,7 @@ export async function getCircleMembers(circleId: string) {
   const client = requireClient();
   const { data, error } = await client
     .from("circle_members")
-    .select("*, users(id, full_name, avatar_url)")
+    .select("id, circle_id, user_id, role, joined_at, users(id, full_name, avatar_url)")
     .eq("circle_id", circleId)
     .is("left_at", null)
     .order("role", { ascending: true });

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Search, User } from "lucide-react"
 import { BisikMatchNotifier } from "@/components/bisik/MatchNotifier"
+import { NotificationBell } from "@/components/NotificationBell"
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -27,6 +28,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Search className="w-4 h-4 text-text-secondary" />
             <span className="text-xs text-text-secondary">Cari di Beautifio...</span>
           </Link>
+          <NotificationBell />
           <Link href="/profil" aria-label="Profil">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
               <User size={16} className="text-primary" />
