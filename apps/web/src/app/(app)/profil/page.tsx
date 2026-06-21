@@ -423,6 +423,7 @@ function StoryLink() {
 
 function SettingsSection() {
   const { signOut } = useAuth();
+  const router = useRouter();
 
   return (
     <div className="px-6">
@@ -435,7 +436,7 @@ function SettingsSection() {
         </CardHeader>
         <CardContent className="space-y-1">
           {[
-            { icon: User, label: "Edit Profil" },
+            { icon: User, label: "Edit Profil", action: () => router.push("/profil/edit") },
             { icon: BookOpen, label: "Kebijakan Privasi" },
             { icon: LogOut, label: "Keluar", danger: true, action: async () => { await signOut(); window.location.href = "/"; } },
           ].map((item, i) => {

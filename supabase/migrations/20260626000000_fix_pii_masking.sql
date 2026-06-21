@@ -2,6 +2,7 @@
 -- not the full phone number, causing the entire number to be replaced with "0*".
 -- Now uses quantifier {7,10} + substring(v, 1, 1) || repeat('*', len-1) for masking.
 -- Also fixes original_snippet to capture pre-mask content in violations.
+-- Fix FK: bisik_violations.message_id must be deferrable since trigger is BEFORE INSERT.
 
 CREATE OR REPLACE FUNCTION mask_pii_in_message(
   p_content TEXT,
@@ -115,3 +116,11 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- FK must be deferrable because trigger_mask_bisik_message runs BEFORE INSERT
+-- and inserts into bisik_violations referencing NEW.id which doesn't exist yet
+ALTER TABLE bisik_violations
+DROP CONSTRAINT IF EXISTS bisik_violations_message_id_fkey,
+ADD CONSTRAINT bisik_violations_message_id_fkey
+  FOREIGN KEY (message_id) REFERENCES bisik_messages(id)
+  DEFERRABLE INITIALLY DEFERRED;
