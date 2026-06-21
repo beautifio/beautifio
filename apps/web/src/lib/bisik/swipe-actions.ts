@@ -13,6 +13,7 @@ export interface BisikCard {
   created_at: string
   expires_at: string
   topic?: { name: string; emoji: string } | null
+  owner_name?: string
 }
 
 export async function enterBisikQueue(
@@ -51,7 +52,7 @@ export async function getDiscoverCards(
 
   let query = supabase
     .from("bisik_cards")
-    .select("*, topic:bisik_topics(name, emoji)")
+    .select("*, topic:bisik_topics(name, emoji), owner:users!user_id(bisik_anonymous_name, bisik_custom_name)")
     .eq("is_active", true)
     .gt("expires_at", new Date().toISOString())
     .neq("user_id", userId)
@@ -64,7 +65,10 @@ export async function getDiscoverCards(
   }
 
   const { data } = await query
-  return (data ?? []) as BisikCard[]
+  return ((data ?? []) as Array<BisikCard & { owner: { bisik_anonymous_name: string; bisik_custom_name: string | null } | null }>).map((card) => ({
+    ...card,
+    owner_name: card.owner?.bisik_custom_name || card.owner?.bisik_anonymous_name || "Anonymous",
+  })) as BisikCard[]
 }
 
 export async function swipeLeft(

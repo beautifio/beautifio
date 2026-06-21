@@ -612,7 +612,7 @@ export default function BisikHome() {
                       &ldquo;{card.content}&rdquo;
                     </p>
                     <div className="flex items-center justify-between text-xs text-text-secondary">
-                      <span>{bisikName}</span>
+                      <span>{card.owner_name || bisikName}</span>
                       <span>
                         {Math.floor((Date.now() - new Date(card.created_at).getTime()) / 60000) < 1
                           ? "Baru saja"

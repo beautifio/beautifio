@@ -28,6 +28,14 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
   const [showContext, setShowContext] = useState(true)
   const [contextCard, setContextCard] = useState<{ content: string; topic?: { name: string; emoji: string } | null } | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const markAsRead = useCallback(async () => {
+    if (!supabase || !chatId || !user) return
+    await supabase
+      .from("bisik_messages")
+      .update({ is_read: true })
+      .eq("chat_id", chatId)
+      .neq("sender_id", user.id)
+  }, [chatId, user])
 
   // Ban state
   const [banInfo, setBanInfo] = useState<{ isBanned: boolean; message: string; bannedUntil: string } | null>(null)
@@ -91,13 +99,16 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       })
       setBanCount(ban.ban_count)
     }
-    // Also get current violation count for sensor notifications
-    const { count } = await supabase
+    // Also get current violation count (matches server logic: COUNT DISTINCT dates)
+    const { data: violations } = await supabase
       .from("bisik_violations")
-      .select("*", { count: "exact", head: true })
+      .select("created_at")
       .eq("user_id", user.id)
       .gt("created_at", new Date(Date.now() - 86400000).toISOString())
-    setBanCount(count ?? 0)
+    const distinctDays = new Set(
+      (violations ?? []).map((v) => new Date(v.created_at).toDateString())
+    ).size
+    setBanCount(distinctDays)
   }
 
   useEffect(() => {
@@ -125,6 +136,11 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
             checkBan()
           }
           sentContentRef.current.delete(msg.id)
+        }
+
+        // Mark as read when receiving messages from the other user
+        if (msg.sender_id !== user?.id) {
+          markAsRead()
         }
       })
       .on("postgres_changes", {

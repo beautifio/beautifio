@@ -59,13 +59,13 @@ export async function getBisikParticipants(chatId: string): Promise<BisikPartici
 
   const { data: users } = await supabase
     .from("users")
-    .select("id, full_name")
+    .select("id, bisik_anonymous_name, bisik_custom_name")
     .in("id", [chat.initiator_id, chat.receiver_id])
   return (
     users?.map((u) => ({
       id: u.id,
       user_id: u.id,
-      nickname: u.full_name || "Anonymous",
+      nickname: u.bisik_custom_name || u.bisik_anonymous_name || "Anonymous",
     })) || []
   )
 }
