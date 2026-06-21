@@ -198,7 +198,7 @@ export default function InspirasiPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {filteredItems.map((item) => (
-              <InspirasiCard key={item.id} item={item} isSuggested={suggestedIds.has(item.id)} userId={user?.id} />
+              <InspirasiCard key={item.id} item={item} />
             ))}
           </div>
         )}
