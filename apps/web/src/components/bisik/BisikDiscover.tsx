@@ -144,31 +144,116 @@ export default function BisikDiscover({
         </p>
       </div>
 
-      <div className="relative flex-1 min-h-[360px]">
-        {cards.slice(0, 2).reverse().map((card, i) => (
-          <BisikCard
-            key={card.id}
-            card={{
-              id: card.id,
-              content: card.content,
-              topic: card.topic ?? { name: "Topik", emoji: "💬" },
-              created_at: card.created_at,
-              swipe_count: card.swipe_count,
-            }}
-            isTop={i === Math.min(cards.length, 2) - 1}
-            onSwipeLeft={handleLeft}
-            onSwipeRight={handleRight}
-          />
-        ))}
+      {/* Card stack */}
+      <div style={{
+        position: "relative",
+        width: "100%", maxWidth: 380,
+        height: 480,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        margin: "0 auto",
+      }}>
+        {cards.slice(0, 2).map((card, i) => {
+          if (i === 0) {
+            return (
+              <BisikCard
+                key={card.id}
+                card={{
+                  id: card.id,
+                  content: card.content,
+                  topic: card.topic ?? { name: "Topik", emoji: "💬" },
+                  created_at: card.created_at,
+                  owner_name: "",
+                }}
+                isTop={true}
+                onSwipeLeft={handleLeft}
+                onSwipeRight={handleRight}
+              />
+            )
+          }
+          return (
+            <div key={card.id} style={{
+              position: "absolute",
+              width: "100%", maxWidth: 380,
+              height: 480,
+              transform: "scale(0.94) translateY(10px)",
+              zIndex: 2,
+              opacity: 0.8,
+            }}>
+              <BisikCard
+                card={{
+                  id: card.id,
+                  content: card.content,
+                  topic: card.topic ?? { name: "Topik", emoji: "💬" },
+                  created_at: card.created_at,
+                  owner_name: "",
+                }}
+                isTop={false}
+                stackOffset={10}
+                stackScale={0.94}
+                onSwipeLeft={() => {}}
+                onSwipeRight={() => {}}
+              />
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Action buttons */}
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 32,
+        marginTop: 32,
+      }}>
+        <button
+          onClick={handleLeft}
+          style={{
+            width: 64, height: 64,
+            borderRadius: "50%",
+            background: "#FFFFFF",
+            border: "2px solid #E2E8F0",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", fontSize: 24,
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(239,68,68,0.3)"}
+          onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.1)"}
+        >
+          ✕
+        </button>
+        <button
+          onClick={handleRight}
+          style={{
+            width: 80, height: 80,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #084463, #0E7490)",
+            border: "none",
+            boxShadow: "0 8px 24px rgba(8,68,99,0.4)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", fontSize: 32,
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)"}
+          onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"}
+        >
+          ❤️
+        </button>
+      </div>
+      <div style={{
+        display: "flex", justifyContent: "center",
+        gap: 80, marginTop: 8,
+      }}>
+        <span style={{ fontSize: 11, color: "#647488", fontFamily: "Inter" }}>Lewati</span>
+        <span style={{ fontSize: 11, color: "#647488", fontFamily: "Inter" }}>Dengerin</span>
       </div>
 
       {error && (
         <p className="text-xs text-red-500 text-center mt-2">{error}</p>
       )}
-
-      <p className="text-xs text-text-secondary text-center mt-4">
-        ← Lewati &nbsp;&nbsp; Ngobrol →
-      </p>
     </div>
   )
 }

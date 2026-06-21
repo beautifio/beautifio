@@ -10,7 +10,8 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
 import { swipeLeft, swipeRight, getDiscoverCards } from "@/lib/bisik/swipe-actions"
-import type { BisikCard } from "@/lib/bisik/swipe-actions"
+import type { BisikCard as BisikCardType } from "@/lib/bisik/swipe-actions"
+import BisikCard from "@/components/bisik/BisikCard"
 
 const hashColor = (name: string): string => {
   const colors = ["#084463","#6BB9D4","#FFC64F","#22C55E","#084463","#FFC64F","#EF4444","#6BB9D4","#084463","#6BB9D4"]
@@ -62,7 +63,7 @@ export default function BisikHome() {
   const [maxCards, setMaxCards] = useState(5)
 
   // Swipe deck state
-  const [swipeCards, setSwipeCards] = useState<BisikCard[]>([])
+  const [swipeCards, setSwipeCards] = useState<BisikCardType[]>([])
   const [isMatching, setIsMatching] = useState(false)
   const [showLimitModal, setShowLimitModal] = useState(false)
   const [maxAllowed, setMaxAllowed] = useState(5)
@@ -279,20 +280,20 @@ export default function BisikHome() {
 
       const topicIds = (profile?.bisik_topic_ids as string[]) ?? []
       const cards = await getDiscoverCards(user.id, topicIds)
-      setSwipeCards(cards as BisikCard[])
+      setSwipeCards(cards as BisikCardType[])
     } catch (err) {
       console.error("Load swipe cards error:", err)
     }
     setLoading(false)
   }
 
-  const handleSwipeLeft = async (card: BisikCard) => {
+  const handleSwipeLeft = async (card: BisikCardType) => {
     if (!user) return
     await swipeLeft(user.id, card.id, card.user_id)
     setSwipeCards(prev => prev.filter(c => c.id !== card.id))
   }
 
-  const handleSwipeRight = async (card: BisikCard) => {
+  const handleSwipeRight = async (card: BisikCardType) => {
     if (!user) return
     setIsMatching(true)
     const result = await swipeRight(user.id, card)
@@ -619,65 +620,143 @@ export default function BisikHome() {
         {tab === "cards" && (
           <>
             {swipeCards.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-                <p className="text-3xl">😴</p>
-                <p className="text-sm font-medium text-text-primary">Semua kartu sudah kamu lihat</p>
-                <p className="text-xs text-text-secondary">
-                  Coba lagi nanti atau buat kartu curhatan sendiri
+              <div style={{
+                height: 480, display: "flex",
+                flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                textAlign: "center", padding: 24,
+              }}>
+                <div style={{ fontSize: 64, marginBottom: 16 }}>✨</div>
+                <h3 style={{
+                  fontFamily: "Poppins", fontSize: 20, fontWeight: 700,
+                  color: "#1E2938", marginBottom: 8,
+                }}>
+                  Semua kartu sudah kamu lihat
+                </h3>
+                <p style={{
+                  fontFamily: "Inter", fontSize: 14, color: "#647488",
+                  marginBottom: 24, lineHeight: 1.6,
+                }}>
+                  Belum ada kartu baru untuk sekarang.
+                  Coba lagi nanti atau buat kartumu sendiri!
                 </p>
                 <button
                   onClick={() => setView("create-card")}
-                  className="mt-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium cursor-pointer"
+                  style={{
+                    background: "#084463", color: "#FFFFFF",
+                    border: "none", borderRadius: 12,
+                    padding: "12px 24px",
+                    fontFamily: "Poppins", fontSize: 14, fontWeight: 600,
+                    cursor: "pointer",
+                  }}
                 >
-                  Buat Kartu Curhat
+                  💭 Buat Kartu Curhat
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-4">
-                <p className="text-xs text-text-secondary text-center">
-                  {swipeCards.length} kartu tersedia
-                </p>
-                {swipeCards.slice(0, 1).map((card) => (
-                  <div
-                    key={card.id}
-                    className="rounded-2xl p-5 flex flex-col min-h-[320px]"
-                    style={{ background: "#F8FAFC", border: "1.5px solid #E2E8F0" }}
-                  >
-                    <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full self-start mb-3">
-                      {card.topic?.emoji} {card.topic?.name}
-                    </span>
-                    <p className="text-sm text-text-primary leading-relaxed italic mb-4 flex-1">
-                      &ldquo;{card.content}&rdquo;
-                    </p>
-                    <div className="flex items-center justify-between text-xs text-text-secondary">
-                      <span>{card.owner_name || bisikName}</span>
-                      <span>
-                        {Math.floor((Date.now() - new Date(card.created_at).getTime()) / 60000) < 1
-                          ? "Baru saja"
-                          : `${Math.floor((Date.now() - new Date(card.created_at).getTime()) / 60000)} menit lalu`}
-                      </span>
-                    </div>
-                    <div className="flex justify-center gap-6 mt-5">
-                      <button
-                        onClick={() => handleSwipeLeft(card)}
-                        className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center cursor-pointer"
-                      >
-                        <X className="w-6 h-6 text-red-400" />
-                      </button>
-                      <button
-                        onClick={() => handleSwipeRight(card)}
-                        disabled={isMatching}
-                        className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center cursor-pointer disabled:opacity-40"
-                      >
-                        <Heart className="w-6 h-6 text-primary" />
-                      </button>
-                    </div>
-                    <p className="text-xs text-text-secondary text-center mt-4">
-                      ← Lewati &nbsp;&nbsp; Dengerin →
-                    </p>
+              <>
+                <div className="flex flex-col items-center" style={{ minHeight: 520 }}>
+                  {/* Deck container */}
+                  <div style={{
+                    position: "relative",
+                    width: "100%", maxWidth: 380,
+                    height: 480,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}>
+                    {/* Card stack: dari belakang ke depan */}
+                    {swipeCards.slice(0, 3).map((card, index) => {
+                      if (index === 0) {
+                        // Kartu paling depan (aktif untuk swipe)
+                        return (
+                          <BisikCard
+                            key={card.id}
+                            card={card}
+                            onSwipeLeft={() => handleSwipeLeft(card)}
+                            onSwipeRight={() => handleSwipeRight(card)}
+                            isTop={true}
+                          />
+                        )
+                      }
+                      const stackScale = 1 - index * 0.06
+                      const stackOffset = index * 10
+                      return (
+                        <div key={card.id} style={{
+                          position: "absolute",
+                          width: "100%", maxWidth: 380,
+                          height: 480,
+                          transform: `scale(${stackScale}) translateY(${stackOffset}px)`,
+                          zIndex: 3 - index,
+                          opacity: stackScale,
+                        }}>
+                          <BisikCard
+                            card={card}
+                            onSwipeLeft={() => {}}
+                            onSwipeRight={() => {}}
+                            isTop={false}
+                            stackOffset={stackOffset}
+                            stackScale={stackScale}
+                          />
+                        </div>
+                      )
+                    })}
                   </div>
-                ))}
-              </div>
+
+                  {/* Action buttons */}
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 32,
+                    marginTop: 32,
+                  }}>
+                    <button
+                      onClick={() => swipeCards[0] && handleSwipeLeft(swipeCards[0])}
+                      style={{
+                        width: 64, height: 64,
+                        borderRadius: "50%",
+                        background: "#FFFFFF",
+                        border: "2px solid #E2E8F0",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer", fontSize: 24,
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(239,68,68,0.3)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.1)"}
+                    >
+                      ✕
+                    </button>
+                    <button
+                      onClick={() => swipeCards[0] && handleSwipeRight(swipeCards[0])}
+                      disabled={isMatching}
+                      style={{
+                        width: 80, height: 80,
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, #084463, #0E7490)",
+                        border: "none",
+                        boxShadow: "0 8px 24px rgba(8,68,99,0.4)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer", fontSize: 32,
+                        transition: "all 0.2s ease",
+                        opacity: isMatching ? 0.4 : 1,
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"}
+                    >
+                      ❤️
+                    </button>
+                  </div>
+                  <div style={{
+                    display: "flex", justifyContent: "center",
+                    gap: 80, marginTop: 8,
+                  }}>
+                    <span style={{ fontSize: 11, color: "#647488", fontFamily: "Inter" }}>Lewati</span>
+                    <span style={{ fontSize: 11, color: "#647488", fontFamily: "Inter" }}>Dengerin</span>
+                  </div>
+                </div>
+              </>
             )}
           </>
         )}
