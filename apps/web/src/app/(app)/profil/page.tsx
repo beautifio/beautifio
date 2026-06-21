@@ -437,7 +437,7 @@ function SettingsSection() {
         <CardContent className="space-y-1">
           {[
             { icon: User, label: "Edit Profil", action: () => router.push("/profil/edit") },
-            { icon: BookOpen, label: "Kebijakan Privasi" },
+            { icon: BookOpen, label: "Kebijakan Privasi", action: () => router.push("/profil/kebijakan") },
             { icon: LogOut, label: "Keluar", danger: true, action: async () => { await signOut(); window.location.href = "/"; } },
           ].map((item, i) => {
             const Icon = item.icon;

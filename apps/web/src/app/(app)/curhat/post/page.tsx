@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -23,6 +23,22 @@ export default function PostPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [nickname, setNickname] = useState("");
+  const [unifiedName, setUnifiedName] = useState("");
+
+  // Fetch unified anonymous name from users table
+  useEffect(() => {
+    if (!user || !supabase) return
+    supabase
+      .from("users")
+      .select("bisik_custom_name, bisik_anonymous_name")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        const name = data?.bisik_custom_name || data?.bisik_anonymous_name || ""
+        setUnifiedName(name)
+        setNickname(name)
+      })
+  }, [user, supabase])
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -41,7 +57,7 @@ export default function PostPage() {
       .insert({
         user_id: user?.id,
         title: title.trim(),
-        nickname: postingMode === "nickname" ? nickname.trim() : "",
+        nickname: postingMode === "public" ? "" : postingMode === "nickname" ? nickname.trim() : unifiedName,
         content: fullContent,
         category: category,
         is_anonymous: postingMode !== "public",

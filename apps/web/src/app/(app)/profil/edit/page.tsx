@@ -50,6 +50,8 @@ export default function EditProfilePage() {
   // Avatar
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [isPro, setIsPro] = useState(false)
+  const [nameValidation, setNameValidation] = useState<{ valid: boolean; message?: string } | null>(null)
 
   // Fetch profile data
   useEffect(() => {
@@ -74,6 +76,11 @@ export default function EditProfilePage() {
       }
       setLoading(false)
     })()
+
+    // Check Pro status
+    supabase.from("user_subscriptions").select("id").eq("user_id", user.id).eq("status", "active").maybeSingle().then(({ data }) => {
+      setIsPro(!!data)
+    })
 
     // Fetch provinces
     supabase.from("indonesia_provinces").select("*").order("name").then(({ data }) => {
@@ -146,6 +153,30 @@ export default function EditProfilePage() {
     setSaving(true)
     setError(null)
     try {
+      // Validate anonymous name if changed
+      if (isPro && anonymousName !== (profile?.bisik_custom_name || "")) {
+        if (anonymousName.length > 0 && anonymousName.length < 4) {
+          throw new Error("Username anonymous minimal 4 karakter")
+        }
+        if (anonymousName.length > 20) {
+          throw new Error("Username anonymous maksimal 20 karakter")
+        }
+        if (anonymousName && !/^[a-z0-9]+$/.test(anonymousName)) {
+          throw new Error("Hanya huruf dan angka (tanpa spasi/simbol)")
+        }
+        if ((anonymousName.match(/\d/g) || []).length > 2) {
+          throw new Error("Maksimal 2 angka dalam username")
+        }
+        const { data: validation } = await supabase
+          .rpc("validate_bisik_custom_name", {
+            p_user_id: user.id,
+            p_custom_name: anonymousName,
+          })
+        if (!validation?.valid) {
+          throw new Error(validation?.message || "Username tidak tersedia")
+        }
+      }
+
       const updateData: any = {
         full_name: fullName,
         date_of_birth: dateOfBirth || null,
@@ -153,6 +184,9 @@ export default function EditProfilePage() {
         address,
         bio,
         avatar_url: avatarUrl,
+      }
+      if (isPro && anonymousName) {
+        updateData.bisik_custom_name = anonymousName.toLowerCase()
       }
       const { error: updateError } = await supabase
         .from("users")
@@ -257,15 +291,19 @@ export default function EditProfilePage() {
         <div>
           <label className="text-xs font-semibold text-text-primary mb-1.5 block">Username Anonymous</label>
           <div className="flex items-center gap-2">
-            <input
-              value={anonymousName}
-              onChange={(e) => setAnonymousName(e.target.value)}
-              placeholder="Nama anonim untuk Bisik"
-              maxLength={30}
-              className="flex-1 px-4 py-3 rounded-xl border border-border bg-bg text-sm text-text-primary placeholder:text-text-secondary/50 outline-none focus:border-primary transition-colors"
-            />
+              <input
+                  value={anonymousName}
+                  onChange={(e) => setAnonymousName(e.target.value)}
+                  placeholder="Nama anonim untuk Bisik"
+                  maxLength={20}
+                  readOnly={!isPro}
+                  className={`flex-1 px-4 py-3 rounded-xl border border-border text-sm placeholder:text-text-secondary/50 outline-none transition-colors ${isPro ? "bg-bg text-text-primary focus:border-primary" : "bg-muted/30 text-text-secondary cursor-not-allowed"}`} />
           </div>
-          <p className="text-[10px] text-text-secondary mt-1">Nama yang ditampilkan di fitur Bisik. Maks 30 karakter.</p>
+          <p className="text-[10px] text-text-secondary mt-1">
+            {isPro
+              ? "Nama yang ditampilkan di fitur Bisik. Huruf & angka saja, maks 2 angka."
+              : "Nama anonim Bisik di-generate otomatis. Upgrade ke Pro untuk mengganti."}
+          </p>
         </div>
 
         {/* Tanggal Lahir */}

@@ -6,7 +6,7 @@ CREATE TABLE tebak_question_bank (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   question_text text NOT NULL,
   options       jsonb NOT NULL,
-  category      text DEFAULT 'umum' CHECK (category IN ('umum', 'makanan', 'hobi', 'kepribadian', 'hiburan', 'gaya_hidup')),
+  category      text DEFAULT 'umum' CHECK (category IN ('umum', 'makanan', 'hobi', 'kepribadian', 'hiburan', 'gaya_hidup', 'pendidikan', 'percintaan')),
   is_active     boolean DEFAULT true,
   created_at    timestamptz DEFAULT now()
 );
@@ -119,8 +119,19 @@ ALTER PUBLICATION supabase_realtime ADD TABLE tebak_sessions;
 ALTER PUBLICATION supabase_realtime ADD TABLE tebak_questions;
 ALTER PUBLICATION supabase_realtime ADD TABLE tebak_answers;
 
--- SEED QUESTION BANK
-INSERT INTO tebak_question_bank (question_text, options, category) VALUES
+-- Fix constraint for existing table (CREATE TABLE IF NOT EXISTS won't alter existing)
+ALTER TABLE tebak_question_bank
+DROP CONSTRAINT IF EXISTS tebak_question_bank_category_check;
+
+ALTER TABLE tebak_question_bank
+ADD CONSTRAINT tebak_question_bank_category_check
+CHECK (category IN ('umum', 'makanan', 'hobi', 'kepribadian', 'hiburan', 'gaya_hidup', 'pendidikan', 'percintaan'));
+
+-- SEED QUESTION BANK (only if table is empty)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM tebak_question_bank LIMIT 1) THEN
+    INSERT INTO tebak_question_bank (question_text, options, category) VALUES
   ('Makanan favorit kamu adalah?', '["Bakso","Sate ayam","Mie goreng","Soto ayam"]', 'makanan'),
   ('Kalau weekend, kamu lebih suka?', '["Main di luar","Rebahan di rumah","Nongkrong kafe","Belanja"]', 'gaya_hidup'),
   ('Film yang paling sering kamu tonton ulang?', '["Action","Romantis","Komedi","Horror"]', 'hiburan'),
@@ -145,13 +156,16 @@ INSERT INTO tebak_question_bank (question_text, options, category) VALUES
   ('Game genre favorit?', '["MOBA","FPS","Puzzle","Petualangan"]', 'hobi'),
   ('Tipe pacar idaman?', '["Setia","Lucu","Mapan","Pengertian"]', 'percintaan'),
   ('Bahasa asing yang ingin dikuasai?', '["Inggris","Jepang","Korea","Mandarin"]', 'pendidikan');
+    END IF;
+  END;
+$$;
 
 -- RPC untuk increment score
 CREATE OR REPLACE FUNCTION increment_tebak_score(
-  session_id uuid, column text, amount int
+  session_id uuid, col_name text, amount int
 ) RETURNS void AS $$
 BEGIN
-  EXECUTE format('UPDATE tebak_sessions SET %I = %I + $1 WHERE id = $2', column, column)
+  EXECUTE format('UPDATE tebak_sessions SET %I = %I + $1 WHERE id = $2', col_name, col_name)
     USING amount, session_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

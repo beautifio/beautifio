@@ -50,6 +50,7 @@ interface Comment {
   content: string;
   created_at: string;
   parent_id: string | null;
+  nickname?: string;
 }
 
 export default function CurhatDetailPage({
@@ -154,7 +155,7 @@ export default function CurhatDetailPage({
     (async () => {
       const { data } = await supabase
         .from("curhat_comments")
-        .select("id, user_id, content, created_at, parent_id")
+        .select("id, user_id, content, created_at, parent_id, nickname")
         .eq("curhat_id", id)
         .eq("status", "visible")
         .order("created_at", { ascending: true });
@@ -195,7 +196,14 @@ export default function CurhatDetailPage({
     setCommentSubmitting(true);
     setCommentError("");
 
-    const insertPayload: Record<string, any> = { curhat_id: id, user_id: user.id, content: text };
+    const { data: userData } = await supabase
+      .from("users")
+      .select("bisik_custom_name, bisik_anonymous_name")
+      .eq("id", user.id)
+      .single()
+    const unifiedNickname = userData?.bisik_custom_name || userData?.bisik_anonymous_name || ""
+
+    const insertPayload: Record<string, any> = { curhat_id: id, user_id: user.id, content: text, nickname: unifiedNickname };
     if (replyToId) insertPayload.parent_id = replyToId;
 
     const { error } = await supabase
@@ -434,9 +442,9 @@ export default function CurhatDetailPage({
                       <div className="bg-white p-3 rounded-lg border border-gray-100">
                         <div className="flex items-center gap-2 mb-1">
                           <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-500">
-                            AN
+                            {(c.nickname || "AN").slice(0, 2).toUpperCase()}
                           </div>
-                          <span className="text-xs text-gray-400">ANON · {timeAgo(c.created_at)}</span>
+                          <span className="text-xs text-gray-400">{c.nickname || "ANON"} · {timeAgo(c.created_at)}</span>
                         </div>
                         <p className="text-sm text-gray-700">{c.content}</p>
                         {user?.id && (
@@ -481,9 +489,9 @@ export default function CurhatDetailPage({
                           <div className="bg-gray-50/50 p-3 rounded-lg border border-gray-100">
                             <div className="flex items-center gap-2 mb-1">
                               <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-500">
-                                AN
+                                {(child.nickname || "AN").slice(0, 2).toUpperCase()}
                               </div>
-                              <span className="text-xs text-gray-400">ANON · {timeAgo(child.created_at)}</span>
+                              <span className="text-xs text-gray-400">{child.nickname || "ANON"} · {timeAgo(child.created_at)}</span>
                             </div>
                             <p className="text-sm text-gray-700">{child.content}</p>
                           </div>
