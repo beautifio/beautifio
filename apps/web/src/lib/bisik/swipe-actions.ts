@@ -52,7 +52,7 @@ export async function getDiscoverCards(
 
   let query = supabase
     .from("bisik_cards")
-    .select("*, topic:bisik_topics(name, emoji), owner:users!user_id(bisik_anonymous_name, bisik_custom_name)")
+    .select("*, topic:bisik_topics(name, emoji)")
     .eq("is_active", true)
     .gt("expires_at", new Date().toISOString())
     .neq("user_id", userId)
@@ -68,10 +68,27 @@ export async function getDiscoverCards(
   }
 
   const { data } = await query
-  return ((data ?? []) as Array<BisikCard & { owner: { bisik_anonymous_name: string; bisik_custom_name: string | null } | null }>).map((card) => ({
-    ...card,
-    owner_name: card.owner?.bisik_custom_name || card.owner?.bisik_anonymous_name || "Anonymous",
-  })) as BisikCard[]
+  const cards = (data ?? []) as BisikCard[]
+
+  // Fetch owner names for all cards
+  if (cards.length > 0) {
+    const ownerIds = [...new Set(cards.map((c) => c.user_id))]
+    const { data: owners } = await supabase
+      .from("users")
+      .select("id, bisik_anonymous_name, bisik_custom_name")
+      .in("id", ownerIds)
+
+    const ownerMap = new Map(
+      (owners ?? []).map((o) => [o.id, o.bisik_custom_name || o.bisik_anonymous_name || "Anonymous"])
+    )
+
+    return cards.map((card) => ({
+      ...card,
+      owner_name: ownerMap.get(card.user_id) || "Anonymous",
+    })) as BisikCard[]
+  }
+
+  return cards
 }
 
 export async function swipeLeft(
