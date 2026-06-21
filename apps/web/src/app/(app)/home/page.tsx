@@ -4,6 +4,7 @@ import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useState, useMemo } from "react"
 import { useAuth } from "@/hooks/use-auth"
+import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet"
 import { supabase } from "@/lib/supabase/client"
 import { getDreamTemplate, getTemplateFromBenchmarkSlug } from "@beautifio/utils"
 import type { DreamJourney, JourneyProgress, DreamTemplate } from "@beautifio/types"
@@ -13,8 +14,7 @@ import { QuoteCard } from "./components/QuoteCard"
 import { GuestCTA } from "./components/GuestCTA"
 import { ArticlePick } from "./components/ArticlePick"
 import { BannerCarousel } from "./components/BannerCarousel"
-import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet"
-import { PusatBantuanSheet } from "@/features/bantuan/PusatBantuanSheet"
+
 import { AchievementNotif } from "@/features/familia/components/AchievementNotif"
 import { Ticket, ShoppingBag, Calendar, Briefcase, Shield } from "lucide-react"
 import { journeyUrl } from "@/lib/journey-queries"
@@ -43,7 +43,7 @@ export default function HomeScreen({
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null)
   const [trialInfo, setTrialInfo] = useState<{ started_at: string; expires_at: string } | null>(null)
   const [ruangAmanOpen, setRuangAmanOpen] = useState(false)
-  const [bantuanOpen, setBantuanOpen] = useState(false)
+
   const [growthZone, setGrowthZone] = useState<string | null>(null)
 
   const mimpiSlug = resolvedParams?.mimpi
@@ -208,7 +208,7 @@ export default function HomeScreen({
 
         {/* Butuh Bantuan? */}
         <button
-          onClick={() => setBantuanOpen(true)}
+          onClick={() => router.push("/care")}
           className="w-full flex items-center gap-3 p-4 rounded-2xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-colors text-left cursor-pointer"
         >
           <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
@@ -233,7 +233,6 @@ export default function HomeScreen({
       )}
 
       <RuangAmanSheet open={ruangAmanOpen} onClose={() => setRuangAmanOpen(false)} />
-      <PusatBantuanSheet open={bantuanOpen} onClose={() => setBantuanOpen(false)} />
     </div>
   )
 }
