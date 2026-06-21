@@ -12,7 +12,6 @@ import { JourneySnapshot } from "@/components/beranda/JourneySnapshot"
 import { QuoteCard } from "./components/QuoteCard"
 import { GuestCTA } from "./components/GuestCTA"
 import { ArticlePick } from "./components/ArticlePick"
-import { CurhatFeed } from "./components/CurhatFeed"
 import { BannerCarousel } from "./components/BannerCarousel"
 import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet"
 import { BantuanSheet } from "@/features/bantuan/BantuanSheet"
@@ -193,7 +192,6 @@ export default function HomeScreen({
         </div>
 
         <ArticlePick journey={journey} />
-        <CurhatFeed />
 
         {growthZone && (() => {
           const dimInfo = DIMENSION_LABELS[growthZone]
