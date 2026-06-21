@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { Search, Users, ChevronRight, Plus, Check } from "lucide-react";
+import { Search, Users, ChevronRight, Plus, Check, Send, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, Badge, Avatar, Button } from "@beautifio/ui";
 import { CIRCLE_CATEGORIES } from "@beautifio/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/lib/supabase/client";
 import type { Circle } from "@beautifio/types";
 
 export default function CircleListPage() {
@@ -18,6 +19,14 @@ export default function CircleListPage() {
   const [joining, setJoining] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formDesc, setFormDesc] = useState("");
+  const [formCategory, setFormCategory] = useState<string>(CIRCLE_CATEGORIES[0]?.value || "");
+  const [formCapacity, setFormCapacity] = useState(20);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const loadCircles = useCallback(async () => {
     if (!user) { setLoading(false); return; }
@@ -75,6 +84,34 @@ export default function CircleListPage() {
     }
     return items;
   }, [exploreCircles, search, selectedCategory]);
+
+  const handleSubmitForum = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !supabase || !formName.trim()) return
+    setSubmitting(true)
+    setSubmitError("")
+    try {
+      const { error } = await supabase
+        .from("circle_submissions")
+        .insert({
+          user_id: user.id,
+          name: formName.trim(),
+          description: formDesc.trim(),
+          goal_category: formCategory,
+          capacity: formCapacity,
+        })
+      if (error) throw error
+      setSubmitSuccess(true)
+      setShowForm(false)
+      setFormName("")
+      setFormDesc("")
+      setTimeout(() => setSubmitSuccess(false), 5000)
+    } catch (e: any) {
+      setSubmitError(e.message || "Gagal mengajukan forum")
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const getCategoryMeta = (cat: string) =>
     CIRCLE_CATEGORIES.find((c) => c.value === cat);
@@ -253,6 +290,89 @@ export default function CircleListPage() {
             </div>
           )}
         </section>
+
+        {/* Ajukan Forum */}
+        <div className="mt-8 pt-6 border-t border-border">
+          {submitSuccess ? (
+            <div className="text-center py-6">
+              <Check size={24} className="mx-auto text-green-500 mb-2" />
+              <p className="text-sm font-semibold text-text-primary">Forum diajukan!</p>
+              <p className="text-xs text-text-secondary mt-1">Tunggu persetujuan admin ya</p>
+            </div>
+          ) : showForm ? (
+            <form onSubmit={handleSubmitForum} className="space-y-3">
+              <h3 className="text-sm font-bold text-text-primary">Ajukan Forum Baru</h3>
+
+              <input
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Nama forum"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary transition-colors"
+              />
+
+              <textarea
+                value={formDesc}
+                onChange={(e) => setFormDesc(e.target.value)}
+                placeholder="Deskripsi forum (opsional)"
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary transition-colors resize-none"
+              />
+
+              <div className="flex gap-3">
+                <select
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-xl border border-border bg-bg text-sm text-text-primary outline-none focus:border-primary transition-colors"
+                >
+                  {CIRCLE_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>{cat.emoji} {cat.label}</option>
+                  ))}
+                </select>
+
+                <div className="w-28">
+                  <input
+                    type="number"
+                    value={formCapacity}
+                    onChange={(e) => setFormCapacity(Math.max(5, Math.min(50, Number(e.target.value))))}
+                    min={5}
+                    max={50}
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-bg text-sm text-text-primary outline-none focus:border-primary transition-colors"
+                  />
+                  <p className="text-[9px] text-text-secondary mt-0.5 text-center">5-50 anggota</p>
+                </div>
+              </div>
+
+              {submitError && <p className="text-xs text-red-500">{submitError}</p>}
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="flex-1 h-10 rounded-xl border border-border text-xs font-medium text-text-secondary hover:bg-surface transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="flex-1"
+                  loading={submitting}
+                  disabled={!formName.trim()}
+                >
+                  <Send size={14} className="mr-1" /> Ajukan
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <button
+              onClick={() => setShowForm(true)}
+              className="w-full py-3 rounded-xl border-2 border-dashed border-border text-sm font-medium text-text-secondary hover:border-primary hover:text-primary transition-colors cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Plus size={16} /> Ajukan Forum Baru
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
