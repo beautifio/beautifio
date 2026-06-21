@@ -678,7 +678,7 @@ export default function BisikHome() {
         {chats.map((chat) => (
           <button
             key={chat.id}
-            onClick={() => router.push(`/bisik/chat/${chat.id}`)}
+            onClick={() => { window.history.replaceState(null, '', '/bisik/chats'); router.push(`/bisik/chat/${chat.id}`) }}
             className="w-full flex items-start gap-3 p-4 rounded-xl bg-surface border border-border hover:border-primary/30 transition-all text-left cursor-pointer"
           >
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -793,6 +793,7 @@ export default function BisikHome() {
               <button
                 onClick={() => {
                   setMatchPopup(null)
+                  window.history.replaceState(null, '', '/bisik/chats')
                   router.push(`/bisik/chat/${matchPopup.chatId}`)
                 }}
                 className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-medium cursor-pointer"
