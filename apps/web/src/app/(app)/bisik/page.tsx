@@ -268,7 +268,7 @@ export default function BisikHome() {
   // ---- SWIPE ----
 
   const loadSwipeCards = async () => {
-    if (!user) return
+    if (!user || !supabase) return
     setLoading(true)
     try {
       const { data: profile } = await supabase!
@@ -279,7 +279,7 @@ export default function BisikHome() {
 
       const topicIds = (profile?.bisik_topic_ids as string[]) ?? []
       const cards = await getDiscoverCards(user.id, topicIds)
-      setSwipeCards(cards as unknown as BisikCard[])
+      setSwipeCards(cards as BisikCard[])
     } catch (err) {
       console.error("Load swipe cards error:", err)
     }

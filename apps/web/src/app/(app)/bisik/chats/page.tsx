@@ -56,7 +56,7 @@ function relativeTime(dateStr: string): string {
   if (hours < 24) return `${hours}j`
   const days = Math.floor(hours / 24)
   if (days === 1) return "Kemarin"
-  return `${days}h`
+  return `${days}hr`
 }
 
 export default function ActiveChats() {
@@ -71,6 +71,7 @@ export default function ActiveChats() {
     topicEmoji: string | null
   }>>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (authLoading || !user || !supabase) return
@@ -78,15 +79,28 @@ export default function ActiveChats() {
 
     const channel = supabase
       .channel("bisik-chats-live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "bisik_messages" }, () => loadData())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "bisik_messages" }, () => refreshData())
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [user, authLoading])
 
+  const refreshData = async () => {
+    if (!supabase || !user) return
+    setRefreshing(true)
+    await loadDataInner()
+    setRefreshing(false)
+  }
+
   const loadData = async () => {
     if (!supabase || !user) return
     setLoading(true)
+    await loadDataInner()
+    setLoading(false)
+  }
+
+  const loadDataInner = async () => {
+    if (!supabase || !user) return
 
     // 1. Fetch chats (simple, no joins)
     const { data: chats } = await supabase
@@ -98,7 +112,6 @@ export default function ActiveChats() {
 
     if (!chats || chats.length === 0) {
       setRows([])
-      setLoading(false)
       return
     }
 
@@ -168,7 +181,6 @@ export default function ActiveChats() {
       }
     }))
 
-    setLoading(false)
   }
 
   const markAsRead = async (chatId: string) => {

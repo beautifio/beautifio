@@ -35,7 +35,10 @@ export function BisikMatchNotifier() {
       .in("status", ["active", "pending"])
       .is("expires_at", null)
       .then(({ count }) => {
-        if (count && count > 0) setBisikMatchCount(count)
+        if (count && count > 0) {
+          const current = useAuthStore.getState().bisikMatchCount
+          if (count > current) setBisikMatchCount(count)
+        }
       })
 
     const channel = supabase
