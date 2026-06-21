@@ -150,6 +150,7 @@ export default function NotifikasiPage() {
               {/* Master toggle */}
               <div className="flex items-center gap-3 px-4 py-3.5 bg-surface/50">
                 <span className="text-lg">{group.icon}</span>
+                <span className="flex-1 text-sm font-bold text-text-primary">{group.label}</span>
                 <button
                   onClick={() => toggleMaster(group.key)}
                   className={`relative w-12 h-7 rounded-full transition-colors shrink-0 cursor-pointer ${
@@ -162,7 +163,6 @@ export default function NotifikasiPage() {
                     }`}
                   />
                 </button>
-                <span className="flex-1 text-sm font-bold text-text-primary">{group.label}</span>
                 <button
                   onClick={() => setExpanded((prev) => ({ ...prev, [group.key]: !prev[group.key] }))}
                   className="p-1 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
@@ -177,24 +177,24 @@ export default function NotifikasiPage() {
                   {group.items.map((item) => {
                     const enabled = prefs[item.key] !== false
                     return (
-                      <div key={item.key} className="flex items-center gap-3 px-4 py-3 bg-bg">
-                        <button
-                          onClick={() => toggleItem(item.key)}
-                          disabled={masterState === "off" || saving === item.key}
-                          className={`relative w-10 h-6 rounded-full transition-colors shrink-0 cursor-pointer ${
-                            enabled && masterState !== "off" ? "bg-primary" : "bg-border"
-                          } ${masterState === "off" ? "opacity-30" : ""}`}
-                        >
-                          <div
-                            className={`absolute top-0.5 w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform ${
-                              enabled && masterState !== "off" ? "translate-x-[19px]" : "translate-x-0.5"
-                            }`}
-                          />
-                        </button>
-                        <span className={`text-xs flex-1 ${masterState === "off" ? "text-text-secondary/50" : "text-text-secondary"}`}>
-                          {item.label}
-                        </span>
-                      </div>
+                  <div key={item.key} className="flex items-center gap-3 px-4 py-3 bg-bg">
+                    <span className={`text-xs flex-1 ${masterState === "off" ? "text-text-secondary/50" : "text-text-secondary"}`}>
+                      {item.label}
+                    </span>
+                    <button
+                      onClick={() => toggleItem(item.key)}
+                      disabled={masterState === "off" || saving === item.key}
+                      className={`relative w-10 h-6 rounded-full transition-colors shrink-0 cursor-pointer ${
+                        enabled && masterState !== "off" ? "bg-primary" : "bg-border"
+                      } ${masterState === "off" ? "opacity-30" : ""}`}
+                    >
+                      <div
+                        className={`absolute top-0.5 w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform ${
+                          enabled && masterState !== "off" ? "translate-x-[19px]" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
                     )
                   })}
                 </div>
