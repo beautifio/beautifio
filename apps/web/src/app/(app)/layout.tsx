@@ -12,7 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const hideTopBar =
     pathname === "/" ||
     pathname.startsWith("/admin") ||
-    pathname === "/bisik" || pathname.startsWith("/bisik/") ||
+    pathname.startsWith("/tebak/") ||
     pathname.startsWith("/tebak/") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/register")

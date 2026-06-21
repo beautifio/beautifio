@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { MessageCircle, MessageCircleHeart } from "lucide-react"
+import { MessageCircleHeart } from "lucide-react"
 import { NAV_TABS } from "@/lib/navigation"
 import { useAuthStore } from "@/stores/auth-store"
 
@@ -12,8 +12,6 @@ export function BottomNav() {
   const pathname = usePathname()
   const bisikMatchCount = useAuthStore((s) => s.bisikMatchCount)
   const clearBisikMatch = useAuthStore((s) => s.clearBisikMatch)
-
-  const hideFAB = ["/bisik", "/tebak", "/admin", "/connect"].some((p) => pathname.startsWith(p))
 
   const activeTab = (() => {
     if (pathname.startsWith("/bisik")) return "bisik"
@@ -43,22 +41,6 @@ export function BottomNav() {
           badge={bisikMatchCount}
           onBadgeClick={clearBisikMatch}
         />
-
-        {/* FAB tengah */}
-        <div className="flex flex-col items-center -mt-4">
-          {!hideFAB ? (
-            <Link
-              href="/connect"
-              className="w-12 h-12 rounded-full flex items-center justify-center shadow-sm transition-transform hover:scale-105 active:scale-95"
-              style={{ background: "#D4537E" }}
-              aria-label="Connect"
-            >
-              <MessageCircle size={22} className="text-white" />
-            </Link>
-          ) : (
-            <div className="w-12 h-12" />
-          )}
-        </div>
 
         {/* Inspirasi */}
         <NavItem tab={NAV_TABS[2]} active={activeTab === "inspirasi"} />

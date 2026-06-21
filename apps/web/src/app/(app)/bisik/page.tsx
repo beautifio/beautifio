@@ -412,6 +412,27 @@ export default function BisikHome() {
           <span className="text-sm font-medium" style={{ color: "#6BB9D4" }}>Lihat →</span>
         </div>
       )}
+
+      {/* Permainan */}
+      <div className="pt-4 border-t border-border">
+        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Permainan</p>
+        <button
+          onClick={() => router.push("/tebak")}
+          className="w-full p-5 rounded-2xl bg-surface border border-border hover:border-primary/30 transition-all text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">
+              🎭
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Tebak Aku</p>
+              <p className="text-xs text-text-secondary">
+                Main tebak kepribadian lawan
+              </p>
+            </div>
+          </div>
+        </button>
+      </div>
     </div>
   )
 
