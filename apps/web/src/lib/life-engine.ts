@@ -1,12 +1,12 @@
 import { supabase } from "@/lib/supabase/client";
 
 export const DIMENSION_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  character: { label: "Character", emoji: "🧭", color: "#FF5E5B" },
-  dream_skill: { label: "Skill", emoji: "⚡", color: "#FFB627" },
-  knowledge: { label: "Knowledge", emoji: "📚", color: "#6C3FA0" },
-  physical: { label: "Health", emoji: "💪", color: "#16A34A" },
+  character: { label: "Character", emoji: "🧭", color: "#084463" },
+  dream_skill: { label: "Skill", emoji: "⚡", color: "#FFC64F" },
+  knowledge: { label: "Knowledge", emoji: "📚", color: "#6BB9D4" },
+  physical: { label: "Health", emoji: "💪", color: "#22C55E" },
   social: { label: "Relationship", emoji: "🤝", color: "#0EA5E9" },
-  spiritual: { label: "Spiritual", emoji: "✨", color: "#EC4899" },
+  spiritual: { label: "Spiritual", emoji: "✨", color: "#6BB9D4" },
 };
 
 export const ALL_DIMENSIONS = Object.keys(DIMENSION_LABELS);

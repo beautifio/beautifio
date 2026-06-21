@@ -86,24 +86,24 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
+      <h1 className="text-lg font-bold text-text-primary">Dashboard</h1>
 
       {/* Stats */}
       <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Ringkasan</p>
+        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Ringkasan</p>
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-xl bg-gray-100 animate-pulse" />
+              <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {stats.map((s) => (
-              <div key={s.label} className="p-4 rounded-xl bg-white border border-gray-200">
+            {stats.map((s, i) => (
+              <div key={s.label} className="p-4 rounded-xl bg-surface border border-border shadow-sm" style={{ borderTop: `3px solid ${i % 2 === 0 ? '#084463' : '#6BB9D4'}` }}>
                 <p className="text-xl">{s.icon}</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{s.value}</p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">{s.label}</p>
+                <p className="text-lg font-bold text-text-primary mt-1">{s.value}</p>
+                <p className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
@@ -113,17 +113,17 @@ export default function AdminDashboard() {
       {/* Navigation Grid */}
       {grouped.map(({ group, items }) => (
         <div key={group}>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{group}</p>
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">{group}</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {items.map((card) => (
               <button
                 key={card.href}
                 onClick={() => router.push(card.href)}
-                className="p-4 rounded-xl bg-white border border-gray-200 text-left transition-all hover:border-amber-200 hover:shadow-sm cursor-pointer"
+                className="p-4 rounded-xl bg-surface border border-border text-left transition-all hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer"
               >
                 <p className="text-lg">{card.emoji}</p>
-                <p className="text-sm font-semibold text-gray-900 mt-1.5">{card.title}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">{card.desc}</p>
+                <p className="text-sm font-semibold text-text-primary mt-1.5">{card.title}</p>
+                <p className="text-[11px] text-text-secondary mt-0.5 leading-tight">{card.desc}</p>
               </button>
             ))}
           </div>

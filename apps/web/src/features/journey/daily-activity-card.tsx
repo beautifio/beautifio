@@ -69,7 +69,7 @@ export function DailyActivityCard({
         activity.is_completed
           ? "border-success/30 bg-success/5"
           : isExpanded
-            ? "border-[#FF5E5B]/40 bg-accent/5"
+            ? "border-primary/40 bg-accent/5"
             : "border-border hover:border-primary/30 hover:bg-muted/30"
       }`}
     >
@@ -184,7 +184,7 @@ export function DailyActivityCard({
 
               {detail.warnings && (
                 <div className="p-2.5 rounded-lg" style={{ backgroundColor: "rgba(255, 94, 91, 0.08)" }}>
-                  <p className="text-[12px] text-[#FF5E5B] leading-relaxed">
+                  <p className="text-[12px] text-primary leading-relaxed">
                     ⚠ Perhatikan: {detail.warnings}
                   </p>
                 </div>

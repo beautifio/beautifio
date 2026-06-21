@@ -41,7 +41,7 @@ function getInitial(name: string): string {
 }
 
 function hashColor(name: string): string {
-  const colors = ["#084463","#6BB9D4","#FFC64F","#22C55E","#8B5CF6","#F59E0B","#EF4444","#06B6D4","#D4537E","#FF6B35"]
+  const colors = ["#084463","#6BB9D4","#FFC64F","#22C55E","#084463","#FFC64F","#EF4444","#6BB9D4","#084463","#6BB9D4"]
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
   return colors[Math.abs(hash) % colors.length]

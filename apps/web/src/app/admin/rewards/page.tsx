@@ -7,7 +7,7 @@ import type { FamiliaAchievementReward, AchievementTrigger, RewardType } from "@
 
 const TRIGGER_LABELS: Record<string, string> = { discovery_complete: "Discovery Complete", roadmap_milestones: "Roadmap Milestones", circle_days: "Circle Days", mentor_program: "Mentor Program", journal_entries: "Journal Entries", story_posted: "Story Posted" };
 const REWARD_TYPE_LABELS: Record<string, string> = { voucher: "Voucher", discount: "Discount", special_benefit: "Special Benefit" };
-const COLORS = ["from-emerald-500 to-teal-500", "from-amber-500 to-orange-500", "from-blue-500 to-cyan-500", "from-purple-500 to-pink-500", "from-rose-500 to-red-500"];
+const COLORS = ["from-primary to-secondary", "from-secondary to-accent", "from-accent to-primary", "from-primary to-accent", "from-secondary to-primary"];
 
 export default function RewardsPage() {
   const [rewards, setRewards] = useState<FamiliaAchievementReward[]>([]);

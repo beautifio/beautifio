@@ -33,7 +33,9 @@ function ProfileHero({ journey }: { journey: DreamJourney | null }) {
       <div className="max-w-content mx-auto">
         <div className="relative pt-8 pb-6 px-6">
           <div className="flex flex-col items-center">
-            <Avatar initials={initials} size="xl" />
+            <div style={{ border: '3px solid #6BB9D4' }} className="rounded-full">
+              <Avatar initials={initials} size="xl" />
+            </div>
             <h1 className="text-xl font-bold text-text-primary mt-4">{displayName}</h1>
           </div>
         </div>
@@ -165,8 +167,8 @@ function RadarChart({ data }: { data: Record<string, number> }) {
             return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
           })
           .join(" ")}
-        fill="rgba(255, 94, 91, 0.15)"
-        stroke="#FF5E5B"
+        fill="rgba(8, 68, 99, 0.15)"
+        stroke="#084463"
         strokeWidth={2}
       />
 
@@ -256,16 +258,16 @@ function LifeEngineWidget({ userId }: { userId: string }) {
 
   return (
     <div className="px-6">
-      <Card padding="lg" style={hasPoints ? { background: "linear-gradient(135deg, #FFF7F3 0%, #FFFFFF 100%)" } : undefined}>
+      <Card padding="lg">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={18} style={{ color: "#FF5E5B" }} />
+              <Sparkles size={18} className="text-primary" />
               <CardTitle>Life Engine</CardTitle>
             </div>
             {data && (
-              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: "#FFF0EF" }}>
-                <span className="text-xs font-bold" style={{ color: "#FF5E5B" }}>Level {data.level}</span>
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted">
+                <span className="text-xs font-bold text-primary">Level {data.level}</span>
               </div>
             )}
           </div>
@@ -273,7 +275,7 @@ function LifeEngineWidget({ userId }: { userId: string }) {
         <CardContent>
           {!hasPoints ? (
             <div className="text-center py-6">
-              <Sparkles size={32} className="mx-auto mb-3" style={{ color: "#FFB627" }} />
+              <Sparkles size={32} className="mx-auto mb-3 text-accent" />
               <p className="text-sm font-semibold text-text-primary">
                 Life Engine-mu masih kosong
               </p>
@@ -309,20 +311,20 @@ function LifeEngineWidget({ userId }: { userId: string }) {
               </div>
 
               {growthInfo ? (
-                <div className="mt-4 p-3 rounded-xl" style={{ background: "#FFF0EF", border: "1px solid #FFE4E2" }}>
-                  <p className="text-xs font-semibold" style={{ color: "#FF5E5B" }}>
+                <div className="mt-4 p-3 rounded-xl bg-muted border border-border">
+                  <p className="text-xs font-semibold text-primary">
                     🎯 Growth Zone: {growthInfo.label}
                   </p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "#D94A47" }}>
+                  <p className="text-[11px] mt-0.5 text-destructive">
                     Capital ini paling butuh perhatian sekarang.
                   </p>
                 </div>
               ) : (
-                <div className="mt-4 p-3 rounded-xl" style={{ background: "#E8F5E9", border: "1px solid #C8E6C9" }}>
-                  <p className="text-xs font-semibold" style={{ color: "#2E7D32" }}>
+                <div className="mt-4 p-3 rounded-xl bg-success/10 border border-success/20">
+                  <p className="text-xs font-semibold text-success">
                     ✨ Semua dimensi berkembang seimbang!
                   </p>
-                  <p className="text-[11px] mt-0.5" style={{ color: "#388E3C" }}>
+                  <p className="text-[11px] mt-0.5 text-success">
                     Pertahankan konsistensimu.
                   </p>
                 </div>
@@ -549,9 +551,9 @@ function ReadingStats({ user }: { user: any }) {
 
   return (
     <div className="px-6">
-      <div className="flex items-center gap-2 px-4 py-3 rounded-xl" style={{ backgroundColor: "#FFF0EF" }}>
-        <BookMarked size={14} style={{ color: "#D94040" }} />
-        <span className="text-xs" style={{ color: "#D94040" }}>
+      <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-muted">
+        <BookMarked size={14} className="text-destructive" />
+        <span className="text-xs text-destructive">
           {stats.total_read} artikel dibaca · {stats.total_minutes} menit total waktu membaca
         </span>
       </div>
@@ -655,12 +657,12 @@ export default function ProfileScreen() {
         <ProfileHero journey={journey} />
         {isAnonymous && (
           <div className="px-6">
-            <Card padding="lg" className="border-[#FFB627] bg-[#FFF7E6]">
+            <Card padding="lg" className="border-accent bg-accent/5">
               <CardContent>
-                <p className="text-sm font-semibold text-[#92400E] mb-1">
+                <p className="text-sm font-semibold text-primary mb-1">
                   🕐 Akun Tamu
                 </p>
-                <p className="text-xs text-[#92400E]/70 mb-3">
+                <p className="text-xs text-text-secondary mb-3">
                   Data tersimpan sementara di browser ini.
                   Daftar untuk menyimpan selamanya dan akses dari mana saja.
                 </p>

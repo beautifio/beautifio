@@ -25,7 +25,7 @@ const circleNames: Record<string, { name: string; tag: string; color: string; me
   "3": { name: "Future Leaders", tag: "Kepemimpinan", color: "from-accent to-primary", members: 10 },
   "4": { name: "Green Warriors", tag: "Lingkungan", color: "from-green-600 to-emerald-400", members: 5 },
   "5": { name: "Data Science ID", tag: "Teknologi", color: "from-blue-600 to-cyan-400", members: 9 },
-  "6": { name: "Content Creator Hub", tag: "Kreatif", color: "from-pink-500 to-orange-400", members: 7 },
+  "6": { name: "Content Creator Hub", tag: "Kreatif", color: "from-secondary to-accent", members: 7 },
 };
 
 function computeResult(answers: DiscoveryAnswer[]) {

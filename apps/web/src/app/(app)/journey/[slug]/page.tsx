@@ -530,7 +530,7 @@ export default function JourneyDetailPage() {
               <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${progressPercent}%`, backgroundColor: "#FF5E5B" }}
+                  style={{ width: `${progressPercent}%`, backgroundColor: "#084463" }}
                 />
               </div>
               <div className="flex justify-between mt-1">
@@ -553,16 +553,16 @@ export default function JourneyDetailPage() {
 
         {/* Trial banner for anonymous users */}
         {isAnonymous && trialInfo && (
-          <div className="mb-4 px-4 py-3 rounded-2xl bg-[#FFF7E6] border border-[#FFB627]">
+          <div className="mb-4 px-4 py-3 rounded-2xl bg-accent/5 border border-accent">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#92400E]">
+              <p className="text-sm font-semibold text-primary">
                 🕐 Mode Tamu
               </p>
-              <p className="text-xs text-[#92400E]">
+              <p className="text-xs text-text-secondary">
                 Sisa {Math.max(0, Math.ceil((new Date(trialInfo.expires_at).getTime() - Date.now()) / 86400000))} hari
               </p>
             </div>
-            <p className="text-[11px] text-[#92400E]/70 mt-1">
+            <p className="text-[11px] text-text-secondary mt-1">
               Daftar untuk simpan progress selamanya →
             </p>
           </div>
@@ -689,11 +689,11 @@ export default function JourneyDetailPage() {
 
         {/* Current Focus */}
         {currentBigWin && (
-          <Card className="p-4 mb-6 border" style={{ borderColor: "#FFF0EF" }}>
+          <Card className="p-4 mb-6 border border-border">
             <div className="flex items-start gap-3">
-              <Target size={20} className="text-[#FF5E5B] mt-0.5 flex-shrink-0" />
+              <Target size={20} className="text-primary mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-[#FF5E5B] font-semibold uppercase tracking-wide">Big Win Saat Ini</p>
+                <p className="text-xs text-primary font-semibold uppercase tracking-wide">Big Win Saat Ini</p>
                 <p className="text-base font-bold text-text-primary mt-0.5">{currentBigWin.title}</p>
                 {(() => {
                   const sw = currentBigWin.small_wins || [];
@@ -705,7 +705,7 @@ export default function JourneyDetailPage() {
                       <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${pct}%`, backgroundColor: "#FF5E5B" }}
+                          style={{ width: `${pct}%`, backgroundColor: "#084463" }}
                         />
                       </div>
                       <p className="text-[11px] text-text-secondary mt-1">
@@ -781,7 +781,7 @@ export default function JourneyDetailPage() {
               </p>
 
               {(progress?.streak ?? 0) >= 2 && (
-                <p className="text-sm font-semibold mb-3" style={{ color: "#FFB627" }}>
+                <p className="text-sm font-semibold mb-3 text-accent">
                   🔥 {progress?.streak} hari berturut-turut
                 </p>
               )}
@@ -1015,7 +1015,7 @@ export default function JourneyDetailPage() {
               {recommendedArticles.map((art: any) => (
                 <Card key={art.slug} padding="sm" className="hover:border-primary/30 transition-colors cursor-pointer" onClick={() => router.push(`/inspirasi/${art.slug}`)}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center flex-shrink-0 text-lg">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center flex-shrink-0 text-lg">
                       {art.cover_emoji || "📄"}
                     </div>
                     <div className="flex-1 min-w-0">

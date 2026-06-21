@@ -418,7 +418,7 @@ export default function JourneyPage() {
                 onClick={() => setActiveFilter(chip.value)}
                 className={`shrink-0 px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                   activeFilter === chip.value
-                    ? "bg-purple-50 border border-purple-400 text-purple-700"
+                    ? "bg-primary/10 border border-primary/30 text-primary"
                     : "bg-muted text-text-secondary hover:text-text-primary"
                 }`}
               >

@@ -30,7 +30,7 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
         <div className="text-center px-5">
           <BookOpen size={32} className="mx-auto text-gray-300 mb-3" />
           <p className="text-sm font-semibold text-gray-700">Inspirasi tidak ditemukan</p>
-          <Link href="/inspiration" className="text-xs text-purple-600 font-medium hover:underline mt-2 inline-block">
+          <Link href="/inspiration" className="text-xs text-primary font-medium hover:underline mt-2 inline-block">
             Kembali ke Inspirasi
           </Link>
         </div>
@@ -75,7 +75,7 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
       {/* Author & Meta */}
       <div className="bg-white border-b border-gray-200 px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-purple-200 flex items-center justify-center text-sm font-semibold text-purple-700">
+          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
             {item.author.charAt(0)}
           </div>
           <div>
@@ -89,7 +89,7 @@ export default function InspirationDetailPage({ params }: { params: Promise<{ sl
       {item.tags.length > 0 && (
         <div className="px-5 py-3 flex flex-wrap gap-1.5 border-b border-gray-200 bg-white">
           {item.tags.map((tag, i) => (
-            <span key={i} className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-medium">
+            <span key={i} className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
               {tag}
             </span>
           ))}

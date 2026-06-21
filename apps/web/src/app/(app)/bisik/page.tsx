@@ -13,7 +13,7 @@ import { swipeLeft, swipeRight, getDiscoverCards } from "@/lib/bisik/swipe-actio
 import type { BisikCard } from "@/lib/bisik/swipe-actions"
 
 const hashColor = (name: string): string => {
-  const colors = ["#084463","#6BB9D4","#FFC64F","#22C55E","#8B5CF6","#F59E0B","#EF4444","#06B6D4","#D4537E","#FF6B35"]
+  const colors = ["#084463","#6BB9D4","#FFC64F","#22C55E","#084463","#FFC64F","#EF4444","#6BB9D4","#084463","#6BB9D4"]
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
   return colors[Math.abs(hash) % colors.length]
@@ -366,18 +366,20 @@ export default function BisikHome() {
 
       <button
         onClick={() => setView("create-card")}
-        className="w-full p-5 rounded-2xl bg-surface border border-border hover:border-primary/30 transition-all text-left cursor-pointer"
+        className="w-full p-5 rounded-2xl bg-surface border border-border hover:shadow-card-hover hover:-translate-y-0.5 transition-all text-left cursor-pointer"
+        style={{ borderLeft: '4px solid #084463' }}
       >
-        <div className="flex items-center gap-3 mb-2">
-          <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">
+        <div className="flex items-center gap-3">
+          <span className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl">
             💭
           </span>
-          <div>
-            <p className="text-sm font-semibold text-text-primary">Buat Kartu Curhat</p>
-            <p className="text-xs text-text-secondary">
+          <div className="flex-1">
+            <p className="text-sm font-bold text-text-primary">Buat Kartu Curhat</p>
+            <p className="text-xs text-text-secondary mt-0.5">
               Ceritakan yang kamu rasakan, tunggu sampai ada yang mau dengerin
             </p>
           </div>
+          <ChevronRight size={20} className="text-text-secondary/40" />
         </div>
       </button>
 
@@ -386,18 +388,20 @@ export default function BisikHome() {
           setView("find-chat")
           await loadSwipeCards()
         }}
-        className="w-full p-5 rounded-2xl bg-surface border border-border hover:border-primary/30 transition-all text-left cursor-pointer"
+        className="w-full p-5 rounded-2xl bg-surface border border-border hover:shadow-card-hover hover:-translate-y-0.5 transition-all text-left cursor-pointer"
+        style={{ borderLeft: '4px solid #6BB9D4' }}
       >
-        <div className="flex items-center gap-3 mb-2">
-          <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">
+        <div className="flex items-center gap-3">
+          <span className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-2xl">
             🔍
           </span>
-          <div>
-            <p className="text-sm font-semibold text-text-primary">Cari Obrolan</p>
-            <p className="text-xs text-text-secondary">
+          <div className="flex-1">
+            <p className="text-sm font-bold text-text-primary">Cari Obrolan</p>
+            <p className="text-xs text-text-secondary mt-0.5">
               Swipe kartu curhat orang lain, temukan yang pas buat kamu dengerin
             </p>
           </div>
+          <ChevronRight size={20} className="text-text-secondary/40" />
         </div>
       </button>
 

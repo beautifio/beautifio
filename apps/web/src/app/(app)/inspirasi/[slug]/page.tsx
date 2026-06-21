@@ -25,8 +25,8 @@ const TAB_ICONS: Record<string, typeof Sparkles> = {
 
 const SOURCE_BADGE: Record<string, { bg: string; text: string; label: string }> = {
   cerita: { bg: "bg-emerald-100", text: "text-emerald-700", label: "Cerita" },
-  mentor: { bg: "bg-purple-100", text: "text-purple-700", label: "Mentor" },
-  redaksi: { bg: "bg-blue-100", text: "text-blue-700", label: "Redaksi" },
+  mentor: { bg: "bg-primary/10", text: "text-primary", label: "Mentor" },
+  redaksi: { bg: "bg-secondary/10", text: "text-secondary", label: "Redaksi" },
 };
 
 function InspirasiDetailPage({
@@ -340,7 +340,7 @@ function InspirasiDetailPage({
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
-        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-secondary/20 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -348,18 +348,18 @@ function InspirasiDetailPage({
   if (!item) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 pb-20">
-        <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-4">
-          <BookHeart className="w-10 h-10 text-purple-400" />
+        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+          <BookHeart className="w-10 h-10 text-primary/40" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        <h2 className="text-xl font-semibold text-text-primary mb-2">
           Inspirasi Tidak Ditemukan
         </h2>
-        <p className="text-gray-500 text-center mb-6">
+        <p className="text-text-secondary text-center mb-6">
           Halaman yang Anda cari tidak tersedia atau telah dihapus.
         </p>
         <Link
           href="/inspirasi"
-          className="px-6 py-2.5 bg-purple-600 text-white rounded-full text-sm font-medium hover:bg-purple-700 transition-colors"
+          className="px-6 py-2.5 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary/80 transition-colors"
         >
           Kembali ke Inspirasi
         </Link>
@@ -371,9 +371,9 @@ function InspirasiDetailPage({
   const badge = SOURCE_BADGE[source] || SOURCE_BADGE.cerita;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-bg pb-20">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-surface border-b border-border sticky top-0 z-10">
         <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-14">
           <button
             onClick={() => {
@@ -383,12 +383,12 @@ function InspirasiDetailPage({
                 router.push("/inspirasi");
               }
             }}
-            className="p-1.5 -ml-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            className="p-1.5 -ml-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-muted transition-colors"
             aria-label="Kembali"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-sm font-medium text-gray-900 truncate">
+          <h1 className="text-sm font-medium text-text-primary truncate">
             {item.title}
           </h1>
         </div>
@@ -397,10 +397,10 @@ function InspirasiDetailPage({
       {/* Journey Progress Bar */}
       {fromJourney && (
         <div className="sticky top-14 z-10">
-          <div className="h-[3px] w-full bg-gray-200">
+          <div className="h-[3px] w-full bg-border">
             <div
               className="h-full transition-all duration-300"
-              style={{ width: `${scrollPercentage}%`, backgroundColor: "#FF5E5B" }}
+              style={{ width: `${scrollPercentage}%`, backgroundColor: "#084463" }}
             />
           </div>
         </div>
@@ -410,8 +410,7 @@ function InspirasiDetailPage({
       {fromJourney && showBanner && (
         <div className="max-w-2xl mx-auto px-4 mt-3">
           <div
-            className="flex items-start gap-2 px-4 py-3 rounded-lg text-sm"
-            style={{ backgroundColor: "#FFF0EF", border: "1px solid #FFB3A8", color: "#D94040" }}
+            className="flex items-start gap-2 px-4 py-3 rounded-lg text-sm bg-muted border border-border"
           >
             <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
             <p className="flex-1">
@@ -440,8 +439,8 @@ function InspirasiDetailPage({
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
           </div>
         ) : (
-          <div className="aspect-[16/9] relative bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-            <BookOpen className="w-20 h-20 text-purple-300" />
+          <div className="aspect-[16/9] relative bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+            <BookOpen className="w-20 h-20 text-primary/30" />
           </div>
         )}
 
@@ -464,7 +463,7 @@ function InspirasiDetailPage({
 
           {/* Author */}
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-sm font-semibold text-white">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-sm font-semibold text-white">
               {item.initials || item.author.charAt(0)}
             </div>
             <div>
@@ -517,10 +516,10 @@ function InspirasiDetailPage({
               </button>
               <button
                 onClick={handleSave}
-                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600 transition-colors"
+                className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-secondary transition-colors"
               >
                 <Bookmark
-                  className={`w-5 h-5 ${isSaved ? "fill-purple-600 text-purple-600" : ""}`}
+                  className={`w-5 h-5 ${isSaved ? "fill-secondary text-secondary" : ""}`}
                 />
                 <span>{saveCount}</span>
               </button>
@@ -546,12 +545,12 @@ function InspirasiDetailPage({
 
           {/* Article in Journey */}
           {articleInJourney && !fromJourney && (
-            <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: "#FFF0EF", border: "1px solid #FFB3A8" }}>
-              <p className="text-sm font-medium" style={{ color: "#D94040" }}>
+            <div className="mb-6 p-4 rounded-xl bg-muted border border-border">
+              <p className="text-sm font-medium text-primary">
                 <MapPin className="w-4 h-4 inline mr-1.5" />
                 Artikel ini ada di journey-mu juga
               </p>
-              <p className="text-xs mt-1" style={{ color: "#D94040" }}>
+              <p className="text-xs mt-1 text-text-secondary">
                 Kembali ke <Link href="/journey" className="font-semibold underline">journey-mu</Link> untuk melihat aktivitas hari ini.
               </p>
             </div>
@@ -586,8 +585,8 @@ function InspirasiDetailPage({
                           </Badge>
                         </div>
                       ) : (
-                        <div className="aspect-[16/9] bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                          <BookOpen className="w-8 h-8 text-purple-300" />
+                        <div className="aspect-[16/9] bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                          <BookOpen className="w-8 h-8 text-primary/30" />
                           <Badge className={`absolute top-2 left-2 ${relBadge.bg} ${relBadge.text} text-xs font-semibold`}>
                             {relBadge.label}
                           </Badge>

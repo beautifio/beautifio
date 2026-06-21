@@ -94,20 +94,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 lg:relative lg:translate-x-0 flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
+      <aside style={{ background: '#084463' }} className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 lg:relative lg:translate-x-0 flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex items-center justify-between p-4 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="flex items-center gap-2">
             {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="h-7 w-auto" />
+              <img src={logoUrl} alt="Logo" className="h-7 w-auto brightness-0 invert" />
             ) : (
               <>
-                <Shield className="w-5 h-5 text-amber-500" />
-                <span className="text-sm font-bold text-gray-900">Admin Panel</span>
+                <Shield className="w-5 h-5" style={{ color: '#FFC64F' }} />
+                <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Admin Panel</span>
               </>
             )}
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden cursor-pointer">
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5" style={{ color: 'rgba(255,255,255,0.6)' }} />
           </button>
         </div>
         <nav className="p-3 space-y-1 overflow-y-auto flex-1">
@@ -119,11 +119,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <a
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
-                  active
-                    ? "bg-amber-50 text-amber-700 border border-amber-200"
-                    : "text-gray-600 hover:bg-gray-50 border border-transparent"
-                }`}
+                style={{
+                  background: active ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  color: active ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
+                }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-all hover:bg-white/10"
               >
                 <item.icon className="w-4 h-4 flex-shrink-0" />
                 <span>{item.label}</span>
@@ -133,7 +133,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* Divider */}
-        <div style={{ height: 1, background: '#E2E8F0', margin: '8px 0' }} />
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '8px 12px' }} />
 
         {/* Profile */}
         <div
@@ -143,11 +143,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             padding: '10px 12px', borderRadius: 8,
             cursor: 'pointer', margin: '0 8px',
           }}
-          className="hover:bg-gray-50 transition-colors"
+          className="hover:bg-white/10 transition-colors"
         >
           <div style={{
             width: 32, height: 32, borderRadius: '50%',
-            background: '#084463', color: '#fff',
+            background: 'rgba(255,255,255,0.2)', color: '#FFFFFF',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 13, fontWeight: 600, flexShrink: 0,
           }}>
@@ -155,12 +155,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{
-              fontSize: 13, fontWeight: 500, color: '#1E2938',
+              fontSize: 13, fontWeight: 500, color: '#FFFFFF',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>
               {userName || 'Admin'}
             </div>
-            <div style={{ fontSize: 11, color: '#647488' }}>{role}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{role}</div>
           </div>
         </div>
 
@@ -178,10 +178,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               width: '100%', padding: '10px 12px',
               display: 'flex', alignItems: 'center', gap: 8,
               background: 'none', border: 'none', borderRadius: 8,
-              cursor: 'pointer', color: '#DC2626', fontSize: 13, fontWeight: 500,
+              cursor: 'pointer', color: '#FCA5A5', fontSize: 13, fontWeight: 500,
               textAlign: 'left',
             }}
-            className="hover:bg-red-50 transition-colors"
+            className="hover:bg-white/10 transition-colors"
           >
             <span>🚪</span> Keluar
           </button>
@@ -193,14 +193,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       <main className="flex-1 min-w-0">
-        <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 lg:hidden">
+        <div style={{ background: '#084463' }} className="sticky top-0 z-30 px-4 py-3 flex items-center gap-3 lg:hidden">
           <button onClick={() => setSidebarOpen(true)} className="cursor-pointer">
-            <Menu className="w-5 h-5 text-gray-600" />
+            <Menu className="w-5 h-5" style={{ color: '#FFFFFF' }} />
           </button>
           {logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="h-6 w-auto" />
+            <img src={logoUrl} alt="Logo" className="h-6 w-auto brightness-0 invert" />
           ) : (
-            <span className="text-sm font-bold text-gray-900">Admin Panel</span>
+            <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Admin Panel</span>
           )}
         </div>
         <div className="p-4 lg:p-6">{children}</div>

@@ -23,23 +23,23 @@ function InspirationCard({ item }: { item: InspirationItem }) {
 
   return (
     <div
-      className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-surface rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
       onClick={() => router.push(`/inspiration/${item.slug}`)}
     >
       <div className={`aspect-[16/9] relative bg-gradient-to-br ${item.coverGradient} flex items-center justify-center`}>
         <span className="text-5xl">{item.type === "story" ? "📖" : "📝"}</span>
-        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-purple-600 text-white text-[10px] font-medium">
+        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-primary text-white text-[10px] font-medium">
           {item.type === "story" ? "Cerita" : "Artikel"}
         </span>
       </div>
 
       <div className="p-4">
-        <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+        <div className="flex items-center gap-2 text-xs text-text-secondary mb-2">
           <Clock size={12} />
           <span>{item.readingTime} menit baca</span>
           {dreamInfo && dreamInfo.length > 0 && (
             <>
-              <span className="text-gray-300">|</span>
+              <span className="text-border">|</span>
               {dreamInfo.slice(0, 1).map((d, i) => (
                 <span key={i}>{d?.emoji} {d?.title}</span>
               ))}
@@ -47,18 +47,18 @@ function InspirationCard({ item }: { item: InspirationItem }) {
           )}
         </div>
 
-        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 leading-snug text-sm">
+        <h3 className="font-semibold text-text-primary mb-1 line-clamp-2 leading-snug text-sm">
           {item.title}
         </h3>
-        <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+        <p className="text-xs text-text-secondary mb-3 line-clamp-2 leading-relaxed">
           {item.excerpt}
         </p>
 
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-purple-200 flex items-center justify-center text-[10px] font-semibold text-purple-700">
+          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary">
             {item.author.charAt(0)}
           </div>
-          <span className="text-xs text-gray-700">{item.author}</span>
+          <span className="text-xs text-text-primary">{item.author}</span>
         </div>
       </div>
     </div>
@@ -96,14 +96,14 @@ export default function InspirationPage() {
   const activeTabInfo = TABS.find((t) => t.key === activeTab)!;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-bg pb-24">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-surface border-b border-border">
         <div className="max-w-content mx-auto">
           <div className="flex items-center justify-between px-5 pt-6 pb-1">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Inspirasi</h1>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <h1 className="text-xl font-bold text-text-primary">Inspirasi</h1>
+              <p className="text-xs text-text-secondary mt-0.5">
                 Belajar dan dapatkan perspektif baru untuk mimpimu
               </p>
             </div>
@@ -119,8 +119,8 @@ export default function InspirationPage() {
                   onClick={() => setActiveTab(tab.key)}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                     isActive
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? "bg-primary text-white"
+                      : "bg-muted text-text-secondary hover:bg-muted/80"
                   }`}
                 >
                   <tab.icon size={14} />
@@ -135,13 +135,13 @@ export default function InspirationPage() {
       {/* Search + Filter */}
       <div className="max-w-content mx-auto px-5 pt-4 pb-4 space-y-3">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/50" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari inspirasi..."
-            className="w-full h-10 pl-9 pr-3 rounded-lg bg-white border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full h-10 pl-9 pr-3 rounded-lg bg-surface border border-border text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-ring/20"
           />
         </div>
 
@@ -153,8 +153,8 @@ export default function InspirationPage() {
                 onClick={() => { setSelectedCategory(null); setSelectedDream(null); }}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all cursor-pointer ${
                   !selectedCategory && !selectedDream
-                    ? "bg-purple-600 text-white border-purple-600"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-purple-300"
+                    ? "bg-primary text-white border-primary"
+                    : "bg-surface text-text-secondary border-border hover:border-primary/30"
                 }`}
               >
                 Semua
@@ -172,8 +172,8 @@ export default function InspirationPage() {
                   }}
                   className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all cursor-pointer ${
                     selectedCategory === cat.slug && !selectedDream
-                      ? "bg-purple-600 text-white border-purple-600"
-                      : "bg-white text-gray-700 border-gray-200 hover:border-purple-300"
+                      ? "bg-primary text-white border-primary"
+                      : "bg-surface text-text-secondary border-border hover:border-primary/30"
                   }`}
                 >
                   {cat.emoji} {cat.label}
@@ -188,7 +188,7 @@ export default function InspirationPage() {
                   <button
                     key={d.slug}
                     onClick={() => setSelectedDream(d.slug)}
-                    className="flex-shrink-0 px-2.5 py-1 rounded-md text-[10px] font-medium border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all cursor-pointer"
+                    className="flex-shrink-0 px-2.5 py-1 rounded-md text-[10px] font-medium border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-all cursor-pointer"
                   >
                     {d.emoji} {d.title}
                   </button>
@@ -201,7 +201,7 @@ export default function InspirationPage() {
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setSelectedDream(null)}
-                  className="flex-shrink-0 px-2.5 py-1 rounded-md text-[10px] font-medium bg-purple-600 text-white border border-purple-600 transition-all cursor-pointer"
+                  className="flex-shrink-0 px-2.5 py-1 rounded-md text-[10px] font-medium bg-primary text-white border border-primary transition-all cursor-pointer"
                 >
                   {DREAM_MAP[selectedDream]?.emoji} {DREAM_MAP[selectedDream]?.title} ✕
                 </button>
@@ -215,9 +215,9 @@ export default function InspirationPage() {
       <div className="max-w-content mx-auto px-5 pb-4">
         {currentItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <Sparkles size={32} className="text-gray-300 mb-3" />
-            <p className="text-sm font-semibold text-gray-700">Belum ada inspirasi</p>
-            <p className="text-xs text-gray-500 mt-1">Coba pilih impian lain atau ubah kata kunci</p>
+            <Sparkles size={32} className="text-text-secondary/20 mb-3" />
+            <p className="text-sm font-semibold text-text-primary">Belum ada inspirasi</p>
+            <p className="text-xs text-text-secondary mt-1">Coba pilih impian lain atau ubah kata kunci</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

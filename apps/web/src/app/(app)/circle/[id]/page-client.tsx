@@ -21,9 +21,9 @@ const tabs = [
 
 const GRADIENTS = [
   "from-primary to-secondary", "from-secondary to-accent", "from-accent to-primary",
-  "from-blue-600 to-cyan-400", "from-pink-500 to-orange-400", "from-orange-500 to-red-500",
-  "from-purple-600 to-pink-500", "from-green-600 to-teal-400", "from-rose-500 to-pink-400",
-  "from-blue-500 to-indigo-600",
+  "from-primary to-accent", "from-secondary to-primary", "from-accent to-secondary",
+  "from-primary to-secondary", "from-secondary to-accent", "from-accent to-primary",
+  "from-primary to-accent",
 ]
 
 function getGradient(str: string) {
@@ -766,7 +766,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
                     {m.user_id === user?.id && <span className="text-text-secondary font-normal"> (Kamu)</span>}
                   </span>
                   {m.role === "host" && (
-                    <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none bg-amber-100 text-amber-800">Host</Badge>
+                    <Badge variant="default" className="text-[10px] px-1.5 py-0 leading-none bg-accent/20 text-primary">Host</Badge>
                   )}
                   {m.role === "co-host" && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-none">Co-Host</Badge>
@@ -778,7 +778,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
                   <button
                     onClick={() => handleToggleCohost(m.user_id)}
                     className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
-                      m.role === "co-host" ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : "bg-primary/10 text-primary hover:bg-primary/20"
+                      m.role === "co-host" ? "bg-accent/20 text-primary hover:bg-accent/30" : "bg-primary/10 text-primary hover:bg-primary/20"
                     }`}
                   >
                     {m.role === "co-host" ? "Hapus Admin" : "Jadikan Admin"}

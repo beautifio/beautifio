@@ -20,18 +20,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {!hideTopBar && (
-        <header className="flex items-center gap-3 px-4 py-2 border-b border-border sticky top-0 bg-surface z-30">
+        <header
+          style={{
+            background: '#084463',
+            boxShadow: '0 2px 12px rgba(8,68,99,0.2)',
+          }}
+          className="flex items-center gap-3 px-4 py-2.5 sticky top-0 z-30"
+        >
           <Link
             href="/search"
-            className="flex items-center gap-2 flex-1 bg-bg rounded-full px-3 py-2 border border-border"
+            style={{
+              background: 'rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 20,
+            }}
+            className="flex items-center gap-2 flex-1 px-3 py-2"
           >
-            <Search className="w-4 h-4 text-text-secondary" />
-            <span className="text-xs text-text-secondary">Cari di Beautifio...</span>
+            <Search className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Cari di Beautifio...</span>
           </Link>
           <NotificationBell />
           <Link href="/profil" aria-label="Profil">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
-              <User size={16} className="text-primary" />
+            <div className="w-8 h-8 rounded-full flex items-center justify-center transition-colors" style={{ background: 'rgba(255,255,255,0.15)' }}>
+              <User size={16} style={{ color: '#FFFFFF' }} />
             </div>
           </Link>
         </header>

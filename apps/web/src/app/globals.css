@@ -21,7 +21,7 @@
   --color-muted-foreground: #64748b;
   --color-destructive: #ef4444;
   --color-destructive-foreground: #ffffff;
-  --color-success: #10b981;
+  --color-success: #22C55E;
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
   --color-ring: #084463;
@@ -45,7 +45,10 @@
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
   --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.14);
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 16px rgba(8, 68, 99, 0.10);
+  --shadow-nav: 0 -4px 20px rgba(8, 68, 99, 0.3);
+  --shadow-topbar: 0 2px 12px rgba(8, 68, 99, 0.2);
   --shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.12);
   --shadow-hero: 0 8px 32px rgba(0, 0, 0, 0.16);
 

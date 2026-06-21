@@ -22,10 +22,10 @@ import { journeyUrl } from "@/lib/journey-queries"
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false })
 
 const FEATURE_BUTTONS = [
-  { href: "/voucher",     label: "Voucher",   icon: Ticket,      color: "bg-amber-100 text-amber-700" },
-  { href: "/belanja",     label: "Deals",      icon: ShoppingBag, color: "bg-blue-100 text-blue-700" },
-  { href: "/event",       label: "Event",      icon: Calendar,    color: "bg-purple-100 text-purple-700" },
-  { href: "/opportunity", label: "Peluang",    icon: Briefcase,   color: "bg-green-100 text-green-700" },
+  { href: "/voucher",     label: "Voucher",   icon: Ticket,      color: "bg-accent/20 text-primary" },
+  { href: "/belanja",     label: "Deals",      icon: ShoppingBag, color: "bg-secondary/20 text-secondary" },
+  { href: "/event",       label: "Event",      icon: Calendar,    color: "bg-primary/10 text-primary" },
+  { href: "/opportunity", label: "Peluang",    icon: Briefcase,   color: "bg-success/10 text-success" },
 ]
 
 export default function HomeScreen({
@@ -140,18 +140,18 @@ export default function HomeScreen({
       <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-5">
         {/* Trial banner */}
         {trialDays && (
-          <div className="bg-[#FFF7E6] border border-[#FFB627] rounded-2xl p-4">
+          <div className="bg-accent/5 border border-accent rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-[#92400E]">🕐 Mode Tamu</p>
-              <p className="text-xs text-[#92400E]">Sisa {trialDays.remaining} hari</p>
+              <p className="text-sm font-semibold text-primary">🕐 Mode Tamu</p>
+              <p className="text-xs text-text-secondary">Sisa {trialDays.remaining} hari</p>
             </div>
-            <div className="w-full bg-[#FFE4A0] rounded-full h-1.5 mb-2">
+            <div className="w-full bg-accent/20 rounded-full h-1.5 mb-2">
               <div
-                className="h-1.5 rounded-full bg-[#FFB627] transition-all"
+                className="h-1.5 rounded-full bg-accent transition-all"
                 style={{ width: `${(trialDays.currentDay / trialDays.totalDays) * 100}%` }}
               />
             </div>
-            <p className="text-[11px] text-[#92400E]/70">Daftar untuk simpan progress selamanya</p>
+            <p className="text-[11px] text-text-secondary">Daftar untuk simpan progress selamanya</p>
           </div>
         )}
 
@@ -209,16 +209,16 @@ export default function HomeScreen({
         {/* Butuh Bantuan? */}
         <button
           onClick={() => setBantuanOpen(true)}
-          className="w-full flex items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors text-left cursor-pointer"
+          className="w-full flex items-center gap-3 p-4 rounded-2xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-colors text-left cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center shrink-0">
-            <Shield className="w-5 h-5 text-amber-700" />
+          <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+            <Shield className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-800">Butuh Bantuan?</p>
-            <p className="text-xs text-amber-600">Kontak darurat & lembaga bantuan</p>
+            <p className="text-sm font-semibold text-primary">Butuh Bantuan?</p>
+            <p className="text-xs text-text-secondary">Kontak darurat & lembaga bantuan</p>
           </div>
-          <span className="text-lg text-amber-400">→</span>
+          <span className="text-lg text-accent">→</span>
         </button>
       </div>
 

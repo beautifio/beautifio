@@ -19,12 +19,12 @@ interface JourneyCardProps {
 
 const CATEGORY_BG: Record<string, string> = {
   sports: "#E8F5E9",
-  health: "#FFF3E0",
-  creative: "#F3E5F5",
+  health: "#FFF8E7",
+  creative: "#F0F9FF",
   tech: "#E0F7FA",
-  education: "#F1F8E9",
+  education: "#F0F9FF",
   business: "#E3F2FD",
-  lifestyle: "#FCE4EC",
+  lifestyle: "#FFF8E7",
 }
 
 export default function JourneyCard({

@@ -118,7 +118,7 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
               </div>
               <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                 <div>
-                  <span className="text-[10px] font-semibold text-purple-600 uppercase tracking-wider">
+                  <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
                     {SOURCE_LABEL[source] || source}
                   </span>
                   <h3 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 mt-0.5">
@@ -126,7 +126,7 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
                   </h3>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center text-[7px] font-bold text-purple-700 shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center text-[7px] font-bold text-primary shrink-0">
                     {initials}
                   </div>
                   <span className="text-[11px] text-gray-500 truncate">{a.author}</span>

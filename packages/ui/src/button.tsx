@@ -12,15 +12,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 shadow-sm active:shadow-none",
+    "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-[#063650] shadow-[0_2px_8px_rgba(8,68,99,0.25)] active:shadow-none rounded-xl",
   secondary:
-    "border border-primary text-primary hover:bg-primary/5 active:bg-primary/10",
+    "border-[1.5px] border-primary text-primary hover:bg-primary/5 active:bg-primary/10 rounded-xl",
   accent:
     "bg-accent text-accent-foreground hover:bg-accent/90 active:bg-accent/80 shadow-sm active:shadow-none",
   ghost:
     "hover:bg-muted active:bg-muted/80 text-text-primary",
   destructive:
-    "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80",
+    "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80 rounded-xl",
 };
 
 const sizeStyles: Record<Size, string> = {
@@ -40,7 +40,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center font-semibold transition-all cursor-pointer rounded-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`inline-flex items-center justify-center font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

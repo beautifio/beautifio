@@ -85,11 +85,21 @@ export function NotificationBell() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors relative cursor-pointer"
+        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors relative cursor-pointer"
+        style={{ background: 'rgba(255,255,255,0.15)' }}
       >
-        <Bell size={16} className="text-text-secondary" />
+        <Bell size={16} style={{ color: '#FFFFFF' }} />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center">
+          <span
+            style={{
+              position: 'absolute', top: -2, right: -2,
+              width: 16, height: 16,
+              background: '#FFC64F', color: '#1E2938',
+              borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 8, fontWeight: 700,
+            }}
+          >
             {unread > 9 ? "9+" : unread}
           </span>
         )}

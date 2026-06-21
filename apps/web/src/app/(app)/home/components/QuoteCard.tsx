@@ -50,7 +50,7 @@ export function QuoteCard({ userName }: { userName: string }) {
   if (!quote) {
     const greeting = timeGreeting();
     return (
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100">
+      <div className="rounded-2xl p-5" style={{ background: '#FFF8E7', borderLeft: '4px solid #FFC64F' }}>
         <div className="flex items-center gap-2 text-amber-700 mb-3">
           {greeting.icon}
           <span className="text-sm font-semibold">{greeting.text}, {userName}.</span>
@@ -67,7 +67,7 @@ export function QuoteCard({ userName }: { userName: string }) {
   const greeting = timeGreeting();
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100">
+    <div className="rounded-2xl p-5" style={{ background: '#FFF8E7', borderLeft: '4px solid #FFC64F' }}>
       <div className="flex items-center gap-2 text-amber-700 mb-3">
         {greeting.icon}
         <span className="text-sm font-semibold">{greeting.text}, {userName}.</span>
@@ -79,14 +79,14 @@ export function QuoteCard({ userName }: { userName: string }) {
         </span>
       </div>
 
-      <blockquote className="text-base font-medium text-gray-900 leading-relaxed mb-3">
+      <blockquote className="text-base font-medium text-text-primary leading-relaxed mb-3">
         &ldquo;{quote.text}&rdquo;
       </blockquote>
 
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-sm font-semibold text-gray-800">— {quote.author}</p>
-          <p className="text-xs text-gray-500">{quote.title}</p>
+          <p className="text-sm font-semibold text-text-primary">— {quote.author}</p>
+          <p className="text-xs text-text-secondary">{quote.title}</p>
         </div>
         <div className="flex gap-1">
           <button

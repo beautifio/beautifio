@@ -23,7 +23,7 @@ function SourceBar({
   onChange: (t: SourceType) => void;
 }) {
   return (
-    <div className="flex overflow-x-auto gap-2 px-4 py-3">
+    <div className="flex overflow-x-auto gap-2 px-4 py-3 border-b border-border">
       {SOURCE_TABS.map((tab) => {
         const Icon = TAB_ICONS[tab.icon]!;
         const isActive = tab.key === active;
@@ -31,14 +31,18 @@ function SourceBar({
           <button
             key={tab.key}
             onClick={() => onChange(tab.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              isActive
-                ? "bg-purple-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition-all relative cursor-pointer ${
+              isActive ? "text-primary" : "text-text-secondary hover:text-text-primary"
             }`}
           >
             <Icon className="w-4 h-4" />
             {tab.label}
+            {isActive && (
+              <span
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full"
+                style={{ background: '#FFC64F' }}
+              />
+            )}
           </button>
         );
       })}
