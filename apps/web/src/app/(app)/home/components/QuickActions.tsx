@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Gift, Shield, Ticket, ShoppingBag, Calendar, Heart } from "lucide-react";
+import { Gift, Shield, Ticket, ShoppingBag, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export function QuickActions({ onRuangAman }: { onRuangAman: () => void }) {
@@ -67,25 +67,12 @@ export function QuickActions({ onRuangAman }: { onRuangAman: () => void }) {
         </div>
       </Link>
 
-      <Link
-        href="/curhat"
-        className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-100 hover:border-rose-200 transition-all"
-      >
-        <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
-          <Heart size={20} className="text-rose-500" />
-        </div>
-        <div className="text-left">
-          <p className="text-sm font-bold text-gray-900">Curhat</p>
-          <p className="text-[10px] text-gray-500">Cerita anonim publik</p>
-        </div>
-      </Link>
-
       <button
         onClick={onRuangAman}
-        className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-red-50 to-rose-50 border border-red-100 hover:border-red-200 transition-all text-left"
+        className="col-span-2 flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 hover:border-amber-200 transition-all text-left"
       >
-        <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
-          <Shield size={20} className="text-red-500" />
+        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+          <Shield size={20} className="text-amber-600" />
         </div>
         <div className="text-left">
           <p className="text-sm font-bold text-gray-900">Ruang Aman</p>

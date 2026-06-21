@@ -204,13 +204,6 @@ export default function InspirasiPage() {
         )}
       </div>
 
-      <Link
-        href="/curhat/post"
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-[#084463] text-white shadow-lg hover:bg-[#084463]/90 active:scale-95 transition-all flex items-center justify-center"
-      >
-        <PenLine size={22} />
-      </Link>
-
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { MessageCircle, Sparkles, PenLine, ArrowRight } from "lucide-react"
+import { MessageCircle, Sparkles, ArrowRight, ShoppingBag } from "lucide-react"
 
 const OPTIONS = [
   {
@@ -21,12 +21,12 @@ const OPTIONS = [
     bg: "#EEEDFE",
   },
   {
-    href: "/curhat",
-    icon: PenLine,
-    label: "Curhat",
-    desc: "Post ke komunitas, bisa anonim",
-    color: "#8B5CF6",
-    bg: "#F3EEFF",
+    href: "/belanja",
+    icon: ShoppingBag,
+    label: "Belanja",
+    desc: "Deals & diskon spesial",
+    color: "#2563EB",
+    bg: "#EFF6FF",
   },
 ]
 

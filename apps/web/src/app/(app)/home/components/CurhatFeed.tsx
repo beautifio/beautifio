@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowRight, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 
 interface CurhatPost {
   id: string;
@@ -54,21 +53,12 @@ export function CurhatFeed() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-bold text-gray-900">Curhat Terbaru</h2>
-        <Link
-          href="/curhat"
-          className="text-xs font-medium text-amber-600 hover:text-amber-700 flex items-center gap-1"
-        >
-          Lihat Semua <ArrowRight size={12} />
-        </Link>
-      </div>
+      <h2 className="text-sm font-bold text-gray-900 mb-3">Curhat Terbaru</h2>
       <div className="space-y-2">
         {posts.map((p) => (
-          <Link
+          <div
             key={p.id}
-            href={`/curhat/${p.id}`}
-            className="block p-3 rounded-xl bg-gray-50 border border-gray-100 hover:bg-amber-50/50 hover:border-amber-100 transition-all"
+            className="block p-3 rounded-xl bg-gray-50 border border-gray-100"
           >
             <p className="text-sm text-gray-700 line-clamp-2 leading-relaxed mb-2">
               &ldquo;{p.content}&rdquo;
@@ -78,7 +68,7 @@ export function CurhatFeed() {
                 <Heart size={12} /> {p.support_count ?? 0}
               </span>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </div>

@@ -15,8 +15,9 @@ import { ArticlePick } from "./components/ArticlePick"
 import { CurhatFeed } from "./components/CurhatFeed"
 import { BannerCarousel } from "./components/BannerCarousel"
 import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet"
+import { BantuanSheet } from "@/features/bantuan/BantuanSheet"
 import { AchievementNotif } from "@/features/familia/components/AchievementNotif"
-import { Ticket, ShoppingBag, Calendar, Briefcase } from "lucide-react"
+import { Ticket, ShoppingBag, Calendar, Briefcase, Shield } from "lucide-react"
 import { journeyUrl } from "@/lib/journey-queries"
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false })
@@ -43,6 +44,7 @@ export default function HomeScreen({
   const [onboardingTemplate, setOnboardingTemplate] = useState<DreamTemplate | null>(null)
   const [trialInfo, setTrialInfo] = useState<{ started_at: string; expires_at: string } | null>(null)
   const [ruangAmanOpen, setRuangAmanOpen] = useState(false)
+  const [bantuanOpen, setBantuanOpen] = useState(false)
   const [growthZone, setGrowthZone] = useState<string | null>(null)
 
   const mimpiSlug = resolvedParams?.mimpi
@@ -154,6 +156,23 @@ export default function HomeScreen({
           </div>
         )}
 
+        {/* Quote Card */}
+        <QuoteCard userName={user ? userName : "Sobat"} />
+
+        <BannerCarousel />
+
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-24 rounded-2xl bg-surface border border-border animate-pulse" />
+            ))}
+          </div>
+        ) : user ? (
+          <JourneySnapshot activity={journey ? journeyActivity : null} />
+        ) : (
+          <GuestCTA variant="landing" />
+        )}
+
         {/* Feature Buttons — 4 kolom */}
         <div className="grid grid-cols-4 gap-2">
           {FEATURE_BUTTONS.map((btn) => {
@@ -173,23 +192,6 @@ export default function HomeScreen({
           })}
         </div>
 
-        {/* Quote Card */}
-        <QuoteCard userName={user ? userName : "Sobat"} />
-
-        <BannerCarousel />
-
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 rounded-2xl bg-surface border border-border animate-pulse" />
-            ))}
-          </div>
-        ) : user ? (
-          <JourneySnapshot activity={journey ? journeyActivity : null} />
-        ) : (
-          <GuestCTA variant="landing" />
-        )}
-
         <ArticlePick journey={journey} />
         <CurhatFeed />
 
@@ -205,6 +207,21 @@ export default function HomeScreen({
             </div>
           )
         })()}
+
+        {/* Butuh Bantuan? */}
+        <button
+          onClick={() => setBantuanOpen(true)}
+          className="w-full flex items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors text-left cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center shrink-0">
+            <Shield className="w-5 h-5 text-amber-700" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-800">Butuh Bantuan?</p>
+            <p className="text-xs text-amber-600">Kontak darurat & lembaga bantuan</p>
+          </div>
+          <span className="text-lg text-amber-400">→</span>
+        </button>
       </div>
 
       <AchievementNotif />
@@ -218,6 +235,7 @@ export default function HomeScreen({
       )}
 
       <RuangAmanSheet open={ruangAmanOpen} onClose={() => setRuangAmanOpen(false)} />
+      <BantuanSheet open={bantuanOpen} onClose={() => setBantuanOpen(false)} />
     </div>
   )
 }

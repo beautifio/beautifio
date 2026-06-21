@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { Newspaper, MessageSquareText, Briefcase, Gift } from "lucide-react"
+import { Newspaper, Briefcase, Gift, Heart } from "lucide-react"
 
 const QUICK_LINKS = [
   { href: "/inspirasi", label: "Inspirasi", icon: Newspaper },
-  { href: "/curhat",    label: "Curhat",    icon: MessageSquareText },
+  { href: "/connect",   label: "Connect",   icon: Heart },
   { href: "/opportunity", label: "Peluang", icon: Briefcase },
   { href: "/voucher",   label: "Familia",   icon: Gift },
 ]
