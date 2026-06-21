@@ -14,7 +14,7 @@ import { GuestCTA } from "./components/GuestCTA"
 import { ArticlePick } from "./components/ArticlePick"
 import { BannerCarousel } from "./components/BannerCarousel"
 import { RuangAmanSheet } from "@/features/bantuan/RuangAmanSheet"
-import { BantuanSheet } from "@/features/bantuan/BantuanSheet"
+import { PusatBantuanSheet } from "@/features/bantuan/PusatBantuanSheet"
 import { AchievementNotif } from "@/features/familia/components/AchievementNotif"
 import { Ticket, ShoppingBag, Calendar, Briefcase, Shield } from "lucide-react"
 import { journeyUrl } from "@/lib/journey-queries"
@@ -233,7 +233,7 @@ export default function HomeScreen({
       )}
 
       <RuangAmanSheet open={ruangAmanOpen} onClose={() => setRuangAmanOpen(false)} />
-      <BantuanSheet open={bantuanOpen} onClose={() => setBantuanOpen(false)} />
+      <PusatBantuanSheet open={bantuanOpen} onClose={() => setBantuanOpen(false)} />
     </div>
   )
 }
