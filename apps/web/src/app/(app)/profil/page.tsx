@@ -7,7 +7,7 @@ import {
   Compass, ArrowRight,
   Settings, LogOut, LogIn, User, UserPlus,
   BookOpen, BookHeart, History,
-  ChevronRight, BookMarked, Shield, Sparkles,
+  ChevronRight, BookMarked, Shield, Sparkles, Bell,
 } from "lucide-react";
 import {
   Card, CardHeader, CardTitle, CardContent, Avatar,
@@ -437,6 +437,7 @@ function SettingsSection() {
         <CardContent className="space-y-1">
           {[
             { icon: User, label: "Edit Profil", action: () => router.push("/profil/edit") },
+            { icon: Bell, label: "Notifikasi", action: () => router.push("/profil/notifikasi") },
             { icon: BookOpen, label: "Kebijakan Privasi", action: () => router.push("/profil/kebijakan") },
             { icon: LogOut, label: "Keluar", danger: true, action: async () => { await signOut(); window.location.href = "/"; } },
           ].map((item, i) => {

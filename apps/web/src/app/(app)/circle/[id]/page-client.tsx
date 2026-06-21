@@ -9,6 +9,7 @@ import {
 import { supabase } from "@/lib/supabase/client"
 import { Avatar, Badge, Card, Button } from "@beautifio/ui"
 import { useAuth } from "@/hooks/use-auth"
+import { MentionInput, notifyMentions } from "@/components/shared/MentionInput"
 import type { Circle, Message, CircleSession, CircleMentorQA } from "@beautifio/types"
 
 const tabs = [
@@ -123,13 +124,15 @@ function QuestionCard({ q, currentUserId, onAnswer }: {
             <div className="mt-2">
               {showAnswerForm ? (
                 <div className="space-y-2">
-                  <textarea
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    placeholder="Tulis jawaban..."
-                    rows={2}
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-xs text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary resize-none"
-                  />
+                  <div className="w-full">
+                    <textarea
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      placeholder="Tulis jawaban..."
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-xs text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary resize-none"
+                    />
+                  </div>
                   <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => setShowAnswerForm(false)}
@@ -300,11 +303,13 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
   const handleSend = async () => {
     if (!input.trim() || !user || sendingMsg) return
     setSendingMsg(true)
+    const msgText = input.trim()
     try {
       const { sendMessage } = await import("@/lib/supabase/queries")
-      const msg = await sendMessage({ circle_id: id, sender_id: user.id, message: input.trim() })
+      const msg = await sendMessage({ circle_id: id, sender_id: user.id, message: msgText })
       setMessages((prev) => [...prev, msg])
       setInput("")
+      notifyMentions(msgText, "circle_mention", id, `/circle/${id}`)
     } catch (e) {
       console.error("Failed to send message", e)
     } finally {
@@ -379,12 +384,14 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
   const handleAsk = async () => {
     if (!questionText.trim() || !user || asking) return
     setAsking(true)
+    const text = questionText.trim()
     try {
       const { askMentor } = await import("@/lib/supabase/queries")
-      const qa = await askMentor(id, user.id, questionText.trim())
+      const qa = await askMentor(id, user.id, text)
       setQaList((prev) => [qa, ...prev])
       setShowAskForm(false)
       setQuestionText("")
+      notifyMentions(text, "circle_mention", id, `/circle/${id}`)
     } catch (e) {
       console.error("Failed to ask", e)
     } finally {
@@ -400,6 +407,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
       setQaList((prev) => prev.map((q) =>
         q.id === qaId ? { ...q, is_answered: true, answer_text: answerText, answered_by: user.id, answered_at: new Date().toISOString() } : q
       ))
+      notifyMentions(answerText, "circle_mention", id, `/circle/${id}`)
     } catch (e) {
       console.error("Failed to answer", e)
     }
@@ -615,13 +623,15 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
               onChange={handleFileChange}
             />
 
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-              placeholder="Tulis pesan..."
-              className="flex-1 h-10 px-3 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
-            />
+            <div className="relative flex-1">
+              <MentionInput
+                value={input}
+                onChange={setInput}
+                onSend={handleSend}
+                placeholder="Tulis pesan..."
+                className="w-full h-10 px-3 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20 resize-none leading-10"
+              />
+            </div>
             <Button
               variant="primary"
               size="sm"
@@ -652,9 +662,9 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
 
       {showAskForm && (
         <Card padding="md" className="border-primary/20">
-          <textarea
+          <MentionInput
             value={questionText}
-            onChange={(e) => setQuestionText(e.target.value)}
+            onChange={setQuestionText}
             placeholder="Tulis pertanyaan..."
             rows={3}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-sm text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20 resize-none"
