@@ -5,11 +5,39 @@ import { useRouter } from "next/navigation"
 import {
   Send, Flag, PhoneOff, ArrowLeft, Loader2,
   ChevronDown, ChevronUp, AlertTriangle, Ban,
+  Check, CheckCheck, Clock, AlertCircle, RefreshCw,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { createClient } from "@/lib/supabase/client"
 import { getBisikChat, getBisikMessages } from "@/lib/bisik/queries"
 import type { BisikMessage, BisikChat } from "@/lib/bisik/queries"
+
+interface PendingMessage {
+  localId: string
+  chat_id: string
+  sender_id: string
+  content: string
+  is_read: boolean
+  created_at: string
+  _status: 'pending' | 'failed'
+}
+
+function relativeTimeShort(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return "Baru"
+  if (mins < 60) return `${mins}m`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}j`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return "Kemarin"
+  return `${days}hr`
+}
+
+function isOnline(dateStr: string | null | undefined): boolean {
+  if (!dateStr) return false
+  return Date.now() - new Date(dateStr).getTime() < 120_000
+}
 
 export default function BisikChatPage({ params }: { params: Promise<{ chatId: string }> }) {
   const { chatId } = use(params)
@@ -19,12 +47,15 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
 
   const [chat, setChat] = useState<BisikChat | null>(null)
   const [messages, setMessages] = useState<BisikMessage[]>([])
+  const [pendingMsgs, setPendingMsgs] = useState<PendingMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showEndConfirm, setShowEndConfirm] = useState(false)
   const [otherName, setOtherName] = useState("Anonymous")
+  const [otherId, setOtherId] = useState<string | null>(null)
+  const [lastOnline, setLastOnline] = useState<string | null>(null)
   const [showContext, setShowContext] = useState(true)
   const [contextCard, setContextCard] = useState<{ content: string; topic?: { name: string; emoji: string } | null } | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -64,13 +95,15 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       }
 
       const isInitiator = c.initiator_id === user.id
-      const otherId = isInitiator ? c.receiver_id : c.initiator_id
+      const oId = isInitiator ? c.receiver_id : c.initiator_id
+      setOtherId(oId)
       const { data: otherUser } = await supabase!
         .from("users")
-        .select("bisik_anonymous_name, bisik_custom_name")
-        .eq("id", otherId)
+        .select("bisik_anonymous_name, bisik_custom_name, last_online_at")
+        .eq("id", oId)
         .single()
       setOtherName(otherUser?.bisik_custom_name || otherUser?.bisik_anonymous_name || "Anonymous")
+      setLastOnline(otherUser?.last_online_at ?? null)
 
       const msgs = await getBisikMessages(chatId)
       setMessages(msgs)
@@ -80,6 +113,27 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
     // Check ban status
     checkBan()
   }, [chatId, user, router])
+
+  // Heartbeat: update last_online_at periodically
+  useEffect(() => {
+    if (!supabase || !user) return
+    const beat = () => {
+      supabase.from("users").update({ last_online_at: new Date().toISOString() }).eq("id", user.id)
+    }
+    beat()
+    const interval = setInterval(beat, 60_000)
+    return () => clearInterval(interval)
+  }, [user?.id])
+
+  // Refresh opponent's last_online_at periodically
+  useEffect(() => {
+    if (!supabase || !otherId) return
+    const interval = setInterval(async () => {
+      const { data } = await supabase.from("users").select("last_online_at").eq("id", otherId).single()
+      if (data?.last_online_at) setLastOnline(data.last_online_at)
+    }, 30_000)
+    return () => clearInterval(interval)
+  }, [otherId])
 
   const checkBan = async () => {
     if (!supabase || !user) return
@@ -162,26 +216,26 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
 
   const isInitiator = chat?.initiator_id === user?.id
 
-  const handleSend = useCallback(async () => {
-    if (!input.trim() || sending || !supabase || !user) return
-    if (banInfo?.isBanned) return
+  const allMessages = () =>
+    [...messages, ...pendingMsgs].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    )
 
-    const originalContent = input.trim()
-    setSending(true)
+  const sendMessage = async (content: string, localId: string) => {
+    if (!supabase || !user) return false
     try {
       const { data: msg } = await supabase
         .from("bisik_messages")
         .insert({
           chat_id: chatId,
           sender_id: user.id,
-          content: originalContent,
+          content,
         })
         .select("id")
         .single()
 
-      // Track sent content for masking detection
       if (msg?.id) {
-        sentContentRef.current.set(msg.id, originalContent)
+        sentContentRef.current.set(msg.id, content)
       }
 
       if (isInitiator && !chat?.expires_at) {
@@ -191,11 +245,56 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
           .eq("id", chatId)
       }
 
-      setInput("")
-    } catch {} finally {
-      setSending(false)
+      return true
+    } catch {
+      return false
     }
+  }
+
+  const handleSend = useCallback(async () => {
+    if (!input.trim() || sending || !supabase || !user) return
+    if (banInfo?.isBanned) return
+
+    const originalContent = input.trim()
+    const localId = crypto.randomUUID()
+    const now = new Date().toISOString()
+
+    setPendingMsgs(prev => [...prev, {
+      localId,
+      chat_id: chatId,
+      sender_id: user.id,
+      content: originalContent,
+      is_read: false,
+      created_at: now,
+      _status: 'pending',
+    }])
+
+    setSending(true)
+    setInput("")
+    const ok = await sendMessage(originalContent, localId)
+    if (ok) {
+      setPendingMsgs(prev => prev.filter(m => m.localId !== localId))
+    } else {
+      setPendingMsgs(prev => prev.map(m =>
+        m.localId === localId ? { ...m, _status: 'failed' as const } : m
+      ))
+    }
+    setSending(false)
   }, [input, sending, supabase, user, chatId, isInitiator, chat, banInfo])
+
+  const retryMessage = async (pending: PendingMessage) => {
+    setPendingMsgs(prev => prev.map(m =>
+      m.localId === pending.localId ? { ...m, _status: 'pending' as const } : m
+    ))
+    const ok = await sendMessage(pending.content, pending.localId)
+    if (ok) {
+      setPendingMsgs(prev => prev.filter(m => m.localId !== pending.localId))
+    } else {
+      setPendingMsgs(prev => prev.map(m =>
+        m.localId === pending.localId ? { ...m, _status: 'failed' as const } : m
+      ))
+    }
+  }
 
   const handleEnd = async () => {
     if (!supabase) return
@@ -236,7 +335,13 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
           </div>
           <div>
             <p className="text-sm font-semibold text-text-primary">{otherName}</p>
-            <p className="text-[10px] text-text-secondary">Private chat</p>
+            <p className="text-[10px] text-text-secondary">
+              {isOnline(lastOnline) ? (
+                <span className="text-green-600 font-medium">Online</span>
+              ) : lastOnline ? (
+                `Offline ${relativeTimeShort(lastOnline)}`
+              ) : "Private chat"}
+            </p>
           </div>
         </div>
         <div className="relative">
@@ -305,26 +410,52 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {messages.length === 0 && (
+        {messages.length === 0 && pendingMsgs.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-text-secondary">
             <p className="text-sm">Tidak ada pesan, mulailah percakapan!</p>
           </div>
         )}
-        {messages.map((msg) => {
+        {allMessages().map((msg, i) => {
+          const isPending = '_status' in msg
           const isMe = msg.sender_id === user?.id
+          const status = isPending ? (msg as PendingMessage)._status : 'sent'
           return (
-            <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+            <div key={isPending ? (msg as PendingMessage).localId : msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl ${
+                  status === 'failed' ? 'border border-red-300 bg-red-50' :
                   isMe
                     ? "bg-primary text-white rounded-br-md"
                     : "bg-muted text-text-primary rounded-bl-md"
                 }`}
               >
-                <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                <p className={`text-[10px] mt-1 ${isMe ? "text-white/60" : "text-text-secondary"}`}>
-                  {timeStr(msg.created_at)}
+                <p className={`text-sm whitespace-pre-wrap break-words ${status === 'failed' ? 'text-red-700' : ''}`}>
+                  {msg.content}
                 </p>
+                <div className={`flex items-center gap-1 mt-1 ${isMe ? "justify-end" : "justify-start"}`}>
+                  <span className={`text-[10px] ${isMe ? "text-white/60" : "text-text-secondary"}`}>
+                    {timeStr(msg.created_at)}
+                  </span>
+                  {isMe && !isPending && (
+                    <span className="flex items-center">
+                      {(msg as BisikMessage).is_read
+                        ? <CheckCheck size={12} className="text-blue-300" />
+                        : <Check size={12} className="text-white/50" />
+                      }
+                    </span>
+                  )}
+                  {isPending && (msg as PendingMessage)._status === 'pending' && (
+                    <Clock size={12} className="text-white/50 animate-pulse" />
+                  )}
+                </div>
+                {status === 'failed' && (
+                  <button
+                    onClick={() => retryMessage(msg as PendingMessage)}
+                    className="mt-1.5 flex items-center gap-1 text-[10px] text-red-600 font-medium cursor-pointer"
+                  >
+                    <RefreshCw size={10} /> Kirim ulang
+                  </button>
+                )}
               </div>
             </div>
           )
