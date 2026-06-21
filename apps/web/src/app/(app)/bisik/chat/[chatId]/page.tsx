@@ -249,6 +249,13 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
           {showMenu && (
             <div className="absolute right-0 top-10 w-44 bg-surface border border-border rounded-xl shadow-lg py-1 z-50">
               <button
+                onClick={() => { setShowMenu(false); alert("Fitur lapor akan segera hadir") }}
+                className="w-full px-4 py-2.5 text-sm text-text-primary hover:bg-muted flex items-center gap-2 cursor-pointer"
+              >
+                <Flag size={14} /> Laporkan Obrolan Ini
+              </button>
+              <hr className="border-border" />
+              <button
                 onClick={() => { setShowMenu(false); setShowEndConfirm(true) }}
                 className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-muted flex items-center gap-2 cursor-pointer"
               >

@@ -12,6 +12,13 @@ import { useAuth } from "@/hooks/use-auth"
 import { swipeLeft, swipeRight, getDiscoverCards } from "@/lib/bisik/swipe-actions"
 import type { BisikCard } from "@/lib/bisik/swipe-actions"
 
+const hashColor = (name: string): string => {
+  const colors = ["#084463","#6BB9D4","#FFC64F","#22C55E","#8B5CF6","#F59E0B","#EF4444","#06B6D4","#D4537E","#FF6B35"]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  return colors[Math.abs(hash) % colors.length]
+}
+
 type View = "menu" | "create-card" | "card-waiting" | "find-chat"
 type Tab = "cards" | "chats" | "pending"
 
@@ -64,7 +71,11 @@ export default function BisikHome() {
   const [chats, setChats] = useState<BisikChat[]>([])
 
   // Match popup state
-  const [matchPopup, setMatchPopup] = useState<{ chatId: string; name: string } | null>(null)
+  const [matchPopup, setMatchPopup] = useState<{
+    chatId: string; name: string;
+    myInitial: string; theirInitial: string;
+    color1: string; color2: string;
+  } | null>(null)
 
   // Name modal state
   const [showNameModal, setShowNameModal] = useState(false)
@@ -143,7 +154,14 @@ export default function BisikHome() {
           .eq("id", newChat.initiator_id)
           .single()
         const matchName = owner?.bisik_custom_name || owner?.bisik_anonymous_name || "Anonymous"
-        setMatchPopup({ chatId: newChat.id, name: matchName })
+        setMatchPopup({
+          chatId: newChat.id,
+          name: matchName,
+          myInitial: (bisikName[0] || "?").toUpperCase(),
+          theirInitial: (matchName[0] || "?").toUpperCase(),
+          color1: hashColor(bisikName),
+          color2: hashColor(matchName),
+        })
         loadChats()
       })
       .on("postgres_changes", {
@@ -159,7 +177,14 @@ export default function BisikHome() {
           .eq("id", newChat.receiver_id)
           .single()
         const matchName = owner?.bisik_custom_name || owner?.bisik_anonymous_name || "Anonymous"
-        setMatchPopup({ chatId: newChat.id, name: matchName })
+        setMatchPopup({
+          chatId: newChat.id,
+          name: matchName,
+          myInitial: (bisikName[0] || "?").toUpperCase(),
+          theirInitial: (matchName[0] || "?").toUpperCase(),
+          color1: hashColor(bisikName),
+          color2: hashColor(matchName),
+        })
         loadChats()
       })
       .subscribe()
@@ -214,11 +239,16 @@ export default function BisikHome() {
         .single()
 
       if (data) {
+        const topicInfo = topics.find(t => t.id === cardTopic)
         setNewCardId(data.id)
         setCardTopic("")
         setCardContent("")
         setView("card-waiting")
-        setActiveCards(prev => [...prev, { id: data.id, content: cardContent.trim() }])
+        setActiveCards(prev => [...prev, {
+          id: data.id,
+          content: cardContent.trim(),
+          topic: topicInfo ? { name: topicInfo.name, emoji: topicInfo.emoji } : null
+        }])
       }
     } catch (err) {
       console.error("Create card error:", err)
@@ -372,36 +402,14 @@ export default function BisikHome() {
       </button>
 
       {chats.length > 0 && (
-        <div className="pt-2">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-text-primary">
-              💬 Obrolan Aktif ({chats.length})
-            </p>
-            <button
-              onClick={() => setTab("chats")}
-              className="text-xs text-primary font-medium cursor-pointer"
-            >
-              Lihat →
-            </button>
-          </div>
-          <div className="space-y-2">
-            {chats.slice(0, 3).map((chat) => (
-              <button
-                key={chat.id}
-                onClick={() => router.push(`/bisik/chat/${chat.id}`)}
-                className="w-full p-3 rounded-xl bg-surface border border-border text-left cursor-pointer hover:border-primary/30 transition-colors"
-              >
-                <p className="text-sm text-text-primary truncate">
-                  {chat.card?.content?.slice(0, 60) || "Percakapan"}
-                </p>
-                {chat.last_message && (
-                  <p className="text-xs text-text-secondary truncate mt-0.5">
-                    {chat.last_message.content.slice(0, 80)}
-                  </p>
-                )}
-              </button>
-            ))}
-          </div>
+        <div
+          onClick={() => router.push("/bisik/chats")}
+          className="flex items-center justify-between px-4 py-3.5 border-t border-b border-border mt-2 cursor-pointer hover:bg-muted/50 transition-colors"
+        >
+          <span className="text-sm font-semibold text-text-primary">
+            💬 Obrolan Aktifmu ({chats.length})
+          </span>
+          <span className="text-sm font-medium" style={{ color: "#6BB9D4" }}>Lihat →</span>
         </div>
       )}
     </div>
@@ -475,13 +483,21 @@ export default function BisikHome() {
             <p className="text-right text-xs text-text-secondary mt-1">{cardContent.length}/300</p>
           </div>
 
-          <button
-            onClick={handleCreateCard}
-            disabled={!cardTopic || cardContent.trim().length < 10 || cardSubmitting}
-            className="w-full py-3 rounded-xl bg-primary text-white font-medium text-sm disabled:opacity-40 cursor-pointer"
-          >
-            {cardSubmitting ? "Memproses..." : "Posting Kartu"}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setView("menu"); setError(null) }}
+              className="flex-1 py-3 rounded-xl border border-border text-text-primary text-sm font-medium cursor-pointer"
+            >
+              Batalkan
+            </button>
+            <button
+              onClick={handleCreateCard}
+              disabled={!cardTopic || cardContent.trim().length < 10 || cardSubmitting}
+              className="flex-[2] py-3 rounded-xl bg-primary text-white font-medium text-sm disabled:opacity-40 cursor-pointer"
+            >
+              {cardSubmitting ? "Memproses..." : "Posting Kartu"}
+            </button>
+          </div>
         </>
       )}
     </div>
@@ -498,7 +514,10 @@ export default function BisikHome() {
 
       {activeCards.filter(c => c.id === newCardId).map((card) => (
         <div key={card.id} className="p-4 rounded-2xl bg-surface border border-border mb-6 text-left">
-          <p className="text-sm text-text-primary italic">&ldquo;{card.content}&rdquo;</p>
+          <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full mb-2">
+            {card.topic?.emoji} {card.topic?.name}
+          </span>
+          <p className="text-sm text-text-primary italic mt-1">&ldquo;{card.content}&rdquo;</p>
         </div>
       ))}
 
@@ -744,8 +763,23 @@ export default function BisikHome() {
       {matchPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-surface rounded-2xl px-8 py-8 text-center max-w-sm mx-4 animate-in zoom-in-95">
-            <p className="text-4xl mb-3">✨</p>
-            <h2 className="text-xl font-bold text-text-primary mb-2">It&rsquo;s a Match!</h2>
+            <p className="text-4xl mb-2">✨</p>
+            <h2 className="text-lg font-bold text-text-primary mb-4">It&rsquo;s a Match!</h2>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold text-white"
+                style={{ background: matchPopup.color1 }}
+              >
+                {matchPopup.myInitial}
+              </div>
+              <span className="text-2xl">💕</span>
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold text-white"
+                style={{ background: matchPopup.color2 }}
+              >
+                {matchPopup.theirInitial}
+              </div>
+            </div>
             <p className="text-sm text-text-secondary mb-6">
               Kamu dan <span className="font-semibold text-primary">{matchPopup.name}</span> matched!
             </p>
