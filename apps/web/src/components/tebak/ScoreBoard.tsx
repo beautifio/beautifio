@@ -1,15 +1,15 @@
 "use client"
 
-import { HelpCircle } from "lucide-react"
 
 type Props = {
   scoreA: number
   scoreB: number
   round: number
   isPlayerA: boolean
+  opponentName?: string
 }
 
-export function ScoreBoard({ scoreA, scoreB, round, isPlayerA }: Props) {
+export function ScoreBoard({ scoreA, scoreB, round, isPlayerA, opponentName }: Props) {
   const myScore = isPlayerA ? scoreA : scoreB
   const theirScore = isPlayerA ? scoreB : scoreA
 
@@ -24,7 +24,7 @@ export function ScoreBoard({ scoreA, scoreB, round, isPlayerA }: Props) {
         <p className="text-lg font-bold text-text-primary">{round}/2</p>
       </div>
       <div className="flex-1">
-        <p className="text-xs text-text-secondary">Lawan</p>
+        <p className="text-xs text-text-secondary">{opponentName || "Lawan"}</p>
         <p className="text-2xl font-bold text-text-secondary">{theirScore}</p>
       </div>
     </div>

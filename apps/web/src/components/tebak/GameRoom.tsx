@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Check, X, HelpCircle, Trophy, ArrowRight, Loader2, Bot, WifiOff } from "lucide-react"
+import { Check, X, HelpCircle, Trophy, ArrowRight, Loader2, WifiOff } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import {
@@ -34,6 +34,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [answers, setAnswers] = useState<TebakAnswer[]>([])
   const [opponentIsBot, setOpponentIsBot] = useState(false)
   const [disconnectMsg, setDisconnectMsg] = useState<string | null>(null)
+  const [opponentName, setOpponentName] = useState<string | null>(null)
   const [botThinking, setBotThinking] = useState(false)
   const guessStartTime = useRef(Date.now())
   const botPlayedRef = useRef<Set<string>>(new Set())
@@ -89,8 +90,10 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   // Check if opponent is a bot
   useEffect(() => {
     if (!supabase) return
-    supabase.from("users").select("is_bot").eq("id", opponentId).single().then(({ data }) => {
-      if (data?.is_bot) setOpponentIsBot(true)
+    supabase.from("users").select("is_bot, full_name, avatar_url").eq("id", opponentId).single().then(({ data }) => {
+      if (!data) return
+      if (data.is_bot) setOpponentIsBot(true)
+      if (data.full_name) setOpponentName(data.full_name)
     })
   }, [opponentId])
 
@@ -112,7 +115,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       if (!opp || opp.is_bot) return
       const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
       if (!opp.last_active_at || opp.last_active_at < fiveMinAgo) {
-        setDisconnectMsg("Lawan disconnect. Bot mengambil alih...")
+        setDisconnectMsg("Lawan terputus. Pemain lain mengambil alih...")
         await replaceDisconnectedWithBot(sessionId, opponentId)
         setOpponentIsBot(true)
         clearInterval(check)
@@ -206,14 +209,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         </div>
       )}
 
-      {/* Bot indicator */}
-      {opponentIsBot && !disconnectMsg && (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-primary/5 border-b border-primary/10 text-primary text-xs font-medium">
-          <Bot size={14} />
-          Kamu bermain dengan bot
-        </div>
-      )}
-
       {/* Header */}
       <div className="bg-surface border-b border-border">
         <ScoreBoard
@@ -221,20 +216,15 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           scoreB={gameSession.score_b}
           round={gameSession.current_round}
           isPlayerA={isPlayerA}
+          opponentName={opponentName || undefined}
         />
       </div>
-
-      {botThinking && (
-        <div className="flex items-center justify-center gap-2 py-2 text-text-secondary text-xs">
-          <Loader2 size={14} className="animate-spin" />
-          Bot sedang berpikir...
-        </div>
-      )}
 
       {finished ? (
         <ResultScreen
           session={gameSession}
           isPlayerA={isPlayerA}
+          opponentName={opponentName}
           onBack={() => window.location.href = "/tebak"}
         />
       ) : currentQ ? (
@@ -419,10 +409,12 @@ function QuestionView({
 function ResultScreen({
   session,
   isPlayerA,
+  opponentName,
   onBack,
 }: {
   session: TebakSession
   isPlayerA: boolean
+  opponentName: string | null
   onBack: () => void
 }) {
   const myScore = isPlayerA ? session.score_a : session.score_b
@@ -450,7 +442,7 @@ function ResultScreen({
           <span className="text-sm font-bold text-text-primary">{myScore} poin</span>
         </div>
         <div className="flex justify-between p-4 rounded-xl bg-surface border border-border">
-          <span className="text-sm text-text-secondary">Lawan</span>
+          <span className="text-sm text-text-secondary">{opponentName || "Lawan"}</span>
           <span className="text-sm font-bold text-text-primary">{theirScore} poin</span>
         </div>
       </div>
