@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/providers";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NavWrapper } from "@/components/NavWrapper";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 
 const poppins = Poppins({
@@ -35,6 +36,7 @@ export default function RootLayout({
             <NavWrapper>{children}</NavWrapper>
           </Providers>
         </ErrorBoundary>
+        <SpeedInsights />
       </body>
     </html>
   );
