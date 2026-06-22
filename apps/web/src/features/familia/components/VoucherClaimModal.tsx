@@ -118,7 +118,7 @@ export function VoucherClaimModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-white rounded-t-2xl sm:rounded-2xl px-5 pt-5 pb-8 animate-in fade-in slide-in-from-bottom-8 duration-300">
+      <div className="relative w-full max-w-sm bg-white rounded-t-2xl sm:rounded-2xl px-5 pt-5 pb-24 animate-in fade-in slide-in-from-bottom-8 duration-300">
         <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer">
           <X className="w-4 h-4 text-gray-500" />
         </button>
