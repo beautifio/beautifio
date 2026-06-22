@@ -46,7 +46,7 @@ BEGIN
     UPDATE tebak_sessions SET
       player_b_id = p_user_id,
       status = 'active',
-      current_subject = CASE WHEN random() > 0.5 THEN 'a' ELSE 'b' END
+      current_subject = CASE WHEN random() > 0.5 THEN 'a'::tebak_player ELSE 'b'::tebak_player END
     WHERE id = v_new_id;
 
     INSERT INTO tebak_rounds (session_id, subject_player, round_number)
