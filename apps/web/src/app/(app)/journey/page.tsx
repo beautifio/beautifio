@@ -492,9 +492,7 @@ export default function JourneyPage() {
                             color: "#647488",
                           }}
                         >
-                          {t.description.length > 45
-                            ? t.description.slice(0, 45) + "..."
-                            : t.description}
+                          {t.description}
                         </p>
                         <div
                           className="flex items-center gap-1 text-[11px] mt-0.5"
