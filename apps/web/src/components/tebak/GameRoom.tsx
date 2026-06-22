@@ -45,6 +45,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const botPlayedRef = useRef<Set<string>>(new Set())
   const selectedAnswerRef = useRef<string | null>(null)
   const prevQuestionId = useRef<string | null>(null)
+  const roundIdsRef = useRef<Set<string>>(new Set())
 
   const isPlayerA = gameSession.player_a_id === userId
   const opponentId = isPlayerA ? gameSession.player_b_id : gameSession.player_a_id
@@ -72,6 +73,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     if (!data) { console.error('GameRoom: no data from questions query'); return }
     console.log('GameRoom: questions fetched', data.length, data)
 
+    roundIdsRef.current = new Set(data.map((q: any) => q.round_id))
     setQuestions(data as TebakQuestion[])
     const activeRound = data.filter(
       (q: any) => q.status === "subject_answering" || q.status === "guesser_guessing"
@@ -171,7 +173,16 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         if (s.status === "finished") setFinished(true)
       },
       onQuestionUpdate: async (q) => {
-        setQuestions((prev) => prev.map((p) => (p.id === q.id ? q : p)))
+        if (!roundIdsRef.current.has(q.round_id)) return
+        setQuestions((prev) => {
+          const exists = prev.some(p => p.id === q.id)
+          if (!exists && q.sequence_number > 1) {
+            setLocked(false)
+            setSelectedAnswer(null)
+            selectedAnswerRef.current = null
+          }
+          return prev.map((p) => (p.id === q.id ? q : p))
+        })
         setCurrentQ(q)
         if (q.status === "guesser_guessing" && !isSubject) {
           guessStartTime.current = Date.now()
@@ -227,6 +238,27 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     }
   }
 
+  const myDots = questions.map(q => {
+    const a = answers.find(ans => ans.question_id === q.id && ans.guesser_id === userId)
+    if (!a) return null
+    return a.is_correct ?? null
+  })
+  const theirDots = questions.map(q => {
+    const a = answers.find(ans => ans.question_id === q.id && ans.guesser_id === opponentId)
+    if (!a) return null
+    return a.is_correct ?? null
+  })
+  const guesserAnswers = answers.filter(a => a.is_correct != null)
+  const myGuesses = guesserAnswers.filter(a => a.guesser_id === userId)
+  const correctCount = myGuesses.filter(a => a.is_correct).length
+  const totalCount = myGuesses.length
+  const compatibility = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0
+
+  const handleBegin = useCallback(() => {
+    setShowIntro(false)
+    refreshQuestions()
+  }, [refreshQuestions])
+
   return (
     <div className="min-h-screen bg-bg flex flex-col">
       {/* Disconnect banner */}
@@ -246,6 +278,8 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           isPlayerA={isPlayerA}
           myName={myName}
           opponentName={opponentName}
+          myDots={myDots}
+          theirDots={theirDots}
         />
       </div>
 
@@ -253,13 +287,14 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         <MatchIntro
           myName={myName}
           opponentName={opponentName}
-          onBegin={() => setShowIntro(false)}
+          onBegin={handleBegin}
         />
       ) : finished ? (
         <ResultScreen
           session={gameSession}
           isPlayerA={isPlayerA}
           opponentName={opponentName}
+          compatibility={compatibility}
           onBack={() => window.location.href = "/tebak"}
         />
       ) : currentQ ? (
@@ -465,11 +500,13 @@ function ResultScreen({
   session,
   isPlayerA,
   opponentName,
+  compatibility,
   onBack,
 }: {
   session: TebakSession
   isPlayerA: boolean
   opponentName: string | null
+  compatibility: number
   onBack: () => void
 }) {
   const myScore = isPlayerA ? session.score_a : session.score_b
@@ -491,7 +528,7 @@ function ResultScreen({
         Skor akhir: {myScore} - {theirScore}
       </p>
 
-      <div className="w-full max-w-xs space-y-3 mb-8">
+      <div className="w-full max-w-xs space-y-3 mb-6">
         <div className="flex justify-between p-4 rounded-xl bg-surface border border-border">
           <span className="text-sm text-text-secondary">Kamu</span>
           <span className="text-sm font-bold text-text-primary">{myScore} poin</span>
@@ -499,6 +536,28 @@ function ResultScreen({
         <div className="flex justify-between p-4 rounded-xl bg-surface border border-border">
           <span className="text-sm text-text-secondary">{opponentName || "Lawan"}</span>
           <span className="text-sm font-bold text-text-primary">{theirScore} poin</span>
+        </div>
+      </div>
+
+      {/* Compatibility */}
+      <div className="w-full max-w-xs mb-8">
+        <div className="p-5 rounded-xl bg-surface border border-border text-center">
+          <p className="text-[11px] font-semibold tracking-widest uppercase text-text-secondary mb-3">
+            Tingkat Kecocokan
+          </p>
+          <div className="h-2 rounded-full bg-muted overflow-hidden mb-2">
+            <div
+              className={`h-full rounded-full transition-all duration-1000 ${
+                compatibility <= 30 ? "bg-red-400" : compatibility <= 60 ? "bg-orange-400" : compatibility <= 85 ? "bg-green-400" : "bg-accent"
+              }`}
+              style={{ width: `${compatibility}%` }}
+            />
+          </div>
+          <p className={`text-sm font-bold ${
+            compatibility <= 30 ? "text-red-500" : compatibility <= 60 ? "text-orange-500" : compatibility <= 85 ? "text-green-600" : "text-accent"
+          }`}>
+            {compatibility <= 30 ? "Kurang cocok" : compatibility <= 60 ? "Cukup cocok" : compatibility <= 85 ? "Cocok!" : "Soulmate! 😱"}
+          </p>
         </div>
       </div>
 

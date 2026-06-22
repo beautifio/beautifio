@@ -19,8 +19,7 @@ export function subscribeToTebakGame(
       filter: `id=eq.${sessionId}`,
     }, (p) => callbacks.onSessionUpdate(p.new as TebakSession))
     .on('postgres_changes', {
-      event: 'UPDATE', schema: 'public', table: 'tebak_questions',
-      filter: `round_id=in.(SELECT id FROM tebak_rounds WHERE session_id=eq.${sessionId})`,
+      event: '*', schema: 'public', table: 'tebak_questions',
     }, (p) => callbacks.onQuestionUpdate(p.new as TebakQuestion))
     .on('postgres_changes', {
       event: 'INSERT', schema: 'public', table: 'tebak_answers',
