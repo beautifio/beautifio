@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Loader2, Users, Bot } from "lucide-react"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
-import { matchWithBot } from "@/lib/tebak/actions"
+import { matchWithBot, retryMatchmaking } from "@/lib/tebak/actions"
 import type { TebakSession } from "@/lib/tebak/queries"
 
 type Props = {
@@ -11,13 +12,17 @@ type Props = {
   isPlayerA: boolean
   onMatched: (session: TebakSession) => void
   onCancel: () => void
+  onReMatched?: (newSessionId: string) => void
 }
 
-export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel }: Props) {
+export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMatched }: Props) {
+  const router = useRouter()
   const [dots, setDots] = useState("")
   const [elapsed, setElapsed] = useState(0)
   const [matchingBot, setMatchingBot] = useState(false)
+  const [retrying, setRetrying] = useState(false)
   const matchedRef = useRef(false)
+  const retryDoneRef = useRef(false)
 
   useEffect(() => {
     const i = setInterval(() => setDots((p) => (p.length >= 3 ? "" : p + ".")), 500)
@@ -29,8 +34,23 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel }: Prop
     return () => clearInterval(t)
   }, [])
 
+  // After 5s, retry matchmaking to handle race condition
   useEffect(() => {
-    if (elapsed >= 20 && !matchedRef.current) {
+    if (elapsed < 5 || elapsed >= 20 || matchedRef.current || retryDoneRef.current) return
+    retryDoneRef.current = true
+    setRetrying(true)
+    retryMatchmaking(sessionId).then((newId) => {
+      setRetrying(false)
+      if (newId && newId !== sessionId) {
+        if (onReMatched) onReMatched(newId)
+        else router.push(`/tebak/${newId}`)
+      }
+    }).catch(() => setRetrying(false))
+  }, [elapsed, sessionId, router, onReMatched])
+
+  // After 20s, match with bot
+  useEffect(() => {
+    if (elapsed >= 20 && !matchedRef.current && !retrying) {
       matchedRef.current = true
       setMatchingBot(true)
       matchWithBot(sessionId, isPlayerA).catch(() => {
@@ -38,7 +58,7 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel }: Prop
         setMatchingBot(false)
       })
     }
-  }, [elapsed, sessionId, isPlayerA])
+  }, [elapsed, sessionId, isPlayerA, retrying])
 
   useEffect(() => {
     const unsub = subscribeToTebakGame(sessionId, {
@@ -67,11 +87,13 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel }: Prop
         <Loader2 size={20} className="absolute -top-1 -right-1 text-primary animate-spin" />
       </div>
       <h3 className="text-lg font-bold text-text-primary mb-2">
-        {matchingBot ? "Bot sedang bergabung..." : `Mencari lawan${dots}`}
+        {matchingBot ? "Bot sedang bergabung..." : retrying ? "Mencocokkan pemain..." : `Mencari lawan${dots}`}
       </h3>
       <p className="text-sm text-text-secondary text-center mb-8">
         {matchingBot
           ? "Tidak ada pemain lain, kamu akan bermain dengan bot"
+          : retrying
+          ? "Memeriksa ulang antrian..."
           : "Kami mencari pemain lain untuk bermain Tebak Aku"}
       </p>
       {!matchingBot && (

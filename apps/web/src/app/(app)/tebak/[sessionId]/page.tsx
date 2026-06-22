@@ -55,7 +55,7 @@ export default function TebakSessionPage({ params }: { params: Promise<{ session
             <h1 className="text-lg font-bold text-text-primary">Tebak Aku</h1>
           </div>
         </div>
-        <TebakWaiting sessionId={sessionId} isPlayerA={true} onMatched={handleMatched} onCancel={() => router.push("/tebak")} />
+        <TebakWaiting sessionId={sessionId} isPlayerA={true} onMatched={handleMatched} onCancel={() => router.push("/tebak")} onReMatched={(newId) => router.push(`/tebak/${newId}`)} />
       </div>
     )
   }

@@ -2,50 +2,33 @@
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { getRandomBotId, getBotWinRate } from "./bot"
 
-export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole: 'a' | 'b' }> {
+export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole: 'a' | 'b'; isNew: boolean }> {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: existingPlayer } = await supabase
-    .from('tebak_sessions')
-    .select('id')
-    .or(`player_a_id.eq.${user.id},player_b_id.eq.${user.id}`)
-    .in('status', ['waiting', 'active'])
-    .maybeSingle()
-  if (existingPlayer) {
-    return { sessionId: existingPlayer.id, playerRole: 'a' }
+  const { data: result, error } = await supabase.rpc('find_or_create_tebak_session', {
+    p_user_id: user.id,
+  })
+
+  if (error || !result) throw new Error('Failed to find or create session')
+
+  const { sessionId, playerRole, isNew } = result as { sessionId: string; playerRole: 'a' | 'b'; isNew: boolean }
+
+  // If we just claimed a waiting session (isNew && playerRole === 'b'),
+  // we need to select questions for round 1
+  if (isNew && playerRole === 'b') {
+    const { data: round } = await supabase
+      .from('tebak_rounds')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('round_number', 1)
+      .single()
+
+    if (round) await selectQuestionsForRound(sessionId, round.id)
   }
 
-  const { data: existing } = await supabase
-    .from('tebak_sessions')
-    .select('id')
-    .eq('status', 'waiting')
-    .neq('player_a_id', user.id)
-    .limit(1)
-    .maybeSingle()
-
-  if (existing) {
-    const firstSubject: 'a' | 'b' = Math.random() > 0.5 ? 'a' : 'b'
-
-    await supabase.from('tebak_sessions').update({
-      player_b_id: user.id, status: 'active', current_subject: firstSubject,
-    }).eq('id', existing.id)
-
-    const { data: round } = await supabase.from('tebak_rounds').insert({
-      session_id: existing.id, subject_player: firstSubject, round_number: 1,
-    }).select('id').single()
-
-    if (round) await selectQuestionsForRound(existing.id, round.id)
-
-    return { sessionId: existing.id, playerRole: 'b' }
-  }
-
-  const { data: session } = await supabase.from('tebak_sessions').insert({
-    player_a_id: user.id, status: 'waiting',
-  }).select('id').single()
-
-  return { sessionId: session!.id, playerRole: 'a' }
+  return { sessionId, playerRole, isNew }
 }
 
 export async function matchWithBot(sessionId: string, isPlayerA: boolean): Promise<void> {
@@ -195,6 +178,46 @@ export async function getSessionWithPlayers(sessionId: string) {
     .eq('id', sessionId)
     .single()
   return data
+}
+
+export async function retryMatchmaking(sessionId: string): Promise<string | null> {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data: ourSession } = await supabase
+    .from('tebak_sessions')
+    .select('status')
+    .eq('id', sessionId)
+    .single()
+
+  if (!ourSession || ourSession.status !== 'waiting') return null
+
+  const { data: other } = await supabase
+    .from('tebak_sessions')
+    .select('id')
+    .eq('status', 'waiting')
+    .neq('player_a_id', user.id)
+    .limit(1)
+    .maybeSingle()
+
+  if (!other) return null
+
+  await supabase.from('tebak_sessions').delete().eq('id', sessionId)
+
+  const firstSubject: 'a' | 'b' = Math.random() > 0.5 ? 'a' : 'b'
+
+  await supabase.from('tebak_sessions').update({
+    player_b_id: user.id, status: 'active', current_subject: firstSubject,
+  }).eq('id', other.id)
+
+  const { data: round } = await supabase.from('tebak_rounds').insert({
+    session_id: other.id, subject_player: firstSubject, round_number: 1,
+  }).select('id').single()
+
+  if (round) await selectQuestionsForRound(other.id, round.id)
+
+  return other.id
 }
 
 export async function updateUserHeartbeat(userId: string): Promise<void> {
