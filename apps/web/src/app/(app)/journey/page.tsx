@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Play, ChevronRight } from "lucide-react";
+import { Play, ChevronRight } from "lucide-react";
 import { Skeleton } from "@beautifio/ui";
 import { getAllDreamTemplates } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
@@ -244,27 +244,6 @@ export default function JourneyPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
       <div className="max-w-xl mx-auto px-5 pt-6 pb-28">
-        {/* ─── SEARCH BAR ─── */}
-        <div className="mb-6">
-          <div
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all focus-within:shadow-sm"
-            style={{
-              backgroundColor: "#F8FAFC",
-              border: "1px solid #E2E8F0",
-            }}
-          >
-            <Search size={16} style={{ color: "#647488" }} />
-            <input
-              type="text"
-              placeholder="Cari jalur..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="flex-1 text-sm bg-transparent outline-none"
-              style={{ fontFamily: "Inter, sans-serif", color: "#1E2938" }}
-            />
-          </div>
-        </div>
-
         {/* ─── JALURMU ─── */}
         <section className="mb-8">
           {activeJourney ? (
@@ -471,19 +450,10 @@ export default function JourneyPage() {
 
                 return (
                   <div key={t.slug}>
-                    {idx > 0 && (
-                      <div style={{ borderTop: "1px solid #E2E8F0" }} />
-                    )}
                     <div
                       onClick={() => handleCardClick(t)}
-                      className="flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors"
+                      className="flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors hover:bg-[#F8FAFC]"
                       style={{ backgroundColor: "#FFFFFF" }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#F8FAFC";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#FFFFFF";
-                      }}
                     >
                       {/* Thumbnail */}
                       <div
@@ -529,6 +499,9 @@ export default function JourneyPage() {
                         style={{ color: "#E2E8F0" }}
                       />
                     </div>
+                    {idx < filteredTemplates.length - 1 && (
+                      <div className="h-px bg-[#E2E8F0]" />
+                    )}
                   </div>
                 );
               })}
