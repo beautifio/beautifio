@@ -34,19 +34,14 @@ export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole:
 export async function matchWithBot(sessionId: string, isPlayerA: boolean): Promise<void> {
   const supabase = await createServerClient()
   const botId = getRandomBotId('medium')
-  const firstSubject: 'a' | 'b' = Math.random() > 0.5 ? 'a' : 'b'
 
-  await supabase.from('tebak_sessions').update({
-    player_b_id: botId,
-    status: 'active',
-    current_subject: firstSubject,
-  }).eq('id', sessionId)
+  const { data: roundId, error } = await supabase.rpc('activate_tebak_session', {
+    p_session_id: sessionId,
+    p_player_b_id: botId,
+  })
 
-  const { data: round } = await supabase.from('tebak_rounds').insert({
-    session_id: sessionId, subject_player: firstSubject, round_number: 1,
-  }).select('id').single()
-
-  if (round) await selectQuestionsForRound(sessionId, round.id)
+  if (error || !roundId) return
+  await selectQuestionsForRound(sessionId, roundId as string)
 }
 
 export async function replaceDisconnectedWithBot(sessionId: string, disconnectedUserId: string): Promise<void> {
@@ -205,17 +200,13 @@ export async function retryMatchmaking(sessionId: string): Promise<string | null
 
   await supabase.from('tebak_sessions').delete().eq('id', sessionId)
 
-  const firstSubject: 'a' | 'b' = Math.random() > 0.5 ? 'a' : 'b'
+  const { data: roundId, error } = await supabase.rpc('activate_tebak_session', {
+    p_session_id: other.id,
+    p_player_b_id: user.id,
+  })
 
-  await supabase.from('tebak_sessions').update({
-    player_b_id: user.id, status: 'active', current_subject: firstSubject,
-  }).eq('id', other.id)
-
-  const { data: round } = await supabase.from('tebak_rounds').insert({
-    session_id: other.id, subject_player: firstSubject, round_number: 1,
-  }).select('id').single()
-
-  if (round) await selectQuestionsForRound(other.id, round.id)
+  if (error || !roundId) return null
+  await selectQuestionsForRound(other.id, roundId as string)
 
   return other.id
 }
@@ -352,9 +343,7 @@ export async function advanceGame(sessionId: string): Promise<void> {
 
     if (newRound) {
       await selectQuestionsForRound(sessionId, newRound.id)
-      await supabase.from('tebak_sessions').update({
-        current_round: 2, current_subject: newSubject, current_q_seq: 1,
-      }).eq('id', sessionId)
+      await supabase.rpc('switch_tebak_subject', { p_session_id: sessionId })
     }
   } else {
     await supabase.from('tebak_sessions').update({

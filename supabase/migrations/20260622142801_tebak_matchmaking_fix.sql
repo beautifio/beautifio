@@ -72,3 +72,55 @@ BEGIN
   );
 END;
 $$;
+
+-- Activate session with bot (or second player) — handles tebak_player cast
+CREATE OR REPLACE FUNCTION activate_tebak_session(
+  p_session_id uuid,
+  p_player_b_id uuid
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_subject tebak_player;
+  v_round_id uuid;
+BEGIN
+  v_subject := CASE WHEN random() > 0.5 THEN 'a'::tebak_player ELSE 'b'::tebak_player END;
+
+  UPDATE tebak_sessions SET
+    player_b_id = p_player_b_id,
+    status = 'active',
+    current_subject = v_subject
+  WHERE id = p_session_id;
+
+  INSERT INTO tebak_rounds (session_id, subject_player, round_number)
+  VALUES (p_session_id, v_subject, 1)
+  RETURNING id INTO v_round_id;
+
+  RETURN v_round_id;
+END;
+$$;
+
+-- Switch subject for round 2
+CREATE OR REPLACE FUNCTION switch_tebak_subject(p_session_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_current tebak_player;
+  v_new tebak_player;
+BEGIN
+  SELECT current_subject INTO v_current FROM tebak_sessions WHERE id = p_session_id;
+  v_new := CASE WHEN v_current = 'a'::tebak_player THEN 'b'::tebak_player ELSE 'a'::tebak_player END;
+
+  UPDATE tebak_sessions SET
+    current_round = 2,
+    current_subject = v_new,
+    current_q_seq = 1
+  WHERE id = p_session_id;
+END;
+$$;
