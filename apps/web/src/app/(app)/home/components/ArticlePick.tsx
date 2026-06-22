@@ -12,12 +12,20 @@ interface Article {
   cover_image?: string;
   category?: string;
   author?: string;
+  source?: string;
+  author_type?: string;
 }
 
-const SOURCE_LABEL: Record<string, string> = {
-  cerita: "Cerita",
-  mentor: "Mentor",
+const AUTHOR_TYPE_LABEL: Record<string, string> = {
   redaksi: "Redaksi",
+  mentor: "Mentor",
+  cerita_pembaca: "Cerita",
+}
+
+const AUTHOR_TYPE_COLORS: Record<string, string> = {
+  redaksi: "text-blue-600",
+  mentor: "text-purple-600",
+  cerita_pembaca: "text-orange-600",
 }
 
 export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
@@ -39,7 +47,7 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
             if (matched && matched.length > 0) {
               const { data: personal } = await supabase
                 .from("articles")
-                .select("id, slug, title, cover_image, category, author")
+                .select("id, slug, title, cover_image, category, author, source, author_type")
                 .in("id", matched.slice(0, 10))
                 .eq("is_published", true);
               if (personal && personal.length > 0) {
@@ -54,7 +62,7 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
 
         const { data } = await supabase
           .from("articles")
-          .select("id, slug, title, cover_image, category, author")
+          .select("id, slug, title, cover_image, category, author, source, author_type")
           .eq("is_published", true)
           .order("created_at", { ascending: false })
           .limit(10);
@@ -95,7 +103,9 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
       <div className="divide-y divide-gray-100">
         {articles.map((a) => {
           const initials = a.author?.charAt(0) || "?"
-          const source = a.category || "cerita"
+          const sourceKey = a.author_type || a.source || "cerita_pembaca"
+          const sourceLabel = AUTHOR_TYPE_LABEL[sourceKey] || "Cerita"
+          const sourceColor = AUTHOR_TYPE_COLORS[sourceKey] || "text-purple-600"
           return (
             <Link
               key={a.id}
@@ -118,8 +128,8 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
               </div>
               <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                 <div>
-                  <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-                    {SOURCE_LABEL[source] || source}
+                  <span className={`text-[10px] font-semibold ${sourceColor} uppercase tracking-wider`}>
+                    {sourceLabel}
                   </span>
                   <h3 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 mt-0.5">
                     {a.title}

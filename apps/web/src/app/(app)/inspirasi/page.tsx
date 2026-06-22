@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, BookOpen, PenLine, Quote, BookHeart } from "lucide-react";
-import { SOURCE_TABS } from "@/lib/inspirasi-data";
+import { Sparkles, BookOpen, PenLine, Quote, BookHeart, Heart, TrendingUp, Users, Feather, Monitor } from "lucide-react";
+import { SOURCE_TABS, CATEGORY_LABELS } from "@/lib/inspirasi-data";
 import type { SourceType, InspirasiItem } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -89,11 +89,23 @@ async function fetchArticles(): Promise<InspirasiItem[]> {
     initials: a.initials,
     cover_image: a.cover_image,
     category: a.category,
+    category_id: a.category_id,
+    category_label: a.category_id ? CATEGORY_LABELS[a.category_id] || a.category : a.category,
     reading_time: a.read_time_minutes,
     like_count: a.like_count,
     comment_count: a.comment_count,
     save_count: a.save_count,
     related_slugs: a.related_slugs || [],
+    author_type: a.author_type,
+    architecture: a.architecture,
+    author_credentials: a.author_credentials,
+    author_anon_name: a.author_anon_name,
+    series_id: a.series_id,
+    disclaimer_type: a.disclaimer_type,
+    disclaimer_custom: a.disclaimer_custom,
+    meta_title: a.meta_title,
+    meta_description: a.meta_description,
+    og_image: a.og_image,
   }));
 }
 
@@ -123,10 +135,27 @@ export default function InspirasiPage() {
 
   const allItems = useMemo(() => dbItems, [dbItems]);
 
+  const CATEGORY_ICONS: Record<string, typeof Heart> = {
+    "mind-body": Heart,
+    "glow-glowup": Sparkles,
+    "levelup-career": TrendingUp,
+    "relationship": Users,
+    "creative-space": Feather,
+    "tech-gaming": Monitor,
+  };
+
   const categories = useMemo(() => {
     const items = activeTab === "all" ? allItems : allItems.filter((item) => (item.source || "cerita") === activeTab);
-    const cats = new Set(items.map((item) => item.category));
-    return Array.from(cats).sort();
+    const seen = new Set<string>();
+    const result: { id: string; label: string }[] = [];
+    items.forEach((item) => {
+      const id = item.category_id || item.category;
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        result.push({ id, label: item.category_label || item.category });
+      }
+    });
+    return result;
   }, [activeTab, allItems]);
 
   const filteredItems = useMemo(() => {
@@ -134,7 +163,7 @@ export default function InspirasiPage() {
       ? allItems
       : allItems.filter((item) => (item.source || "cerita") === activeTab);
     if (categoryFilter) {
-      items = items.filter((item) => item.category === categoryFilter);
+      items = items.filter((item) => (item.category_id || item.category) === categoryFilter);
     }
     return items;
   }, [activeTab, categoryFilter, allItems]);
@@ -177,19 +206,23 @@ export default function InspirasiPage() {
           >
             Semua
           </button>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                categoryFilter === cat
-                  ? "bg-gray-800 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          {categories.map((cat) => {
+            const CatIcon = CATEGORY_ICONS[cat.id];
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setCategoryFilter(cat.id)}
+                className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  categoryFilter === cat.id
+                    ? "bg-gray-800 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {CatIcon && <CatIcon className="w-3 h-3" />}
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

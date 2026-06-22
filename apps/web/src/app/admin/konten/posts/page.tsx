@@ -1,29 +1,55 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle } from "lucide-react";
 import { Button, Badge } from "@beautifio/ui";
 import { RichTextEditor } from "@/features/editor/RichTextEditor";
 
-const STATUS_LABELS: Record<string, string> = { draft: "Draft", published: "Published", archived: "Archived", scheduled: "Terjadwal" };
+const CATEGORIES = [
+  { id: "mind-body", label: "Mind & Body", icon: "heart" },
+  { id: "glow-glowup", label: "Glow & Glow Up", icon: "sparkles" },
+  { id: "levelup-career", label: "Level Up & Career", icon: "trending-up" },
+  { id: "relationship", label: "Relationship", icon: "users" },
+  { id: "creative-space", label: "Creative Space", icon: "feather" },
+  { id: "tech-gaming", label: "Tech & Gaming", icon: "monitor" },
+];
+
+const AUTHOR_TYPES = [
+  { id: "redaksi", label: "Redaksi (Kak Nara)", icon: User },
+  { id: "mentor", label: "Mentor / Ahli", icon: GraduationCap },
+  { id: "cerita_pembaca", label: "Cerita Pembaca", icon: MessageSquare },
+];
+
+const ARCHITECTURES = [
+  { id: "pilar", label: "Pilar", desc: "Evergreen, 2.500–4.000 kata" },
+  { id: "kluster", label: "Kluster", desc: "Sub-topik, 1.500–2.500 kata" },
+  { id: "trending", label: "Trending", desc: "Real-time, 800–1.200 kata" },
+];
+
+const DISCLAIMER_TYPES = [
+  { id: "none", label: "None", color: "bg-gray-100 text-gray-600" },
+  { id: "yellow", label: "Kuning", color: "bg-yellow-100 text-yellow-700" },
+  { id: "red", label: "Merah", color: "bg-red-100 text-red-700" },
+];
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Draft", published: "Published", archived: "Archived", scheduled: "Terjadwal",
+};
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
-  published: "bg-green-100 text-green-700",
-  archived: "bg-yellow-100 text-yellow-700",
-  scheduled: "bg-blue-100 text-blue-700",
+  draft: "bg-gray-100 text-gray-700", published: "bg-green-100 text-green-700",
+  archived: "bg-yellow-100 text-yellow-700", scheduled: "bg-blue-100 text-blue-700",
 };
 
-const CATEGORIES = [
-  "Karir", "Pendidikan", "Bisnis", "Kesehatan Mental",
-  "Percintaan", "Self Reflection", "Personal Growth",
-  "Public Speaking", "Personal Branding", "Finance",
-  "Writing", "Teknologi", "Gaming", "Alam & Petualangan",
-  "Menulis & Literasi",
-];
+const REVIEW_LABELS: Record<string, string> = {
+  draft: "Draft", peer_review: "Peer Review", mentor_approved: "Mentor OK", ready: "Siap",
+};
+const REVIEW_COLORS: Record<string, string> = {
+  draft: "bg-gray-100 text-gray-500", peer_review: "bg-orange-100 text-orange-700",
+  mentor_approved: "bg-purple-100 text-purple-700", ready: "bg-green-100 text-green-700",
+};
 
 function postStatus(p: any): string {
   if (p.deleted_at) return "deleted";
-  if (p.status) return p.status;
   if (p.scheduled_at && !p.is_published) return "scheduled";
   if (p.is_published === true) return "published";
   return "draft";
@@ -39,16 +65,33 @@ function toLocalDatetime(iso: string) {
     String(d.getMinutes()).padStart(2, "0");
 }
 
+const AUTHOR_TYPE_BADGE: Record<string, { label: string; color: string }> = {
+  redaksi: { label: "Redaksi", color: "bg-blue-100 text-blue-700" },
+  mentor: { label: "Mentor", color: "bg-purple-100 text-purple-700" },
+  cerita_pembaca: { label: "Cerita", color: "bg-orange-100 text-orange-700" },
+};
+
+const ARCH_LABELS: Record<string, string> = { pilar: "Pilar", kluster: "Kluster", trending: "Trending" };
+
 export default function InspirasiPostsPage() {
   const [posts, setPosts] = useState<any[]>([]);
-  const [trash, setTrash] = useState<any[]>([]);
+  const [seriesList, setSeriesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<any>({ title: "", content: "", excerpt: "", category: "Karir", cover_image: "", author_name: "", read_time_minutes: 5, slug: "", meta_title: "", meta_description: "", og_image: "", scheduled_at: "" });
+  const [form, setForm] = useState<any>({
+    title: "", content: "", excerpt: "", category_id: "mind-body",
+    cover_image: "", author_name: "", read_time_minutes: 5,
+    slug: "", meta_title: "", meta_description: "", og_image: "",
+    scheduled_at: "", author_type: "redaksi", architecture: "",
+    disclaimer_type: "none", disclaimer_custom: "",
+    author_credentials: { gelar: "", institusi: "", linkedin: "", foto_url: "" },
+    author_anon_name: "", series_id: "",
+  });
   const [saving, setSaving] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [scheduleInputs, setScheduleInputs] = useState<Record<string, string>>({});
 
   const fetchPosts = async () => {
     try {
@@ -60,34 +103,54 @@ export default function InspirasiPostsPage() {
   const fetchTrash = async () => {
     try {
       const res = await fetch("/api/admin/konten/posts?trash=1");
-      if (res.ok) { const { data } = await res.json(); setTrash(data || []); }
+      if (res.ok) { const { data } = await res.json(); setTrashPosts(data || []); }
     } catch (e) { console.error("Failed to load trash", e); }
   };
 
-  useEffect(() => { fetchPosts(); }, []);
+  const fetchSeries = async () => {
+    try {
+      const res = await fetch("/api/admin/konten/series");
+      if (res.ok) { const { data } = await res.json(); setSeriesList(data || []); }
+    } catch (e) { console.error("Failed to load series", e); }
+  };
+
+  useEffect(() => { fetchPosts(); fetchSeries(); }, []);
+
+  const [trashPosts, setTrashPosts] = useState<any[]>([]);
 
   function startEdit(p: any) {
     setEditId(p.id);
     setForm({
-      title: p.title,
-      content: p.content,
-      excerpt: p.excerpt || "",
-      category: CATEGORIES.includes(p.category) ? p.category : "Karir",
+      title: p.title, content: p.content, excerpt: p.excerpt || "",
+      category_id: p.category_id || "mind-body",
       cover_image: p.cover_image || "",
       author_name: p.author || p.author_name || "",
       read_time_minutes: p.read_time_minutes || 5,
       slug: p.slug || "",
-      meta_title: p.meta_title || "",
-      meta_description: p.meta_description || "",
-      og_image: p.og_image || "",
-      scheduled_at: p.scheduled_at || "",
+      meta_title: p.meta_title || "", meta_description: p.meta_description || "",
+      og_image: p.og_image || "", scheduled_at: p.scheduled_at || "",
+      author_type: p.author_type || "redaksi",
+      architecture: p.architecture || "",
+      disclaimer_type: p.disclaimer_type || "none",
+      disclaimer_custom: p.disclaimer_custom || "",
+      author_credentials: p.author_credentials || { gelar: "", institusi: "", linkedin: "", foto_url: "" },
+      author_anon_name: p.author_anon_name || "",
+      series_id: p.series_id || "",
     });
     setShowAdd(true);
   }
 
   function startNew() {
     setEditId(null);
-    setForm({ title: "", content: "", excerpt: "", category: "Karir", cover_image: "", author_name: "", read_time_minutes: 5, slug: "", meta_title: "", meta_description: "", og_image: "", scheduled_at: "" });
+    setForm({
+      title: "", content: "", excerpt: "", category_id: "mind-body",
+      cover_image: "", author_name: "", read_time_minutes: 5,
+      slug: "", meta_title: "", meta_description: "", og_image: "",
+      scheduled_at: "", author_type: "redaksi", architecture: "",
+      disclaimer_type: "none", disclaimer_custom: "",
+      author_credentials: { gelar: "", institusi: "", linkedin: "", foto_url: "" },
+      author_anon_name: "", series_id: "",
+    });
     setShowAdd(true);
   }
 
@@ -103,6 +166,10 @@ export default function InspirasiPostsPage() {
       } else {
         delete body.scheduled_at;
       }
+      if (!body.series_id) delete body.series_id;
+      if (!body.author_anon_name) delete body.author_anon_name;
+      if (body.author_type !== "mentor") delete body.author_credentials;
+      if (body.disclaimer_type === "none") { body.disclaimer_custom = null; }
 
       let res;
       if (editId) {
@@ -124,10 +191,7 @@ export default function InspirasiPostsPage() {
   async function updateStatus(id: string, status: string) {
     try {
       const res = await fetch(`/api/admin/konten/posts/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${res.status}`);
-      }
+      if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error || `HTTP ${res.status}`); }
       await fetchPosts();
     } catch (e: any) { alert(e.message); }
   }
@@ -136,10 +200,7 @@ export default function InspirasiPostsPage() {
     if (!scheduledAt) return;
     try {
       const res = await fetch(`/api/admin/konten/posts/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scheduled_at: new Date(scheduledAt).toISOString(), is_published: false }) });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${res.status}`);
-      }
+      if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error || `HTTP ${res.status}`); }
       await fetchPosts();
     } catch (e: any) { alert(e.message); }
   }
@@ -181,49 +242,34 @@ export default function InspirasiPostsPage() {
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("landing-assets").getPublicUrl(`artikel/${filename}`);
       setForm((prev: any) => ({ ...prev, cover_image: urlData.publicUrl }));
-    } catch (err: any) {
-      alert(`Upload cover gagal: ${err.message || ""}`);
-    } finally {
-      setUploadingCover(false);
-    }
+    } catch (err: any) { alert(`Upload cover gagal: ${err.message || ""}`); } finally { setUploadingCover(false); }
   }
 
-  const [scheduleInputs, setScheduleInputs] = useState<Record<string, string>>({});
+  const authorType = form.author_type;
+  const CatIcon = ({ id }: { id: string }) => {
+    const icons: Record<string, string> = { heart: "\u2764", sparkles: "\u2728", "trending-up": "\uD83D\uDCC8", users: "\uD83D\uDC65", feather: "\u270F\uFE0F", monitor: "\uD83D\uDDA5\uFE0F" };
+    return <span>{icons[id] || "\u2764"}</span>;
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-gray-900">Inspirasi Posts</h1>
         <div className="flex items-center gap-2">
-          {showTrash && (
-            <Button variant="ghost" size="sm" onClick={() => setShowTrash(false)} className="cursor-pointer">
-              Kembali
-            </Button>
-          )}
-          <Button
-            variant={showTrash ? "accent" : "ghost"}
-            size="sm"
-            onClick={() => { setShowTrash(!showTrash); if (!showTrash) fetchTrash(); }}
-            className="cursor-pointer"
-          >
-            <Trash className="w-4 h-4" /> Sampah
-          </Button>
-          {!showTrash && (
-            <Button variant="accent" size="sm" onClick={startNew} className="cursor-pointer">
-              <Plus className="w-4 h-4" /> Tambah Post
-            </Button>
-          )}
+          {showTrash && <Button variant="ghost" size="sm" onClick={() => setShowTrash(false)} className="cursor-pointer">Kembali</Button>}
+          <Button variant={showTrash ? "accent" : "ghost"} size="sm" onClick={() => { setShowTrash(!showTrash); if (!showTrash) fetchTrash(); }} className="cursor-pointer"><Trash className="w-4 h-4" /> Sampah</Button>
+          {!showTrash && <Button variant="accent" size="sm" onClick={startNew} className="cursor-pointer"><Plus className="w-4 h-4" /> Tambah Post</Button>}
         </div>
       </div>
 
       {loading ? (
         <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-gray-100 animate-pulse" />)}</div>
       ) : showTrash ? (
-        trash.length === 0 ? (
+        trashPosts.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-8">Sampah kosong</p>
         ) : (
           <div className="space-y-2">
-            {trash.map((p) => {
+            {trashPosts.map((p) => {
               const daysLeft = p.deleted_at ? 30 - Math.floor((Date.now() - new Date(p.deleted_at).getTime()) / 86400000) : 30;
               return (
                 <div key={p.id} className="bg-white rounded-xl border border-red-200 p-4 opacity-75">
@@ -231,7 +277,7 @@ export default function InspirasiPostsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-red-100 text-red-700">Dihapus</span>
-                        <Badge variant="accent" className="text-[10px]">{p.category}</Badge>
+                        <Badge variant="accent" className="text-[10px]">{p.category_label || p.category}</Badge>
                       </div>
                       <p className="text-sm font-semibold text-gray-900">{p.title}</p>
                       <p className="text-xs text-red-500 mt-1">{daysLeft} hari sebelum dihapus permanen</p>
@@ -251,25 +297,28 @@ export default function InspirasiPostsPage() {
           {posts.length === 0 && <p className="text-sm text-gray-500 text-center py-8">Belum ada post</p>}
           {posts.map((p) => {
             const st = postStatus(p);
+            const authorBadge = AUTHOR_TYPE_BADGE[p.author_type || "redaksi"];
             return (
               <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[st] || "bg-gray-100 text-gray-700"}`}>{STATUS_LABELS[st] || st}</span>
-                      <Badge variant="accent" className="text-[10px]">{p.category}</Badge>
-                      {p.source === "redaksi" && <span className="text-[10px] text-blue-500 font-medium">Redaksi</span>}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${authorBadge.color}`}>{authorBadge.label}</span>
+                      <Badge variant="accent" className="text-[10px]">{p.category_label || p.category}</Badge>
+                      {p.architecture && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-cyan-100 text-cyan-700">{ARCH_LABELS[p.architecture] || p.architecture}</span>}
+                      {p.review_status && p.review_status !== "ready" && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${REVIEW_COLORS[p.review_status] || ""}`}>
+                          {REVIEW_LABELS[p.review_status] || p.review_status}
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm font-semibold text-gray-900">{p.title}</p>
                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{p.excerpt || p.content?.slice(0, 100)}</p>
                     <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400">
-                      <span>{p.author || p.author_name || "—"}</span>
+                      <span>{p.author || p.author_name || "\u2014"}</span>
                       <span>{new Date(p.created_at).toLocaleString("id-ID")}</span>
-                      {p.scheduled_at && !p.is_published && (
-                        <span className="text-blue-500 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> Jadwal {new Date(p.scheduled_at).toLocaleString("id-ID")}
-                        </span>
-                      )}
+                      {p.scheduled_at && !p.is_published && <span className="text-blue-500 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(p.scheduled_at).toLocaleString("id-ID")}</span>}
                       {p.read_time_minutes && <span>{p.read_time_minutes} menit</span>}
                       {p.slug && <span className="font-mono">/{p.slug}</span>}
                     </div>
@@ -280,29 +329,10 @@ export default function InspirasiPostsPage() {
                       <>
                         <button onClick={() => updateStatus(p.id, "published")} className="w-7 h-7 rounded-lg hover:bg-green-50 flex items-center justify-center cursor-pointer" title="Publish"><Send className="w-3.5 h-3.5 text-green-500" /></button>
                         <div className="relative">
-                          <button
-                            onClick={() => {
-                              const el = document.getElementById(`schedule-${p.id}`);
-                              if (el) el.style.display = el.style.display === "none" ? "flex" : "none";
-                            }}
-                            className="w-7 h-7 rounded-lg hover:bg-blue-50 flex items-center justify-center cursor-pointer"
-                            title="Jadwalkan"
-                          >
-                            <CalendarClock className="w-3.5 h-3.5 text-blue-500" />
-                          </button>
-                          <div id={`schedule-${p.id}`} className="hidden absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-3 flex items-center gap-2" style={{ display: "none" }}>
-                            <input
-                              type="datetime-local"
-                              className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs w-44"
-                              value={scheduleInputs[p.id] || ""}
-                              onChange={(e) => setScheduleInputs((prev: any) => ({ ...prev, [p.id]: e.target.value }))}
-                            />
-                            <button
-                              onClick={() => schedulePost(p.id, scheduleInputs[p.id] || "")}
-                              className="px-2.5 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 cursor-pointer"
-                            >
-                              Atur
-                            </button>
+                          <button onClick={() => { const el = document.getElementById(`schedule-${p.id}`); if (el) el.classList.toggle("hidden"); }} className="w-7 h-7 rounded-lg hover:bg-blue-50 flex items-center justify-center cursor-pointer" title="Jadwalkan"><CalendarClock className="w-3.5 h-3.5 text-blue-500" /></button>
+                          <div id={`schedule-${p.id}`} className="hidden absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-3 flex items-center gap-2">
+                            <input type="datetime-local" className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs w-44" value={scheduleInputs[p.id] || ""} onChange={(e) => setScheduleInputs((prev: any) => ({ ...prev, [p.id]: e.target.value }))} />
+                            <button onClick={() => schedulePost(p.id, scheduleInputs[p.id] || "")} className="px-2.5 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 cursor-pointer">Atur</button>
                           </div>
                         </div>
                       </>
@@ -321,72 +351,159 @@ export default function InspirasiPostsPage() {
 
       {showAdd && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 px-4" onClick={() => setShowAdd(false)}>
-          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl p-6 max-w-3xl w-full shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-gray-900">{editId ? "Edit Post" : "Tambah Post"}</h3>
               <button onClick={() => setShowAdd(false)} className="cursor-pointer"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Title</label><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Slug</label><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" placeholder="Auto-generated" /></div>
               </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Kategori</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {CATEGORIES.map((c) => (
+                    <button key={c.id} onClick={() => setForm({ ...form, category_id: c.id })}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${
+                        form.category_id === c.id ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}>
+                      <CatIcon id={c.icon} /> {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Tipe Penulis</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {AUTHOR_TYPES.map((t) => {
+                    const Icon = t.icon;
+                    return (
+                      <button key={t.id} onClick={() => setForm({ ...form, author_type: t.id })}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${
+                          form.author_type === t.id ? "border-purple-500 bg-purple-50 text-purple-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                        }`}>
+                        <Icon className="w-4 h-4" /> {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {authorType === "mentor" && (
+                <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 space-y-3">
+                  <p className="text-xs font-semibold text-purple-700">Data Mentor</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className="text-[10px] font-medium text-gray-500 block mb-1">Nama Lengkap</label><input value={form.author_name} onChange={(e) => setForm({ ...form, author_name: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-purple-200 text-sm" /></div>
+                    <div><label className="text-[10px] font-medium text-gray-500 block mb-1">Gelar / Sertifikasi</label><input value={form.author_credentials.gelar} onChange={(e) => setForm({ ...form, author_credentials: { ...form.author_credentials, gelar: e.target.value } })} className="w-full px-3 py-2 rounded-lg border border-purple-200 text-sm" placeholder="S.Psi., M.Psi., Psikolog" /></div>
+                    <div><label className="text-[10px] font-medium text-gray-500 block mb-1">Institusi / Praktik</label><input value={form.author_credentials.institusi} onChange={(e) => setForm({ ...form, author_credentials: { ...form.author_credentials, institusi: e.target.value } })} className="w-full px-3 py-2 rounded-lg border border-purple-200 text-sm" /></div>
+                    <div><label className="text-[10px] font-medium text-gray-500 block mb-1">LinkedIn / URL Profesional</label><input value={form.author_credentials.linkedin} onChange={(e) => setForm({ ...form, author_credentials: { ...form.author_credentials, linkedin: e.target.value } })} className="w-full px-3 py-2 rounded-lg border border-purple-200 text-sm" /></div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium text-gray-500 block mb-1">Foto Profesional</label>
+                    <div className="flex items-center gap-2">
+                      <input value={form.author_credentials.foto_url} onChange={(e) => setForm({ ...form, author_credentials: { ...form.author_credentials, foto_url: e.target.value } })} className="flex-1 px-3 py-2 rounded-lg border border-purple-200 text-sm" placeholder="URL foto" />
+                      {form.author_credentials.foto_url && <img src={form.author_credentials.foto_url} className="w-10 h-10 rounded-full object-cover" alt="" />}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {authorType === "cerita_pembaca" && (
+                <div className="p-3 rounded-xl bg-orange-50 border border-orange-200 space-y-3">
+                  <p className="text-xs font-semibold text-orange-700">Identitas Penulis Cerita</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className="text-[10px] font-medium text-gray-500 block mb-1">Nama Anonim</label><input value={form.author_anon_name} onChange={(e) => setForm({ ...form, author_anon_name: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-orange-200 text-sm" placeholder="Anonim, 20 tahun, Jakarta" /></div>
+                    <div><label className="text-[10px] font-medium text-gray-500 block mb-1">Nama Asli (internal)</label><input value={form.author_name} onChange={(e) => setForm({ ...form, author_name: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-orange-200 text-sm" /></div>
+                  </div>
+                </div>
+              )}
+
+              {authorType === "redaksi" && (
+                <div><label className="text-xs font-medium text-gray-600 block mb-1">Author Name</label><input value={form.author_name} onChange={(e) => setForm((prev: any) => ({ ...prev, author_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
+              )}
+
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Arsitektur Konten</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button onClick={() => setForm({ ...form, architecture: "" })}
+                    className={`px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${!form.architecture ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}>
+                    None
+                  </button>
+                  {ARCHITECTURES.map((a) => (
+                    <button key={a.id} onClick={() => setForm({ ...form, architecture: a.id })}
+                      className={`px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer ${
+                        form.architecture === a.id ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}>
+                      <span className="font-medium">{a.label}</span>
+                      <p className="text-[9px] text-gray-400 mt-0.5">{a.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Series (opsional)</label>
+                <select value={form.series_id} onChange={(e) => setForm({ ...form, series_id: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
+                  <option value="">Tidak masuk series</option>
+                  {seriesList.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                </select>
+              </div>
+
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-1">Content</label>
-                <RichTextEditor
-                  content={form.content}
-                  onChange={(html) => setForm((prev: any) => ({ ...prev, content: html }))}
-                  placeholder="Tulis konten artikel di sini..."
-                />
+                <RichTextEditor content={form.content} onChange={(html) => setForm((prev: any) => ({ ...prev, content: html }))} placeholder="Tulis konten artikel di sini..." />
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Excerpt</label><input value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
-                <div><label className="text-xs font-medium text-gray-600 block mb-1">Category</label>
-                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
-                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
+                <div><label className="text-xs font-medium text-gray-600 block mb-1">Read Time (menit)</label><input type="number" min={1} max={60} value={form.read_time_minutes} onChange={(e) => setForm((prev: any) => ({ ...prev, read_time_minutes: parseInt(e.target.value) || 5 }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Author Name</label>
-                  <input value={form.author_name} onChange={(e) => setForm((prev: any) => ({ ...prev, author_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Read Time (menit)</label>
-                  <input type="number" min={1} max={60} value={form.read_time_minutes} onChange={(e) => setForm((prev: any) => ({ ...prev, read_time_minutes: parseInt(e.target.value) || 5 }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
-                </div>
-              </div>
+
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-1">Jadwalkan Publikasi (opsional)</label>
-                <input
-                  type="datetime-local"
-                  value={form.scheduled_at ? toLocalDatetime(form.scheduled_at) : ""}
-                  onChange={(e) => setForm((prev: any) => ({ ...prev, scheduled_at: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
-                />
-                <p className="text-[10px] text-gray-400 mt-1">Kosongkan jika ingin publikasi manual</p>
+                <input type="datetime-local" value={form.scheduled_at ? toLocalDatetime(form.scheduled_at) : ""} onChange={(e) => setForm((prev: any) => ({ ...prev, scheduled_at: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
               </div>
+
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-1">Cover Image</label>
                 <div className="flex items-center gap-2">
                   <label className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm cursor-pointer hover:bg-gray-50">
                     <Upload className="w-4 h-4 text-gray-400" />
                     <span className="text-gray-500">{uploadingCover ? "Uploading..." : form.cover_image ? "Ganti" : "Upload"}</span>
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); e.target.value = ""; }} />
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); e.target.value = ""; }} />
                   </label>
-                  {form.cover_image && (
-                    <button onClick={() => setForm((prev: any) => ({ ...prev, cover_image: "" }))}
-                      className="text-xs text-red-500 hover:text-red-700 cursor-pointer">Hapus</button>
-                  )}
+                  {form.cover_image && <button onClick={() => setForm((prev: any) => ({ ...prev, cover_image: "" }))} className="text-xs text-red-500 hover:text-red-700 cursor-pointer">Hapus</button>}
                 </div>
-                {form.cover_image && (
-                  <div className="mt-2 aspect-[16/9] rounded-lg overflow-hidden bg-gray-100">
-                    <img src={form.cover_image} alt="Cover preview" className="w-full h-full object-cover" />
-                  </div>
+                {form.cover_image && <div className="mt-2 aspect-[16/9] rounded-lg overflow-hidden bg-gray-100"><img src={form.cover_image} alt="" className="w-full h-full object-cover" /></div>}
+              </div>
+
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                  <span className="text-xs font-semibold text-gray-700">Disclaimer</span>
+                </div>
+                <div className="flex gap-2">
+                  {DISCLAIMER_TYPES.map((d) => (
+                    <button key={d.id} onClick={() => setForm({ ...form, disclaimer_type: d.id })}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                        form.disclaimer_type === d.id ? d.color + " ring-2 ring-offset-1" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                      }`}>
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+                {form.disclaimer_type !== "none" && (
+                  <textarea value={form.disclaimer_custom} onChange={(e) => setForm({ ...form, disclaimer_custom: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs resize-none" rows={2}
+                    placeholder={`Custom disclaimer (opsional). Default untuk ${form.disclaimer_type === "red" ? "MERAH" : "KUNING"} sudah otomatis.`} />
                 )}
               </div>
+
               <details className="group">
                 <summary className="text-xs font-medium text-gray-500 cursor-pointer hover:text-gray-700">SEO Settings</summary>
                 <div className="space-y-3 mt-3">

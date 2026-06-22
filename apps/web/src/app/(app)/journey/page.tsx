@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Compass, ChevronDown, ChevronUp, Flame, X } from "lucide-react";
+import { Sparkles, ArrowRight, Compass, ChevronDown, ChevronUp, Flame, X, Search, Play } from "lucide-react";
 import { Button, Card, Skeleton } from "@beautifio/ui";
 import { getAllDreamTemplates } from "@beautifio/utils";
 import type { DreamTemplate, DreamJourney, JourneyProgress } from "@beautifio/types";
@@ -15,17 +15,49 @@ import { getAllJourneys, journeyUrl, getJourneyProgress, archiveJourney } from "
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false });
 
-const FILTER_CHIPS = [
+const FILTER_TABS = [
   { label: "Semua", value: "" },
   { label: "Olahraga", value: "sports" },
   { label: "Karir", value: "career" },
   { label: "Bisnis", value: "business" },
+  { label: "Tech", value: "tech" },
   { label: "Seni", value: "creative" },
-  { label: "Akademik", value: "education" },
-  { label: "Kesehatan", value: "health" },
-] as const
+] as const;
 
-type FilterKey = (typeof FILTER_CHIPS)[number]["value"]
+type FilterKey = (typeof FILTER_TABS)[number]["value"];
+
+const CATEGORY_BG: Record<string, string> = {
+  sports: "#E8F5E9",
+  career: "#E3F2FD",
+  business: "#FFF3E0",
+  tech: "#E0F7FA",
+  creative: "#F3E5F5",
+  education: "#F0F9FF",
+  health: "#FFF8E7",
+  lifestyle: "#FFF8E7",
+};
+
+const CATEGORY_TEXT: Record<string, string> = {
+  sports: "#2E7D32",
+  career: "#1565C0",
+  business: "#E65100",
+  tech: "#00838F",
+  creative: "#7B1FA2",
+  education: "#026AA2",
+  health: "#8D6E00",
+  lifestyle: "#8D6E00",
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  sports: "Olahraga",
+  career: "Karir",
+  business: "Bisnis",
+  tech: "Tech",
+  creative: "Seni",
+  education: "Akademik",
+  health: "Kesehatan",
+  lifestyle: "Lifestyle",
+};
 
 function statusLabel(status: string) {
   switch (status) {
@@ -68,6 +100,8 @@ export default function JourneyPage() {
   // Max-3 limit modal
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<DreamTemplate | null>(null);
+
+  const [searchInput, setSearchInput] = useState("");
 
   const filteredTemplates = useMemo(
     () => templates.filter((t) => !activeFilter || t.category === activeFilter),
@@ -239,77 +273,135 @@ export default function JourneyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg p-6 max-w-content mx-auto">
-        <Skeleton className="h-8 w-48 mb-6" />
-        <Skeleton className="h-48 w-full mb-4 rounded-2xl" />
-        <Skeleton className="h-32 w-full mb-4 rounded-xl" />
+      <div className="min-h-screen" style={{ backgroundColor: '#F8FAFC' }}>
+        <div className="max-w-xl mx-auto px-5 pt-6 pb-28 space-y-4">
+          <Skeleton className="h-44 w-full rounded-2xl" />
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-72 w-full rounded-2xl" />
+        </div>
       </div>
     );
   }
 
-  const progressPct = primaryProgress
+  const progressPct = primaryJourney && primaryProgress
     ? Math.round((primaryProgress.big_wins_completed / Math.max(primaryProgress.big_wins_total, 1)) * 100)
     : 0;
 
-  const hasJourneys = primaryJourney || otherActiveJourneys.length > 0 || previousJourneys.length > 0;
+  const filteredTemplatesBySearch = useMemo(
+    () => {
+      let items = templates.filter((t) => !activeFilter || t.category === activeFilter);
+      if (searchInput.trim()) {
+        const q = searchInput.toLowerCase();
+        items = items.filter((t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q)
+        );
+      }
+      return items;
+    },
+    [templates, activeFilter, searchInput]
+  );
 
   return (
-    <div className="min-h-screen bg-bg">
-      <div className="max-w-content mx-auto px-6 pt-8 pb-28">
+    <div className="min-h-screen" style={{ backgroundColor: '#F8FAFC' }}>
+      <div className="max-w-xl mx-auto px-5 pt-6 pb-28">
 
-        {/* ─── HERO CARD ─── */}
-        {primaryJourney && (
-          <Link href={journeyUrl(primaryJourney)} className="block mb-8">
-            <Card className="p-6 border-2 border-primary bg-gradient-to-br from-primary/5 via-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 transition-all">
-              <div className="flex items-start gap-4 mb-4">
-                <span className="text-4xl">{primaryJourney.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-xl font-bold text-text-primary">{primaryJourney.title}</h1>
-                  <p className="text-xs text-primary font-semibold mt-0.5 uppercase tracking-wide">Fokus Utama</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-xs text-text-secondary mb-1">
-                    <span>Progress</span>
-                    <span className="font-semibold text-text-primary">{progressPct}%</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progressPct}%` }} />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 text-xs text-text-secondary">
-                  {primaryProgress && primaryProgress.streak > 0 && (
-                    <span className="flex items-center gap-1">
-                      <Flame size={14} className="text-orange-500" />
-                      {primaryProgress.streak} hari berturut-turut
-                    </span>
-                  )}
-                  <span>
-                    {primaryProgress?.big_wins_completed || 0}/{primaryProgress?.big_wins_total || 0} big wins
-                  </span>
-                </div>
-
-                {primaryProgress?.current_big_win && (
-                  <div className="p-3 rounded-xl bg-accent/10 border border-accent/20">
-                    <p className="text-[11px] text-accent font-semibold uppercase tracking-wide">Sedang</p>
-                    <p className="text-sm font-bold text-text-primary mt-0.5">
-                      {primaryProgress.current_big_win.title}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-border/50 flex justify-end">
-                <span className="text-sm font-semibold text-primary flex items-center gap-1">
-                  Lanjutkan <ArrowRight size={16} />
+        {/* ─── JALURMU ─── */}
+        <section className="mb-8">
+          {primaryJourney ? (
+            <Link href={journeyUrl(primaryJourney)} className="block">
+              <div
+                className="rounded-2xl p-[18px]"
+                style={{ backgroundColor: '#084463' }}
+              >
+                {/* Category tag */}
+                <span
+                  className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-3"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#FFFFFF' }}
+                >
+                  {CATEGORY_LABEL[primaryJourney.category] || primaryJourney.category}
                 </span>
+
+                {/* Emoji + Title row */}
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="text-4xl leading-none">{primaryJourney.emoji}</span>
+                  <div className="min-w-0 flex-1 pt-1">
+                    <h2
+                      className="text-base font-semibold truncate"
+                      style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, color: '#FFFFFF' }}
+                    >
+                      {primaryJourney.title}
+                    </h2>
+                    {primaryProgress?.current_big_win && (
+                      <p
+                        className="text-xs mt-0.5 truncate"
+                        style={{ fontFamily: 'Inter, sans-serif', color: 'rgba(255,255,255,0.7)' }}
+                      >
+                        Fase: {primaryProgress.current_big_win.title}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mb-1">
+                  <div
+                    className="w-full h-1.5 rounded-full overflow-hidden"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${progressPct}%`, backgroundColor: '#FFC64F' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Percentage + CTA row */}
+                <div className="flex items-center justify-between mt-1">
+                  <span
+                    className="text-xs font-medium"
+                    style={{ fontFamily: 'Inter, sans-serif', color: 'rgba(255,255,255,0.8)' }}
+                  >
+                    {progressPct}% selesai
+                  </span>
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                    style={{ backgroundColor: '#FFC64F', color: '#1E2938' }}
+                  >
+                    <Play size={14} />
+                    Lanjut belajar
+                  </div>
+                </div>
               </div>
-            </Card>
-          </Link>
-        )}
+            </Link>
+          ) : (
+            /* ─── EMPTY STATE ─── */
+            <div
+              className="rounded-2xl border p-8 text-center"
+              style={{ borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' }}
+            >
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ backgroundColor: '#F8FAFC' }}
+              >
+                <Compass size={24} style={{ color: '#647488' }} />
+              </div>
+              <p
+                className="text-sm font-semibold mb-4"
+                style={{ fontFamily: 'Poppins, sans-serif', color: '#1E2938' }}
+              >
+                Kamu belum memilih jalur
+              </p>
+              <button
+                onClick={() => document.getElementById('jelajahi-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90 cursor-pointer"
+                style={{ backgroundColor: '#FFC64F', color: '#1E2938' }}
+              >
+                Pilih Jalurmu
+              </button>
+            </div>
+          )}
+        </section>
 
         {/* ─── JOURNEY AKTIF LAINNYA ─── */}
         {otherActiveJourneys.length > 0 && (
@@ -323,30 +415,34 @@ export default function JourneyPage() {
                 return (
                   <div key={j.id} className="relative group">
                     <Link href={journeyUrl(j)}>
-                      <Card className="p-4 border border-border hover:border-primary/30 transition-all h-full">
+                      <div
+                        className="p-4 rounded-2xl h-full transition-all hover:shadow-sm"
+                        style={{ border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}
+                      >
                         <span className="text-2xl block mb-2">{j.emoji}</span>
-                        <h3 className="text-sm font-bold text-text-primary">{j.title}</h3>
-                        <div className="mt-2 w-full h-1.5 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                        <h3 className="text-sm font-bold" style={{ color: '#1E2938' }}>{j.title}</h3>
+                        <div className="mt-2 w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#F8FAFC' }}>
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: '#084463' }} />
                         </div>
                         <div className="flex items-center justify-between mt-2">
-                          <span className="text-[11px] text-text-secondary">
+                          <span className="text-[11px]" style={{ color: '#647488' }}>
                             {p?.big_wins_completed || 0}/{p?.big_wins_total || 0}
                           </span>
                           {p && p.streak > 0 && (
-                            <span className="flex items-center gap-0.5 text-[11px] text-orange-500">
+                            <span className="flex items-center gap-0.5 text-[11px]" style={{ color: '#FFC64F' }}>
                               <Flame size={11} />{p.streak}
                             </span>
                           )}
                         </div>
-                        <div className="mt-3 pt-2 border-t border-border/50 flex justify-end">
-                          <span className="text-xs font-medium text-primary">Lanjutkan →</span>
+                        <div className="mt-3 pt-2 flex justify-end" style={{ borderTop: '1px solid #E2E8F0' }}>
+                          <span className="text-xs font-medium" style={{ color: '#084463' }}>Lanjutkan →</span>
                         </div>
-                      </Card>
+                      </div>
                     </Link>
                     <button
                       onClick={() => setArchiveTarget(j)}
-                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      style={{ backgroundColor: 'rgba(0,0,0,0.4)', color: '#FFFFFF' }}
                     >
                       <X size={12} />
                     </button>
@@ -360,15 +456,15 @@ export default function JourneyPage() {
         {/* ─── PERJALANAN SEBELUMNYA ─── */}
         {previousJourneys.length > 0 && (
           <section className="mb-8">
-            <h2 className="text-base font-bold text-text-primary mb-3">Perjalanan Sebelumnya</h2>
+            <h2 className="text-base font-bold mb-3" style={{ fontFamily: 'Poppins, sans-serif', color: '#1E2938' }}>Perjalanan Sebelumnya</h2>
             <div className="space-y-2">
               {(showAllPrevious ? previousJourneys : previousJourneys.slice(0, 3)).map((j) => (
-                <div key={j.id} className="p-4 rounded-xl bg-surface border border-border opacity-60 hover:opacity-80 transition-opacity">
+                <div key={j.id} className="p-4 rounded-xl opacity-60 hover:opacity-80 transition-opacity" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0' }}>
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{j.emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary">{j.title}</p>
-                      <p className="text-[11px] text-text-secondary">{statusLabel(j.status)}</p>
+                      <p className="text-sm font-medium" style={{ color: '#1E2938' }}>{j.title}</p>
+                      <p className="text-[11px]" style={{ color: '#647488' }}>{statusLabel(j.status)}</p>
                     </div>
                   </div>
                 </div>
@@ -377,7 +473,8 @@ export default function JourneyPage() {
             {previousJourneys.length > 3 && (
               <button
                 onClick={() => setShowAllPrevious(!showAllPrevious)}
-                className="mt-2 flex items-center gap-1 text-xs font-medium text-text-secondary hover:text-text-primary cursor-pointer mx-auto"
+                className="mt-2 flex items-center gap-1 text-xs font-medium mx-auto cursor-pointer"
+                style={{ color: '#647488' }}
               >
                 {showAllPrevious ? (
                   <>Lebih sedikit <ChevronUp size={14} /></>
@@ -389,56 +486,155 @@ export default function JourneyPage() {
           </section>
         )}
 
-        {/* ─── JELAJAHI MIMPI LAIN ─── */}
-        <section>
-          {primaryJourney && (
-            <>
-              <h2 className="text-base font-bold text-text-primary mb-1">Jelajahi Mimpi Lain</h2>
-              <p className="text-xs text-text-secondary mb-4">Kamu bisa menjalani lebih dari satu perjalanan sekaligus</p>
-            </>
-          )}
+        {/* ─── SEARCH BAR ─── */}
+        <div className="mb-5">
+          <div
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all focus-within:shadow-sm"
+            style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}
+          >
+            <Search size={16} style={{ color: '#647488' }} />
+            <input
+              type="text"
+              placeholder="Cari jalur..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="flex-1 text-sm bg-transparent outline-none"
+              style={{ fontFamily: 'Inter, sans-serif', color: '#1E2938' }}
+            />
+          </div>
+        </div>
 
-          {!hasJourneys && (
-            <div className="text-center mb-6 pt-4">
-              <p className="text-base text-text-secondary">Kamu belum memulai perjalanan.</p>
-              <p className="text-sm text-text-secondary/60 mt-1">Pilih mimpi yang paling menarik untukmu.</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive text-center">
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
-            {FILTER_CHIPS.map((chip) => (
+        {/* ─── FILTER TABS (sticky) ─── */}
+        <div className="sticky top-0 z-10 mb-5" style={{ backgroundColor: '#F8FAFC' }}>
+          <div className="flex gap-0 overflow-x-auto scrollbar-none">
+            {FILTER_TABS.map((tab) => (
               <button
-                key={chip.label}
-                onClick={() => setActiveFilter(chip.value)}
-                className={`shrink-0 px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
-                  activeFilter === chip.value
-                    ? "bg-primary/10 border border-primary/30 text-primary"
-                    : "bg-muted text-text-secondary hover:text-text-primary"
-                }`}
+                key={tab.value}
+                onClick={() => setActiveFilter(tab.value)}
+                className="shrink-0 px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer relative whitespace-nowrap"
+                style={{
+                  fontFamily: 'Poppins, sans-serif',
+                  color: activeFilter === tab.value ? '#084463' : '#647488',
+                }}
               >
-                {chip.label}
+                {tab.label}
+                {activeFilter === tab.value && (
+                  <span
+                    className="absolute bottom-0 left-0 right-0 h-0.5 mx-4"
+                    style={{ backgroundColor: '#084463' }}
+                  />
+                )}
               </button>
             ))}
           </div>
+        </div>
 
-          <div className="flex flex-col gap-3">
-            {filteredTemplates.map((t) => (
-              <JourneyCard
-                key={t.slug}
-                template={t}
-                phases={templatePhases[t.slug] || []}
-                participantCount={participantCounts[t.slug] || 0}
-                userJourney={userJourneyMap[t.slug] || null}
-                startedPhaseIds={startedPhaseIds}
-              />
-            ))}
+        {/* ─── ERROR ─── */}
+        {error && (
+          <div className="mb-4 p-3 rounded-xl text-sm text-center" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#EF4444' }}>
+            {error}
           </div>
+        )}
+
+        {/* ─── JELAJAHI JALUR LAIN ─── */}
+        <section id="jelajahi-section">
+          <div className="flex items-center justify-between mb-4">
+            <h2
+              className="text-xs font-semibold uppercase tracking-wider"
+              style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, color: '#647488' }}
+            >
+              Jelajahi jalur lain
+            </h2>
+            <span
+              className="text-xs font-medium"
+              style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, color: '#6BB9D4' }}
+            >
+              {filteredTemplatesBySearch.length} tersedia
+            </span>
+          </div>
+
+          {filteredTemplatesBySearch.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-sm" style={{ color: '#647488' }}>Tidak ada jalur yang cocok</p>
+            </div>
+          ) : (
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}
+            >
+              {filteredTemplatesBySearch.map((t, idx) => {
+                const phaseCount = templatePhases[t.slug]?.length || t.big_wins?.length || 0;
+                const bgColor = CATEGORY_BG[t.category] || '#F8FAFC';
+                const textColor = CATEGORY_TEXT[t.category] || '#647488';
+                const catLabel = CATEGORY_LABEL[t.category] || t.category;
+                const userJourney = userJourneyMap[t.slug];
+
+                return (
+                  <div key={t.slug}>
+                    {idx > 0 && <div style={{ borderTop: '1px solid #E2E8F0' }} />}
+                    <div
+                      onClick={() => {
+                        if (userJourney) {
+                          router.push(journeyUrl(userJourney));
+                        } else {
+                          handleStartJourney(t);
+                        }
+                      }}
+                      className="flex items-center gap-3 px-4 py-3.5 transition-all cursor-pointer"
+                      style={{ backgroundColor: '#FFFFFF' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F8FAFC'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
+                    >
+                      {/* Thumbnail */}
+                      <div
+                        className="w-[46px] h-[46px] rounded-xl flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}
+                      >
+                        <span className="text-xl leading-none">{t.emoji}</span>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        {/* Category pill */}
+                        <span
+                          className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1"
+                          style={{ backgroundColor: bgColor, color: textColor }}
+                        >
+                          {catLabel}
+                        </span>
+                        {/* Title */}
+                        <p
+                          className="text-[13px] font-medium truncate"
+                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, color: '#1E2938' }}
+                        >
+                          {t.title}
+                        </p>
+                      </div>
+
+                      {/* Phase count + dots */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[11px]" style={{ color: '#647488' }}>{phaseCount} fase</span>
+                          <div className="flex items-center gap-[3px]">
+                            {Array.from({ length: Math.min(phaseCount, 4) }).map((_, i) => (
+                              <span
+                                key={i}
+                                className="w-1 h-1 rounded-full"
+                                style={{ backgroundColor: '#E2E8F0' }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: '#647488' }}>
+                          <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
       </div>

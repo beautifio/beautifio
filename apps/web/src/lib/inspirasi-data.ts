@@ -2,6 +2,9 @@ export type SourceType = "all" | "cerita" | "mentor" | "redaksi";
 export type PostingMode = "anonymous" | "nickname" | "public";
 export type ModerationStatus = "pending" | "approved" | "rejected";
 
+export type AuthorType = "redaksi" | "mentor" | "cerita_pembaca";
+export type Architecture = "pilar" | "kluster" | "trending";
+
 export interface InspirasiItem {
   id: string;
   slug: string;
@@ -14,6 +17,8 @@ export interface InspirasiItem {
   initials?: string;
   cover_image?: string;
   category: string;
+  category_id?: string;
+  category_label?: string;
   reading_time: number;
   like_count: number;
   comment_count: number;
@@ -25,7 +30,65 @@ export interface InspirasiItem {
   moderationStatus?: ModerationStatus;
   nickname?: string;
   createdAt?: string;
+  author_type?: AuthorType;
+  architecture?: Architecture;
+  author_credentials?: { gelar?: string; institusi?: string; linkedin?: string; foto_url?: string };
+  author_anon_name?: string;
+  series_id?: string;
+  disclaimer_type?: string;
+  disclaimer_custom?: string;
+  meta_title?: string;
+  meta_description?: string;
+  og_image?: string;
 }
+
+export const CATEGORIES = [
+  { id: "mind-body", label: "Mind & Body", icon: "heart" },
+  { id: "glow-glowup", label: "Glow & Glow Up", icon: "sparkles" },
+  { id: "levelup-career", label: "Level Up & Career", icon: "trending-up" },
+  { id: "relationship", label: "Relationship", icon: "users" },
+  { id: "creative-space", label: "Creative Space", icon: "feather" },
+  { id: "tech-gaming", label: "Tech & Gaming", icon: "monitor" },
+];
+
+export const CATEGORY_LABELS: Record<string, string> = {
+  "mind-body": "Mind & Body",
+  "glow-glowup": "Glow & Glow Up",
+  "levelup-career": "Level Up & Career",
+  "relationship": "Relationship",
+  "creative-space": "Creative Space",
+  "tech-gaming": "Tech & Gaming",
+};
+
+export const SOURCE_LABEL: Record<string, string> = {
+  cerita: "Cerita",
+  mentor: "Mentor",
+  redaksi: "Redaksi",
+};
+
+export const AUTHOR_TYPE_LABEL: Record<string, string> = {
+  redaksi: "Redaksi",
+  mentor: "Mentor / Ahli",
+  cerita_pembaca: "Cerita Pembaca",
+};
+
+export const ARCH_LABELS: Record<string, string> = {
+  pilar: "Pilar",
+  kluster: "Kluster",
+  trending: "Trending",
+};
+
+export const AUTHOR_TYPE_BADGE: Record<string, { label: string; color: string }> = {
+  redaksi: { label: "Redaksi", color: "bg-blue-100 text-blue-700" },
+  mentor: { label: "Mentor", color: "bg-purple-100 text-purple-700" },
+  cerita_pembaca: { label: "Cerita", color: "bg-orange-100 text-orange-700" },
+};
+
+export const ARCHITECTURES = [
+  { id: "pilar" as Architecture, label: "Pilar", desc: "Evergreen, 2.500–4.000 kata" },
+  { id: "kluster" as Architecture, label: "Kluster", desc: "Sub-topik, 1.500–2.500 kata" },
+  { id: "trending" as Architecture, label: "Trending", desc: "Real-time, 800–1.200 kata" },
+];
 
 export const SOURCE_TABS: { key: SourceType; label: string; icon: string }[] = [
   { key: "all", label: "Semua", icon: "Sparkles" },

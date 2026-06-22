@@ -11,6 +11,15 @@ async function checkRole(supabase: Supabase) {
   return user;
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  "mind-body": "Mind & Body",
+  "glow-glowup": "Glow & Glow Up",
+  "levelup-career": "Level Up & Career",
+  "relationship": "Relationship",
+  "creative-space": "Creative Space",
+  "tech-gaming": "Tech & Gaming",
+};
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = createRouteClient(request);
@@ -34,7 +43,13 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
 
     if (error) throw error;
-    return NextResponse.json({ data });
+
+    const enriched = (data || []).map((a: any) => ({
+      ...a,
+      category_label: a.category_id ? (CATEGORY_LABELS[a.category_id] || a.category) : a.category,
+    }));
+
+    return NextResponse.json({ data: enriched });
   } catch (error: any) {
     console.error("GET /api/admin/konten/posts:", error);
     return NextResponse.json({ error: error.message || "Internal error" }, { status: 500 });
@@ -53,30 +68,42 @@ export async function POST(request: NextRequest) {
     }
 
     const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
-
-    const now = new Date().toISOString();
     const isScheduled = body.scheduled_at && new Date(body.scheduled_at) > new Date();
+
+    const categoryId = body.category_id || "mind-body";
+    const categoryLabel = CATEGORY_LABELS[categoryId] || categoryId;
+
+    const insertData: any = {
+      slug,
+      type: "story",
+      title: body.title,
+      content: body.content,
+      excerpt: body.excerpt || "",
+      category: categoryLabel,
+      category_id: categoryId,
+      cover_image: body.cover_image || "",
+      author: body.author_name || user.email || "",
+      initials: (body.author_name || user.email || "").charAt(0).toUpperCase(),
+      source: body.author_type || "redaksi",
+      is_published: body.status === "published" || false,
+      scheduled_at: isScheduled ? body.scheduled_at : null,
+      read_time_minutes: body.read_time_minutes || 5,
+      meta_title: body.meta_title || "",
+      meta_description: body.meta_description || "",
+      og_image: body.og_image || "",
+      author_type: body.author_type || "redaksi",
+      architecture: body.architecture || null,
+      review_status: body.review_status || "ready",
+      disclaimer_type: body.disclaimer_type || "none",
+      disclaimer_custom: body.disclaimer_custom || null,
+      author_credentials: body.author_credentials || null,
+      author_anon_name: body.author_anon_name || null,
+      series_id: body.series_id || null,
+    };
 
     const { data, error } = await supabase
       .from("articles")
-      .insert({
-        slug,
-        type: "story",
-        title: body.title,
-        content: body.content,
-        excerpt: body.excerpt || "",
-        category: body.category || "artikel",
-        cover_image: body.cover_image || "",
-        author: body.author_name || user.email || "",
-        initials: (body.author_name || user.email || "").charAt(0).toUpperCase(),
-        source: "redaksi",
-        is_published: body.status === "published" || (isScheduled ? false : false),
-        scheduled_at: isScheduled ? body.scheduled_at : null,
-        read_time_minutes: body.read_time_minutes || 5,
-        meta_title: body.meta_title || "",
-        meta_description: body.meta_description || "",
-        og_image: body.og_image || "",
-      })
+      .insert(insertData)
       .select()
       .single();
 

@@ -25,7 +25,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.title !== undefined) updateData.title = body.title;
     if (body.content !== undefined) updateData.content = body.content;
     if (body.excerpt !== undefined) updateData.excerpt = body.excerpt;
-    if (body.category !== undefined) updateData.category = body.category;
+    if (body.category_id !== undefined) {
+      updateData.category_id = body.category_id;
+      const labels: Record<string, string> = {
+        "mind-body": "Mind & Body", "glow-glowup": "Glow & Glow Up",
+        "levelup-career": "Level Up & Career", "relationship": "Relationship",
+        "creative-space": "Creative Space", "tech-gaming": "Tech & Gaming",
+      };
+      updateData.category = labels[body.category_id] || body.category_id;
+    }
     if (body.cover_image !== undefined) updateData.cover_image = body.cover_image;
     if (body.author_name !== undefined) updateData.author = body.author_name;
     if (body.initials !== undefined) updateData.initials = body.initials;
@@ -36,6 +44,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.og_image !== undefined) updateData.og_image = body.og_image;
     if (body.scheduled_at !== undefined) updateData.scheduled_at = body.scheduled_at;
     if (body.deleted_at !== undefined) updateData.deleted_at = body.deleted_at;
+    if (body.author_type !== undefined) updateData.author_type = body.author_type;
+    if (body.architecture !== undefined) updateData.architecture = body.architecture;
+    if (body.review_status !== undefined) updateData.review_status = body.review_status;
+    if (body.disclaimer_type !== undefined) updateData.disclaimer_type = body.disclaimer_type;
+    if (body.disclaimer_custom !== undefined) updateData.disclaimer_custom = body.disclaimer_custom;
+    if (body.author_credentials !== undefined) updateData.author_credentials = body.author_credentials;
+    if (body.author_anon_name !== undefined) updateData.author_anon_name = body.author_anon_name;
+    if (body.series_id !== undefined) updateData.series_id = body.series_id;
     if (body.status !== undefined) {
       updateData.is_published = body.status === "published";
       if (body.status !== "published") updateData.scheduled_at = null;

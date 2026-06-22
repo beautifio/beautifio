@@ -1,4 +1,4 @@
-export type DreamJourneyStatus = "active" | "completed" | "pivoted";
+export type DreamJourneyStatus = "active" | "completed" | "pivoted" | "archived";
 
 export type DailyActivityDimension =
   | "spiritual"
