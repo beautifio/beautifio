@@ -25,7 +25,7 @@ const NAV_CARDS: NavCard[] = [
   { emoji: "🖼️", title: "Hero Landing", desc: "Upload gambar hero", href: "/admin/konten/hero", group: "Konten" },
   { emoji: "👥", title: "Users", desc: "Manajemen pengguna", href: "/admin/users", group: "Komunitas" },
   { emoji: "🗣️", title: "Curhat", desc: "Moderasi curhat", href: "/admin/curhat", group: "Komunitas" },
-  { emoji: "🎫", title: "Care Tickets", desc: "Tiket bantuan", href: "/admin/care", group: "Komunitas" },
+  { emoji: "🎫", title: "Beautifio Care", desc: "Status petugas & sesi chat", href: "/admin/care", group: "Komunitas" },
   { emoji: "🏪", title: "Merchants", desc: "Kelola merchant", href: "/admin/merchants", group: "Familia" },
   { emoji: "🏷️", title: "Deals", desc: "Kelola deals", href: "/admin/deals", group: "Familia" },
   { emoji: "🏆", title: "Rewards", desc: "Kelola rewards", href: "/admin/rewards", group: "Familia" },

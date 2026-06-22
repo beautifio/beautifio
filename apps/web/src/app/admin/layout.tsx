@@ -25,7 +25,7 @@ const navItems: NavItem[] = [
   { href: "/admin/redemption-log", label: "Redemption Log", icon: FileText, roles: ["admin", "superadmin"] },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["superadmin"] },
   { href: "/admin/curhat", label: "Curhat", icon: MessageCircle, roles: ["admin", "superadmin", "redaksi"] },
-  { href: "/admin/care", label: "Care Tickets", icon: HeartHandshake, roles: ["admin", "superadmin"] },
+  { href: "/admin/care", label: "Beautifio Care", icon: HeartHandshake, roles: ["admin", "superadmin"] },
   { href: "/admin/konten/posts", label: "Inspirasi", icon: FileSpreadsheet, roles: ["redaksi", "superadmin"] },
   { href: "/admin/konten/stories", label: "Stories", icon: BookOpen, roles: ["redaksi", "superadmin"] },
   { href: "/admin/konten/quotes", label: "Quotes", icon: Quote, roles: ["redaksi", "superadmin"] },
