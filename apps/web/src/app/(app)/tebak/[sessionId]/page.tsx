@@ -31,7 +31,7 @@ export default function TebakSessionPage({ params }: { params: Promise<{ session
   }, [sessionId, user, router])
 
   const handleMatched = useCallback((s: TebakSession) => {
-    setSession(s)
+    setSession(prev => prev ? { ...prev, ...s } : s)
   }, [])
 
   if (loading) {

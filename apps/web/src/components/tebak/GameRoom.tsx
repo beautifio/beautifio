@@ -44,26 +44,31 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
 
   const refreshQuestions = useCallback(async () => {
     if (!supabase) return
-    const s = supabase.from("tebak_questions")
-      .select("*, tebak_rounds!inner(session_id)")
-      .eq("tebak_rounds.session_id", sessionId)
-    if (s) {
-      const { data } = await s.order("sequence_number")
-      if (data) {
-        setQuestions(data as TebakQuestion[])
-        const activeRound = data.filter(
-          (q: any) => !isSubject
-            ? q.status === "guesser_guessing" || q.status === "subject_answering"
-            : q.status === "subject_answering" || q.status === "guesser_guessing"
-        )
-        const current = activeRound[0]
-        setCurrentQ(current || null)
-        if (current?.status === "guesser_guessing" && !isSubject) {
-          guessStartTime.current = Date.now()
-        }
-      }
+    const { data: round } = await supabase
+      .from("tebak_rounds")
+      .select("id")
+      .eq("session_id", sessionId)
+      .eq("round_number", gameSession.current_round)
+      .maybeSingle()
+    if (!round) return
+
+    const { data } = await supabase
+      .from("tebak_questions")
+      .select("*")
+      .eq("round_id", round.id)
+      .order("sequence_number")
+    if (!data) return
+
+    setQuestions(data as TebakQuestion[])
+    const activeRound = data.filter(
+      (q: any) => q.status === "subject_answering" || q.status === "guesser_guessing"
+    )
+    const current = activeRound[0]
+    setCurrentQ(current || null)
+    if (current?.status === "guesser_guessing" && !isSubject) {
+      guessStartTime.current = Date.now()
     }
-  }, [sessionId, isSubject])
+  }, [sessionId, isSubject, gameSession.current_round])
 
   useEffect(() => {
     refreshQuestions()
@@ -134,7 +139,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   useEffect(() => {
     const unsub = subscribeToTebakGame(sessionId, {
       onSessionUpdate: (s) => {
-        setGameSession(s)
+        setGameSession(prev => ({ ...prev, ...s }))
         if (s.status === "finished") setFinished(true)
       },
       onQuestionUpdate: async (q) => {
