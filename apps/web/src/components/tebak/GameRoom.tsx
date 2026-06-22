@@ -7,6 +7,7 @@ import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import {
   submitSubjectAnswer,
   submitGuesserAnswer,
+  handleSubjectTimeout,
   advanceGame,
   botPlayTurn,
   replaceDisconnectedWithBot,
@@ -198,6 +199,11 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     return unsub
   }, [sessionId, isSubject])
 
+  const handleSubjectAnswerTimeout = useCallback(() => {
+    if (!currentQ) return
+    handleSubjectTimeout(currentQ.id, sessionId)
+  }, [currentQ, sessionId])
+
   const handleAdvance = async () => {
     setSelectedAnswer(null)
     setRevealed(false)
@@ -298,19 +304,20 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           onBack={() => window.location.href = "/tebak"}
         />
       ) : currentQ ? (
-        <QuestionView
-          question={currentQ}
-          isSubject={isSubject}
-          selectedAnswer={selectedAnswer}
-          submitting={submitting}
-          locked={locked}
-          revealed={revealed}
-          lastAnswerCorrect={lastAnswerCorrect}
-          onSubjectAnswer={handleSubjectAnswer}
-          onGuesserGuess={handleGuesserGuess}
-          onGuesserTimeout={handleGuesserTimeout}
-          onAdvance={handleAdvance}
-        />
+          <QuestionView
+            question={currentQ}
+            isSubject={isSubject}
+            selectedAnswer={selectedAnswer}
+            submitting={submitting}
+            locked={locked}
+            revealed={revealed}
+            lastAnswerCorrect={lastAnswerCorrect}
+            onSubjectAnswer={handleSubjectAnswer}
+            onGuesserGuess={handleGuesserGuess}
+            onGuesserTimeout={handleGuesserTimeout}
+            onSubjectTimeout={handleSubjectAnswerTimeout}
+            onAdvance={handleAdvance}
+          />
       ) : (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -331,6 +338,7 @@ function QuestionView({
   onSubjectAnswer,
   onGuesserGuess,
   onGuesserTimeout,
+  onSubjectTimeout,
   onAdvance,
 }: {
   question: TebakQuestion
@@ -343,10 +351,9 @@ function QuestionView({
   onSubjectAnswer: (a: string) => void
   onGuesserGuess: (a: string) => void
   onGuesserTimeout: () => void
+  onSubjectTimeout: () => void
   onAdvance: () => void
 }) {
-  const waitingForSubject = question.status === "subject_answering" && !isSubject
-  const waitingForGuesser = question.status === "guesser_guessing" && isSubject
   const needAction = isSubject
     ? question.status === "subject_answering"
     : question.status === "guesser_guessing"
@@ -428,31 +435,30 @@ function QuestionView({
             })}
           </div>
 
-          {question.status === "guesser_guessing" && question.guesser_deadline && !revealed && (
+          {question.status === "subject_answering" && question.subject_deadline && !revealed && (
             <div className="mb-4">
-              {isSubject ? (
-                <div className="flex flex-col items-center gap-3">
-                  <DigitalClock
-                    deadline={question.guesser_deadline}
-                    onTimeout={() => {}}
-                    label="Menunggu lawan menebak"
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-3">
-                  <Timer
-                    deadline={question.guesser_deadline}
-                    onTimeout={onGuesserTimeout}
-                  />
-                </div>
-              )}
+              <DigitalClock
+                deadline={question.subject_deadline}
+                onTimeout={onSubjectTimeout}
+                label={isSubject ? "Jawab sebelum waktu habis" : "Menunggu lawan menjawab"}
+              />
             </div>
           )}
 
-          {waitingForSubject && (
-            <div className="flex flex-col items-center gap-2 py-6 text-text-secondary">
-              <Loader2 size={20} className="animate-spin" />
-              <p className="text-sm">Menunggu lawan menjawab</p>
+          {question.status === "guesser_guessing" && question.guesser_deadline && !revealed && (
+            <div className="mb-4">
+              {isSubject ? (
+                <DigitalClock
+                  deadline={question.guesser_deadline}
+                  onTimeout={() => {}}
+                  label="Menunggu lawan menebak"
+                />
+              ) : (
+                <Timer
+                  deadline={question.guesser_deadline}
+                  onTimeout={onGuesserTimeout}
+                />
+              )}
             </div>
           )}
 

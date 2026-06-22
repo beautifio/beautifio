@@ -30,6 +30,7 @@ export type TebakQuestion = {
   correct_answer: string | null
   subject_answered_at: string | null
   guesser_deadline: string | null
+  subject_deadline: string | null
   status: string
 }
 

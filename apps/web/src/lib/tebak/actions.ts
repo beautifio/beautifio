@@ -321,6 +321,36 @@ export async function submitGuesserAnswer(
   return { isCorrect, points: isCorrect ? 10 : 0 }
 }
 
+export async function handleSubjectTimeout(questionId: string, sessionId: string): Promise<void> {
+  const supabase = await createServerClient()
+
+  const { data: q } = await supabase
+    .from('tebak_questions')
+    .select('status')
+    .eq('id', questionId)
+    .single()
+  if (!q || q.status !== 'subject_answering') return
+
+  const { data: session } = await supabase
+    .from('tebak_sessions')
+    .select('current_subject')
+    .eq('id', sessionId)
+    .single()
+  if (!session) return
+
+  const guesserCol = session.current_subject === 'a' ? 'score_b' : 'score_a'
+
+  await supabase.rpc('increment_tebak_score', {
+    session_id: sessionId,
+    column: guesserCol,
+    amount: 10,
+  })
+
+  await supabase.from('tebak_questions').update({
+    status: 'revealed',
+  }).eq('id', questionId)
+}
+
 export async function advanceGame(sessionId: string): Promise<void> {
   const supabase = await createServerClient()
 
