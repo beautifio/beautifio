@@ -73,19 +73,31 @@ export default function InspirasiPostsPage() {
     setSaving(true);
     try {
       const body = { ...form, status: editId ? undefined : "draft" };
+      let res;
       if (editId) {
-        await fetch(`/api/admin/konten/posts/${editId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        res = await fetch(`/api/admin/konten/posts/${editId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       } else {
-        await fetch("/api/admin/konten/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        res = await fetch("/api/admin/konten/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
       }
       setShowAdd(false);
       setEditId(null);
       await fetchPosts();
-    } catch (e) { console.error("Save failed", e); } finally { setSaving(false); }
+    } catch (e: any) { alert(e.message); } finally { setSaving(false); }
   }
 
   async function updateStatus(id: string, status: string) {
-    try { await fetch(`/api/admin/konten/posts/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) }); await fetchPosts(); } catch (e) { console.error("Update failed", e); }
+    try {
+      const res = await fetch(`/api/admin/konten/posts/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
+      await fetchPosts();
+    } catch (e: any) { alert(e.message); }
   }
 
   async function remove(id: string) {
@@ -96,8 +108,7 @@ export default function InspirasiPostsPage() {
   async function handleCoverUpload(file: File) {
     setUploadingCover(true);
     try {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
+      const { supabase } = await import("@/lib/supabase/client");
       if (!supabase) throw new Error("No client");
       const ext = file.name.split(".").pop();
       const filename = `cover-${Date.now()}.${ext}`;
@@ -105,8 +116,8 @@ export default function InspirasiPostsPage() {
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("landing-assets").getPublicUrl(`artikel/${filename}`);
       setForm((prev: any) => ({ ...prev, cover_image: urlData.publicUrl }));
-    } catch {
-      alert("Upload cover gagal");
+    } catch (err: any) {
+      alert(`Upload cover gagal: ${err.message || ""}`);
     } finally {
       setUploadingCover(false);
     }

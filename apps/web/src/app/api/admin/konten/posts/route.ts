@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createRouteClient } from "@/lib/supabase/server";
 
-async function checkRole(supabase: Awaited<ReturnType<typeof createClient>>) {
+type Supabase = ReturnType<typeof createRouteClient>;
+
+async function checkRole(supabase: Supabase) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
@@ -9,9 +11,9 @@ async function checkRole(supabase: Awaited<ReturnType<typeof createClient>>) {
   return user;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createRouteClient(request);
     const user = await checkRole(supabase);
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -29,13 +31,13 @@ export async function GET() {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createRouteClient(request);
     const user = await checkRole(supabase);
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const body = await req.json();
+    const body = await request.json();
     if (!body.title || !body.content) {
       return NextResponse.json({ error: "title and content required" }, { status: 400 });
     }

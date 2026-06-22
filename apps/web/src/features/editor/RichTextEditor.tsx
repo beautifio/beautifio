@@ -56,8 +56,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
   const handleImageUpload = useCallback(async (file: File) => {
     setUploadingImage(true);
     try {
-      const { createClient } = await import('@/lib/supabase/client');
-      const supabase = createClient();
+      const { supabase } = await import('@/lib/supabase/client');
       if (!supabase) throw new Error('No supabase client');
 
       const ext = file.name.split('.').pop();
@@ -74,8 +73,8 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         .getPublicUrl(`artikel/${filename}`);
 
       editor?.chain().focus().setImage({ src: urlData.publicUrl }).run();
-    } catch (err) {
-      alert('Upload gambar gagal. Coba lagi.');
+    } catch (err: any) {
+      alert(`Upload gambar gagal: ${err.message || "Coba lagi."}`);
     } finally {
       setUploadingImage(false);
     }

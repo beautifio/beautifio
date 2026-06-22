@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Camera, Loader2, Save, Check, ChevronDown } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 
 interface Province {
   id: number
@@ -21,12 +21,12 @@ interface Regency {
 export default function EditProfilePage() {
   const router = useRouter()
   const { user } = useAuth()
-  const supabase = createClient()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [errorDetail, setErrorDetail] = useState<string>("")
   const [profile, setProfile] = useState<any>(null)
 
   // Form fields
@@ -86,12 +86,11 @@ export default function EditProfilePage() {
     supabase.from("indonesia_provinces").select("*").order("name").then(({ data }) => {
       setProvinces(data ?? [])
     })
-  }, [user, supabase])
+  }, [user])
 
   // Fetch regencies when province changes
   const loadRegencies = async (provinceId: number) => {
-    if (!supabase) return
-    const { data } = await supabase
+    const { data } = await supabase!
       .from("indonesia_regencies")
       .select("*")
       .eq("province_id", provinceId)
@@ -126,30 +125,35 @@ export default function EditProfilePage() {
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !supabase || !user) return
+    if (!file || !user) return
     setUploading(true)
+    setError(null)
+    setErrorDetail("")
     try {
       const ext = file.name.split(".").pop()
       const filePath = `${user.id}/${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase!.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true })
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        setErrorDetail(`Kode: ${uploadError.message}`)
+        throw uploadError
+      }
 
-      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath)
+      const { data: urlData } = supabase!.storage.from("avatars").getPublicUrl(filePath)
       const publicUrl = urlData?.publicUrl
       if (publicUrl) {
         setAvatarUrl(publicUrl)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Upload error:", err)
-      setError("Gagal upload foto. Coba lagi.")
+      setError(err.message || "Gagal upload foto. Coba lagi.")
     }
     setUploading(false)
   }
 
   const handleSave = async () => {
-    if (!supabase || !user) return
+    if (!user) return
     setSaving(true)
     setError(null)
     try {
@@ -167,7 +171,7 @@ export default function EditProfilePage() {
         if ((anonymousName.match(/\d/g) || []).length > 2) {
           throw new Error("Maksimal 2 angka dalam username")
         }
-        const { data: validation } = await supabase
+        const { data: validation } = await supabase!
           .rpc("validate_bisik_custom_name", {
             p_user_id: user.id,
             p_custom_name: anonymousName,
@@ -188,14 +192,14 @@ export default function EditProfilePage() {
       if (isPro && anonymousName) {
         updateData.bisik_custom_name = anonymousName.toLowerCase()
       }
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabase!
         .from("users")
         .update(updateData)
         .eq("id", user.id)
       if (updateError) throw updateError
 
       // Update auth metadata
-      await supabase.auth.updateUser({
+      await supabase!.auth.updateUser({
         data: { full_name: fullName },
       })
 
@@ -241,6 +245,7 @@ export default function EditProfilePage() {
         {error && (
           <div className="p-3 rounded-xl bg-red-50 border border-red-200">
             <p className="text-xs text-red-700">{error}</p>
+            {errorDetail && <p className="text-[10px] text-red-500 mt-1">{errorDetail}</p>}
           </div>
         )}
 
