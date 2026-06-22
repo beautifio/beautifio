@@ -22,18 +22,6 @@ export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole:
 
   const { sessionId, playerRole, isNew } = result as { sessionId: string; playerRole: 'a' | 'b'; isNew: boolean }
 
-  // If we joined as player B, select questions for round 1
-  if (playerRole === 'b') {
-    const { data: round } = await supabase
-      .from('tebak_rounds')
-      .select('id')
-      .eq('session_id', sessionId)
-      .eq('round_number', 1)
-      .single()
-
-    if (round) await selectQuestionsForRound(sessionId, round.id)
-  }
-
   return { sessionId, playerRole, isNew }
 }
 
@@ -41,7 +29,7 @@ export async function matchWithBot(sessionId: string): Promise<boolean> {
   const supabase = await createServerClient()
   const botId = getRandomBotId('medium')
 
-  const { data: roundId, error } = await supabase.rpc('activate_tebak_session', {
+  const { error } = await supabase.rpc('activate_tebak_session', {
     p_session_id: sessionId,
     p_player_b_id: botId,
   })
@@ -50,12 +38,7 @@ export async function matchWithBot(sessionId: string): Promise<boolean> {
     console.error('matchWithBot RPC error:', error)
     return false
   }
-  if (!roundId) {
-    console.error('matchWithBot: RPC returned no roundId')
-    return false
-  }
 
-  await selectQuestionsForRound(sessionId, roundId as string)
   return true
 }
 
@@ -228,8 +211,6 @@ export async function retryMatchmaking(sessionId: string): Promise<string | null
     console.error('retryMatchmaking: activate_tebak_session returned null')
     return null
   }
-
-  await selectQuestionsForRound(other.id, roundId as string)
 
   return other.id
 }

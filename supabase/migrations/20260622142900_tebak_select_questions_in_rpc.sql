@@ -14,13 +14,13 @@ DECLARE
   v_new_id uuid;
   v_round_id uuid;
 BEGIN
-  -- 1. Check if user already has a session
+  -- 1. Check if user already has a waiting session (reuse it)
   SELECT id, status,
     CASE WHEN player_a_id = p_user_id THEN 'a' ELSE 'b' END
   INTO v_new_id, v_status, v_role
   FROM tebak_sessions
   WHERE (player_a_id = p_user_id OR player_b_id = p_user_id)
-    AND status IN ('waiting', 'active')
+    AND status = 'waiting'
   ORDER BY created_at DESC
   LIMIT 1;
 
@@ -94,9 +94,17 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
+  v_session tebak_sessions;
   v_subject tebak_player;
   v_round_id uuid;
 BEGIN
+  SELECT * INTO v_session
+  FROM tebak_sessions
+  WHERE id = p_session_id AND status = 'waiting'
+  FOR UPDATE;
+  IF NOT FOUND THEN RETURN NULL; END IF;
+  IF v_session.player_b_id IS NOT NULL THEN RETURN NULL; END IF;
+
   v_subject := CASE WHEN random() > 0.5 THEN 'a'::tebak_player ELSE 'b'::tebak_player END;
 
   UPDATE tebak_sessions SET
