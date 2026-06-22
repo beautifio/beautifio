@@ -11,7 +11,14 @@ export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole:
     p_user_id: user.id,
   })
 
-  if (error || !result) throw new Error('Failed to find or create session')
+  if (error) {
+    console.error('joinTebakQueue RPC error:', error)
+    throw new Error('Failed to find or create session')
+  }
+  if (!result) {
+    console.error('joinTebakQueue: RPC returned null')
+    throw new Error('Failed to find or create session')
+  }
 
   const { sessionId, playerRole, isNew } = result as { sessionId: string; playerRole: 'a' | 'b'; isNew: boolean }
 
@@ -40,7 +47,15 @@ export async function matchWithBot(sessionId: string): Promise<boolean> {
     p_player_b_id: botId,
   })
 
-  if (error || !roundId) return false
+  if (error) {
+    console.error('matchWithBot RPC error:', error)
+    return false
+  }
+  if (!roundId) {
+    console.error('matchWithBot: RPC returned no roundId')
+    return false
+  }
+
   await selectQuestionsForRound(sessionId, roundId as string)
   return true
 }
@@ -206,7 +221,15 @@ export async function retryMatchmaking(sessionId: string): Promise<string | null
     p_player_b_id: user.id,
   })
 
-  if (error || !roundId) return null
+  if (error) {
+    console.error('retryMatchmaking activate_tebak_session RPC error:', error)
+    return null
+  }
+  if (!roundId) {
+    console.error('retryMatchmaking: activate_tebak_session returned null')
+    return null
+  }
+
   await selectQuestionsForRound(other.id, roundId as string)
 
   return other.id
@@ -221,17 +244,24 @@ export async function updateUserHeartbeat(userId: string): Promise<void> {
 
 async function selectQuestionsForRound(sessionId: string, roundId: string): Promise<void> {
   const supabase = await createServerClient()
-  const { data: bank } = await supabase
+  const { data: bank, error: bankErr } = await supabase
     .from('tebak_question_bank')
     .select('id, question_text, options')
     .eq('is_active', true)
     .limit(20)
 
-  if (!bank?.length) return
+  if (bankErr) {
+    console.error('selectQuestionsForRound: fetch question bank error:', bankErr)
+    return
+  }
+  if (!bank?.length) {
+    console.error('selectQuestionsForRound: no questions in bank')
+    return
+  }
 
   const shuffled = bank.sort(() => Math.random() - 0.5).slice(0, 5)
 
-  await supabase.from('tebak_questions').insert(
+  const { error: insertErr } = await supabase.from('tebak_questions').insert(
     shuffled.map((q, i) => ({
       round_id: roundId,
       question_bank_id: q.id,
@@ -240,6 +270,10 @@ async function selectQuestionsForRound(sessionId: string, roundId: string): Prom
       sequence_number: i + 1,
     }))
   )
+
+  if (insertErr) {
+    console.error('selectQuestionsForRound: insert error:', insertErr)
+  }
 }
 
 export async function submitSubjectAnswer(questionId: string, answer: string): Promise<void> {

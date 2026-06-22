@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Users, Bot } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
@@ -19,11 +19,10 @@ type Props = {
 export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMatched }: Props) {
   const router = useRouter()
   const [dots, setDots] = useState("")
-  const [elapsed, setElapsed] = useState(0)
   const [matchingBot, setMatchingBot] = useState(false)
   const [retrying, setRetrying] = useState(false)
-  const matchedRef = useRef(false)
-  const retryDoneRef = useRef(false)
+  const [error, setError] = useState<string | null>(null)
+  const doneRef = useRef(false)
 
   useEffect(() => {
     const i = setInterval(() => setDots((p) => (p.length >= 3 ? "" : p + ".")), 500)
@@ -31,46 +30,68 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMa
   }, [])
 
   useEffect(() => {
-    const t = setInterval(() => setElapsed((p) => p + 1), 1000)
-    return () => clearInterval(t)
-  }, [])
+    if (doneRef.current) return
 
-  // After 2s, retry matchmaking to handle race condition
-  useEffect(() => {
-    if (elapsed < 2 || elapsed >= 10 || matchedRef.current || retryDoneRef.current) return
-    retryDoneRef.current = true
-    setRetrying(true)
-    retryMatchmaking(sessionId).then((newId) => {
-      setRetrying(false)
-      if (newId && newId !== sessionId) {
-        if (onReMatched) onReMatched(newId)
-        else router.push(`/tebak/${newId}`)
-      }
-    }).catch(() => setRetrying(false))
-  }, [elapsed, sessionId, router, onReMatched])
-
-  // After 10s, match with bot
-  useEffect(() => {
-    if (elapsed >= 10 && !matchedRef.current && !retrying) {
-      matchedRef.current = true
-      setMatchingBot(true)
-      matchWithBot(sessionId).then(async (ok) => {
-        if (ok && supabase) {
-          const { data: s } = await supabase.from("tebak_sessions").select("*").eq("id", sessionId).single()
-          if (s && s.status === "active") onMatched(s as TebakSession)
+    const retryTimer = setTimeout(async () => {
+      if (doneRef.current) return
+      setRetrying(true)
+      try {
+        const newId = await retryMatchmaking(sessionId)
+        if (doneRef.current) return
+        if (newId && newId !== sessionId) {
+          doneRef.current = true
+          if (onReMatched) onReMatched(newId)
+          else router.push(`/tebak/${newId}`)
+          return
         }
+      } catch {
+        // retry gagal, lanjut
+      }
+      setRetrying(false)
+    }, 2000)
+
+    const botTimer = setTimeout(async () => {
+      if (doneRef.current) return
+      doneRef.current = true
+      setMatchingBot(true)
+
+      try {
+        const ok = await matchWithBot(sessionId)
+        if (!ok || !supabase) {
+          setMatchingBot(false)
+          setError("Gagal mencari bot. Coba lagi.")
+          doneRef.current = false
+          return
+        }
+
+        const { data: s } = await supabase.from("tebak_sessions").select("*").eq("id", sessionId).single()
+        if (s && s.status === "active") {
+          onMatched(s as TebakSession)
+          return
+        }
+
         setMatchingBot(false)
-      }).catch(() => {
+        setError("Gagal mengaktifkan sesi. Coba lagi.")
+        doneRef.current = false
+      } catch {
         setMatchingBot(false)
-      })
+        setError("Terjadi kesalahan. Coba lagi.")
+        doneRef.current = false
+      }
+    }, 10000)
+
+    return () => {
+      clearTimeout(retryTimer)
+      clearTimeout(botTimer)
     }
-  }, [elapsed, sessionId, isPlayerA, retrying])
+  }, [sessionId, router, onReMatched, onMatched])
 
   useEffect(() => {
+    if (doneRef.current) return
     const unsub = subscribeToTebakGame(sessionId, {
       onSessionUpdate: (s) => {
         if (s.status === "active") {
-          matchedRef.current = true
+          doneRef.current = true
           onMatched(s)
         }
       },
@@ -102,6 +123,9 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMa
           ? "Memeriksa ulang antrian..."
           : "Kami mencari pemain lain untuk bermain Tebak Aku"}
       </p>
+      {error && (
+        <p className="text-sm text-red-500 text-center mb-4">{error}</p>
+      )}
       {!matchingBot && (
         <button
           onClick={onCancel}
