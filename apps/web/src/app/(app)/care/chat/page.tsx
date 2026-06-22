@@ -138,8 +138,10 @@ export default function CareChatPage() {
       </div>
 
       {/* ─── Tabs ─── */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0',
-        background: '#FFFFFF', padding: '0 16px' }}>
+      <div style={{ borderBottom: '1px solid #E2E8F0',
+        background: '#FFFFFF' }}>
+        <div style={{ display: 'flex', maxWidth: 480,
+          margin: '0 auto', padding: '0 16px' }}>
         <button onClick={() => setActiveTab('new')}
           style={{
             padding: '12px 16px', cursor: 'pointer',
@@ -166,6 +168,7 @@ export default function CareChatPage() {
           }}>
           Chat Saya ({mySessions.length})
         </button>
+        </div>
       </div>
 
       <div style={{ padding: '20px 16px', maxWidth: 480,
