@@ -13,6 +13,7 @@ import {
   updateUserHeartbeat,
 } from "@/lib/tebak/actions"
 import { Timer } from "./Timer"
+import { DigitalClock } from "./DigitalClock"
 import { ScoreBoard } from "./ScoreBoard"
 import type { TebakSession, TebakQuestion, TebakAnswer } from "@/lib/tebak/queries"
 
@@ -276,132 +277,143 @@ function QuestionView({
     : question.status === "guesser_guessing"
 
   return (
-    <div className="flex-1 flex flex-col px-4 py-6">
-      <div className="text-center mb-2">
-        <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-          Pertanyaan {question.sequence_number}/5
-        </span>
-      </div>
+    <div className="flex-1 flex flex-col px-4 py-4">
+      <div className="bg-surface rounded-xl border border-border shadow-card overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-accent via-primary to-secondary" />
 
-      <h2 className="text-lg font-bold text-text-primary text-center mb-6">
-        {question.question_text}
-      </h2>
-
-      <div className="space-y-2.5 mb-8">
-        {(question.options as string[]).map((opt) => {
-          const isSelected = selectedAnswer === opt
-          const isCorrect = revealed && opt === question.correct_answer
-          const isWrong = revealed && isSelected && opt !== question.correct_answer
-
-          let btnStyle = "border-border bg-surface hover:border-primary/30"
-          if (isSelected && !revealed) btnStyle = "border-primary bg-primary/5"
-          if (isCorrect) btnStyle = "border-green-500 bg-green-50"
-          if (isWrong) btnStyle = "border-red-500 bg-red-50"
-
-          return (
-            <button
-              key={opt}
-              onClick={() => {
-                if (submitting || revealed) return
-                if (isSubject) onSubjectAnswer(opt)
-                else onGuesserGuess(opt)
-              }}
-              disabled={submitting || revealed || !needAction}
-              className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                revealed ? "cursor-default" : ""
-              } ${btnStyle}`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                    isSelected && !revealed
-                      ? "border-primary bg-primary"
-                      : isCorrect
-                      ? "border-green-500 bg-green-500"
-                      : isWrong
-                      ? "border-red-500 bg-red-500"
-                      : "border-border"
-                  }`}
-                >
-                  {(isSelected || isCorrect || isWrong) && (
-                    isCorrect ? <Check size={12} className="text-white" /> :
-                    isWrong ? <X size={12} className="text-white" /> : null
-                  )}
-                </div>
-                <span className={`text-sm font-medium ${
-                  revealed && opt === question.correct_answer
-                    ? "text-green-700"
-                    : revealed && isWrong
-                    ? "text-red-700"
-                    : "text-text-primary"
-                }`}>
-                  {opt}
-                </span>
-              </div>
-            </button>
-          )
-        })}
-      </div>
-
-      {question.status === "guesser_guessing" && question.guesser_deadline && !isSubject && !revealed && (
-        <div className="mb-6">
-          <Timer
-            deadline={question.guesser_deadline}
-            onTimeout={() => {
-              if (!selectedAnswer) onGuesserGuess("__timeout__")
-            }}
-          />
-        </div>
-      )}
-
-      {waitingForSubject && (
-        <div className="flex flex-col items-center gap-2 py-6 text-text-secondary">
-          <Loader2 size={20} className="animate-spin" />
-          <p className="text-sm">Menunggu lawan menjawab</p>
-        </div>
-      )}
-
-      {waitingForGuesser && (
-        <div className="flex flex-col items-center gap-2 py-6 text-text-secondary">
-          <Loader2 size={20} className="animate-spin" />
-          <p className="text-sm">Menunggu lawan menebak</p>
-        </div>
-      )}
-
-      {revealed && (
-        <div className="text-center mb-6">
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl ${
-            lastAnswerCorrect === true
-              ? "bg-green-100 text-green-700"
-              : lastAnswerCorrect === false
-              ? "bg-red-100 text-red-700"
-              : "bg-primary/10 text-primary"
-          }`}>
-            {lastAnswerCorrect === true ? (
-              <><Check size={18} /> Benar! +10 poin</>
-            ) : lastAnswerCorrect === false ? (
-              <><X size={18} /> Salah</>
-            ) : (
-              <><HelpCircle size={18} /> Lawan sudah menjawab</>
-            )}
+        <div className="p-5">
+          <div className="text-center mb-3">
+            <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              Pertanyaan {question.sequence_number}/5
+            </span>
           </div>
-          {!isSubject && lastAnswerCorrect !== true && (
-            <p className="text-sm text-text-secondary mt-2">
-              Jawaban: <span className="font-bold text-green-600">{question.correct_answer}</span>
-            </p>
+
+          <h2 className="text-lg font-bold text-text-primary text-center mb-5">
+            {question.question_text}
+          </h2>
+
+          <div className="space-y-2.5 mb-5">
+            {(question.options as string[]).map((opt) => {
+              const isSelected = selectedAnswer === opt
+              const isCorrect = revealed && opt === question.correct_answer
+              const isWrong = revealed && isSelected && opt !== question.correct_answer
+
+              let btnStyle = "border-border bg-surface hover:border-primary/30"
+              if (isSelected && !revealed) btnStyle = "border-primary bg-primary/5"
+              if (isCorrect) btnStyle = "border-green-500 bg-green-50"
+              if (isWrong) btnStyle = "border-red-500 bg-red-50"
+
+              return (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    if (submitting || revealed) return
+                    if (isSubject) onSubjectAnswer(opt)
+                    else onGuesserGuess(opt)
+                  }}
+                  disabled={submitting || revealed || !needAction}
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                    revealed ? "cursor-default" : ""
+                  } ${btnStyle}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        isSelected && !revealed
+                          ? "border-primary bg-primary"
+                          : isCorrect
+                          ? "border-green-500 bg-green-500"
+                          : isWrong
+                          ? "border-red-500 bg-red-500"
+                          : "border-border"
+                      }`}
+                    >
+                      {(isSelected || isCorrect || isWrong) && (
+                        isCorrect ? <Check size={12} className="text-white" /> :
+                        isWrong ? <X size={12} className="text-white" /> : null
+                      )}
+                    </div>
+                    <span className={`text-sm font-medium ${
+                      revealed && opt === question.correct_answer
+                        ? "text-green-700"
+                        : revealed && isWrong
+                        ? "text-red-700"
+                        : "text-text-primary"
+                    }`}>
+                      {opt}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {question.status === "guesser_guessing" && question.guesser_deadline && !revealed && (
+            <div className="mb-4">
+              {isSubject ? (
+                <div className="flex flex-col items-center gap-3">
+                  <DigitalClock
+                    deadline={question.guesser_deadline}
+                    onTimeout={() => {}}
+                    label="Menunggu lawan menebak"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <Timer
+                    deadline={question.guesser_deadline}
+                    onTimeout={() => {
+                      if (!selectedAnswer) onGuesserGuess("__timeout__")
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {waitingForSubject && (
+            <div className="flex flex-col items-center gap-2 py-6 text-text-secondary">
+              <Loader2 size={20} className="animate-spin" />
+              <p className="text-sm">Menunggu lawan menjawab</p>
+            </div>
+          )}
+
+          {revealed && (
+            <div className="text-center mb-4 animate-in fade-in slide-in-from-bottom-1 duration-400">
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl ${
+                lastAnswerCorrect === true
+                  ? "bg-green-100 text-green-700"
+                  : lastAnswerCorrect === false
+                  ? "bg-red-100 text-red-700"
+                  : "bg-primary/10 text-primary"
+              }`}>
+                {lastAnswerCorrect === true ? (
+                  <><Check size={18} /> Benar! +10 poin</>
+                ) : lastAnswerCorrect === false ? (
+                  <><X size={18} /> Salah</>
+                ) : (
+                  <><HelpCircle size={18} /> Lawan sudah menjawab</>
+                )}
+              </div>
+              {!isSubject && lastAnswerCorrect !== true && question.correct_answer && (
+                <p className="text-sm text-text-secondary mt-2">
+                  Jawaban: <span className="font-bold text-green-600">{question.correct_answer}</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {revealed && (
+            <button
+              onClick={onAdvance}
+              className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors cursor-pointer mt-auto"
+            >
+              {question.sequence_number < 5 ? "Pertanyaan Selanjutnya" : "Selesai Round Ini"}
+              <ArrowRight size={16} />
+            </button>
           )}
         </div>
-      )}
-
-      {revealed && (
-        <button
-          onClick={onAdvance}
-          className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors cursor-pointer mt-auto"
-        >
-          {question.sequence_number < 5 ? "Pertanyaan Selanjutnya" : "Selesai Round Ini"}
-          <ArrowRight size={16} />
-        </button>
-      )}
+      </div>
     </div>
   )
 }
