@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Check, X, HelpCircle, Trophy, ArrowRight, Loader2, WifiOff } from "lucide-react"
+import { Check, X, HelpCircle, Trophy, ArrowRight, Loader2, WifiOff, Clock } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import {
@@ -464,22 +464,37 @@ function QuestionView({
 
           {revealed && (
             <div className="text-center mb-4 animate-in fade-in slide-in-from-bottom-1 duration-400">
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl ${
-                lastAnswerCorrect === true
-                  ? "bg-green-100 text-green-700"
-                  : lastAnswerCorrect === false
-                  ? "bg-red-100 text-red-700"
-                  : "bg-primary/10 text-primary"
-              }`}>
-                {lastAnswerCorrect === true ? (
-                  <><Check size={18} /> Benar! +10 poin</>
-                ) : lastAnswerCorrect === false ? (
-                  <><X size={18} /> Salah</>
-                ) : (
-                  <><HelpCircle size={18} /> Lawan sudah menjawab</>
-                )}
-              </div>
-              {!isSubject && lastAnswerCorrect !== true && question.correct_answer && (
+              {(() => {
+                const isSubTimeout = !question.subject_answered_at
+
+                if (lastAnswerCorrect === true) {
+                  return (
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-100 text-green-700">
+                      <Check size={18} /> Benar! +10 poin
+                    </div>
+                  )
+                }
+                if (lastAnswerCorrect === false) {
+                  return (
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-100 text-red-700">
+                      <X size={18} /> Salah
+                    </div>
+                  )
+                }
+                if (isSubTimeout) {
+                  return (
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-100 text-red-700">
+                      <Clock size={18} /> {isSubject ? "Kamu kehabisan waktu! +10 untuk lawan" : "Lawan kehabisan waktu! Kamu dapat +10"}
+                    </div>
+                  )
+                }
+                return (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary">
+                    <HelpCircle size={18} /> Lawan sudah menjawab
+                  </div>
+                )
+              })()}
+              {!isSubject && lastAnswerCorrect !== true && question.correct_answer && question.subject_answered_at && (
                 <p className="text-sm text-text-secondary mt-2">
                   Jawaban: <span className="font-bold text-green-600">{question.correct_answer}</span>
                 </p>

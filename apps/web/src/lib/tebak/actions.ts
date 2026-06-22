@@ -333,17 +333,26 @@ export async function handleSubjectTimeout(questionId: string, sessionId: string
 
   const { data: session } = await supabase
     .from('tebak_sessions')
-    .select('current_subject')
+    .select('current_subject, player_a_id, player_b_id')
     .eq('id', sessionId)
     .single()
   if (!session) return
 
   const guesserCol = session.current_subject === 'a' ? 'score_b' : 'score_a'
+  const guesserId = session.current_subject === 'a' ? session.player_b_id : session.player_a_id
 
   await supabase.rpc('increment_tebak_score', {
     session_id: sessionId,
     column: guesserCol,
     amount: 10,
+  })
+
+  await supabase.from('tebak_answers').insert({
+    question_id: questionId,
+    guesser_id: guesserId,
+    answer: '__subject_timeout__',
+    is_correct: true,
+    time_ms: 20000,
   })
 
   await supabase.from('tebak_questions').update({
