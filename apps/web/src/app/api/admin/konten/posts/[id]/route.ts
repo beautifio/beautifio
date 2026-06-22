@@ -36,7 +36,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.og_image !== undefined) updateData.og_image = body.og_image;
     if (body.status !== undefined) {
       updateData.is_published = body.status === "published";
-      if (body.status === "published") updateData.published_at = new Date().toISOString();
     }
 
     const { data, error } = await supabase
