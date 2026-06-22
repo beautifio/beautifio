@@ -14,6 +14,7 @@ import {
 } from "@/lib/tebak/actions"
 import { Timer } from "./Timer"
 import { DigitalClock } from "./DigitalClock"
+import { MatchIntro } from "./MatchIntro"
 import { ScoreBoard } from "./ScoreBoard"
 import type { TebakSession, TebakQuestion, TebakAnswer } from "@/lib/tebak/queries"
 
@@ -37,9 +38,13 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [disconnectMsg, setDisconnectMsg] = useState<string | null>(null)
   const [opponentName, setOpponentName] = useState<string | null>(null)
   const [myName, setMyName] = useState<string | null>(null)
+  const [showIntro, setShowIntro] = useState(true)
+  const [locked, setLocked] = useState(false)
   const [botThinking, setBotThinking] = useState(false)
   const guessStartTime = useRef(Date.now())
   const botPlayedRef = useRef<Set<string>>(new Set())
+  const selectedAnswerRef = useRef<string | null>(null)
+  const prevQuestionId = useRef<string | null>(null)
 
   const isPlayerA = gameSession.player_a_id === userId
   const opponentId = isPlayerA ? gameSession.player_b_id : gameSession.player_a_id
@@ -148,6 +153,16 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       .finally(() => setBotThinking(false))
   }, [opponentIsBot, currentQ, botThinking, sessionId, opponentId, isPlayerA, gameSession.current_subject, refreshQuestions])
 
+  // Reset locked/selection when question changes
+  useEffect(() => {
+    if (currentQ && currentQ.id !== prevQuestionId.current) {
+      prevQuestionId.current = currentQ.id
+      setLocked(false)
+      setSelectedAnswer(null)
+      selectedAnswerRef.current = null
+    }
+  }, [currentQ])
+
   // Real-time subscriptions
   useEffect(() => {
     const unsub = subscribeToTebakGame(sessionId, {
@@ -176,6 +191,8 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     setSelectedAnswer(null)
     setRevealed(false)
     setLastAnswerCorrect(null)
+    setLocked(false)
+    selectedAnswerRef.current = null
     await advanceGame(sessionId)
     await refreshQuestions()
   }
@@ -191,15 +208,22 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     }
   }
 
-  const handleGuesserGuess = async (answer: string) => {
-    if (!currentQ || submitting) return
-    setSubmitting(true)
+  const handleGuesserGuess = (answer: string) => {
+    if (!currentQ || locked) return
     setSelectedAnswer(answer)
+    selectedAnswerRef.current = answer
+  }
+
+  const handleGuesserTimeout = async () => {
+    if (locked) return
+    setLocked(true)
+    if (!currentQ) return
+    const answer = selectedAnswerRef.current || "__timeout__"
     try {
       const result = await submitGuesserAnswer(currentQ.id, userId, answer, guessStartTime.current)
-      setLastAnswerCorrect(result.isCorrect)
-    } catch {} finally {
-      setSubmitting(false)
+      if (result) setLastAnswerCorrect(result.isCorrect)
+    } catch (e) {
+      console.error("handleGuesserTimeout error", e)
     }
   }
 
@@ -225,7 +249,13 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         />
       </div>
 
-      {finished ? (
+      {showIntro ? (
+        <MatchIntro
+          myName={myName}
+          opponentName={opponentName}
+          onBegin={() => setShowIntro(false)}
+        />
+      ) : finished ? (
         <ResultScreen
           session={gameSession}
           isPlayerA={isPlayerA}
@@ -238,10 +268,12 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           isSubject={isSubject}
           selectedAnswer={selectedAnswer}
           submitting={submitting}
+          locked={locked}
           revealed={revealed}
           lastAnswerCorrect={lastAnswerCorrect}
           onSubjectAnswer={handleSubjectAnswer}
           onGuesserGuess={handleGuesserGuess}
+          onGuesserTimeout={handleGuesserTimeout}
           onAdvance={handleAdvance}
         />
       ) : (
@@ -258,20 +290,24 @@ function QuestionView({
   isSubject,
   selectedAnswer,
   submitting,
+  locked,
   revealed,
   lastAnswerCorrect,
   onSubjectAnswer,
   onGuesserGuess,
+  onGuesserTimeout,
   onAdvance,
 }: {
   question: TebakQuestion
   isSubject: boolean
   selectedAnswer: string | null
   submitting: boolean
+  locked: boolean
   revealed: boolean
   lastAnswerCorrect: boolean | null
   onSubjectAnswer: (a: string) => void
   onGuesserGuess: (a: string) => void
+  onGuesserTimeout: () => void
   onAdvance: () => void
 }) {
   const waitingForSubject = question.status === "subject_answering" && !isSubject
@@ -311,11 +347,16 @@ function QuestionView({
                 <button
                   key={opt}
                   onClick={() => {
-                    if (submitting || revealed) return
-                    if (isSubject) onSubjectAnswer(opt)
-                    else onGuesserGuess(opt)
+                    if (revealed) return
+                    if (isSubject) {
+                      if (submitting) return
+                      onSubjectAnswer(opt)
+                    } else {
+                      if (locked) return
+                      onGuesserGuess(opt)
+                    }
                   }}
-                  disabled={submitting || revealed || !needAction}
+                  disabled={(isSubject ? submitting : locked) || revealed || !needAction}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${
                     revealed ? "cursor-default" : ""
                   } ${btnStyle}`}
@@ -366,9 +407,7 @@ function QuestionView({
                 <div className="flex flex-col items-center gap-3">
                   <Timer
                     deadline={question.guesser_deadline}
-                    onTimeout={() => {
-                      if (!selectedAnswer) onGuesserGuess("__timeout__")
-                    }}
+                    onTimeout={onGuesserTimeout}
                   />
                 </div>
               )}
