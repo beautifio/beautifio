@@ -40,7 +40,7 @@ const BOT_IDS = {
   ],
 }
 
-export function getRandomBotId(tier?: 'low' | 'medium' | 'high'): string {
+export async function getRandomBotId(tier?: 'low' | 'medium' | 'high'): Promise<string> {
   const pool = tier ? BOT_IDS[tier] : [...BOT_IDS.low, ...BOT_IDS.medium, ...BOT_IDS.high]
   return pool[Math.floor(Math.random() * pool.length)]
 }

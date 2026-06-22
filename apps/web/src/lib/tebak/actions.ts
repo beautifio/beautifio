@@ -27,7 +27,7 @@ export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole:
 
 export async function matchWithBot(sessionId: string): Promise<boolean> {
   const supabase = await createServerClient()
-  const botId = getRandomBotId('medium')
+  const botId = await getRandomBotId('medium')
 
   const { error } = await supabase.rpc('activate_tebak_session', {
     p_session_id: sessionId,
@@ -44,7 +44,7 @@ export async function matchWithBot(sessionId: string): Promise<boolean> {
 
 export async function replaceDisconnectedWithBot(sessionId: string, disconnectedUserId: string): Promise<void> {
   const supabase = await createServerClient()
-  const botId = getRandomBotId('low')
+  const botId = await getRandomBotId('low')
 
   const { data: session } = await supabase
     .from('tebak_sessions')

@@ -43,21 +43,26 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const isSubject = gameSession.current_subject === (isPlayerA ? "a" : "b")
 
   const refreshQuestions = useCallback(async () => {
-    if (!supabase) return
-    const { data: round } = await supabase
+    if (!supabase) { console.error('GameRoom: supabase null'); return }
+    console.log('GameRoom: refreshQuestions, round=', gameSession.current_round, 'session=', sessionId, 'isSubject=', isSubject)
+    const { data: round, error: roundErr } = await supabase
       .from("tebak_rounds")
       .select("id")
       .eq("session_id", sessionId)
       .eq("round_number", gameSession.current_round)
       .maybeSingle()
-    if (!round) return
+    if (roundErr) { console.error('GameRoom: round query error', roundErr); return }
+    if (!round) { console.error('GameRoom: no round found for session', sessionId, 'round', gameSession.current_round); return }
+    console.log('GameRoom: found round', round.id)
 
-    const { data } = await supabase
+    const { data, error: qErr } = await supabase
       .from("tebak_questions")
       .select("*")
       .eq("round_id", round.id)
       .order("sequence_number")
-    if (!data) return
+    if (qErr) { console.error('GameRoom: questions query error', qErr); return }
+    if (!data) { console.error('GameRoom: no data from questions query'); return }
+    console.log('GameRoom: questions fetched', data.length, data)
 
     setQuestions(data as TebakQuestion[])
     const activeRound = data.filter(
