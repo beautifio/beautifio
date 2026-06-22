@@ -485,6 +485,17 @@ export default function JourneyPage() {
                         >
                           {t.title}
                         </p>
+                        <p
+                          className="text-[12px] truncate mt-0.5"
+                          style={{
+                            fontFamily: "Inter, sans-serif",
+                            color: "#647488",
+                          }}
+                        >
+                          {t.description.length > 45
+                            ? t.description.slice(0, 45) + "..."
+                            : t.description}
+                        </p>
                         <div
                           className="flex items-center gap-1 text-[11px] mt-0.5"
                           style={{ color: "#647488" }}
