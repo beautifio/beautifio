@@ -1,8 +1,24 @@
 "use client";
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function CarePage() {
   const router = useRouter();
+  const [activeSessionCount, setActiveSessionCount] = useState(0);
+
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from('care_chat_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .neq('status', 'closed')
+        .then(({ count }) => setActiveSessionCount(count ?? 0));
+    });
+  }, []);
 
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100svh',
@@ -31,6 +47,26 @@ export default function CarePage() {
       <div style={{ padding: '20px 16px', display: 'flex',
         flexDirection: 'column', gap: 14, maxWidth: 480,
         margin: '0 auto' }}>
+
+        {/* Active session banner */}
+        {activeSessionCount > 0 && (
+          <div onClick={() => router.push('/care/chat')}
+            style={{
+              background: '#FFFFFF',
+              border: '1.5px solid #6BB9D4',
+              borderRadius: 14, padding: '12px 16px',
+              display: 'flex', justifyContent: 'space-between',
+              alignItems: 'center', cursor: 'pointer',
+            }}>
+            <span style={{ fontFamily: 'Inter', fontSize: 13,
+              color: '#084463', fontWeight: 500 }}>
+              💬 Kamu punya {activeSessionCount} sesi chat aktif
+            </span>
+            <span style={{ color: '#6BB9D4', fontSize: 13 }}>
+              Lihat →
+            </span>
+          </div>
+        )}
 
         {/* Card 1: DARURAT */}
         <a href="tel:112" style={{ textDecoration: 'none' }}>
