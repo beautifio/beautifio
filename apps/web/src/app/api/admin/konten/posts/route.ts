@@ -17,11 +17,21 @@ export async function GET(request: NextRequest) {
     const user = await checkRole(supabase);
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { data, error } = await supabase
+    const includeTrash = request.nextUrl.searchParams.get("trash") === "1";
+
+    let query = supabase
       .from("articles")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(100);
+
+    if (!includeTrash) {
+      query = query.is("deleted_at", null);
+    } else {
+      query = query.not("deleted_at", "is", null);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return NextResponse.json({ data });
@@ -44,6 +54,9 @@ export async function POST(request: NextRequest) {
 
     const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
 
+    const now = new Date().toISOString();
+    const isScheduled = body.scheduled_at && new Date(body.scheduled_at) > new Date();
+
     const { data, error } = await supabase
       .from("articles")
       .insert({
@@ -57,7 +70,8 @@ export async function POST(request: NextRequest) {
         author: body.author_name || user.email || "",
         initials: (body.author_name || user.email || "").charAt(0).toUpperCase(),
         source: "redaksi",
-        is_published: body.status === "published",
+        is_published: body.status === "published" || (isScheduled ? false : false),
+        scheduled_at: isScheduled ? body.scheduled_at : null,
         read_time_minutes: body.read_time_minutes || 5,
         meta_title: body.meta_title || "",
         meta_description: body.meta_description || "",

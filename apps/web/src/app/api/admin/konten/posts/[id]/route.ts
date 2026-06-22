@@ -34,8 +34,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.meta_title !== undefined) updateData.meta_title = body.meta_title;
     if (body.meta_description !== undefined) updateData.meta_description = body.meta_description;
     if (body.og_image !== undefined) updateData.og_image = body.og_image;
+    if (body.scheduled_at !== undefined) updateData.scheduled_at = body.scheduled_at;
+    if (body.deleted_at !== undefined) updateData.deleted_at = body.deleted_at;
     if (body.status !== undefined) {
       updateData.is_published = body.status === "published";
+      if (body.status !== "published") updateData.scheduled_at = null;
     }
 
     const { data, error } = await supabase
@@ -60,9 +63,20 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { id } = await params;
-    const { error } = await supabase.from("articles").delete().eq("id", id);
+    const body = await request.json().catch(() => ({}));
+
+    if (body.permanent) {
+      const { error } = await supabase.from("articles").delete().eq("id", id);
+      if (error) throw error;
+      return NextResponse.json({ success: true, permanent: true });
+    }
+
+    const { error } = await supabase
+      .from("articles")
+      .update({ deleted_at: new Date().toISOString(), is_published: false })
+      .eq("id", id);
     if (error) throw error;
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, permanent: false });
   } catch (error: any) {
     console.error("DELETE /api/admin/konten/posts/[id]:", error);
     return NextResponse.json({ error: error.message || "Internal error" }, { status: 500 });
