@@ -36,6 +36,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [opponentIsBot, setOpponentIsBot] = useState(false)
   const [disconnectMsg, setDisconnectMsg] = useState<string | null>(null)
   const [opponentName, setOpponentName] = useState<string | null>(null)
+  const [myName, setMyName] = useState<string | null>(null)
   const [botThinking, setBotThinking] = useState(false)
   const guessStartTime = useRef(Date.now())
   const botPlayedRef = useRef<Set<string>>(new Set())
@@ -88,7 +89,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     return () => clearInterval(interval)
   }, [questions.length, refreshQuestions])
 
-  // Check if opponent is a bot
+  // Fetch opponent + current user info
   useEffect(() => {
     if (!supabase) return
     supabase.from("users").select("is_bot, full_name, avatar_url").eq("id", opponentId).single().then(({ data }) => {
@@ -96,7 +97,10 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       if (data.is_bot) setOpponentIsBot(true)
       if (data.full_name) setOpponentName(data.full_name)
     })
-  }, [opponentId])
+    supabase.from("users").select("full_name").eq("id", userId).single().then(({ data }) => {
+      if (data?.full_name) setMyName(data.full_name)
+    })
+  }, [opponentId, userId])
 
   // Heartbeat + disconnect detection
   useEffect(() => {
@@ -153,13 +157,12 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       },
       onQuestionUpdate: async (q) => {
         setQuestions((prev) => prev.map((p) => (p.id === q.id ? q : p)))
+        setCurrentQ(q)
         if (q.status === "guesser_guessing" && !isSubject) {
-          setCurrentQ(q)
           guessStartTime.current = Date.now()
         }
         if (q.status === "revealed") {
           setRevealed(true)
-          setCurrentQ(q)
         }
       },
       onAnswerSubmitted: (a) => {
@@ -217,7 +220,8 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           scoreB={gameSession.score_b}
           round={gameSession.current_round}
           isPlayerA={isPlayerA}
-          opponentName={opponentName || undefined}
+          myName={myName}
+          opponentName={opponentName}
         />
       </div>
 
