@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Users, Bot } from "lucide-react"
+import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import { matchWithBot, retryMatchmaking } from "@/lib/tebak/actions"
 import type { TebakSession } from "@/lib/tebak/queries"
@@ -53,8 +54,13 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMa
     if (elapsed >= 10 && !matchedRef.current && !retrying) {
       matchedRef.current = true
       setMatchingBot(true)
-      matchWithBot(sessionId, isPlayerA).catch(() => {
-        matchedRef.current = false
+      matchWithBot(sessionId).then(async (ok) => {
+        if (ok && supabase) {
+          const { data: s } = await supabase.from("tebak_sessions").select("*").eq("id", sessionId).single()
+          if (s && s.status === "active") onMatched(s as TebakSession)
+        }
+        setMatchingBot(false)
+      }).catch(() => {
         setMatchingBot(false)
       })
     }

@@ -31,7 +31,7 @@ export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole:
   return { sessionId, playerRole, isNew }
 }
 
-export async function matchWithBot(sessionId: string, isPlayerA: boolean): Promise<void> {
+export async function matchWithBot(sessionId: string): Promise<boolean> {
   const supabase = await createServerClient()
   const botId = getRandomBotId('medium')
 
@@ -40,8 +40,9 @@ export async function matchWithBot(sessionId: string, isPlayerA: boolean): Promi
     p_player_b_id: botId,
   })
 
-  if (error || !roundId) return
+  if (error || !roundId) return false
   await selectQuestionsForRound(sessionId, roundId as string)
+  return true
 }
 
 export async function replaceDisconnectedWithBot(sessionId: string, disconnectedUserId: string): Promise<void> {
