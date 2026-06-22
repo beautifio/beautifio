@@ -132,32 +132,37 @@ export default function CarePage() {
         </div>
       </div>
 
-      <div style={{ padding: "16px" }}>
+      <div className="max-w-2xl mx-auto px-4 py-6">
         {view === "main" && (
           <>
             {/* === JALUR 1: DARURAT === */}
             <DaruratSection />
 
             {/* === JALUR 2: LAPORKAN MASALAH === */}
-            <h2 style={{ fontFamily: "Poppins", fontSize: 16, fontWeight: 700, color: "#1E2938", marginBottom: 4, marginTop: 24 }}>
+            <h2 style={{ fontFamily: "Poppins", fontWeight: 600, fontSize: 18, color: "#1E2938", margin: "24px 0 0" }}>
               Laporkan Masalahmu
             </h2>
-            <p style={{ fontFamily: "Inter", fontSize: 13, color: "#647488", marginBottom: 16 }}>
+            <p style={{ fontFamily: "Inter", fontSize: 13, color: "#647488", margin: "4px 0 16px" }}>
               Pilih kategori yang sesuai dengan situasimu
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
               {categories.map(cat => (
                 <button key={cat.id} onClick={() => { setSelectedCategory(selectedCategory?.id === cat.id ? null : cat); setShowReportForm(false) }}
                   style={{
-                    background: selectedCategory?.id === cat.id ? "#084463" : "#FFFFFF",
-                    color: selectedCategory?.id === cat.id ? "#FFFFFF" : "#1E2938",
-                    border: selectedCategory?.id === cat.id ? "2px solid #084463" : "1.5px solid #E2E8F0",
-                    borderRadius: 14, padding: "16px 12px", fontFamily: "Poppins", fontSize: 13, fontWeight: 600,
-                    cursor: "pointer", textAlign: "center", transition: "all 0.2s ease",
-                    boxShadow: selectedCategory?.id === cat.id ? "0 4px 12px rgba(8,68,99,0.2)" : "0 1px 4px rgba(0,0,0,0.05)",
-                  }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>{cat.emoji}</div>
-                  {cat.name}
+                    background: "#FFFFFF", border: selectedCategory?.id === cat.id ? "1.5px solid #6BB9D4" : "1px solid #E2E8F0",
+                    borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12,
+                    cursor: "pointer", textAlign: "left", transition: "all 0.2s ease",
+                    boxShadow: selectedCategory?.id === cat.id ? "0 2px 8px rgba(107,185,212,0.15)" : "none",
+                  }}
+                  onMouseEnter={e => { if (selectedCategory?.id !== cat.id) { e.currentTarget.style.borderColor = "#6BB9D4"; e.currentTarget.style.background = "#F8FAFC" } }}
+                  onMouseLeave={e => { if (selectedCategory?.id !== cat.id) { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.background = "#FFFFFF" } }}
+                >
+                  <div style={{ width: 40, height: 40, background: "#F8FAFC", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 22, lineHeight: 1 }}>
+                    {cat.emoji}
+                  </div>
+                  <span style={{ fontFamily: "Poppins", fontWeight: 500, fontSize: 13, color: "#1E2938" }}>
+                    {cat.name}
+                  </span>
                 </button>
               ))}
             </div>
@@ -177,10 +182,10 @@ export default function CarePage() {
             )}
 
             {/* === JALUR 3: CHAT CARE === */}
-            <h2 style={{ fontFamily: "Poppins", fontSize: 16, fontWeight: 700, color: "#1E2938", marginBottom: 4, marginTop: 24 }}>
+            <h2 style={{ fontFamily: "Poppins", fontWeight: 600, fontSize: 18, color: "#1E2938", margin: "24px 0 0" }}>
               Chat dengan Petugas Care
             </h2>
-            <p style={{ fontFamily: "Inter", fontSize: 13, color: "#647488", marginBottom: 16 }}>
+            <p style={{ fontFamily: "Inter", fontSize: 13, color: "#647488", margin: "4px 0 16px" }}>
               Konsultasi langsung melalui chat dengan petugas terlatih
             </p>
             <ChatSection schedule={schedule} onStartChat={(cat) => { setChatCategory(cat); setView("chat-form") }} />
@@ -218,21 +223,23 @@ export default function CarePage() {
 function DaruratSection() {
   return (
     <div style={{
-      background: "linear-gradient(135deg, #DC2626, #B91C1C)",
-      borderRadius: 16, padding: "16px",
-      display: "flex", alignItems: "center", justifyContent: "space-between",
+      background: "#FEF2F2", border: "1px solid #FECACA", borderLeft: "4px solid #EF4444",
+      borderRadius: 12, padding: "14px 16px",
+      display: "flex", alignItems: "center", gap: 12,
     }}>
-      <div>
-        <p style={{ fontFamily: "Poppins", fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: "0 0 2px" }}>🆘 Keadaan Darurat?</p>
-        <p style={{ fontFamily: "Inter", fontSize: 12, color: "rgba(255,255,255,0.85)", margin: 0 }}>
+      <div style={{ flex: 1 }}>
+        <p style={{ fontFamily: "Poppins", fontWeight: 600, fontSize: 14, color: "#DC2626", margin: 0 }}>
+          Keadaan Darurat?
+        </p>
+        <p style={{ fontFamily: "Inter", fontSize: 12, color: "#647488", margin: "2px 0 0" }}>
           Segera hubungi layanan darurat nasional 112
         </p>
       </div>
       <a href="tel:112" style={{
-        background: "#FFFFFF", color: "#DC2626", padding: "8px 16px", borderRadius: 10,
-        fontFamily: "Poppins", fontSize: 14, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap",
+        background: "#EF4444", color: "#FFFFFF", padding: "6px 12px", borderRadius: 8,
+        fontFamily: "Inter", fontSize: 12, fontWeight: 500, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0,
       }}>
-        📞 112
+        112
       </a>
     </div>
   )
@@ -376,24 +383,27 @@ function ChatSection({ schedule, onStartChat }: { schedule: CareSchedule[]; onSt
   const isOnline = currentSchedule?.is_online ?? false
 
   return (
-    <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 16, padding: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+    <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 12, padding: 20 }}>
+      {/* ─── Underline Tabs ─── */}
+      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid #E2E8F0", marginBottom: 16 }}>
         {types.map(t => (
           <button key={t.key} onClick={() => setSelectedType(t.key)} style={{
-            flex: 1, padding: "8px 4px",
-            background: selectedType === t.key ? "#084463" : "#F8FAFC",
-            color: selectedType === t.key ? "#FFFFFF" : "#647488",
-            border: selectedType === t.key ? "none" : "1px solid #E2E8F0",
-            borderRadius: 10, cursor: "pointer", fontFamily: "Inter", fontSize: 12, fontWeight: 600,
+            padding: "8px 16px", cursor: "pointer", fontFamily: "Inter", fontSize: 13,
+            color: selectedType === t.key ? "#084463" : "#647488",
+            fontWeight: selectedType === t.key ? 500 : 400,
+            border: "none", background: "none",
+            borderBottom: selectedType === t.key ? "2px solid #084463" : "2px solid transparent",
+            transition: "all 0.2s ease",
           }}>
             {t.emoji} {t.label}
           </button>
         ))}
       </div>
 
+      {/* ─── Status ─── */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-        <div style={{ width: 10, height: 10, borderRadius: "50%", background: isOnline ? "#22C55E" : "#9CA3AF" }} />
-        <span style={{ fontFamily: "Inter", fontSize: 13, color: isOnline ? "#15803D" : "#647488", fontWeight: 600 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: isOnline ? "#22C55E" : "#9CA3AF" }} />
+        <span style={{ fontFamily: "Inter", fontSize: 12, color: "#647488" }}>
           {isOnline ? "Petugas tersedia" : "Sedang tidak ada petugas online"}
         </span>
       </div>
@@ -404,12 +414,13 @@ function ChatSection({ schedule, onStartChat }: { schedule: CareSchedule[]; onSt
         </p>
       )}
 
+      {/* ─── Button ─── */}
       <button onClick={() => onStartChat(selectedType)} style={{
         width: "100%", background: "#084463", color: "#FFFFFF", border: "none",
-        borderRadius: 12, padding: "13px", fontFamily: "Poppins", fontSize: 14,
-        fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 12px rgba(8,68,99,0.3)",
+        borderRadius: 12, padding: "12px", fontFamily: "Inter", fontSize: 13,
+        fontWeight: 500, cursor: "pointer", marginTop: 16,
       }}>
-        💬 Mulai Chat {isOnline ? "Sekarang" : "— Tetap Kirim Pesan"}
+        Mulai Chat {isOnline ? "Sekarang" : "— Tetap Kirim Pesan"}
       </button>
     </div>
   )
