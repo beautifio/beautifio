@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Users, Bot } from "lucide-react"
+import { Loader2, Users } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import { matchWithBot, retryMatchmaking } from "@/lib/tebak/actions"
@@ -59,7 +59,7 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMa
         const ok = await matchWithBot(sessionId)
         if (!ok || !supabase) {
           setMatchingBot(false)
-          setError("Gagal mencari bot. Coba lagi.")
+          setError("Gagal mencari pemain. Coba lagi.")
           doneRef.current = false
           return
         }
@@ -105,20 +105,16 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMa
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="relative mb-8">
         <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-          {matchingBot ? (
-            <Bot size={36} className="text-primary animate-bounce" />
-          ) : (
-            <Users size={36} className="text-primary animate-pulse" />
-          )}
+          <Users size={36} className="text-primary animate-pulse" />
         </div>
         <Loader2 size={20} className="absolute -top-1 -right-1 text-primary animate-spin" />
       </div>
       <h3 className="text-lg font-bold text-text-primary mb-2">
-        {matchingBot ? "Bot sedang bergabung..." : retrying ? "Mencocokkan pemain..." : `Mencari lawan${dots}`}
+        {matchingBot ? "Menyiapkan pertandingan..." : retrying ? "Mencocokkan pemain..." : `Mencari lawan${dots}`}
       </h3>
       <p className="text-sm text-text-secondary text-center mb-8">
         {matchingBot
-          ? "Tidak ada pemain lain, kamu akan bermain dengan bot"
+          ? "Kamu akan segera bermain"
           : retrying
           ? "Memeriksa ulang antrian..."
           : "Kami mencari pemain lain untuk bermain Tebak Aku"}
