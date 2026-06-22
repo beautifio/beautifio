@@ -22,9 +22,8 @@ export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole:
 
   const { sessionId, playerRole, isNew } = result as { sessionId: string; playerRole: 'a' | 'b'; isNew: boolean }
 
-  // If we just claimed a waiting session (isNew && playerRole === 'b'),
-  // we need to select questions for round 1
-  if (isNew && playerRole === 'b') {
+  // If we joined as player B, select questions for round 1
+  if (playerRole === 'b') {
     const { data: round } = await supabase
       .from('tebak_rounds')
       .select('id')

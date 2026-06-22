@@ -69,6 +69,13 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     refreshQuestions()
   }, [refreshQuestions])
 
+  // Retry fetching questions if still empty (race condition safety net)
+  useEffect(() => {
+    if (questions.length > 0) return
+    const interval = setInterval(refreshQuestions, 2000)
+    return () => clearInterval(interval)
+  }, [questions.length, refreshQuestions])
+
   // Check if opponent is a bot
   useEffect(() => {
     if (!supabase) return
