@@ -34,9 +34,9 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMa
     return () => clearInterval(t)
   }, [])
 
-  // After 5s, retry matchmaking to handle race condition
+  // After 2s, retry matchmaking to handle race condition
   useEffect(() => {
-    if (elapsed < 5 || elapsed >= 20 || matchedRef.current || retryDoneRef.current) return
+    if (elapsed < 2 || elapsed >= 10 || matchedRef.current || retryDoneRef.current) return
     retryDoneRef.current = true
     setRetrying(true)
     retryMatchmaking(sessionId).then((newId) => {
@@ -48,9 +48,9 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMa
     }).catch(() => setRetrying(false))
   }, [elapsed, sessionId, router, onReMatched])
 
-  // After 20s, match with bot
+  // After 10s, match with bot
   useEffect(() => {
-    if (elapsed >= 20 && !matchedRef.current && !retrying) {
+    if (elapsed >= 10 && !matchedRef.current && !retrying) {
       matchedRef.current = true
       setMatchingBot(true)
       matchWithBot(sessionId, isPlayerA).catch(() => {
