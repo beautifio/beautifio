@@ -23,6 +23,7 @@ export default function RegisterPage({
   const isUpgrade = resolvedParams.upgrade === "true";
 
   const [name, setName] = useState("");
+  const [gender, setGender] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -59,6 +60,11 @@ export default function RegisterPage({
       return;
     }
 
+    if (!gender) {
+      setError("Silakan pilih gender untuk melanjutkan");
+      return;
+    }
+
     if (!validateEmail(email)) {
       setError("Format email tidak valid");
       return;
@@ -88,7 +94,7 @@ export default function RegisterPage({
         const { data, error: linkErr } = await supabase.auth.updateUser({
           email,
           password,
-          data: { full_name: name },
+          data: { full_name: name, gender },
         });
 
         if (linkErr) {
@@ -124,7 +130,7 @@ export default function RegisterPage({
         email,
         password,
         options: {
-          data: { full_name: name },
+          data: { full_name: name, gender },
         },
       });
 
@@ -144,6 +150,10 @@ export default function RegisterPage({
       if (data?.session) {
         setSession(data.session);
         setUser(data.session.user);
+
+        await supabase.from("users").update({
+          gender,
+        }).eq("id", data.session.user.id);
 
         const dest = mimpiSlug ? `/home?mimpi=${mimpiSlug}` : "/home";
         router.push(dest);
@@ -207,6 +217,66 @@ export default function RegisterPage({
                 onChange={(e) => setName(e.target.value)}
                 required
               />
+            </div>
+
+            {/* Info platform */}
+            <div style={{
+              background: '#F0F9FF',
+              border: '1px solid #6BB9D4',
+              borderRadius: 12, padding: '12px 14px',
+            }}>
+              <p style={{
+                fontFamily: 'Inter', fontSize: 12,
+                color: '#0E7490', margin: 0, lineHeight: 1.6,
+              }}>
+                💜 Beautifio adalah platform yang dirancang untuk
+                perempuan — ruang aman untuk tumbuh, berbagi, dan
+                saling mendukung.
+              </p>
+            </div>
+
+            <div>
+              <label style={{
+                fontFamily: 'Inter', fontSize: 12, fontWeight: 600,
+                color: '#647488', display: 'block', marginBottom: 8,
+              }}>
+                Gender *
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column',
+                gap: 8, marginBottom: 4 }}>
+                {[
+                  { value: 'perempuan', label: '♀️ Perempuan' },
+                  { value: 'prefer_not_to_say',
+                    label: '🔒 Tidak ingin menyebutkan' },
+                ].map(opt => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setGender(opt.value)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px',
+                      background: gender === opt.value
+                        ? '#F0F9FF' : '#F8FAFC',
+                      border: gender === opt.value
+                        ? '2px solid #084463' : '1.5px solid #E2E8F0',
+                      borderRadius: 12, cursor: 'pointer',
+                      textAlign: 'left', width: '100%',
+                      transition: 'all 0.15s ease',
+                    }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: '50%',
+                      border: gender === opt.value
+                        ? '5px solid #084463' : '2px solid #D1D5DB',
+                      flexShrink: 0, transition: 'all 0.15s ease',
+                    }} />
+                    <span style={{
+                      fontFamily: 'Inter', fontSize: 14,
+                      color: '#1E2938', fontWeight: 500,
+                    }}>
+                      {opt.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
