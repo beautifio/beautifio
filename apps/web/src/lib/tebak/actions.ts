@@ -256,6 +256,16 @@ async function selectQuestionsForRound(sessionId: string, roundId: string): Prom
   }
 }
 
+export async function startQuestionTimer(sessionId: string, seq: number): Promise<string | null> {
+  const supabase = await createServerClient()
+  const { data, error } = await supabase.rpc('start_question_timer', {
+    p_session_id: sessionId,
+    p_seq: seq,
+  })
+  if (error) { console.error('startQuestionTimer error', error); return null }
+  return data as string | null
+}
+
 export async function submitSubjectAnswer(questionId: string, answer: string): Promise<void> {
   const supabase = await createServerClient()
   const now = new Date()
@@ -360,8 +370,16 @@ export async function handleSubjectTimeout(questionId: string, sessionId: string
   }).eq('id', questionId)
 }
 
-export async function advanceGame(sessionId: string): Promise<void> {
+export async function advanceGame(sessionId: string, expectedSeq: number): Promise<void> {
   const supabase = await createServerClient()
+
+  // Atomic guard: skip if another client already advanced
+  const { data: seqCheck } = await supabase
+    .from('tebak_sessions')
+    .select('current_q_seq')
+    .eq('id', sessionId)
+    .single()
+  if (!seqCheck || seqCheck.current_q_seq !== expectedSeq) return
 
   const { data: session } = await supabase
     .from('tebak_sessions')

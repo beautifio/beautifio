@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Check, X, HelpCircle, Trophy, ArrowRight, Loader2, WifiOff, Clock } from "lucide-react"
+import { Trophy, Loader2, WifiOff } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import {
   submitSubjectAnswer,
   submitGuesserAnswer,
   handleSubjectTimeout,
+  startQuestionTimer,
   advanceGame,
   botPlayTurn,
   replaceDisconnectedWithBot,
@@ -17,6 +18,7 @@ import { Timer } from "./Timer"
 import { DigitalClock } from "./DigitalClock"
 import { MatchIntro } from "./MatchIntro"
 import { ScoreBoard } from "./ScoreBoard"
+import { JedaScreen } from "./JedaScreen"
 import type { TebakSession, TebakQuestion, TebakAnswer } from "@/lib/tebak/queries"
 
 type Props = {
@@ -32,7 +34,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [revealed, setRevealed] = useState(false)
-  const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null)
   const [finished, setFinished] = useState(false)
   const [answers, setAnswers] = useState<TebakAnswer[]>([])
   const [opponentIsBot, setOpponentIsBot] = useState(false)
@@ -47,6 +48,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const selectedAnswerRef = useRef<string | null>(null)
   const prevQuestionId = useRef<string | null>(null)
   const roundIdsRef = useRef<Set<string>>(new Set())
+  const submittedRef = useRef(false)
 
   const isPlayerA = gameSession.player_a_id === userId
   const opponentId = isPlayerA ? gameSession.player_b_id : gameSession.player_a_id
@@ -163,8 +165,16 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       setLocked(false)
       setSelectedAnswer(null)
       selectedAnswerRef.current = null
+      submittedRef.current = false
     }
   }, [currentQ])
+
+  // Auto-start timer when a subject_answering question appears without deadline
+  useEffect(() => {
+    if (!currentQ || currentQ.status !== 'subject_answering') return
+    if (currentQ.subject_deadline) return
+    startQuestionTimer(sessionId, currentQ.sequence_number)
+  }, [currentQ, sessionId])
 
   // Real-time subscriptions
   useEffect(() => {
@@ -205,12 +215,13 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   }, [currentQ, sessionId])
 
   const handleAdvance = async () => {
+    const currentSeq = gameSession.current_q_seq
     setSelectedAnswer(null)
     setRevealed(false)
-    setLastAnswerCorrect(null)
     setLocked(false)
     selectedAnswerRef.current = null
-    await advanceGame(sessionId)
+    submittedRef.current = false
+    await advanceGame(sessionId, currentSeq)
     await refreshQuestions()
   }
 
@@ -225,20 +236,25 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     }
   }
 
-  const handleGuesserGuess = (answer: string) => {
-    if (!currentQ || locked) return
+  const handleGuesserGuess = async (answer: string) => {
+    if (!currentQ || locked || submittedRef.current) return
+    if (currentQ.status !== "guesser_guessing") return
+    submittedRef.current = true
     setSelectedAnswer(answer)
-    selectedAnswerRef.current = answer
+    try {
+      await submitGuesserAnswer(currentQ.id, userId, answer, guessStartTime.current)
+    } catch (e) {
+      submittedRef.current = false
+      console.error("submitGuesserAnswer error", e)
+    }
   }
 
   const handleGuesserTimeout = async () => {
-    if (locked) return
+    if (locked || submittedRef.current) return
     setLocked(true)
     if (!currentQ) return
-    const answer = selectedAnswerRef.current || "__timeout__"
     try {
-      const result = await submitGuesserAnswer(currentQ.id, userId, answer, guessStartTime.current)
-      if (result) setLastAnswerCorrect(result.isCorrect)
+      await submitGuesserAnswer(currentQ.id, userId, "__timeout__", guessStartTime.current)
     } catch (e) {
       console.error("handleGuesserTimeout error", e)
     }
@@ -259,6 +275,25 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const correctCount = myGuesses.filter(a => a.is_correct).length
   const totalCount = myGuesses.length
   const compatibility = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0
+
+  const currentAnswer = currentQ
+    ? answers.find(a => a.question_id === currentQ.id && a.guesser_id === (isSubject ? opponentId : userId))
+    : undefined
+  const guesserIsCorrect = currentAnswer?.is_correct ?? null
+  const guesserAnswerText = currentAnswer?.answer ?? null
+
+  let resultType: 'correct' | 'wrong' | 'subject_timeout' | 'guesser_timeout' = 'correct'
+  if (revealed && currentQ) {
+    if (!currentQ.subject_answered_at) {
+      resultType = 'subject_timeout'
+    } else if (guesserAnswerText === '__timeout__') {
+      resultType = 'guesser_timeout'
+    } else if (guesserIsCorrect === true) {
+      resultType = 'correct'
+    } else {
+      resultType = 'wrong'
+    }
+  }
 
   const handleBegin = useCallback(() => {
     setShowIntro(false)
@@ -303,6 +338,18 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           compatibility={compatibility}
           onBack={() => window.location.href = "/tebak"}
         />
+      ) : revealed && currentQ ? (
+        <JedaScreen
+          resultType={resultType}
+          subjectName={isSubject ? myName : opponentName}
+          guesserName={isSubject ? opponentName : myName}
+          correctAnswer={currentQ.correct_answer ?? ''}
+          myScore={isPlayerA ? gameSession.score_a : gameSession.score_b}
+          theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a}
+          isLastQuestion={currentQ.sequence_number === 5}
+          isLastRound={gameSession.current_round === 2}
+          onComplete={handleAdvance}
+        />
       ) : currentQ ? (
           <QuestionView
             question={currentQ}
@@ -310,13 +357,10 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
             selectedAnswer={selectedAnswer}
             submitting={submitting}
             locked={locked}
-            revealed={revealed}
-            lastAnswerCorrect={lastAnswerCorrect}
             onSubjectAnswer={handleSubjectAnswer}
             onGuesserGuess={handleGuesserGuess}
             onGuesserTimeout={handleGuesserTimeout}
             onSubjectTimeout={handleSubjectAnswerTimeout}
-            onAdvance={handleAdvance}
           />
       ) : (
         <div className="flex-1 flex items-center justify-center">
@@ -333,26 +377,20 @@ function QuestionView({
   selectedAnswer,
   submitting,
   locked,
-  revealed,
-  lastAnswerCorrect,
   onSubjectAnswer,
   onGuesserGuess,
   onGuesserTimeout,
   onSubjectTimeout,
-  onAdvance,
 }: {
   question: TebakQuestion
   isSubject: boolean
   selectedAnswer: string | null
   submitting: boolean
   locked: boolean
-  revealed: boolean
-  lastAnswerCorrect: boolean | null
   onSubjectAnswer: (a: string) => void
   onGuesserGuess: (a: string) => void
   onGuesserTimeout: () => void
   onSubjectTimeout: () => void
-  onAdvance: () => void
 }) {
   const needAction = isSubject
     ? question.status === "subject_answering"
@@ -376,20 +414,15 @@ function QuestionView({
 
           <div className="space-y-2.5 mb-5">
             {(question.options as string[]).map((opt) => {
-              const isSelected = selectedAnswer === opt
-              const isCorrect = revealed && opt === question.correct_answer
-              const isWrong = revealed && isSelected && opt !== question.correct_answer
+              const isSelected = selectedAnswer === opt && !submitting
 
               let btnStyle = "border-border bg-surface hover:border-primary/30"
-              if (isSelected && !revealed) btnStyle = "border-primary bg-primary/5"
-              if (isCorrect) btnStyle = "border-green-500 bg-green-50"
-              if (isWrong) btnStyle = "border-red-500 bg-red-50"
+              if (isSelected) btnStyle = "border-primary bg-primary/5"
 
               return (
                 <button
                   key={opt}
                   onClick={() => {
-                    if (revealed) return
                     if (isSubject) {
                       if (submitting) return
                       onSubjectAnswer(opt)
@@ -398,35 +431,21 @@ function QuestionView({
                       onGuesserGuess(opt)
                     }
                   }}
-                  disabled={(isSubject ? submitting : locked) || revealed || !needAction}
-                  className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                    revealed ? "cursor-default" : ""
+                  disabled={(isSubject ? submitting : locked) || !needAction}
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                    needAction ? "cursor-pointer" : "cursor-default"
                   } ${btnStyle}`}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        isSelected && !revealed
+                        isSelected
                           ? "border-primary bg-primary"
-                          : isCorrect
-                          ? "border-green-500 bg-green-500"
-                          : isWrong
-                          ? "border-red-500 bg-red-500"
                           : "border-border"
                       }`}
                     >
-                      {(isSelected || isCorrect || isWrong) && (
-                        isCorrect ? <Check size={12} className="text-white" /> :
-                        isWrong ? <X size={12} className="text-white" /> : null
-                      )}
                     </div>
-                    <span className={`text-sm font-medium ${
-                      revealed && opt === question.correct_answer
-                        ? "text-green-700"
-                        : revealed && isWrong
-                        ? "text-red-700"
-                        : "text-text-primary"
-                    }`}>
+                    <span className="text-sm font-medium text-text-primary">
                       {opt}
                     </span>
                   </div>
@@ -435,7 +454,7 @@ function QuestionView({
             })}
           </div>
 
-          {question.status === "subject_answering" && question.subject_deadline && !revealed && (
+          {question.status === "subject_answering" && question.subject_deadline && (
             <div className="mb-4">
               <DigitalClock
                 deadline={question.subject_deadline}
@@ -445,7 +464,7 @@ function QuestionView({
             </div>
           )}
 
-          {question.status === "guesser_guessing" && question.guesser_deadline && !revealed && (
+          {question.status === "guesser_guessing" && question.guesser_deadline && (
             <div className="mb-4">
               {isSubject ? (
                 <DigitalClock
@@ -460,56 +479,6 @@ function QuestionView({
                 />
               )}
             </div>
-          )}
-
-          {revealed && (
-            <div className="text-center mb-4 animate-in fade-in slide-in-from-bottom-1 duration-400">
-              {(() => {
-                const isSubTimeout = !question.subject_answered_at
-
-                if (lastAnswerCorrect === true) {
-                  return (
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-100 text-green-700">
-                      <Check size={18} /> Benar! +10 poin
-                    </div>
-                  )
-                }
-                if (lastAnswerCorrect === false) {
-                  return (
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-100 text-red-700">
-                      <X size={18} /> Salah
-                    </div>
-                  )
-                }
-                if (isSubTimeout) {
-                  return (
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-100 text-red-700">
-                      <Clock size={18} /> {isSubject ? "Kamu kehabisan waktu! +10 untuk lawan" : "Lawan kehabisan waktu! Kamu dapat +10"}
-                    </div>
-                  )
-                }
-                return (
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary">
-                    <HelpCircle size={18} /> Lawan sudah menjawab
-                  </div>
-                )
-              })()}
-              {!isSubject && lastAnswerCorrect !== true && question.correct_answer && question.subject_answered_at && (
-                <p className="text-sm text-text-secondary mt-2">
-                  Jawaban: <span className="font-bold text-green-600">{question.correct_answer}</span>
-                </p>
-              )}
-            </div>
-          )}
-
-          {revealed && (
-            <button
-              onClick={onAdvance}
-              className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors cursor-pointer mt-auto"
-            >
-              {question.sequence_number < 5 ? "Pertanyaan Selanjutnya" : "Selesai Round Ini"}
-              <ArrowRight size={16} />
-            </button>
           )}
         </div>
       </div>
