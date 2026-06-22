@@ -19,7 +19,7 @@ export default function TebakSessionPage({ params }: { params: Promise<{ session
   useEffect(() => {
     if (!user || !supabase) return
     ;(async () => {
-      const { data } = await supabase!
+      const { data } = await supabase
         .from("tebak_sessions")
         .select("*")
         .eq("id", sessionId)
@@ -55,7 +55,7 @@ export default function TebakSessionPage({ params }: { params: Promise<{ session
             <h1 className="text-lg font-bold text-text-primary">Tebak Aku</h1>
           </div>
         </div>
-        <TebakWaiting sessionId={sessionId} onMatched={handleMatched} onCancel={() => router.push("/tebak")} />
+        <TebakWaiting sessionId={sessionId} isPlayerA={true} onMatched={handleMatched} onCancel={() => router.push("/tebak")} />
       </div>
     )
   }

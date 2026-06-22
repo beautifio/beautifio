@@ -1,15 +1,27 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   Search, Users, MapPin, User,
   GraduationCap, Briefcase, Trophy, Heart, DollarSign, Sparkles, Gamepad2, ArrowRight,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
-import { OPP_CATEGORIES, MOCK_OPPORTUNITIES } from "@beautifio/utils";
-import type { OpportunityConstant } from "@beautifio/utils";
+import { OPP_CATEGORIES } from "@beautifio/utils";
+import { createClient } from "@/lib/supabase/client";
+
+type DBOpportunity = {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  organization: string;
+  description: string | null;
+  deadline: string;
+  url: string | null;
+  location: string | null;
+  is_featured: boolean;
+};
 
 const catIcons: Record<string, typeof GraduationCap> = {
   beasiswa: GraduationCap, magang: Briefcase, pekerjaan: Briefcase,
@@ -17,32 +29,57 @@ const catIcons: Record<string, typeof GraduationCap> = {
   pendanaan: DollarSign, "program-kreator": Sparkles,
 };
 
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+];
 
+function formatDeadline(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 export default function OpportunityListPage() {
-
+  const [opportunities, setOpportunities] = useState<DBOpportunity[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    let query = supabase
+      .from("opportunities")
+      .select("*")
+      .eq("is_active", true)
+      .order("deadline", { ascending: true });
+
+    if (activeCat) {
+      query = query.eq("category", activeCat);
+    }
+
+    query.then(({ data }) => {
+      setOpportunities(data ?? []);
+      setLoading(false);
+    });
+  }, [activeCat]);
 
   const filtered = useMemo(() => {
-    let items: (OpportunityConstant & { deadlineDate: Date })[] = MOCK_OPPORTUNITIES.map((o) => ({
-      ...o, deadlineDate: new Date(o.deadline.replace(/(\d+) (\w+) (\d+)/, (_, d, m, y) => {
-        const months: Record<string, string> = { Jan: "0", Feb: "1", Mar: "2", Apr: "3", Mei: "4", Jun: "5", Jul: "6", Agu: "7", Sep: "8", Okt: "9", Nov: "10", Des: "11" };
-        return `${y}-${months[m]}-${d}`;
-      })),
-    }));
-    if (activeCat) items = items.filter((o) => o.category === activeCat);
-    if (search) {
-      const q = search.toLowerCase();
-      items = items.filter((o) => o.title.toLowerCase().includes(q) || o.organization.toLowerCase().includes(q));
-    }
-    items.sort((a, b) => a.deadlineDate.getTime() - b.deadlineDate.getTime());
-    return items;
-  }, [activeCat, search]);
+    if (!search) return opportunities;
+    const q = search.toLowerCase();
+    return opportunities.filter(
+      (o) =>
+        o.title.toLowerCase().includes(q) ||
+        o.organization.toLowerCase().includes(q)
+    );
+  }, [opportunities, search]);
 
-  const featured = useMemo(() => filtered.filter((o) => o.isFeatured), [filtered]);
-  const regular = useMemo(() => filtered.filter((o) => !o.isFeatured), [filtered]);
+  const featured = useMemo(() => filtered.filter((o) => o.is_featured), [filtered]);
+  const regular = useMemo(() => filtered.filter((o) => !o.is_featured), [filtered]);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -50,7 +87,7 @@ export default function OpportunityListPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-text-primary">Peluang</h1>
-            <p className="text-sm text-text-secondary mt-1">Beasiswa, magang, pekerjaan, dan lainnya</p>
+            <p className="text-sm text-text-secondary mt-1">Beasiswa, magang, kompetisi, dan lainnya</p>
           </div>
         </div>
 
@@ -68,7 +105,9 @@ export default function OpportunityListPage() {
           <button
             onClick={() => setActiveCat(null)}
             className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-              activeCat === null ? "bg-primary text-primary-foreground shadow-sm" : "bg-surface text-text-secondary border border-border hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"
+              activeCat === null
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-surface text-text-secondary border border-border hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"
             }`}
           >
             Semua
@@ -80,7 +119,9 @@ export default function OpportunityListPage() {
                 key={cat.value}
                 onClick={() => setActiveCat(activeCat === cat.value ? null : cat.value)}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  activeCat === cat.value ? "bg-primary text-primary-foreground shadow-sm" : "bg-surface text-text-secondary border border-border hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"
+                  activeCat === cat.value
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-surface text-text-secondary border border-border hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"
                 }`}
               >
                 {Icon && <Icon size={14} />}
@@ -90,53 +131,61 @@ export default function OpportunityListPage() {
           })}
         </div>
 
-        <div className="space-y-4">
-          {featured.length > 0 && (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <p className="text-sm text-text-secondary">Memuat peluang...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+              <Search size={28} className="text-text-secondary/40" />
+            </div>
+            <p className="text-sm font-semibold text-text-primary">
+              {search ? "Tidak ada peluang ditemukan" : "Belum ada peluang di kategori ini"}
+            </p>
+            <p className="text-xs text-text-secondary mt-1">
+              {search ? "Coba ubah kata kunci pencarian" : "Coba pilih kategori lain"}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {featured.length > 0 && (
+              <section>
+                <h3 className="text-sm font-bold text-text-primary mb-3">Pilihan</h3>
+                <div className="space-y-3">
+                  {featured.map((opp, i) => (
+                    <div key={opp.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 60}ms` }}>
+                      <OpportunityCard opp={opp} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section>
-              <h3 className="text-sm font-bold text-text-primary mb-3">Pilihan</h3>
+              <h3 className="text-sm font-bold text-text-primary mb-3">
+                {featured.length > 0 ? "Lainnya" : "Semua Peluang"}
+              </h3>
               <div className="space-y-3">
-                {featured.map((opp, i) => (
-                  <div key={opp.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 60}ms` }}>
+                {regular.map((opp, i) => (
+                  <div key={opp.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 50}ms` }}>
                     <OpportunityCard opp={opp} />
                   </div>
                 ))}
               </div>
             </section>
-          )}
-
-          <section>
-            <h3 className="text-sm font-bold text-text-primary mb-3">
-              {featured.length > 0 ? "Lainnya" : "Semua Peluang"}
-            </h3>
-            <div className="space-y-3">
-              {regular.map((opp, i) => (
-                <div key={opp.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 50}ms` }}>
-                  <OpportunityCard opp={opp} />
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <Search size={28} className="text-text-secondary/40" />
-            </div>
-            <p className="text-sm font-semibold text-text-primary">Tidak ada peluang ditemukan</p>
-            <p className="text-xs text-text-secondary mt-1">Coba ubah kata kunci pencarian</p>
           </div>
         )}
       </div>
-
     </div>
   );
 }
 
-function OpportunityCard({ opp }: { opp: OpportunityConstant & { deadlineDate: Date } }) {
+function OpportunityCard({ opp }: { opp: DBOpportunity }) {
   const cat = OPP_CATEGORIES.find((c) => c.value === opp.category);
   const Icon = cat ? catIcons[cat.value] : Briefcase;
-  const isUrgent = opp.deadlineDate.getTime() - Date.now() < 14 * 24 * 60 * 60 * 1000;
+  const deadlineDate = new Date(opp.deadline);
+  const isUrgent = deadlineDate.getTime() - Date.now() < 14 * 24 * 60 * 60 * 1000;
 
   return (
     <Link href={`/opportunity/${opp.slug}`}>
@@ -152,18 +201,11 @@ function OpportunityCard({ opp }: { opp: OpportunityConstant & { deadlineDate: D
           <h4 className="text-sm font-semibold text-text-primary truncate group-hover:text-primary transition-colors">{opp.title}</h4>
           <p className="text-xs text-text-secondary mt-0.5">{opp.organization}</p>
           {opp.location && <p className="text-[11px] text-text-secondary mt-0.5">{opp.location}</p>}
-          {opp.tags && opp.tags.length > 0 && (
-            <div className="flex gap-1.5 mt-1.5 flex-wrap">
-              {opp.tags.slice(0, 3).map((t) => (
-                <Badge key={t} variant="default" className="text-[10px] px-1.5 py-0 leading-none">{t}</Badge>
-              ))}
-            </div>
-          )}
         </div>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
           <ArrowRight size={16} className="text-text-secondary group-hover:text-primary group-hover:translate-x-1 transition-all" />
           <span className={`text-[10px] ${isUrgent ? "text-accent font-medium" : "text-text-secondary"}`}>
-            {opp.deadline}
+            {formatDeadline(opp.deadline)}
           </span>
         </div>
       </div>

@@ -1,17 +1,30 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   ArrowLeft, Calendar, MapPin, Building2, ExternalLink,
-  CheckCircle, ChevronRight, Users, User, GraduationCap, Briefcase, DollarSign, Sparkles, Heart, Gamepad2, Trophy, Bookmark,
+  Users, User, GraduationCap, Briefcase, DollarSign, Sparkles, Heart, Gamepad2, Trophy, Bookmark,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
-import { MOCK_OPPORTUNITIES, OPP_CATEGORIES, MOCK_MENTORS, ROADMAP_TEMPLATES } from "@beautifio/utils";
+import { OPP_CATEGORIES } from "@beautifio/utils";
+import { createClient } from "@/lib/supabase/client";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { EcosystemLinks } from "@/features/ecosystem/EcosystemSection";
 import type { EcosystemItem } from "@/features/ecosystem/EcosystemSection";
+
+type DBOpportunity = {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  organization: string;
+  description: string | null;
+  deadline: string;
+  url: string | null;
+  location: string | null;
+  is_featured: boolean;
+};
 
 const catIcons: Record<string, typeof GraduationCap> = {
   beasiswa: GraduationCap, magang: Briefcase, pekerjaan: Briefcase,
@@ -19,43 +32,65 @@ const catIcons: Record<string, typeof GraduationCap> = {
   pendanaan: DollarSign, "program-kreator": Sparkles,
 };
 
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+];
 
+function formatDeadline(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 export default function OpportunityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
+  const [opp, setOpp] = useState<DBOpportunity | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
 
-  const opp = useMemo(() => MOCK_OPPORTUNITIES.find((o) => o.slug === slug), [slug]);
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    supabase
+      .from("opportunities")
+      .select("*")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .single()
+      .then(({ data }) => {
+        setOpp(data);
+        setLoading(false);
+      });
+  }, [slug]);
+
   const cat = useMemo(() => OPP_CATEGORIES.find((c) => c.value === opp?.category), [opp]);
   const Icon = cat ? catIcons[cat.value] : Briefcase;
 
   const ecosystemGroups = useMemo(() => {
     if (!opp) return [];
-    const tags = opp.tags ?? [];
-    const tagStr = tags.join(" ").toLowerCase();
 
     const relatedStories: EcosystemItem[] = [
       { id: `os-story-${slug}`, type: "story" as const, title: "Cerita Inspiratif", subtitle: "Temukan cerita yang sesuai dengan minatmu", href: "/cerita" },
     ];
 
-    const relatedRoadmaps: EcosystemItem[] = ROADMAP_TEMPLATES
-      .filter((r) => tagStr.includes(r.category) || tags.some((t) => r.title.toLowerCase().includes(t.toLowerCase())))
-      .slice(0, 2)
-      .map((r) => ({ id: `or-${r.slug}`, type: "roadmap" as const, title: r.title, subtitle: r.description, href: `/roadmap/${r.slug}` }));
-
-    const relatedMentors: EcosystemItem[] = MOCK_MENTORS
-      .filter((m) => tags.some((t) => m.expertise.toLowerCase().includes(t.toLowerCase())) || m.roadmapSlugs?.some((rs) => tags.includes(rs)))
-      .slice(0, 2)
-      .map((m) => ({ id: m.id, type: "mentor" as const, title: m.name, subtitle: m.expertise, href: `/mentors/${m.slug}` }));
-
     const groups: { title: string; items: EcosystemItem[] }[] = [];
     groups.push({ title: "Cerita Terkait", items: relatedStories });
-    if (relatedRoadmaps.length) groups.push({ title: "Roadmap Terkait", items: relatedRoadmaps });
-    if (relatedMentors.length) groups.push({ title: "Mentor Terkait", items: relatedMentors });
     groups.push({ title: "Circle Terkait", items: [{ id: `oc-${slug}`, type: "circle" as const, title: "Gabung Circle", subtitle: "Diskusikan peluang ini dengan komunitas", href: "/circle" }] });
     return groups;
   }, [opp, slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <p className="text-sm text-text-secondary">Memuat...</p>
+      </div>
+    );
+  }
 
   if (!opp) {
     return (
@@ -69,11 +104,9 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
     );
   }
 
+  const deadlineDate = new Date(opp.deadline);
   const daysLeft = Math.max(0, Math.ceil(
-    (new Date(opp.deadline.replace(/(\d+) (\w+) (\d+)/, (_, d, m, y) => {
-      const months: Record<string, string> = { Jan: "0", Feb: "1", Mar: "2", Apr: "3", Mei: "4", Jun: "5", Jul: "6", Agu: "7", Sep: "8", Okt: "9", Nov: "10", Des: "11" };
-      return `${y}-${months[m]}-${d}`;
-    })).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    (deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
   ));
 
   return (
@@ -102,13 +135,13 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
               <div>
                 <p className="text-[10px] text-text-secondary">Tenggat</p>
                 <p className={`text-xs font-semibold ${daysLeft <= 7 ? "text-accent" : "text-text-primary"}`}>
-                  {opp.deadline}
+                  {formatDeadline(opp.deadline)}
                 </p>
                 <p className="text-[10px] text-text-secondary">{daysLeft} hari lagi</p>
               </div>
             </div>
             {opp.location && (
-            <div className="flex items-center gap-2.5 p-4 rounded-xl bg-surface border border-border">
+              <div className="flex items-center gap-2.5 p-4 rounded-xl bg-surface border border-border">
                 <MapPin size={16} className="text-secondary flex-shrink-0" />
                 <div>
                   <p className="text-[10px] text-text-secondary">Lokasi</p>
@@ -120,39 +153,8 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
 
           <section>
             <h3 className="text-sm font-bold text-text-primary mb-2">Deskripsi</h3>
-            <p className="text-sm text-text-primary leading-relaxed">{opp.description}</p>
+            <p className="text-sm text-text-primary leading-relaxed">{opp.description || "Tidak ada deskripsi."}</p>
           </section>
-
-          {opp.benefit && (
-            <section>
-              <h3 className="text-sm font-bold text-text-primary mb-2">Benefit</h3>
-              <div className="flex items-start gap-2.5 p-4 rounded-xl bg-accent/5 border border-accent/20">
-                <DollarSign size={16} className="text-accent flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-text-primary">{opp.benefit}</p>
-              </div>
-            </section>
-          )}
-
-          {opp.eligibility && (
-            <section>
-              <h3 className="text-sm font-bold text-text-primary mb-2">Persyaratan</h3>
-              <div className="flex items-start gap-2.5 p-4 rounded-xl bg-surface border border-border">
-                <CheckCircle size={16} className="text-success flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-text-primary">{opp.eligibility}</p>
-              </div>
-            </section>
-          )}
-
-          {opp.tags && opp.tags.length > 0 && (
-            <section>
-              <h3 className="text-sm font-bold text-text-primary mb-2">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {opp.tags.map((t) => (
-                  <Badge key={t} variant="default" className="text-[11px] px-2 py-0.5">{t}</Badge>
-                ))}
-              </div>
-            </section>
-          )}
 
           <div className="pt-4 flex gap-3">
             <ProtectedAction onAction={() => setIsSaved(!isSaved)}>
@@ -166,17 +168,28 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
                 <Bookmark size={18} className={isSaved ? "fill-accent" : ""} />
               </button>
             </ProtectedAction>
-            <ProtectedAction label="Masuk untuk Mendaftar">
-              <button className="flex-1 h-13 text-sm font-medium rounded-xl bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
+            {opp.url ? (
+              <a
+                href={opp.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 h-13 text-sm font-medium rounded-xl bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25"
+              >
                 <ExternalLink size={16} />
                 Daftar Sekarang
-              </button>
-            </ProtectedAction>
+              </a>
+            ) : (
+              <ProtectedAction label="Masuk untuk Mendaftar">
+                <button className="flex-1 h-13 text-sm font-medium rounded-xl bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
+                  <ExternalLink size={16} />
+                  Daftar Sekarang
+                </button>
+              </ProtectedAction>
+            )}
           </div>
           <EcosystemLinks groups={ecosystemGroups} />
         </div>
       </div>
-
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Users, HelpCircle, ArrowRight, Loader2, Check, X } from "lucide-react"
+import { Users, HelpCircle, ArrowRight, Loader2, Check, X, Trophy } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { joinTebakQueue } from "@/lib/tebak/actions"
 
@@ -92,6 +92,14 @@ export default function TebakPage() {
           ) : (
             <><Users size={16} /> Mulai Bermain</>
           )}
+        </button>
+
+        <button
+          onClick={() => router.push("/tebak/leaderboard")}
+          className="w-full py-3.5 rounded-xl border-2 border-primary/20 text-primary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors cursor-pointer"
+        >
+          <Trophy size={16} />
+          Leaderboard
         </button>
       </div>
     </div>

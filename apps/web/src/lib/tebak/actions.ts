@@ -1,12 +1,12 @@
 'use server'
-import { createClient } from "@/lib/supabase/server"
+import { createClient as createServerClient } from "@/lib/supabase/server"
+import { getRandomBotId, getBotWinRate } from "./bot"
 
 export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole: 'a' | 'b' }> {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  // Cek apakah user sudah punya active session
   const { data: existingPlayer } = await supabase
     .from('tebak_sessions')
     .select('id')
@@ -17,7 +17,6 @@ export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole:
     return { sessionId: existingPlayer.id, playerRole: 'a' }
   }
 
-  // Cari session waiting (bukan milik user)
   const { data: existing } = await supabase
     .from('tebak_sessions')
     .select('id')
@@ -42,7 +41,6 @@ export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole:
     return { sessionId: existing.id, playerRole: 'b' }
   }
 
-  // Buat session baru sebagai A
   const { data: session } = await supabase.from('tebak_sessions').insert({
     player_a_id: user.id, status: 'waiting',
   }).select('id').single()
@@ -50,8 +48,187 @@ export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole:
   return { sessionId: session!.id, playerRole: 'a' }
 }
 
+export async function matchWithBot(sessionId: string, isPlayerA: boolean): Promise<void> {
+  const supabase = await createServerClient()
+  const botId = getRandomBotId('medium')
+  const firstSubject: 'a' | 'b' = Math.random() > 0.5 ? 'a' : 'b'
+
+  await supabase.from('tebak_sessions').update({
+    player_b_id: botId,
+    status: 'active',
+    current_subject: firstSubject,
+  }).eq('id', sessionId)
+
+  const { data: round } = await supabase.from('tebak_rounds').insert({
+    session_id: sessionId, subject_player: firstSubject, round_number: 1,
+  }).select('id').single()
+
+  if (round) await selectQuestionsForRound(sessionId, round.id)
+}
+
+export async function replaceDisconnectedWithBot(sessionId: string, disconnectedUserId: string): Promise<void> {
+  const supabase = await createServerClient()
+  const botId = getRandomBotId('low')
+
+  const { data: session } = await supabase
+    .from('tebak_sessions')
+    .select('player_a_id, player_b_id')
+    .eq('id', sessionId)
+    .single()
+
+  if (!session) return
+
+  if (session.player_a_id === disconnectedUserId) {
+    await supabase.from('tebak_sessions').update({ player_a_id: botId }).eq('id', sessionId)
+  } else {
+    await supabase.from('tebak_sessions').update({ player_b_id: botId }).eq('id', sessionId)
+  }
+}
+
+export async function botPlayTurn(
+  sessionId: string,
+  questionId: string,
+  botUserId: string,
+): Promise<void> {
+  const supabase = await createServerClient()
+
+  const { data: q } = await supabase
+    .from('tebak_questions')
+    .select('status, correct_answer, options, round_id')
+    .eq('id', questionId)
+    .single()
+
+  if (!q) return
+
+  const { data: r } = await supabase
+    .from('tebak_rounds')
+    .select('session_id, subject_player')
+    .eq('id', q.round_id)
+    .single()
+
+  if (!r) return
+
+  const { data: session } = await supabase
+    .from('tebak_sessions')
+    .select('player_a_id, player_b_id')
+    .eq('id', r.session_id)
+    .single()
+
+  if (!session) return
+
+  const isBotSubject = r.subject_player === 'a'
+    ? session.player_a_id === botUserId
+    : session.player_b_id === botUserId
+
+  const { data: botUser } = await supabase
+    .from('users')
+    .select('bot_win_rate')
+    .eq('id', botUserId)
+    .single()
+
+  const winRate = botUser?.bot_win_rate ?? 50
+  const options = q.options as string[]
+
+  // Bot answers after 2-4 seconds (seems human)
+  await new Promise((r) => setTimeout(r, 2000 + Math.random() * 2000))
+
+  if (isBotSubject) {
+    const answer = options[Math.floor(Math.random() * options.length)]
+    const now = new Date()
+    const deadline = new Date(now.getTime() + 15_000)
+
+    await supabase.from('tebak_questions').update({
+      correct_answer: answer,
+      subject_answered_at: now.toISOString(),
+      guesser_deadline: deadline.toISOString(),
+      status: 'guesser_guessing',
+    }).eq('id', questionId)
+  } else if (q.status === 'guesser_guessing') {
+    const roll = Math.random() * 100
+    const isCorrect = roll < winRate && q.correct_answer != null
+    const answer = isCorrect
+      ? q.correct_answer!
+      : options.filter((o: string) => o !== q.correct_answer)[Math.floor(Math.random() * (options.length - 1))]
+
+    const now = new Date()
+
+    await supabase.from('tebak_answers').insert({
+      question_id: questionId,
+      guesser_id: botUserId,
+      answer,
+      is_correct: isCorrect,
+      time_ms: Math.floor(Math.random() * 10000) + 3000,
+    })
+
+    if (isCorrect) {
+      const isBotPlayerA = session.player_a_id === botUserId
+      await supabase.rpc('increment_tebak_score', {
+        session_id: r.session_id,
+        column: isBotPlayerA ? 'score_a' : 'score_b',
+        amount: 10,
+      })
+    }
+
+    await supabase.from('tebak_questions').update({ status: 'revealed' }).eq('id', questionId)
+  }
+}
+
+export async function checkOpponentDisconnected(sessionId: string, opponentId: string): Promise<boolean> {
+  const supabase = await createServerClient()
+  const { data: user } = await supabase
+    .from('users')
+    .select('last_active_at, is_bot')
+    .eq('id', opponentId)
+    .single()
+
+  if (!user || user.is_bot) return false
+
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+  return !user.last_active_at || user.last_active_at < fiveMinAgo
+}
+
+export async function getSessionWithPlayers(sessionId: string) {
+  const supabase = await createServerClient()
+  const { data } = await supabase
+    .from('tebak_sessions')
+    .select('*, player_a:player_a_id(id, full_name, avatar_url, is_bot), player_b:player_b_id(id, full_name, avatar_url, is_bot)')
+    .eq('id', sessionId)
+    .single()
+  return data
+}
+
+export async function updateUserHeartbeat(userId: string): Promise<void> {
+  const supabase = await createServerClient()
+  await supabase.from('users').update({
+    last_active_at: new Date().toISOString(),
+  }).eq('id', userId)
+}
+
+async function selectQuestionsForRound(sessionId: string, roundId: string): Promise<void> {
+  const supabase = await createServerClient()
+  const { data: bank } = await supabase
+    .from('tebak_question_bank')
+    .select('id, question_text, options')
+    .eq('is_active', true)
+    .limit(20)
+
+  if (!bank?.length) return
+
+  const shuffled = bank.sort(() => Math.random() - 0.5).slice(0, 5)
+
+  await supabase.from('tebak_questions').insert(
+    shuffled.map((q, i) => ({
+      round_id: roundId,
+      question_bank_id: q.id,
+      question_text: q.question_text,
+      options: q.options,
+      sequence_number: i + 1,
+    }))
+  )
+}
+
 export async function submitSubjectAnswer(questionId: string, answer: string): Promise<void> {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const now = new Date()
   const deadline = new Date(now.getTime() + 15_000)
 
@@ -66,7 +243,7 @@ export async function submitSubjectAnswer(questionId: string, answer: string): P
 export async function submitGuesserAnswer(
   questionId: string, guesserId: string, answer: string, startedAt: number
 ): Promise<{ isCorrect: boolean; points: number }> {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
 
   const { data: q } = await supabase
     .from('tebak_questions')
@@ -93,18 +270,19 @@ export async function submitGuesserAnswer(
   })
 
   if (isCorrect) {
-    const { data: q } = await supabase.from('tebak_questions').select('round_id').eq('id', questionId).single()
-    if (!q) return { isCorrect: true, points: 10 }
-    const { data: r } = await supabase.from('tebak_rounds').select('session_id').eq('id', q.round_id).single()
-    if (!r) return { isCorrect: true, points: 10 }
-    const { data: session } = await supabase.from('tebak_sessions').select('player_a_id, player_b_id').eq('id', r.session_id).single()
-
-    if (session) {
-      const isPlayerA = session.player_a_id === guesserId
-      if (isPlayerA) {
-        await supabase.rpc('increment_tebak_score', { session_id: r.session_id, column: 'score_a', amount: 10 })
-      } else {
-        await supabase.rpc('increment_tebak_score', { session_id: r.session_id, column: 'score_b', amount: 10 })
+    const { data: qq } = await supabase.from('tebak_questions').select('round_id').eq('id', questionId).single()
+    if (qq) {
+      const { data: rr } = await supabase.from('tebak_rounds').select('session_id').eq('id', qq.round_id).single()
+      if (rr) {
+        const { data: sess } = await supabase.from('tebak_sessions').select('player_a_id, player_b_id').eq('id', rr.session_id).single()
+        if (sess) {
+          const isPlayerA = sess.player_a_id === guesserId
+          await supabase.rpc('increment_tebak_score', {
+            session_id: rr.session_id,
+            column: isPlayerA ? 'score_a' : 'score_b',
+            amount: 10,
+          })
+        }
       }
     }
   }
@@ -114,31 +292,8 @@ export async function submitGuesserAnswer(
   return { isCorrect, points: isCorrect ? 10 : 0 }
 }
 
-async function selectQuestionsForRound(sessionId: string, roundId: string): Promise<void> {
-  const supabase = await createClient()
-  const { data: bank } = await supabase
-    .from('tebak_question_bank')
-    .select('id, question_text, options')
-    .eq('is_active', true)
-    .limit(20)
-
-  if (!bank?.length) return
-
-  const shuffled = bank.sort(() => Math.random() - 0.5).slice(0, 5)
-
-  await supabase.from('tebak_questions').insert(
-    shuffled.map((q, i) => ({
-      round_id: roundId,
-      question_bank_id: q.id,
-      question_text: q.question_text,
-      options: q.options,
-      sequence_number: i + 1,
-    }))
-  )
-}
-
 export async function advanceGame(sessionId: string): Promise<void> {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
 
   const { data: session } = await supabase
     .from('tebak_sessions')

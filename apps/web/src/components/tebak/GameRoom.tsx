@@ -1,13 +1,16 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Check, X, HelpCircle, Trophy, ArrowRight, Loader2, User } from "lucide-react"
+import { Check, X, HelpCircle, Trophy, ArrowRight, Loader2, Bot, WifiOff } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import {
   submitSubjectAnswer,
   submitGuesserAnswer,
   advanceGame,
+  botPlayTurn,
+  replaceDisconnectedWithBot,
+  updateUserHeartbeat,
 } from "@/lib/tebak/actions"
 import { Timer } from "./Timer"
 import { ScoreBoard } from "./ScoreBoard"
@@ -29,12 +32,16 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null)
   const [finished, setFinished] = useState(false)
   const [answers, setAnswers] = useState<TebakAnswer[]>([])
+  const [opponentIsBot, setOpponentIsBot] = useState(false)
+  const [disconnectMsg, setDisconnectMsg] = useState<string | null>(null)
+  const [botThinking, setBotThinking] = useState(false)
   const guessStartTime = useRef(Date.now())
+  const botPlayedRef = useRef<Set<string>>(new Set())
 
   const isPlayerA = gameSession.player_a_id === userId
+  const opponentId = isPlayerA ? gameSession.player_b_id : gameSession.player_a_id
   const isSubject = gameSession.current_subject === (isPlayerA ? "a" : "b")
 
-  // Helper untuk mendapatkan data terbaru
   const refreshQuestions = useCallback(async () => {
     if (!supabase) return
     const s = supabase.from("tebak_questions")
@@ -62,6 +69,60 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     refreshQuestions()
   }, [refreshQuestions])
 
+  // Check if opponent is a bot
+  useEffect(() => {
+    if (!supabase) return
+    supabase.from("users").select("is_bot").eq("id", opponentId).single().then(({ data }) => {
+      if (data?.is_bot) setOpponentIsBot(true)
+    })
+  }, [opponentId])
+
+  // Heartbeat + disconnect detection
+  useEffect(() => {
+    const hb = setInterval(() => updateUserHeartbeat(userId), 30_000)
+    updateUserHeartbeat(userId)
+    return () => clearInterval(hb)
+  }, [userId])
+
+  useEffect(() => {
+    if (finished || opponentIsBot || disconnectMsg) return
+    const check = setInterval(async () => {
+      const { data: opp } = await supabase!
+        .from("users")
+        .select("last_active_at, is_bot")
+        .eq("id", opponentId)
+        .single()
+      if (!opp || opp.is_bot) return
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+      if (!opp.last_active_at || opp.last_active_at < fiveMinAgo) {
+        setDisconnectMsg("Lawan disconnect. Bot mengambil alih...")
+        await replaceDisconnectedWithBot(sessionId, opponentId)
+        setOpponentIsBot(true)
+        clearInterval(check)
+      }
+    }, 15_000)
+    return () => clearInterval(check)
+  }, [sessionId, opponentId, finished, opponentIsBot, disconnectMsg])
+
+  // Bot auto-play
+  useEffect(() => {
+    if (!opponentIsBot || !currentQ || botThinking || !supabase) return
+
+    const isBotTurn =
+      (gameSession.current_subject === (isPlayerA ? "b" : "a") && currentQ.status === "subject_answering") ||
+      (gameSession.current_subject !== (isPlayerA ? "b" : "a") && currentQ.status === "guesser_guessing")
+
+    if (!isBotTurn) return
+    if (botPlayedRef.current.has(currentQ.id)) return
+    botPlayedRef.current.add(currentQ.id)
+
+    setBotThinking(true)
+    botPlayTurn(sessionId, currentQ.id, opponentId)
+      .then(() => refreshQuestions())
+      .catch(() => {})
+      .finally(() => setBotThinking(false))
+  }, [opponentIsBot, currentQ, botThinking, sessionId, opponentId, isPlayerA, gameSession.current_subject, refreshQuestions])
+
   // Real-time subscriptions
   useEffect(() => {
     const unsub = subscribeToTebakGame(sessionId, {
@@ -87,7 +148,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     return unsub
   }, [sessionId, isSubject])
 
-  // Unguess advance game
   const handleAdvance = async () => {
     setSelectedAnswer(null)
     setRevealed(false)
@@ -96,7 +156,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     await refreshQuestions()
   }
 
-  // Subject answers
   const handleSubjectAnswer = async (answer: string) => {
     if (!currentQ || submitting) return
     setSubmitting(true)
@@ -108,7 +167,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     }
   }
 
-  // Guesser guesses
   const handleGuesserGuess = async (answer: string) => {
     if (!currentQ || submitting) return
     setSubmitting(true)
@@ -123,6 +181,22 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
 
   return (
     <div className="min-h-screen bg-bg flex flex-col">
+      {/* Disconnect banner */}
+      {disconnectMsg && (
+        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-700 text-xs font-medium">
+          <WifiOff size={14} />
+          {disconnectMsg}
+        </div>
+      )}
+
+      {/* Bot indicator */}
+      {opponentIsBot && !disconnectMsg && (
+        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-primary/5 border-b border-primary/10 text-primary text-xs font-medium">
+          <Bot size={14} />
+          Kamu bermain dengan bot
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-surface border-b border-border">
         <ScoreBoard
@@ -132,6 +206,13 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           isPlayerA={isPlayerA}
         />
       </div>
+
+      {botThinking && (
+        <div className="flex items-center justify-center gap-2 py-2 text-text-secondary text-xs">
+          <Loader2 size={14} className="animate-spin" />
+          Bot sedang berpikir...
+        </div>
+      )}
 
       {finished ? (
         <ResultScreen
@@ -189,19 +270,16 @@ function QuestionView({
 
   return (
     <div className="flex-1 flex flex-col px-4 py-6">
-      {/* Question number */}
       <div className="text-center mb-2">
         <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
           Pertanyaan {question.sequence_number}/5
         </span>
       </div>
 
-      {/* Question text */}
       <h2 className="text-lg font-bold text-text-primary text-center mb-6">
         {question.question_text}
       </h2>
 
-      {/* Options */}
       <div className="space-y-2.5 mb-8">
         {(question.options as string[]).map((opt) => {
           const isSelected = selectedAnswer === opt
@@ -258,7 +336,6 @@ function QuestionView({
         })}
       </div>
 
-      {/* Timer for guesser */}
       {question.status === "guesser_guessing" && question.guesser_deadline && !isSubject && !revealed && (
         <div className="mb-6">
           <Timer
@@ -270,7 +347,6 @@ function QuestionView({
         </div>
       )}
 
-      {/* Waiting states */}
       {waitingForSubject && (
         <div className="flex flex-col items-center gap-2 py-6 text-text-secondary">
           <Loader2 size={20} className="animate-spin" />
@@ -285,7 +361,6 @@ function QuestionView({
         </div>
       )}
 
-      {/* Reveal result */}
       {revealed && (
         <div className="text-center mb-6">
           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl ${
@@ -311,7 +386,6 @@ function QuestionView({
         </div>
       )}
 
-      {/* Advance button */}
       {revealed && (
         <button
           onClick={onAdvance}
