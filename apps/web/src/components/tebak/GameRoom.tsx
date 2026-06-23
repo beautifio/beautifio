@@ -450,7 +450,8 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           onHome={() => window.location.href = "/"}
         />
       ) : showRoundResult ? (
-        <RoundResultScreen
+        <div className="animate-slideUpReveal flex-1 flex flex-col">
+          <RoundResultScreen
           session={gameSession}
           round={1}
           answers={answers}
@@ -460,6 +461,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           opponentName={opponentName}
           onComplete={handleRoundResultComplete}
         />
+        </div>
       ) : tension && !revealed ? (
         <div className="flex-1 flex flex-col items-center justify-center px-4 relative overflow-hidden animate-fadeIn">
           {/* Dark overlay fade in */}
@@ -480,7 +482,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           </div>
         </div>
       ) : revealed && currentQ ? (
-        <div className="animate-fadeSlideUp flex-1 flex flex-col">
+        <div className="animate-slideUpReveal flex-1 flex flex-col">
           <JedaScreen
             resultType={resultType}
             subjectName={isSubject ? myName : opponentName}
@@ -495,7 +497,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         </div>
       ) : isAdvancing ? (
         <div className="flex-1 flex flex-col items-center justify-center px-4 animate-fadeIn">
-          <div className="bg-surface rounded-xl border border-border shadow-card overflow-hidden p-8 text-center">
+          <div className="bg-surface rounded-2xl border border-border shadow-xl overflow-hidden p-8 text-center">
             <div className="flex gap-1.5 items-center justify-center mb-3">
               <span className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
               <span className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -505,7 +507,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           </div>
         </div>
       ) : currentQ ? (
-        <div className="animate-fadeSlideUp flex-1 flex flex-col">
+        <div className="animate-slideUpReveal flex-1 flex flex-col">
           <QuestionView
             question={currentQ}
             isSubject={isSubject}
@@ -560,12 +562,17 @@ function QuestionView({
 
   return (
     <div className="flex-1 flex flex-col px-4 py-4">
-      <div className="bg-surface rounded-xl border border-border shadow-card overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-accent via-primary to-secondary" />
+      <div className="bg-surface rounded-2xl border border-border shadow-xl overflow-hidden relative">
+        {/* Decorative gradient top bar */}
+        <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
 
-        <div className="p-5">
+        {/* Subtle decorative circles — kartu curhat inspired */}
+        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
+
+        <div className="p-6 relative z-10">
           {/* Question number + role label */}
-          <div className="text-center mb-3 space-y-2">
+          <div className="text-center mb-4 space-y-2">
             <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
               Pertanyaan {question.sequence_number}/5
             </span>
@@ -577,7 +584,7 @@ function QuestionView({
             )}
           </div>
 
-          <h2 className="text-lg font-bold text-text-primary text-center mb-5 leading-relaxed">
+          <h2 className="text-lg font-bold text-text-primary text-center mb-6 leading-relaxed">
             {questionText}
           </h2>
 
@@ -603,15 +610,15 @@ function QuestionView({
                     }
                   }}
                   disabled={!myTurn}
-                  className={`w-full text-left min-h-[56px] py-4 px-5 rounded-xl border-2 ${
-                    myTurn ? "cursor-pointer" : "cursor-default opacity-60"
+                  className={`w-full text-left min-h-[60px] py-4 px-5 rounded-2xl border-2 ${
+                    myTurn ? "cursor-pointer hover:border-primary/40 hover:bg-primary/[0.02] active:bg-primary/5" : "cursor-default opacity-60"
                   } ${btnStyle}`}
                 >
                   <div className="flex items-center gap-4">
                     <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
                         isSelected
-                          ? "border-primary bg-primary"
+                          ? "border-primary bg-primary scale-110"
                           : "border-border"
                       }`}
                     />

@@ -101,10 +101,12 @@ export function JedaScreen({
 
   return (
     <div className="flex-1 flex flex-col px-4 py-4">
-      <div className="bg-surface rounded-xl border border-border shadow-card overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-accent via-primary to-secondary" />
+      <div className="bg-surface rounded-2xl border border-border shadow-xl overflow-hidden relative">
+        <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
+        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
 
-        <div className="p-5 flex flex-col items-center gap-4">
+        <div className="p-6 flex flex-col items-center gap-4 relative z-10">
           {/* Icon + Title */}
           <div className={`w-20 h-20 rounded-full flex items-center justify-center ${iconBg}`}>
             {icon}
