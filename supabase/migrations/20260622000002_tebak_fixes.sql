@@ -151,7 +151,7 @@ BEGIN
   IF NOT FOUND THEN RETURN NULL; END IF;
 
   UPDATE tebak_questions
-  SET subject_deadline = NOW() + INTERVAL '20 seconds'
+  SET subject_deadline = NOW() + INTERVAL '15 seconds'
   WHERE round_id = v_round_id
     AND sequence_number = p_seq
     AND subject_deadline IS NULL
