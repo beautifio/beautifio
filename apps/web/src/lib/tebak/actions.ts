@@ -1,6 +1,6 @@
 'use server'
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { getRandomBotId, getBotWinRate } from "./bot"
+import { getRandomBotId } from "./bot"
 
 export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole: 'a' | 'b'; isNew: boolean }> {
   const supabase = await createServerClient()
@@ -222,38 +222,16 @@ export async function updateUserHeartbeat(userId: string): Promise<void> {
   }).eq('id', userId)
 }
 
-async function selectQuestionsForRound(sessionId: string, roundId: string): Promise<void> {
+export async function advanceGame(
+  sessionId: string, expectedSeq: number
+): Promise<{ status: string; current_round?: number; current_q_seq?: number } | null> {
   const supabase = await createServerClient()
-  const { data: bank, error: bankErr } = await supabase
-    .from('tebak_question_bank')
-    .select('id, question_text, options')
-    .eq('is_active', true)
-    .limit(20)
-
-  if (bankErr) {
-    console.error('selectQuestionsForRound: fetch question bank error:', bankErr)
-    return
-  }
-  if (!bank?.length) {
-    console.error('selectQuestionsForRound: no questions in bank')
-    return
-  }
-
-  const shuffled = bank.sort(() => Math.random() - 0.5).slice(0, 5)
-
-  const { error: insertErr } = await supabase.from('tebak_questions').insert(
-    shuffled.map((q, i) => ({
-      round_id: roundId,
-      question_bank_id: q.id,
-      question_text: q.question_text,
-      options: q.options,
-      sequence_number: i + 1,
-    }))
-  )
-
-  if (insertErr) {
-    console.error('selectQuestionsForRound: insert error:', insertErr)
-  }
+  const { data, error } = await supabase.rpc('advance_tebak_game', {
+    p_session_id: sessionId,
+    p_expected_seq: expectedSeq,
+  })
+  if (error) { console.error('advanceGame RPC error:', error); return null }
+  return data as { status: string; current_round?: number; current_q_seq?: number } | null
 }
 
 export async function startQuestionTimer(sessionId: string, seq: number): Promise<string | null> {
@@ -361,7 +339,7 @@ export async function handleSubjectTimeout(questionId: string, sessionId: string
     question_id: questionId,
     guesser_id: guesserId,
     answer: '__subject_timeout__',
-    is_correct: true,
+    is_correct: false,
     time_ms: 20000,
   })
 
@@ -370,56 +348,3 @@ export async function handleSubjectTimeout(questionId: string, sessionId: string
   }).eq('id', questionId)
 }
 
-export async function advanceGame(sessionId: string, expectedSeq: number): Promise<void> {
-  const supabase = await createServerClient()
-
-  // Atomic guard: skip if another client already advanced
-  const { data: seqCheck } = await supabase
-    .from('tebak_sessions')
-    .select('current_q_seq')
-    .eq('id', sessionId)
-    .single()
-  if (!seqCheck || seqCheck.current_q_seq !== expectedSeq) return
-
-  const { data: session } = await supabase
-    .from('tebak_sessions')
-    .select('*, tebak_rounds(*)')
-    .eq('id', sessionId).single()
-
-  if (!session) return
-
-  const round = session.tebak_rounds.find((r: any) => r.round_number === session.current_round)
-  if (!round) return
-
-  const { data: questions } = await supabase
-    .from('tebak_questions')
-    .select('status')
-    .eq('round_id', round.id)
-
-  const allRevealed = questions?.every((q: any) => q.status === 'revealed') ?? false
-
-  if (!allRevealed) {
-    await supabase.from('tebak_sessions').update({
-      current_q_seq: session.current_q_seq + 1,
-    }).eq('id', sessionId)
-    return
-  }
-
-  await supabase.from('tebak_rounds').update({ status: 'done' }).eq('id', round.id)
-
-  if (session.current_round === 1) {
-    const newSubject: 'a' | 'b' = session.current_subject === 'a' ? 'b' : 'a'
-    const { data: newRound } = await supabase.from('tebak_rounds').insert({
-      session_id: sessionId, subject_player: newSubject, round_number: 2,
-    }).select('id').single()
-
-    if (newRound) {
-      await selectQuestionsForRound(sessionId, newRound.id)
-      await supabase.rpc('switch_tebak_subject', { p_session_id: sessionId })
-    }
-  } else {
-    await supabase.from('tebak_sessions').update({
-      status: 'finished', finished_at: new Date().toISOString(),
-    }).eq('id', sessionId)
-  }
-}

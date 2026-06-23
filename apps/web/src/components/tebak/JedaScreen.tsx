@@ -27,7 +27,7 @@ export function JedaScreen({
   isLastRound,
   onComplete,
 }: Props) {
-  const [count, setCount] = useState(5)
+  const [count, setCount] = useState(3)
   const [bannerUrl, setBannerUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -110,6 +110,18 @@ export function JedaScreen({
             <span className="text-text-secondary">—</span>
             <span className="text-text-primary">{theirScore}</span>
           </div>
+
+          {/* Lead indicator */}
+          {(() => {
+            const diff = myScore - theirScore
+            let text = ''
+            if (diff > 0) text = `Kamu unggul ${diff} poin 🔥`
+            else if (diff < 0) text = `Tertinggal ${Math.abs(diff)} poin — kejar!`
+            else text = 'Skor seri — siapa duluan?'
+            return (
+              <p className="text-sm font-semibold text-text-secondary text-center">{text}</p>
+            )
+          })()}
 
           {/* Banner slot */}
           {bannerUrl && (

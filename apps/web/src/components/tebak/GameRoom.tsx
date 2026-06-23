@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Trophy, Loader2, WifiOff } from "lucide-react"
+import { Loader2, WifiOff } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import {
@@ -19,6 +19,8 @@ import { DigitalClock } from "./DigitalClock"
 import { MatchIntro } from "./MatchIntro"
 import { ScoreBoard } from "./ScoreBoard"
 import { JedaScreen } from "./JedaScreen"
+import { RoundResultScreen } from "./RoundResultScreen"
+import { WinnerScreen } from "./WinnerScreen"
 import type { TebakSession, TebakQuestion, TebakAnswer } from "@/lib/tebak/queries"
 
 type Props = {
@@ -214,15 +216,34 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     handleSubjectTimeout(currentQ.id, sessionId)
   }, [currentQ, sessionId])
 
-  const handleAdvance = async () => {
+  const [showRoundResult, setShowRoundResult] = useState(false)
+
+  const doAdvance = async () => {
     const currentSeq = gameSession.current_q_seq
-    setSelectedAnswer(null)
     setRevealed(false)
     setLocked(false)
     selectedAnswerRef.current = null
     submittedRef.current = false
-    await advanceGame(sessionId, currentSeq)
+    setSelectedAnswer(null)
+    const result = await advanceGame(sessionId, currentSeq)
+    if (result?.status === 'game_finished') {
+      setFinished(true)
+      return
+    }
     await refreshQuestions()
+  }
+
+  const handleAdvance = () => {
+    if (currentQ?.sequence_number === 5 && gameSession.current_round === 1) {
+      setShowRoundResult(true)
+      return
+    }
+    doAdvance()
+  }
+
+  const handleRoundResultComplete = () => {
+    setShowRoundResult(false)
+    doAdvance()
   }
 
   const handleSubjectAnswer = async (answer: string) => {
@@ -241,13 +262,36 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     if (currentQ.status !== "guesser_guessing") return
     submittedRef.current = true
     setSelectedAnswer(answer)
+    setLocked(true)
+    setTension(true)
+    tensionStartRef.current = Date.now()
     try {
       await submitGuesserAnswer(currentQ.id, userId, answer, guessStartTime.current)
     } catch (e) {
       submittedRef.current = false
+      setLocked(false)
+      setTension(false)
       console.error("submitGuesserAnswer error", e)
     }
   }
+
+  const [tension, setTension] = useState(false)
+  const tensionStartRef = useRef(0)
+
+  useEffect(() => {
+    if (!tension) return
+    const minDuration = 1500
+    const elapsed = Date.now() - tensionStartRef.current
+    const remaining = Math.max(0, minDuration - elapsed)
+    const t = setTimeout(() => {
+      setTension(false)
+    }, remaining)
+    return () => clearTimeout(t)
+  }, [tension])
+
+  const handleTensionDone = useCallback(() => {
+    setTension(false)
+  }, [])
 
   const handleGuesserTimeout = async () => {
     if (locked || submittedRef.current) return
@@ -331,13 +375,38 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           onBegin={handleBegin}
         />
       ) : finished ? (
-        <ResultScreen
+        <WinnerScreen
           session={gameSession}
           isPlayerA={isPlayerA}
           opponentName={opponentName}
+          myName={myName}
           compatibility={compatibility}
-          onBack={() => window.location.href = "/tebak"}
+          onRematch={() => window.location.href = "/tebak"}
+          onHome={() => window.location.href = "/"}
         />
+      ) : showRoundResult ? (
+        <RoundResultScreen
+          session={gameSession}
+          round={1}
+          answers={answers}
+          questions={questions}
+          isPlayerA={isPlayerA}
+          myName={myName}
+          opponentName={opponentName}
+          onComplete={handleRoundResultComplete}
+        />
+      ) : tension ? (
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="bg-surface rounded-xl border border-border shadow-card overflow-hidden p-10 text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+            <h3 className="text-lg font-bold text-text-primary mb-1">Membuka jawaban...</h3>
+            <p className="text-sm text-text-secondary">
+              {isSubject ? `${opponentName || 'Lawan'} sedang menebak` : `Menunggu hasil tebakan`}
+            </p>
+          </div>
+        </div>
       ) : revealed && currentQ ? (
         <JedaScreen
           resultType={resultType}
@@ -392,7 +461,7 @@ function QuestionView({
   onGuesserTimeout: () => void
   onSubjectTimeout: () => void
 }) {
-  const needAction = isSubject
+  const myTurn = isSubject
     ? question.status === "subject_answering"
     : question.status === "guesser_guessing"
 
@@ -412,17 +481,19 @@ function QuestionView({
             {question.question_text}
           </h2>
 
-          <div className="space-y-2.5 mb-5">
+          <div className="space-y-3 mb-5">
             {(question.options as string[]).map((opt) => {
               const isSelected = selectedAnswer === opt && !submitting
 
-              let btnStyle = "border-border bg-surface hover:border-primary/30"
+              let btnStyle = "border-border bg-surface"
               if (isSelected) btnStyle = "border-primary bg-primary/5"
+              if (myTurn) btnStyle += " active:scale-[0.98] active:bg-primary/10 transition-all duration-75"
 
               return (
                 <button
                   key={opt}
                   onClick={() => {
+                    if (!myTurn) return
                     if (isSubject) {
                       if (submitting) return
                       onSubjectAnswer(opt)
@@ -431,21 +502,21 @@ function QuestionView({
                       onGuesserGuess(opt)
                     }
                   }}
-                  disabled={(isSubject ? submitting : locked) || !needAction}
-                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                    needAction ? "cursor-pointer" : "cursor-default"
+                  disabled={!myTurn}
+                  className={`w-full text-left min-h-[56px] py-4 px-5 rounded-xl border-2 ${
+                    myTurn ? "cursor-pointer" : "cursor-default opacity-60"
                   } ${btnStyle}`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
                         isSelected
                           ? "border-primary bg-primary"
                           : "border-border"
                       }`}
                     >
                     </div>
-                    <span className="text-sm font-medium text-text-primary">
+                    <span className="text-base font-medium text-text-primary leading-tight">
                       {opt}
                     </span>
                   </div>
@@ -486,77 +557,4 @@ function QuestionView({
   )
 }
 
-function ResultScreen({
-  session,
-  isPlayerA,
-  opponentName,
-  compatibility,
-  onBack,
-}: {
-  session: TebakSession
-  isPlayerA: boolean
-  opponentName: string | null
-  compatibility: number
-  onBack: () => void
-}) {
-  const myScore = isPlayerA ? session.score_a : session.score_b
-  const theirScore = isPlayerA ? session.score_b : session.score_a
-  const isWin = myScore > theirScore
-  const isDraw = myScore === theirScore
 
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-      <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${
-        isWin ? "bg-yellow-100" : isDraw ? "bg-blue-100" : "bg-gray-100"
-      }`}>
-        <Trophy size={40} className={isWin ? "text-yellow-500" : isDraw ? "text-blue-500" : "text-gray-400"} />
-      </div>
-      <h2 className="text-2xl font-bold text-text-primary mb-2">
-        {isWin ? "Kamu Menang!" : isDraw ? "Seri!" : "Kamu Kalah"}
-      </h2>
-      <p className="text-sm text-text-secondary mb-8">
-        Skor akhir: {myScore} - {theirScore}
-      </p>
-
-      <div className="w-full max-w-xs space-y-3 mb-6">
-        <div className="flex justify-between p-4 rounded-xl bg-surface border border-border">
-          <span className="text-sm text-text-secondary">Kamu</span>
-          <span className="text-sm font-bold text-text-primary">{myScore} poin</span>
-        </div>
-        <div className="flex justify-between p-4 rounded-xl bg-surface border border-border">
-          <span className="text-sm text-text-secondary">{opponentName || "Lawan"}</span>
-          <span className="text-sm font-bold text-text-primary">{theirScore} poin</span>
-        </div>
-      </div>
-
-      {/* Compatibility */}
-      <div className="w-full max-w-xs mb-8">
-        <div className="p-5 rounded-xl bg-surface border border-border text-center">
-          <p className="text-[11px] font-semibold tracking-widest uppercase text-text-secondary mb-3">
-            Tingkat Kecocokan
-          </p>
-          <div className="h-2 rounded-full bg-muted overflow-hidden mb-2">
-            <div
-              className={`h-full rounded-full transition-all duration-1000 ${
-                compatibility <= 30 ? "bg-red-400" : compatibility <= 60 ? "bg-orange-400" : compatibility <= 85 ? "bg-green-400" : "bg-accent"
-              }`}
-              style={{ width: `${compatibility}%` }}
-            />
-          </div>
-          <p className={`text-sm font-bold ${
-            compatibility <= 30 ? "text-red-500" : compatibility <= 60 ? "text-orange-500" : compatibility <= 85 ? "text-green-600" : "text-accent"
-          }`}>
-            {compatibility <= 30 ? "Kurang cocok" : compatibility <= 60 ? "Cukup cocok" : compatibility <= 85 ? "Cocok!" : "Soulmate! 😱"}
-          </p>
-        </div>
-      </div>
-
-      <button
-        onClick={onBack}
-        className="w-full max-w-xs py-3.5 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors cursor-pointer"
-      >
-        Main Lagi
-      </button>
-    </div>
-  )
-}
