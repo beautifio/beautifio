@@ -7,7 +7,8 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLanding = pathname === "/";
   const isAdmin = pathname.startsWith("/admin");
-  const hideNav = isLanding || isAdmin;
+  const isOnboarding = pathname === "/onboarding" || pathname === "/welcome";
+  const hideNav = isLanding || isAdmin || isOnboarding;
 
   return (
     <div className={`min-h-screen bg-bg ${hideNav ? "" : "pb-16"}`}>
