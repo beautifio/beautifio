@@ -117,7 +117,8 @@ export async function middleware(request: NextRequest) {
 
       if (userData?.trial_expires_at) {
         const isTrialExpired = new Date() > new Date(userData.trial_expires_at);
-        if (isTrialExpired && pathname !== "/trial-expired") {
+        const isUpgradePath = (pathname === "/register" || pathname === "/login") && request.nextUrl.searchParams.get("upgrade") === "true";
+        if (isTrialExpired && pathname !== "/trial-expired" && !isUpgradePath) {
           const url = request.nextUrl.clone();
           url.pathname = "/trial-expired";
           return NextResponse.redirect(url);
