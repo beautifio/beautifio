@@ -7,12 +7,14 @@ type Props = {
   onTimeout: () => void
   label?: string
   compact?: boolean
+  isUrgent?: boolean
 }
 
-export function DigitalClock({ deadline, onTimeout, label = "Sisa Waktu", compact }: Props) {
+export function DigitalClock({ deadline, onTimeout, label = "Sisa Waktu", compact, isUrgent }: Props) {
   const [remaining, setRemaining] = useState(0)
   const colonRef = useRef(true)
   const [, forceRender] = useState(0)
+  const tickSoundRef = useRef(false)
 
   useEffect(() => {
     const tick = () => {
@@ -32,13 +34,18 @@ export function DigitalClock({ deadline, onTimeout, label = "Sisa Waktu", compac
   const minutes = Math.floor(remaining / 60)
   const seconds = remaining % 60
   const isLow = remaining <= 5
+  const isCritical = remaining <= 3
   const colonVisible = colonRef.current
 
+  const urgent = isUrgent && isLow
+
   const digitClass = `font-mono font-bold tracking-[0.15em] transition-all duration-500 ${
-    isLow ? "text-red-400" : "text-[#67e8f9]"
+    isCritical ? "text-red-400 animate-pulse" : isLow ? "text-amber-400" : "text-[#67e8f9]"
   }`
-  const digitStyle = isLow
+  const digitStyle = isCritical
     ? { textShadow: "0 0 20px rgba(239,68,68,0.6), 0 0 60px rgba(239,68,68,0.3)" }
+    : isLow
+    ? { textShadow: "0 0 20px rgba(251,191,36,0.6), 0 0 60px rgba(251,191,36,0.3)" }
     : { textShadow: "0 0 20px rgba(103,232,249,0.5), 0 0 60px rgba(103,232,249,0.2)" }
 
   if (compact) {
@@ -59,14 +66,18 @@ export function DigitalClock({ deadline, onTimeout, label = "Sisa Waktu", compac
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="relative rounded-2xl px-7 py-5 bg-[#0B1120] border border-white/[0.07] shadow-2xl overflow-hidden">
+      <div className={`relative rounded-2xl px-7 py-5 bg-[#0B1120] border shadow-2xl overflow-hidden ${
+        isCritical ? "border-red-500/30" : isLow ? "border-amber-400/20" : "border-white/[0.07]"
+      }`}>
         <div
           className={`absolute inset-0 rounded-2xl blur-3xl transition-colors duration-700 ${
-            isLow ? "bg-red-500/15" : "bg-cyan-400/8"
+            isCritical ? "bg-red-500/20" : isLow ? "bg-amber-400/12" : "bg-cyan-400/8"
           }`}
         />
         {isLow && (
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-red-500/20 rounded-full blur-3xl animate-pulse" />
+          <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-3xl ${
+            isCritical ? "bg-red-500/25 animate-pulse" : "bg-amber-400/15"
+          }`} />
         )}
         <div className="relative flex items-center justify-center">
           <span className={`${digitClass} text-5xl sm:text-6xl`} style={digitStyle}>
@@ -81,7 +92,7 @@ export function DigitalClock({ deadline, onTimeout, label = "Sisa Waktu", compac
         </div>
       </div>
       <p className={`text-[11px] font-semibold tracking-widest uppercase transition-colors duration-500 ${
-        isLow ? "text-red-400" : "text-text-secondary"
+        isCritical ? "text-red-400" : isLow ? "text-amber-400" : "text-text-secondary"
       }`}>
         {label}
       </p>

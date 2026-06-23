@@ -13,6 +13,7 @@ export function Timer({ deadline, onTimeout }: Props) {
       deadline={deadline}
       onTimeout={onTimeout}
       label="Sisa Waktu"
+      isUrgent
     />
   )
 }

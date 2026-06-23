@@ -25,6 +25,7 @@ export type TebakQuestion = {
   round_id: string
   question_bank_id: string
   question_text: string
+  question_for_guesser: string | null
   options: string[]
   sequence_number: number
   correct_answer: string | null

@@ -247,7 +247,8 @@ export async function startQuestionTimer(sessionId: string, seq: number): Promis
 export async function submitSubjectAnswer(questionId: string, answer: string): Promise<void> {
   const supabase = await createServerClient()
   const now = new Date()
-  const deadline = new Date(now.getTime() + 15_000)
+  // +15.5s = 15s for the guesser + 500ms network latency buffer (Bug #5)
+  const deadline = new Date(now.getTime() + 15_500)
 
   await supabase.from('tebak_questions').update({
     correct_answer: answer,

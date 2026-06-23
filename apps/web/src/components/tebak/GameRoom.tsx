@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Loader2, WifiOff } from "lucide-react"
+import { Loader2, WifiOff, Volume2, VolumeX } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import {
@@ -14,6 +14,7 @@ import {
   replaceDisconnectedWithBot,
   updateUserHeartbeat,
 } from "@/lib/tebak/actions"
+import { useSound } from "@/lib/tebak/use-sound"
 import { Timer } from "./Timer"
 import { DigitalClock } from "./DigitalClock"
 import { MatchIntro } from "./MatchIntro"
@@ -45,20 +46,26 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [showIntro, setShowIntro] = useState(true)
   const [locked, setLocked] = useState(false)
   const [botThinking, setBotThinking] = useState(false)
+  const [isAdvancing, setIsAdvancing] = useState(false)
   const guessStartTime = useRef(Date.now())
   const botPlayedRef = useRef<Set<string>>(new Set())
   const selectedAnswerRef = useRef<string | null>(null)
   const prevQuestionId = useRef<string | null>(null)
   const roundIdsRef = useRef<Set<string>>(new Set())
   const submittedRef = useRef(false)
+  const advancingRef = useRef(false)
+  const currentQSeqRef = useRef<number | null>(null)
+  const lastAnswerRef = useRef<TebakAnswer | null>(null)
+  const { play, isMuted, toggleMute } = useSound()
 
   const isPlayerA = gameSession.player_a_id === userId
   const opponentId = isPlayerA ? gameSession.player_b_id : gameSession.player_a_id
   const isSubject = gameSession.current_subject === (isPlayerA ? "a" : "b")
 
+  const subjectName = isSubject ? myName : opponentName
+
   const refreshQuestions = useCallback(async () => {
     if (!supabase) { console.error('GameRoom: supabase null'); return }
-    console.log('GameRoom: refreshQuestions, round=', gameSession.current_round, 'session=', sessionId, 'isSubject=', isSubject)
     const { data: round, error: roundErr } = await supabase
       .from("tebak_rounds")
       .select("id")
@@ -67,7 +74,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       .maybeSingle()
     if (roundErr) { console.error('GameRoom: round query error', roundErr); return }
     if (!round) { console.error('GameRoom: no round found for session', sessionId, 'round', gameSession.current_round); return }
-    console.log('GameRoom: found round', round.id)
 
     const { data, error: qErr } = await supabase
       .from("tebak_questions")
@@ -76,7 +82,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       .order("sequence_number")
     if (qErr) { console.error('GameRoom: questions query error', qErr); return }
     if (!data) { console.error('GameRoom: no data from questions query'); return }
-    console.log('GameRoom: questions fetched', data.length, data)
 
     roundIdsRef.current = new Set(data.map((q: any) => q.round_id))
     setQuestions(data as TebakQuestion[])
@@ -85,6 +90,9 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     )
     const current = activeRound[0]
     setCurrentQ(current || null)
+    if (current) {
+      currentQSeqRef.current = current.sequence_number
+    }
     if (current?.status === "guesser_guessing" && !isSubject) {
       guessStartTime.current = Date.now()
     }
@@ -94,14 +102,12 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     refreshQuestions()
   }, [refreshQuestions])
 
-  // Retry fetching questions if still empty (race condition safety net)
   useEffect(() => {
     if (questions.length > 0) return
     const interval = setInterval(refreshQuestions, 2000)
     return () => clearInterval(interval)
   }, [questions.length, refreshQuestions])
 
-  // Fetch opponent + current user info
   useEffect(() => {
     if (!supabase) return
     supabase.from("users").select("is_bot, full_name, avatar_url").eq("id", opponentId).single().then(({ data }) => {
@@ -114,7 +120,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     })
   }, [opponentId, userId])
 
-  // Heartbeat + disconnect detection
   useEffect(() => {
     const hb = setInterval(() => updateUserHeartbeat(userId), 30_000)
     updateUserHeartbeat(userId)
@@ -141,18 +146,14 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     return () => clearInterval(check)
   }, [sessionId, opponentId, finished, opponentIsBot, disconnectMsg])
 
-  // Bot auto-play
   useEffect(() => {
     if (!opponentIsBot || !currentQ || botThinking || !supabase) return
-
     const isBotTurn =
       (gameSession.current_subject === (isPlayerA ? "b" : "a") && currentQ.status === "subject_answering") ||
       (gameSession.current_subject !== (isPlayerA ? "b" : "a") && currentQ.status === "guesser_guessing")
-
     if (!isBotTurn) return
     if (botPlayedRef.current.has(currentQ.id)) return
     botPlayedRef.current.add(currentQ.id)
-
     setBotThinking(true)
     botPlayTurn(sessionId, currentQ.id, opponentId)
       .then(() => refreshQuestions())
@@ -160,7 +161,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       .finally(() => setBotThinking(false))
   }, [opponentIsBot, currentQ, botThinking, sessionId, opponentId, isPlayerA, gameSession.current_subject, refreshQuestions])
 
-  // Reset locked/selection when question changes
   useEffect(() => {
     if (currentQ && currentQ.id !== prevQuestionId.current) {
       prevQuestionId.current = currentQ.id
@@ -168,17 +168,16 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       setSelectedAnswer(null)
       selectedAnswerRef.current = null
       submittedRef.current = false
+      play('tap')
     }
-  }, [currentQ])
+  }, [currentQ, play])
 
-  // Auto-start timer when a subject_answering question appears without deadline
   useEffect(() => {
     if (!currentQ || currentQ.status !== 'subject_answering') return
     if (currentQ.subject_deadline) return
     startQuestionTimer(sessionId, currentQ.sequence_number)
   }, [currentQ, sessionId])
 
-  // Real-time subscriptions
   useEffect(() => {
     const unsub = subscribeToTebakGame(sessionId, {
       onSessionUpdate: (s) => {
@@ -186,7 +185,10 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         if (s.status === "finished") setFinished(true)
       },
       onQuestionUpdate: async (q) => {
+        if (advancingRef.current) return /* Bug #1: ignore all updates during advance */
         if (!roundIdsRef.current.has(q.round_id)) return
+        /* Bug #2: only accept if it's the currently active question */
+        if (q.sequence_number !== currentQSeqRef.current) return
         setQuestions((prev) => {
           const exists = prev.some(p => p.id === q.id)
           if (!exists && q.sequence_number > 1) {
@@ -200,12 +202,13 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         if (q.status === "guesser_guessing" && !isSubject) {
           guessStartTime.current = Date.now()
         }
-        if (q.status === "revealed") {
+        if (q.status === "revealed" && !advancingRef.current) {
           setRevealed(true)
         }
       },
       onAnswerSubmitted: (a) => {
         setAnswers((prev) => [...prev, a])
+        lastAnswerRef.current = a
       },
     })
     return unsub
@@ -220,17 +223,22 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
 
   const doAdvance = async () => {
     const currentSeq = gameSession.current_q_seq
+    setIsAdvancing(true)
+    advancingRef.current = true /* Bug #1: lock subscription guard */
     setRevealed(false)
-    setLocked(false)
-    selectedAnswerRef.current = null
-    submittedRef.current = false
-    setSelectedAnswer(null)
+    setCurrentQ(null)
+
     const result = await advanceGame(sessionId, currentSeq)
     if (result?.status === 'game_finished') {
       setFinished(true)
+      setIsAdvancing(false)
+      advancingRef.current = false
       return
     }
     await refreshQuestions()
+
+    setIsAdvancing(false)
+    advancingRef.current = false /* unlock */
   }
 
   const handleAdvance = () => {
@@ -250,6 +258,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     if (!currentQ || submitting) return
     setSubmitting(true)
     setSelectedAnswer(answer)
+    play('submit')
     try {
       await submitSubjectAnswer(currentQ.id, answer)
     } catch {} finally {
@@ -265,6 +274,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     setLocked(true)
     setTension(true)
     tensionStartRef.current = Date.now()
+    play('submit')
     try {
       await submitGuesserAnswer(currentQ.id, userId, answer, guessStartTime.current)
     } catch (e) {
@@ -289,10 +299,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     return () => clearTimeout(t)
   }, [tension])
 
-  const handleTensionDone = useCallback(() => {
-    setTension(false)
-  }, [])
-
   const handleGuesserTimeout = async () => {
     if (locked || submittedRef.current) return
     setLocked(true)
@@ -303,6 +309,31 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       console.error("handleGuesserTimeout error", e)
     }
   }
+
+  /* Play correct/wrong/timeout sound when revealed changes to true */
+  useEffect(() => {
+    if (!revealed || !currentQ) return
+    const ans = currentAnswer ?? lastAnswerRef.current
+    if (!currentQ.subject_answered_at || ans?.answer === '__timeout__' || ans?.answer === '__subject_timeout__') {
+      play('timeout')
+    } else if (ans?.is_correct === true) {
+      play('correct')
+    } else if (ans?.is_correct === false) {
+      play('wrong')
+    }
+  }, [revealed])
+
+  /* Play winner/lose sound when game finishes */
+  useEffect(() => {
+    if (!finished) return
+    const myScore = isPlayerA ? gameSession.score_a : gameSession.score_b
+    const theirScore = isPlayerA ? gameSession.score_b : gameSession.score_a
+    if (myScore > theirScore) {
+      play('winner')
+    } else if (myScore < theirScore) {
+      play('lose')
+    }
+  }, [finished])
 
   const myDots = questions.map(q => {
     const a = answers.find(ans => ans.question_id === q.id && ans.guesser_id === userId)
@@ -344,8 +375,33 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     refreshQuestions()
   }, [refreshQuestions])
 
+  /* Build question text for the player's role */
+  const questionText = currentQ
+    ? isSubject
+      ? currentQ.question_text
+      : (currentQ.question_for_guesser ?? currentQ.question_text).replace(/\{NamaSubject\}/g, subjectName ?? 'Lawan')
+    : ''
+
+  /* Role label */
+  const roleLabel = currentQ
+    ? isSubject
+      ? { icon: '🎯', text: 'Pertanyaan untukmu' }
+      : currentQ.status === 'guesser_guessing'
+        ? { icon: '🔍', text: `Tebaklah pikiran ${subjectName ?? 'Lawan'}` }
+        : { icon: '🔍', text: `Apa yang sedang dipikirkan ${subjectName ?? 'Lawan'}?` }
+    : null
+
   return (
     <div className="min-h-screen bg-bg flex flex-col">
+      {/* Mute toggle */}
+      <button
+        onClick={toggleMute}
+        className="fixed top-4 right-4 z-50 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm border border-border flex items-center justify-center cursor-pointer shadow-sm hover:bg-white transition-colors"
+        aria-label={isMuted() ? 'Unmute' : 'Mute'}
+      >
+        {isMuted() ? <VolumeX size={16} className="text-text-secondary" /> : <Volume2 size={16} className="text-text-secondary" />}
+      </button>
+
       {/* Disconnect banner */}
       {disconnectMsg && (
         <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-700 text-xs font-medium">
@@ -395,42 +451,66 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           opponentName={opponentName}
           onComplete={handleRoundResultComplete}
         />
-      ) : tension ? (
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="bg-surface rounded-xl border border-border shadow-card overflow-hidden p-10 text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      ) : tension && !revealed ? (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 relative overflow-hidden animate-fadeIn">
+          {/* Dark overlay fade in */}
+          <div className="absolute inset-0 bg-black/40 animate-fadeIn" style={{ animationDuration: '0.2s' }} />
+          {/* Center card */}
+          <div className="relative z-10 animate-scaleIn">
+            <div className="bg-surface rounded-2xl border border-border shadow-2xl overflow-hidden p-10 text-center">
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5 animate-pulse">
+                <span className="text-4xl">?</span>
+              </div>
+              <h3 className="text-lg font-bold text-text-primary mb-2">
+                Membuka jawaban {subjectName ?? 'Lawan'}...
+              </h3>
+              <p className="text-sm text-text-secondary">
+                {isSubject ? `${opponentName || 'Lawan'} sedang menebak` : `Menunggu hasil tebakan`}
+              </p>
             </div>
-            <h3 className="text-lg font-bold text-text-primary mb-1">Membuka jawaban...</h3>
-            <p className="text-sm text-text-secondary">
-              {isSubject ? `${opponentName || 'Lawan'} sedang menebak` : `Menunggu hasil tebakan`}
-            </p>
           </div>
         </div>
       ) : revealed && currentQ ? (
-        <JedaScreen
-          resultType={resultType}
-          subjectName={isSubject ? myName : opponentName}
-          guesserName={isSubject ? opponentName : myName}
-          correctAnswer={currentQ.correct_answer ?? ''}
-          myScore={isPlayerA ? gameSession.score_a : gameSession.score_b}
-          theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a}
-          isLastQuestion={currentQ.sequence_number === 5}
-          isLastRound={gameSession.current_round === 2}
-          onComplete={handleAdvance}
-        />
+        <div className="animate-fadeSlideUp flex-1 flex flex-col">
+          <JedaScreen
+            resultType={resultType}
+            subjectName={isSubject ? myName : opponentName}
+            guesserName={isSubject ? opponentName : myName}
+            correctAnswer={currentQ.correct_answer ?? ''}
+            myScore={isPlayerA ? gameSession.score_a : gameSession.score_b}
+            theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a}
+            isLastQuestion={currentQ.sequence_number === 5}
+            isLastRound={gameSession.current_round === 2}
+            onComplete={handleAdvance}
+          />
+        </div>
+      ) : isAdvancing ? (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 animate-fadeIn">
+          <div className="bg-surface rounded-xl border border-border shadow-card overflow-hidden p-8 text-center">
+            <div className="flex gap-1.5 items-center justify-center mb-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+            <p className="text-sm text-text-secondary">Menyiapkan pertanyaan berikutnya...</p>
+          </div>
+        </div>
       ) : currentQ ? (
+        <div className="animate-fadeSlideUp flex-1 flex flex-col">
           <QuestionView
             question={currentQ}
             isSubject={isSubject}
             selectedAnswer={selectedAnswer}
             submitting={submitting}
             locked={locked}
+            questionText={questionText}
+            roleLabel={roleLabel}
             onSubjectAnswer={handleSubjectAnswer}
             onGuesserGuess={handleGuesserGuess}
             onGuesserTimeout={handleGuesserTimeout}
             onSubjectTimeout={handleSubjectAnswerTimeout}
           />
+        </div>
       ) : (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -446,6 +526,8 @@ function QuestionView({
   selectedAnswer,
   submitting,
   locked,
+  questionText,
+  roleLabel,
   onSubjectAnswer,
   onGuesserGuess,
   onGuesserTimeout,
@@ -456,6 +538,8 @@ function QuestionView({
   selectedAnswer: string | null
   submitting: boolean
   locked: boolean
+  questionText: string
+  roleLabel: { icon: string; text: string } | null
   onSubjectAnswer: (a: string) => void
   onGuesserGuess: (a: string) => void
   onGuesserTimeout: () => void
@@ -471,14 +555,21 @@ function QuestionView({
         <div className="h-1 bg-gradient-to-r from-accent via-primary to-secondary" />
 
         <div className="p-5">
-          <div className="text-center mb-3">
+          {/* Question number + role label */}
+          <div className="text-center mb-3 space-y-2">
             <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
               Pertanyaan {question.sequence_number}/5
             </span>
+            {roleLabel && (
+              <div className="flex items-center justify-center gap-1.5 text-xs font-medium text-text-secondary">
+                <span>{roleLabel.icon}</span>
+                <span>{roleLabel.text}</span>
+              </div>
+            )}
           </div>
 
-          <h2 className="text-lg font-bold text-text-primary text-center mb-5">
-            {question.question_text}
+          <h2 className="text-lg font-bold text-text-primary text-center mb-5 leading-relaxed">
+            {questionText}
           </h2>
 
           <div className="space-y-3 mb-5">
@@ -514,8 +605,7 @@ function QuestionView({
                           ? "border-primary bg-primary"
                           : "border-border"
                       }`}
-                    >
-                    </div>
+                    />
                     <span className="text-base font-medium text-text-primary leading-tight">
                       {opt}
                     </span>
@@ -531,6 +621,7 @@ function QuestionView({
                 deadline={question.subject_deadline}
                 onTimeout={onSubjectTimeout}
                 label={isSubject ? "Jawab sebelum waktu habis" : "Menunggu lawan menjawab"}
+                isUrgent
               />
             </div>
           )}
@@ -556,5 +647,3 @@ function QuestionView({
     </div>
   )
 }
-
-
