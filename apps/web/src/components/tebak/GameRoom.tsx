@@ -64,16 +64,17 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
 
   const subjectName = isSubject ? myName : opponentName
 
-  const refreshQuestions = useCallback(async () => {
+  const refreshQuestions = useCallback(async (roundOverride?: number) => {
     if (!supabase) { console.error('GameRoom: supabase null'); return }
+    const roundNum = roundOverride ?? gameSession.current_round
     const { data: round, error: roundErr } = await supabase
       .from("tebak_rounds")
       .select("id")
       .eq("session_id", sessionId)
-      .eq("round_number", gameSession.current_round)
+      .eq("round_number", roundNum)
       .maybeSingle()
     if (roundErr) { console.error('GameRoom: round query error', roundErr); return }
-    if (!round) { console.error('GameRoom: no round found for session', sessionId, 'round', gameSession.current_round); return }
+    if (!round) { console.error('GameRoom: no round found for session', sessionId, 'round', roundNum); return }
 
     const { data, error: qErr } = await supabase
       .from("tebak_questions")
@@ -235,7 +236,15 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       advancingRef.current = false
       return
     }
-    await refreshQuestions()
+    /* Update session state before refreshQuestions so it queries correct round */
+    if (result?.current_round != null) {
+      setGameSession(prev => ({
+        ...prev,
+        current_round: result.current_round!,
+        current_q_seq: result.current_q_seq ?? prev.current_q_seq,
+      }))
+    }
+    await refreshQuestions(result?.current_round)
 
     setIsAdvancing(false)
     advancingRef.current = false /* unlock */
