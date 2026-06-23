@@ -27,17 +27,25 @@ export function JedaScreen({
   isLastRound,
   onComplete,
 }: Props) {
-  const [count, setCount] = useState(3)
+  const [count, setCount] = useState(5)
+  const [ready, setReady] = useState(false)
   const [bannerUrl, setBannerUrl] = useState<string | null>(null)
 
+  /* Wait for fadeSlideUp animation (350ms) before starting countdown */
   useEffect(() => {
+    const t = setTimeout(() => setReady(true), 400)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    if (!ready) return
     if (count <= 0) {
       onComplete()
       return
     }
     const t = setTimeout(() => setCount(c => c - 1), 1000)
     return () => clearTimeout(t)
-  }, [count, onComplete])
+  }, [count, onComplete, ready])
 
   useEffect(() => {
     if (!supabase) return

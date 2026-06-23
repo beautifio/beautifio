@@ -10,40 +10,49 @@ type Props = {
 
 export function MatchIntro({ myName, opponentName, onBegin }: Props) {
   const [step, setStep] = useState(0)
-  const [count, setCount] = useState(5)
+  const [count, setCount] = useState(10)
   const [flash, setFlash] = useState(false)
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
 
-    timers.push(setTimeout(() => setStep(1), 300))
-    timers.push(setTimeout(() => setStep(2), 800))
-    timers.push(setTimeout(() => setStep(3), 1500))
-    timers.push(setTimeout(() => { setStep(4); setCount(5) }, 2000))
-    timers.push(setTimeout(() => setCount(4), 3000))
-    timers.push(setTimeout(() => setCount(3), 3500))
-    timers.push(setTimeout(() => setCount(2), 3900))
-    timers.push(setTimeout(() => setCount(1), 4200))
-    timers.push(setTimeout(() => { setStep(5); setFlash(true) }, 4500))
-    timers.push(setTimeout(() => setFlash(false), 4800))
-    timers.push(setTimeout(onBegin, 5100))
+    timers.push(setTimeout(() => setStep(1), 0))
+    timers.push(setTimeout(() => setStep(2), 300))
+    timers.push(setTimeout(() => setStep(3), 700))
+    timers.push(setTimeout(() => { setStep(4); setCount(10) }, 1200))
+
+    // 10 → 1 countdown
+    for (let i = 10; i >= 1; i--) {
+      const delay = 2200 + (10 - i) * 1000
+      timers.push(setTimeout(() => setCount(i), delay))
+    }
+
+    // GO!
+    timers.push(setTimeout(() => { setStep(5); setFlash(true) }, 12200))
+    timers.push(setTimeout(() => setFlash(false), 12500))
+    timers.push(setTimeout(onBegin, 12800))
 
     return () => timers.forEach(clearTimeout)
   }, [onBegin])
 
   const countColor =
-    count >= 4 ? "text-white" :
-    count === 3 ? "text-yellow-300" :
+    count > 5 ? "text-white" :
+    count === 5 ? "text-yellow-200" :
+    count === 4 ? "text-yellow-300" :
+    count === 3 ? "text-yellow-400" :
     count === 2 ? "text-orange-400" :
     "text-red-400"
 
   const countSize =
+    count > 5 ? "text-6xl" :
     count >= 4 ? "text-7xl" :
     count === 3 ? "text-8xl" :
     "text-9xl"
 
   const countGlow =
-    count >= 4 ? { textShadow: "0 0 30px rgba(255,255,255,0.3)" } :
+    count > 5 ? { textShadow: "0 0 20px rgba(255,255,255,0.2)" } :
+    count === 5 ? { textShadow: "0 0 30px rgba(255,255,255,0.3)" } :
+    count === 4 ? { textShadow: "0 0 30px rgba(253,224,71,0.3)" } :
     count === 3 ? { textShadow: "0 0 40px rgba(253,224,71,0.5)" } :
     count === 2 ? { textShadow: "0 0 50px rgba(251,146,60,0.6)" } :
     { textShadow: "0 0 60px rgba(248,113,113,0.7), 0 0 120px rgba(248,113,113,0.3)" }
