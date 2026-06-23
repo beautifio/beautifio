@@ -20,6 +20,8 @@ export function subscribeToTebakGame(
     }, (p) => callbacks.onSessionUpdate(p.new as TebakSession))
     .on('postgres_changes', {
       event: '*', schema: 'public', table: 'tebak_questions',
+      /* Note: round_id filter not added because roundIds aren't known at subscription setup time.
+         Cross-session events are guarded in onQuestionUpdate via roundIdsRef + currentQSeqRef. */
     }, (p) => callbacks.onQuestionUpdate(p.new as TebakQuestion))
     .on('postgres_changes', {
       event: 'INSERT', schema: 'public', table: 'tebak_answers',

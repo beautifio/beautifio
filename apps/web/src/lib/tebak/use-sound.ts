@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useEffect } from "react"
+import { useCallback, useRef, useEffect, useState } from "react"
 
 type SoundName = 'tap' | 'submit' | 'correct' | 'wrong' | 'timeout' | 'tick' | 'winner' | 'lose'
 
@@ -44,15 +44,15 @@ function playSequence(notes: number[], duration: number, type: OscillatorType) {
 }
 
 export function useSound() {
-  const mutedRef = useRef(false)
+  const [isMuted, setIsMuted] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('tebak_sound_muted')
-    if (stored === 'true') mutedRef.current = true
+    setIsMuted(stored === 'true')
   }, [])
 
   const play = useCallback((name: SoundName) => {
-    if (mutedRef.current) return
+    if (isMuted) return
     if (name === 'winner') {
       playSequence(WINNER_NOTES, 0.3, 'sine')
       return
@@ -64,13 +64,14 @@ export function useSound() {
     const s = SOUND_FREQ[name]
     if (!s) return
     playBeep(s.freq, s.duration, s.type)
-  }, [])
-
-  const isMuted = useCallback(() => mutedRef.current, [])
+  }, [isMuted])
 
   const toggleMute = useCallback(() => {
-    mutedRef.current = !mutedRef.current
-    localStorage.setItem('tebak_sound_muted', String(mutedRef.current))
+    setIsMuted((prev: boolean) => {
+      const nextMuted = !prev
+      localStorage.setItem('tebak_sound_muted', String(nextMuted))
+      return nextMuted
+    })
   }, [])
 
   return { play, isMuted, toggleMute }

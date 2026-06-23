@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Trophy, Medal, Loader2, Bot, User } from "lucide-react"
+import { ArrowLeft, Trophy, Medal, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 type LeaderboardEntry = {
@@ -13,27 +13,23 @@ type LeaderboardEntry = {
   total_wins: number
   total_losses: number
   win_rate: number
-  is_bot: boolean
 }
 
 export default function LeaderboardPage() {
   const router = useRouter()
   const [players, setPlayers] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
-  const [showBots, setShowBots] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
     if (!supabase) { setLoading(false); return }
 
-    const q = supabase
+    supabase
       .from("users")
-      .select("id, full_name, avatar_url, total_games, total_wins, total_losses, is_bot")
+      .select("id, full_name, avatar_url, total_games, total_wins, total_losses")
       .gt("total_games", 0)
-
-    if (!showBots) q.eq("is_bot", false)
-
-    q.order("total_wins", { ascending: false })
+      .eq("is_bot", false)
+      .order("total_wins", { ascending: false })
       .order("total_games", { ascending: false })
       .limit(50)
       .then(({ data }) => {
@@ -47,7 +43,7 @@ export default function LeaderboardPage() {
         setPlayers(mapped)
         setLoading(false)
       })
-  }, [showBots])
+  }, [])
 
   return (
     <div className="min-h-screen bg-bg">
@@ -63,17 +59,6 @@ export default function LeaderboardPage() {
       <div className="max-w-content mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-text-secondary">Pemain dengan total kemenangan terbanyak</p>
-          <button
-            onClick={() => setShowBots(!showBots)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-              showBots
-                ? "bg-primary/10 text-primary"
-                : "bg-surface text-text-secondary border border-border"
-            }`}
-          >
-            {showBots ? <User size={14} /> : <Bot size={14} />}
-            {showBots ? "Pemain" : "Bot"}
-          </button>
         </div>
 
         {loading ? (
@@ -113,14 +98,9 @@ export default function LeaderboardPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-semibold text-text-primary truncate">
-                        {p.full_name}
-                      </span>
-                      {p.is_bot && (
-                        <Bot size={12} className="text-primary shrink-0" />
-                      )}
-                    </div>
+                    <span className="text-sm font-semibold text-text-primary truncate">
+                      {p.full_name}
+                    </span>
                     <p className="text-xs text-text-secondary">
                       {p.total_games} game · {p.total_wins} menang · {p.total_losses} kalah
                     </p>

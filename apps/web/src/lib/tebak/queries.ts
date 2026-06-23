@@ -10,6 +10,7 @@ export type TebakSession = {
   current_subject: 'a' | 'b' | null
   created_at: string
   finished_at: string | null
+  advance_at: string | null
 }
 
 export type TebakRound = {

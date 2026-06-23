@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Clock, Check, X, RefreshCw } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import type { TebakSession, TebakQuestion, TebakAnswer } from "@/lib/tebak/queries"
+import { DigitalClock } from "./DigitalClock"
 
 type Props = {
   session: TebakSession
@@ -13,7 +14,7 @@ type Props = {
   isPlayerA: boolean
   myName: string | null
   opponentName: string | null
-  onComplete: () => void
+  deadline: string
 }
 
 export function RoundResultScreen({
@@ -24,16 +25,18 @@ export function RoundResultScreen({
   isPlayerA,
   myName,
   opponentName,
-  onComplete,
+  deadline,
 }: Props) {
-  const [count, setCount] = useState(8)
   const [bannerUrl, setBannerUrl] = useState<string | null>(null)
-
+  
   const playerAId = session.player_a_id
   const playerBId = session.player_b_id
   const myId = isPlayerA ? playerAId : playerBId
   const theirId = isPlayerA ? playerBId : playerAId
-
+  
+  const myScore = isPlayerA ? session.score_a : session.score_b
+  const theirScore = isPlayerA ? session.score_b : session.score_a
+  
   const myRoundAnswers = answers.filter(a => {
     const q = questions.find(q => q.id === a.question_id)
     return q && a.guesser_id === myId
@@ -42,19 +45,13 @@ export function RoundResultScreen({
     const q = questions.find(q => q.id === a.question_id)
     return q && a.guesser_id === theirId
   })
-
+  
   const myCorrect = myRoundAnswers.filter(a => a.is_correct).length
   const myTotal = myRoundAnswers.length
   const myTimeouts = myRoundAnswers.filter(a => a.answer === '__timeout__').length
   const theirCorrect = theirRoundAnswers.filter(a => a.is_correct).length
   const theirTotal = theirRoundAnswers.length
   const theirTimeouts = theirRoundAnswers.filter(a => a.answer === '__timeout__').length
-
-  useEffect(() => {
-    if (count <= 0) { onComplete(); return }
-    const t = setTimeout(() => setCount(c => c - 1), 1000)
-    return () => clearTimeout(t)
-  }, [count, onComplete])
 
   useEffect(() => {
     if (!supabase) return
@@ -75,7 +72,7 @@ export function RoundResultScreen({
         <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
 
-        <div className="p-6 flex flex-col items-center gap-4 relative z-10">
+        <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
             <RefreshCw size={32} className="text-primary" />
           </div>
@@ -85,12 +82,12 @@ export function RoundResultScreen({
           <div className="w-full max-w-xs flex items-center justify-between px-5 py-4 rounded-xl bg-muted/50 border border-border">
             <div className="text-center">
               <p className="text-xs text-text-secondary mb-1">{myName || 'Kamu'}</p>
-              <p className="text-xl font-bold text-text-primary">{session.score_a}</p>
+              <p className="text-xl font-bold text-text-primary">{myScore}</p>
             </div>
             <p className="text-lg font-bold text-text-secondary">-</p>
             <div className="text-center">
               <p className="text-xs text-text-secondary mb-1">{opponentName || 'Lawan'}</p>
-              <p className="text-xl font-bold text-text-primary">{session.score_b}</p>
+              <p className="text-xl font-bold text-text-primary">{theirScore}</p>
             </div>
           </div>
 
@@ -145,9 +142,8 @@ export function RoundResultScreen({
           )}
 
           {/* Countdown */}
-          <div className="flex items-center gap-2 text-sm text-text-secondary mt-2">
-            <Clock size={16} />
-            <span>Babak 2 dimulai dalam {count}</span>
+          <div className="mt-auto pt-4">
+            <DigitalClock deadline={deadline} onTimeout={() => {}} label="Babak 2 dimulai" />
           </div>
         </div>
       </div>

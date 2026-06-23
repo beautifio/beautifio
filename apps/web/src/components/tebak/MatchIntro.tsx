@@ -43,11 +43,7 @@ export function MatchIntro({ myName, opponentName, onBegin }: Props) {
     count === 2 ? "text-orange-400" :
     "text-red-400"
 
-  const countSize =
-    count > 5 ? "text-6xl" :
-    count >= 4 ? "text-7xl" :
-    count === 3 ? "text-8xl" :
-    "text-9xl"
+  const countSize = "text-8xl"
 
   const countGlow =
     count > 5 ? { textShadow: "0 0 20px rgba(255,255,255,0.2)" } :

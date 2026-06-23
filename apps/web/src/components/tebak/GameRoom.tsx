@@ -37,16 +37,20 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [revealed, setRevealed] = useState(false)
-  const [finished, setFinished] = useState(false)
+  const [finished, setFinished] = useState(initialSession.status === 'finished')
   const [answers, setAnswers] = useState<TebakAnswer[]>([])
   const [opponentIsBot, setOpponentIsBot] = useState(false)
   const [disconnectMsg, setDisconnectMsg] = useState<string | null>(null)
   const [opponentName, setOpponentName] = useState<string | null>(null)
   const [myName, setMyName] = useState<string | null>(null)
-  const [showIntro, setShowIntro] = useState(true)
+  const [showIntro, setShowIntro] = useState(initialSession.status === 'waiting')
   const [locked, setLocked] = useState(false)
   const [botThinking, setBotThinking] = useState(false)
   const [isAdvancing, setIsAdvancing] = useState(false)
+  const [advanceError, setAdvanceError] = useState<string | null>(null)
+  const [hasMounted, setHasMounted] = useState(false)
+  useEffect(() => { setHasMounted(true) }, [])
+
   const guessStartTime = useRef(Date.now())
   const botPlayedRef = useRef<Set<string>>(new Set())
   const selectedAnswerRef = useRef<string | null>(null)
@@ -56,6 +60,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const advancingRef = useRef(false)
   const currentQSeqRef = useRef<number | null>(null)
   const lastAnswerRef = useRef<TebakAnswer | null>(null)
+  const pendingAnswerRef = useRef<TebakAnswer | null>(null)
   const { play, isMuted, toggleMute } = useSound()
 
   const isPlayerA = gameSession.player_a_id === userId
@@ -90,14 +95,74 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       (q: any) => q.status === "subject_answering" || q.status === "guesser_guessing"
     )
     const current = activeRound[0]
-    setCurrentQ(current || null)
     if (current) {
+      setCurrentQ(current)
       currentQSeqRef.current = current.sequence_number
+      if (current.status === "guesser_guessing" && !isSubject) {
+        guessStartTime.current = Date.now()
+      }
+    } else if (!revealed) {
+      setCurrentQ(null)
     }
-    if (current?.status === "guesser_guessing" && !isSubject) {
-      guessStartTime.current = Date.now()
+  }, [sessionId, isSubject, gameSession.current_round, revealed])
+  
+  // --- NEW SERVER-TIMED ADVANCE LOGIC ---
+  useEffect(() => {
+    // Player A is designated as the "operator" to call the advance RPC.
+    // Both players will see the countdown, but only A triggers the next step.
+    if (!gameSession.advance_at || !isPlayerA || advancingRef.current) return;
+
+    const deadline = new Date(gameSession.advance_at).getTime()
+    const now = Date.now()
+    const timeUntilAdvance = deadline - now
+
+    const advanceNow = () => {
+      if (advancingRef.current) return
+      advancingRef.current = true
+      setIsAdvancing(true)
+      
+      // Optimistically clear the advance_at on the client to prevent re-triggering
+      setGameSession(prev => ({ ...prev, advance_at: null }))
+
+      advanceGame(sessionId, currentQ?.sequence_number ?? gameSession.current_q_seq)
+        .then(result => {
+          if (!result || result.status === 'already_advanced') {
+            throw new Error('Advance conflict or failed. Forcing re-sync.')
+          }
+          if (result.status === 'game_finished') {
+            setFinished(true)
+            return
+          }
+          return refreshQuestions(result.current_round)
+        })
+        .catch(err => {
+          console.error('[advanceNow] failed, will re-sync from server:', err)
+          if (supabase) {
+            supabase.from('tebak_sessions').select('*').eq('id', sessionId).single().then(({ data }) => {
+              if (data) {
+                setGameSession(data)
+                if (data.status === 'finished') setFinished(true)
+                else refreshQuestions(data.current_round)
+              }
+            })
+          }
+        })
+        .finally(() => {
+          // Reset UI states. The ref is the crucial lock.
+          setIsAdvancing(false)
+          advancingRef.current = false
+          setRevealed(false)
+        })
     }
-  }, [sessionId, isSubject, gameSession.current_round])
+
+    if (timeUntilAdvance <= 100) { // 100ms buffer
+      advanceNow()
+    } else {
+      const timer = setTimeout(advanceNow, timeUntilAdvance)
+      return () => clearTimeout(timer)
+    }
+  }, [gameSession.advance_at, isPlayerA, sessionId, gameSession.current_q_seq, currentQ, refreshQuestions])
+  // --- END OF NEW LOGIC ---
 
   useEffect(() => {
     refreshQuestions()
@@ -108,6 +173,39 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     const interval = setInterval(refreshQuestions, 2000)
     return () => clearInterval(interval)
   }, [questions.length, refreshQuestions])
+
+  /* Resume support: on mount, if no active question but a revealed one exists, show it */
+  useEffect(() => {
+    if (questions.length === 0 || currentQ || revealed) return
+    const revealedQ = questions.find((q: any) => q.status === "revealed")
+    if (revealedQ) {
+      setCurrentQ(revealedQ)
+      setRevealed(true)
+    }
+  }, [questions, currentQ, revealed])
+
+  /* Resume support: fetch existing answers on mount */
+  useEffect(() => {
+    if (!supabase || initialSession.status === 'waiting') return
+    const fetchAnswers = async () => {
+      const { data: rounds } = await supabase!
+        .from('tebak_rounds')
+        .select('id')
+        .eq('session_id', sessionId)
+      if (!rounds?.length) return
+      const { data: quests } = await supabase!
+        .from('tebak_questions')
+        .select('id')
+        .in('round_id', rounds.map(r => r.id))
+      if (!quests?.length) return
+      const { data: ans } = await supabase!
+        .from('tebak_answers')
+        .select('*')
+        .in('question_id', quests.map(q => q.id))
+      if (ans?.length) setAnswers(ans as TebakAnswer[])
+    }
+    fetchAnswers()
+  }, [sessionId, initialSession.status])
 
   useEffect(() => {
     if (!supabase) return
@@ -157,7 +255,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     botPlayedRef.current.add(currentQ.id)
     setBotThinking(true)
     botPlayTurn(sessionId, currentQ.id, opponentId)
-      .then(() => refreshQuestions())
       .catch(() => {})
       .finally(() => setBotThinking(false))
   }, [opponentIsBot, currentQ, botThinking, sessionId, opponentId, isPlayerA, gameSession.current_subject, refreshQuestions])
@@ -203,13 +300,41 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         if (q.status === "guesser_guessing" && !isSubject) {
           guessStartTime.current = Date.now()
         }
-        if (q.status === "revealed" && !advancingRef.current) {
-          setRevealed(true)
+        if (q.status === "revealed") {
+          /* Fix #1: inject pending answer before reveal */
+          if (pendingAnswerRef.current) {
+            setAnswers(prev => {
+              if (prev.find(a => a.id === pendingAnswerRef.current!.id)) return prev
+              return [...prev, pendingAnswerRef.current!]
+            })
+            pendingAnswerRef.current = null
+          }
+          /* Backup: fetch fresh answers from DB */
+          if (supabase) {
+            supabase
+              .from('tebak_answers')
+              .select('*')
+              .eq('question_id', q.id)
+              .then(({ data: fresh }) => {
+                if (fresh?.length) {
+                  setAnswers(prev => {
+                    const ids = new Set(prev.map(a => a.id))
+                    const newOnes = fresh.filter(a => !ids.has(a.id))
+                    return newOnes.length ? [...prev, ...newOnes] : prev
+                  })
+                }
+              })
+          }
+          setTimeout(() => setRevealed(true), 150)
         }
       },
       onAnswerSubmitted: (a) => {
-        setAnswers((prev) => [...prev, a])
         lastAnswerRef.current = a
+        pendingAnswerRef.current = a
+        setAnswers((prev) => {
+          if (prev.find(p => p.id === a.id)) return prev
+          return [...prev, a]
+        })
       },
     })
     return unsub
@@ -221,33 +346,68 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   }, [currentQ, sessionId])
 
   const [showRoundResult, setShowRoundResult] = useState(false)
+  const [networkError, setNetworkError] = useState(false)
+
+  const isNetworkError = (err: unknown): boolean => {
+    if (err instanceof Error) {
+      return err.message.includes('fetch') ||
+             err.message.includes('network') ||
+             err.message.includes('Failed to fetch') ||
+             err.message.includes('ERR_INTERNET_DISCONNECTED')
+    }
+    return false
+  }
 
   const doAdvance = async () => {
-    const currentSeq = gameSession.current_q_seq
+    // Guard untuk mencegah panggilan berulang saat proses advance sedang berjalan
+    if (advancingRef.current) return
+    advancingRef.current = true
     setIsAdvancing(true)
-    advancingRef.current = true /* Bug #1: lock subscription guard */
-    setRevealed(false)
-    setCurrentQ(null)
+    setAdvanceError(null)
 
-    const result = await advanceGame(sessionId, currentSeq)
-    if (result?.status === 'game_finished') {
-      setFinished(true)
+    try {
+      // Optimistic UI update: Sembunyikan JedaScreen, tampilkan loader "Menyiapkan..."
+      setRevealed(false)
+      setCurrentQ(null)
+
+      const result = await advanceGame(sessionId, currentQSeqRef.current ?? gameSession.current_q_seq)
+      if (!result) throw new Error('advance_tebak_game returned null or failed')
+
+      if (result.status === 'game_finished') {
+        setFinished(true)
+        setIsAdvancing(false)
+        advancingRef.current = false
+        return
+      }
+
+      if (result.current_round != null) {
+        setGameSession(prev => ({
+          ...prev,
+          current_round: result.current_round!,
+          current_q_seq: result.current_q_seq ?? prev.current_q_seq,
+        }))
+      }
+      
+      await refreshQuestions(result.current_round)
+
+      // Sukses total, semua state di-reset
       setIsAdvancing(false)
       advancingRef.current = false
-      return
-    }
-    /* Update session state before refreshQuestions so it queries correct round */
-    if (result?.current_round != null) {
-      setGameSession(prev => ({
-        ...prev,
-        current_round: result.current_round!,
-        current_q_seq: result.current_q_seq ?? prev.current_q_seq,
-      }))
-    }
-    await refreshQuestions(result?.current_round)
 
-    setIsAdvancing(false)
-    advancingRef.current = false /* unlock */
+    } catch (err) {
+      console.error('[doAdvance] failed:', err)
+      
+      // Tampilkan UI error, tapi jangan reset advancingRef agar Realtime tetap diblok
+      setIsAdvancing(false) 
+      setAdvanceError("Gagal memuat pertanyaan berikutnya. Mencoba lagi dalam 3 detik...")
+
+      // Jadwalkan retry
+      setTimeout(() => {
+        setAdvanceError(null)
+        advancingRef.current = false // Buka lock sesaat sebelum retry
+        doAdvance()
+      }, 3000)
+    }
   }
 
   const handleAdvance = () => {
@@ -262,6 +422,61 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     setShowRoundResult(false)
     doAdvance()
   }
+
+// Server-timed advance logic
+  useEffect(() => {
+    if (!gameSession.advance_at || !isPlayerA) return
+
+    const deadline = new Date(gameSession.advance_at).getTime()
+    const now = Date.now()
+    const timeUntilAdvance = deadline - now
+
+    if (timeUntilAdvance <= 0) {
+      advanceNow()
+      return
+    }
+
+    const timer = setTimeout(advanceNow, timeUntilAdvance)
+    return () => clearTimeout(timer)
+  }, [gameSession.advance_at, isPlayerA])
+
+  const advanceNow = useCallback(() => {
+    if (advancingRef.current) return
+    advancingRef.current = true
+    setIsAdvancing(true)
+    
+    advanceGame(sessionId, currentQSeqRef.current ?? gameSession.current_q_seq)
+      .then(result => {
+        if (!result || result.status === 'already_advanced') {
+          throw new Error('Advance conflict or failed. Re-syncing.')
+        }
+        if (result.status === 'game_finished') {
+          setFinished(true)
+          return
+        }
+        if (result.current_round != null) {
+          setGameSession(prev => ({
+            ...prev,
+            current_round: result.current_round!,
+            current_q_seq: result.current_q_seq ?? prev.current_q_seq,
+          }))
+        }
+        return refreshQuestions(result.current_round)
+      })
+      .catch(err => {
+        console.error('[advanceNow] failed, will re-sync:', err)
+        // Re-sync with server state
+        if (supabase) {
+          supabase.from('tebak_sessions').select('*').eq('id', sessionId).single().then(({data}) => {
+            if (data) setGameSession(data)
+          })
+        }
+      })
+      .finally(() => {
+        advancingRef.current = false
+        setIsAdvancing(false)
+      })
+  }, [sessionId, gameSession.current_q_seq, isPlayerA, refreshQuestions])
 
   const handleSubjectAnswer = async (answer: string) => {
     if (!currentQ || submitting) return
@@ -316,6 +531,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       await submitGuesserAnswer(currentQ.id, userId, "__timeout__", guessStartTime.current)
     } catch (e) {
       console.error("handleGuesserTimeout error", e)
+      // Even if this fails, the server-side timer for advance_at will eventually move the game forward
     }
   }
 
@@ -332,17 +548,28 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     }
   }, [revealed])
 
+  /* Compute scores from answers array — more reliable than gameSession subscription */
+  /* Include lastAnswerRef in case subscription hasn't delivered it yet */
+  const lastAnswer = lastAnswerRef.current
+  const allScores = lastAnswer && !answers.some(a => a.id === lastAnswer.id)
+    ? [...answers, lastAnswer]
+    : answers
+  const computedMyScore = allScores
+    .filter(a => a.guesser_id === userId)
+    .reduce((sum, a) => sum + (a.is_correct === true || a.answer === '__subject_timeout__' ? 10 : 0), 0)
+  const computedOpponentScore = allScores
+    .filter(a => a.guesser_id === opponentId)
+    .reduce((sum, a) => sum + (a.is_correct === true || a.answer === '__subject_timeout__' ? 10 : 0), 0)
+
   /* Play winner/lose sound when game finishes */
   useEffect(() => {
     if (!finished) return
-    const myScore = isPlayerA ? gameSession.score_a : gameSession.score_b
-    const theirScore = isPlayerA ? gameSession.score_b : gameSession.score_a
-    if (myScore > theirScore) {
+    if (computedMyScore > computedOpponentScore) {
       play('winner')
-    } else if (myScore < theirScore) {
+    } else if (computedMyScore < computedOpponentScore) {
       play('lose')
     }
-  }, [finished])
+  }, [finished, computedMyScore, computedOpponentScore])
 
   const myDots = questions.map(q => {
     const a = answers.find(ans => ans.question_id === q.id && ans.guesser_id === userId)
@@ -384,6 +611,18 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     refreshQuestions()
   }, [refreshQuestions])
 
+  useEffect(() => {
+    // This effect handles the case where the question has been revealed and the session has an `advance_at`
+    // timestamp, but the user refreshes. It makes sure the JedaScreen is shown correctly.
+    if (gameSession.advance_at && !revealed) {
+      const revealedQ = questions.find(q => q.sequence_number === gameSession.current_q_seq)
+      if (revealedQ) {
+        setCurrentQ(revealedQ)
+        setRevealed(true)
+      }
+    }
+  }, [gameSession.advance_at, questions, revealed])
+  
   /* Build question text for the player's role */
   const questionText = currentQ
     ? isSubject
@@ -403,13 +642,17 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   return (
     <div className="min-h-screen bg-bg flex flex-col">
       {/* Mute toggle */}
-      <button
-        onClick={toggleMute}
-        className="fixed top-4 right-4 z-50 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm border border-border flex items-center justify-center cursor-pointer shadow-sm hover:bg-white transition-colors"
-        aria-label={isMuted() ? 'Unmute' : 'Mute'}
-      >
-        {isMuted() ? <VolumeX size={16} className="text-text-secondary" /> : <Volume2 size={16} className="text-text-secondary" />}
-      </button>
+      {hasMounted && (
+        <button
+          onClick={toggleMute}
+          className="fixed top-4 right-4 z-50 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm border border-border flex items-center justify-center cursor-pointer shadow-sm hover:bg-white transition-colors"
+          aria-label={isMuted ? 'Unmute' : 'Mute'}
+        >
+          {isMuted ? <VolumeX size={16} className="text-text-secondary" /> : <Volume2 size={16} className="text-text-secondary" />}
+        </button>
+      )}
+
+      {/* Network error banner (deprecated, replaced by advanceError UI) */}
 
       {/* Disconnect banner */}
       {disconnectMsg && (
@@ -433,66 +676,90 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         />
       </div>
 
-      {showIntro ? (
+      {/* Game state rendering */}
+      {advanceError ? (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
+          <div className="p-6 bg-surface rounded-2xl border border-border shadow-lg">
+            <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+            <p className="text-sm font-medium text-text-secondary">{advanceError}</p>
+          </div>
+        </div>
+      ) : showIntro ? (
         <MatchIntro
           myName={myName}
           opponentName={opponentName}
           onBegin={handleBegin}
         />
       ) : finished ? (
-        <WinnerScreen
-          session={gameSession}
-          isPlayerA={isPlayerA}
-          opponentName={opponentName}
-          myName={myName}
-          compatibility={compatibility}
-          onRematch={() => window.location.href = "/tebak"}
-          onHome={() => window.location.href = "/"}
-        />
+          <WinnerScreen
+            session={{
+              ...gameSession,
+              score_a: isPlayerA ? computedMyScore : computedOpponentScore,
+              score_b: isPlayerA ? computedOpponentScore : computedMyScore,
+            }}
+            isPlayerA={isPlayerA}
+            userId={userId}
+            opponentId={opponentId}
+            opponentName={opponentName}
+            myName={myName}
+            compatibility={compatibility}
+            onHome={() => window.location.href = "/"}
+          />
       ) : showRoundResult ? (
         <div className="animate-slideUpReveal flex-1 flex flex-col">
-          <RoundResultScreen
-          session={gameSession}
-          round={1}
-          answers={answers}
-          questions={questions}
-          isPlayerA={isPlayerA}
-          myName={myName}
-          opponentName={opponentName}
-          onComplete={handleRoundResultComplete}
-        />
+          {gameSession.advance_at && (
+            <RoundResultScreen
+              session={gameSession}
+              round={1}
+              answers={answers}
+              questions={questions}
+              isPlayerA={isPlayerA}
+              myName={myName}
+              opponentName={opponentIsBot ? null : opponentName}
+              deadline={gameSession.advance_at}
+            />
+          )}
         </div>
       ) : tension && !revealed ? (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 relative overflow-hidden animate-fadeIn">
-          {/* Dark overlay fade in */}
-          <div className="absolute inset-0 bg-black/40 animate-fadeIn" style={{ animationDuration: '0.2s' }} />
-          {/* Center card */}
-          <div className="relative z-10 animate-scaleIn">
-            <div className="bg-surface rounded-2xl border border-border shadow-2xl overflow-hidden p-10 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5 animate-pulse">
-                <span className="text-4xl">?</span>
+        <div className="fixed inset-0 bg-black/90 flex flex-col items-center justify-center z-50 animate-fadeIn">
+          {/* Kartu flip animasi */}
+          <div className="relative w-52 h-36 mb-6" style={{ perspective: '600px' }}>
+            <div className="w-full h-full relative animate-cardFlipReveal" style={{ transformStyle: 'preserve-3d' }}>
+              {/* Sisi depan — tanda tanya */}
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/30 to-primary/10 rounded-2xl border border-primary/40" style={{ backfaceVisibility: 'hidden' }}>
+                <span className="text-6xl font-bold text-primary/60">?</span>
               </div>
-              <h3 className="text-lg font-bold text-text-primary mb-2">
-                Membuka jawaban {subjectName ?? 'Lawan'}...
-              </h3>
-              <p className="text-sm text-text-secondary">
-                {isSubject ? `${opponentName || 'Lawan'} sedang menebak` : `Menunggu hasil tebakan`}
-              </p>
+              {/* Sisi belakang — reveal */}
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-transparent rounded-2xl border border-primary/20" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                <span className="text-5xl">✨</span>
+              </div>
             </div>
+          </div>
+
+          <p className="text-white/50 text-sm mb-2 animate-pulse">
+            Membuka jawaban
+          </p>
+          <p className="text-white font-bold text-xl">
+            {opponentIsBot ? 'Lawan' : (opponentName ?? 'Lawan')}
+          </p>
+
+          {/* Loading bar */}
+          <div className="w-48 h-1 bg-white/10 rounded-full mt-6 overflow-hidden">
+            <div className="h-full bg-primary rounded-full animate-loadBar" />
           </div>
         </div>
       ) : revealed && currentQ ? (
         <div className="animate-slideUpReveal flex-1 flex flex-col">
           <JedaScreen
             resultType={resultType}
-            subjectName={isSubject ? myName : opponentName}
-            guesserName={isSubject ? opponentName : myName}
+            subjectName={isSubject ? myName : (opponentIsBot ? null : opponentName)}
+            guesserName={isSubject ? (opponentIsBot ? null : opponentName) : myName}
             correctAnswer={currentQ.correct_answer ?? ''}
             myScore={isPlayerA ? gameSession.score_a : gameSession.score_b}
             theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a}
             isLastQuestion={currentQ.sequence_number === 5}
             isLastRound={gameSession.current_round === 2}
-            onComplete={handleAdvance}
+            deadline={gameSession.advance_at!}
           />
         </div>
       ) : isAdvancing ? (
@@ -570,7 +837,8 @@ function QuestionView({
         <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
 
-        <div className="p-6 relative z-10">
+        <div className="p-6 relative z-10 min-h-[420px] flex flex-col">
+          <div className="flex-1">
           {/* Question number + role label */}
           <div className="text-center mb-4 space-y-2">
             <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
@@ -591,10 +859,12 @@ function QuestionView({
           <div className="space-y-3 mb-5">
             {(question.options as string[]).map((opt) => {
               const isSelected = selectedAnswer === opt && !submitting
+              const isSubmitted = isSubject ? submitting : locked
+              const isClickable = myTurn && !isSubmitted
 
               let btnStyle = "border-border bg-surface"
               if (isSelected) btnStyle = "border-primary bg-primary/5"
-              if (myTurn) btnStyle += " active:scale-[0.98] active:bg-primary/10 transition-all duration-75"
+              if (isClickable) btnStyle += " active:scale-[0.97] active:shadow-sm active:bg-primary/10 transition-all duration-75"
 
               return (
                 <button
@@ -609,9 +879,11 @@ function QuestionView({
                       onGuesserGuess(opt)
                     }
                   }}
-                  disabled={!myTurn}
-                  className={`w-full text-left min-h-[60px] py-4 px-5 rounded-2xl border-2 ${
-                    myTurn ? "cursor-pointer hover:border-primary/40 hover:bg-primary/[0.02] active:bg-primary/5" : "cursor-default opacity-60"
+                  disabled={!isClickable || isSubmitted}
+                  className={`w-full text-left min-h-[68px] py-5 px-5 rounded-2xl border-2 transition-all duration-200 ${
+                    myTurn ? "cursor-pointer hover:border-primary/40 hover:bg-primary/[0.02]" : "cursor-default"
+                  } ${
+                    isSubmitted && !isSelected ? "opacity-40" : !myTurn ? "opacity-60" : ""
                   } ${btnStyle}`}
                 >
                   <div className="flex items-center gap-4">
@@ -658,6 +930,7 @@ function QuestionView({
               )}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

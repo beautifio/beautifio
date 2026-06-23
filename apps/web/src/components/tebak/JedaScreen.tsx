@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Check, X, Clock, Trophy } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
+import { Check, X, Clock } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
+import { DigitalClock } from "./DigitalClock"
 
 type Props = {
   resultType: 'correct' | 'wrong' | 'subject_timeout' | 'guesser_timeout'
@@ -13,7 +14,7 @@ type Props = {
   theirScore: number
   isLastQuestion: boolean
   isLastRound: boolean
-  onComplete: () => void
+  deadline: string
 }
 
 export function JedaScreen({
@@ -25,27 +26,9 @@ export function JedaScreen({
   theirScore,
   isLastQuestion,
   isLastRound,
-  onComplete,
+  deadline,
 }: Props) {
-  const [count, setCount] = useState(5)
-  const [ready, setReady] = useState(false)
   const [bannerUrl, setBannerUrl] = useState<string | null>(null)
-
-  /* Wait for fadeSlideUp animation (350ms) before starting countdown */
-  useEffect(() => {
-    const t = setTimeout(() => setReady(true), 400)
-    return () => clearTimeout(t)
-  }, [])
-
-  useEffect(() => {
-    if (!ready) return
-    if (count <= 0) {
-      onComplete()
-      return
-    }
-    const t = setTimeout(() => setCount(c => c - 1), 1000)
-    return () => clearTimeout(t)
-  }, [count, onComplete, ready])
 
   useEffect(() => {
     if (!supabase) return
@@ -106,7 +89,7 @@ export function JedaScreen({
         <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
 
-        <div className="p-6 flex flex-col items-center gap-4 relative z-10">
+        <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
           {/* Icon + Title */}
           <div className={`w-20 h-20 rounded-full flex items-center justify-center ${iconBg}`}>
             {icon}
@@ -145,9 +128,8 @@ export function JedaScreen({
           )}
 
           {/* Countdown */}
-          <div className="flex items-center gap-2 text-sm text-text-secondary mt-2">
-            <Clock size={16} />
-            <span>{countdownLabel} dalam {count}</span>
+          <div className="mt-auto pt-4">
+            <DigitalClock deadline={deadline} onTimeout={() => {}} label={countdownLabel} />
           </div>
         </div>
       </div>

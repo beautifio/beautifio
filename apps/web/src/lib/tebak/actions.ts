@@ -307,6 +307,19 @@ export async function submitGuesserAnswer(
 
   await supabase.from('tebak_questions').update({ status: 'revealed' }).eq('id', questionId)
 
+  // Set server-timed advance
+  const { data: q2 } = await supabase.from('tebak_questions').select('sequence_number, round_id').eq('id', questionId).single()
+  if (q2) {
+    const { data: r } = await supabase.from('tebak_rounds').select('session_id, round_number').eq('id', q2.round_id).single()
+    if (r) {
+      const isLastQ = q2.sequence_number === 5 && r.round_number === 1
+      await supabase.rpc('set_session_advance_at', { 
+        p_session_id: r.session_id,
+        p_delay_seconds: isLastQ ? 8 : 3
+      })
+    }
+  }
+
   return { isCorrect, points: isCorrect ? 10 : 0 }
 }
 
@@ -347,5 +360,106 @@ export async function handleSubjectTimeout(questionId: string, sessionId: string
   await supabase.from('tebak_questions').update({
     status: 'revealed',
   }).eq('id', questionId)
+
+  // Set server-timed advance
+  const { data: q2 } = await supabase.from('tebak_questions').select('sequence_number, round_id').eq('id', questionId).single()
+  if (q2) {
+    const { data: r } = await supabase.from('tebak_rounds').select('session_id, round_number').eq('id', q2.round_id).single()
+    if (r) {
+      const isLastQ = q2.sequence_number === 5 && r.round_number === 1
+      await supabase.rpc('set_session_advance_at', {
+        p_session_id: r.session_id,
+        p_delay_seconds: isLastQ ? 8 : 3
+      })
+    }
+  }
+}
+
+export async function offerRematch(originalSessionId: string, opponentId: string): Promise<string> {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Pastikan tidak ada offer yang sudah ada
+  const { data: existing } = await supabase
+    .from('tebak_rematch_offers')
+    .select('id')
+    .eq('original_session_id', originalSessionId)
+    .eq('status', 'pending')
+    .single()
+
+  if (existing) {
+    // Jika lawan sudah mengundang, terima saja
+    const { data: acceptedOffer, error } = await supabase
+      .from('tebak_rematch_offers')
+      .update({ status: 'accepted' })
+      .eq('id', existing.id)
+      .select()
+      .single()
+
+    if (error || !acceptedOffer) throw new Error('Failed to accept existing offer')
+    
+    // Buat session baru
+    const { data: newSession, error: newSessionError } = await supabase
+      .rpc('find_or_create_tebak_session', { p_user_id: acceptedOffer.offered_by_id })
+
+    if (newSessionError || !newSession) throw new Error('Failed to create new session on accept')
+
+    await supabase.rpc('activate_tebak_session', {
+      p_session_id: newSession.sessionId,
+      p_player_b_id: acceptedOffer.offered_to_id
+    })
+
+    await supabase.from('tebak_rematch_offers').update({ new_session_id: newSession.sessionId }).eq('id', acceptedOffer.id)
+    
+    return newSession.sessionId
+  }
+
+  const { data, error } = await supabase
+    .from('tebak_rematch_offers')
+    .insert({
+      original_session_id: originalSessionId,
+      offered_by_id: user.id,
+      offered_to_id: opponentId,
+    })
+    .select('id')
+    .single()
+
+  if (error) throw new Error('Failed to create rematch offer')
+  return data.id
+}
+
+export async function respondToRematch(offerId: string, accept: boolean): Promise<string | null> {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  
+  const status = accept ? 'accepted' : 'declined'
+  const { data: offer, error } = await supabase
+    .from('tebak_rematch_offers')
+    .update({ status })
+    .eq('id', offerId)
+    .select()
+    .single()
+
+  if (error || !offer) throw new Error('Failed to respond to offer')
+
+  if (accept) {
+    const { data: newSession, error: newSessionError } = await supabase
+      .rpc('find_or_create_tebak_session', { p_user_id: offer.offered_by_id })
+
+    if (newSessionError || !newSession) throw new Error('Failed to create new session on accept')
+
+    await supabase.rpc('activate_tebak_session', {
+      p_session_id: newSession.sessionId,
+      p_player_b_id: offer.offered_to_id
+    })
+
+    await supabase.from('tebak_rematch_offers').update({ new_session_id: newSession.sessionId }).eq('id', offer.id)
+
+    return newSession.sessionId
+  }
+
+  return null
 }
 

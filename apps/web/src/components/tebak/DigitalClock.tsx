@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 
 type Props = {
   deadline: string
@@ -11,28 +11,56 @@ type Props = {
 }
 
 export function DigitalClock({ deadline, onTimeout, label = "Sisa Waktu", compact, isUrgent }: Props) {
-  const [remaining, setRemaining] = useState(0)
+  const getRemaining = useCallback(() => {
+    return Math.max(0, Math.floor((new Date(deadline).getTime() - Date.now()) / 1000))
+  }, [deadline])
+
+  const [remaining, setRemaining] = useState(getRemaining)
+  const [hasMounted, setHasMounted] = useState(false)
   const colonRef = useRef(true)
   const [, forceRender] = useState(0)
-  const tickSoundRef = useRef(false)
 
   useEffect(() => {
+    setHasMounted(true)
     const tick = () => {
-      const diff = Math.max(0, Math.floor((new Date(deadline).getTime() - Date.now()) / 1000))
+      const diff = getRemaining()
       setRemaining(diff)
       if (diff <= 0) onTimeout()
     }
-    tick()
     const t = setInterval(tick, 250)
     const c = setInterval(() => {
       colonRef.current = !colonRef.current
       forceRender(n => n + 1)
     }, 800)
     return () => { clearInterval(t); clearInterval(c) }
-  }, [deadline, onTimeout])
+  }, [deadline, onTimeout, getRemaining])
 
   const minutes = Math.floor(remaining / 60)
   const seconds = remaining % 60
+  
+  if (!hasMounted) {
+    // Render placeholder or initial state on server and initial client render
+    const initialMinutes = Math.floor(getRemaining() / 60)
+    const initialSeconds = getRemaining() % 60
+    return (
+      <div className="flex flex-col items-center gap-2 opacity-50">
+         {/* Render a simplified, static version for SSR */}
+         <div className="relative rounded-2xl px-7 py-5 bg-[#0B1120] border border-white/[0.07] shadow-2xl">
+            <div className="relative flex items-center justify-center">
+              <span className="font-mono font-bold tracking-[0.15em] text-5xl sm:text-6xl text-[#67e8f9]">
+                {String(initialMinutes).padStart(2, "0")}
+              </span>
+              <span className="text-3xl sm:text-4xl font-bold mx-1.5 text-[#67e8f9]">:</span>
+              <span className="font-mono font-bold tracking-[0.15em] text-5xl sm:text-6xl text-[#67e8f9]">
+                {String(initialSeconds).padStart(2, "0")}
+              </span>
+            </div>
+          </div>
+        <p className="text-[11px] font-semibold tracking-widest uppercase text-text-secondary">{label}</p>
+      </div>
+    )
+  }
+  
   const isLow = remaining <= 5
   const isCritical = remaining <= 3
   const colonVisible = colonRef.current
