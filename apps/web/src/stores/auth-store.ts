@@ -22,16 +22,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   bisikMatchCount: 0,
   setUser: (user) => {
-    set((state) => {
-      if (state.user?.id === user?.id) return state;
-      return { user };
-    });
+    set({ user });
   },
   setSession: (session) => {
-    set((state) => {
-      if (state.session?.access_token === session?.access_token) return state;
-      return { session };
-    });
+    set({ session });
   },
   setLoading: (isLoading) => {
     set((state) => {

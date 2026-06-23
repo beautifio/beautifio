@@ -114,14 +114,13 @@ export default function RegisterPage({
           full_name: name,
         }).eq("id", user.id);
 
-        // Refresh session
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData?.session) {
-          setSession(sessionData.session);
-          setUser(sessionData.session.user);
+        // Force refresh session to get updated user metadata
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        if (refreshed?.session) {
+          useAuthStore.setState({ session: refreshed.session, user: refreshed.session.user });
         }
 
-        router.push("/home");
+        router.replace("/home");
         return;
       }
 
