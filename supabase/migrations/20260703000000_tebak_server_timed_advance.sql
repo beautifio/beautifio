@@ -24,6 +24,4 @@ DROP POLICY IF EXISTS "players can update their session" ON public.tebak_session
 CREATE POLICY "players can update their session" ON public.tebak_sessions
   FOR UPDATE USING (player_a_id = auth.uid() OR player_b_id = auth.uid());
 
--- 4. Re-add table to realtime publication to ensure changes are broadcast
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.tebak_sessions;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.tebak_sessions;
+-- (table already in publication from original migration)

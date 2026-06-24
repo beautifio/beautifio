@@ -55,7 +55,8 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
         }
       })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    const _supabase = supabase
+    return () => { _supabase?.removeChannel(channel) }
   }, [session.id, userId, router])
 
   const handleOfferRematch = async () => {
@@ -128,6 +129,7 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
     )
   }, [])
   
+  const margin = Math.abs(myScore - theirScore)
   let marginText: string;
   if (isDraw) marginText = "SERI! Tidak ada yang menang hari ini 😅"
   else if (margin < 10) marginText = "Sengit sekali!"

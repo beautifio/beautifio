@@ -1,0 +1,5 @@
+# supabase/config.toml
+# This file is located in the root of the Supabase project folder.
+
+[functions]
+  [functions.tebak-advance]
