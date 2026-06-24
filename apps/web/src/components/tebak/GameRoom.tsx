@@ -188,6 +188,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   }
   const questionText = currentQ ? (isSubject ? currentQ.question_text : (currentQ.question_for_guesser ?? currentQ.question_text).replace(/\{NamaSubject\}/g, subjectName ?? 'Lawan')) : '';
   const roleLabel = currentQ ? (isSubject ? { icon: '🎯', text: 'Pertanyaan untukmu' } : { icon: '🔍', text: `Tebaklah pikiran ${subjectName ?? 'Lawan'}` }) : null;
+  const isMyTurn = currentQ ? (isSubject ? currentQ.status === "subject_answering" : currentQ.status === "guesser_guessing") : false;
 
   // --- Main Render ---
   return (
@@ -212,22 +213,29 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
                     {roleLabel && <div className="flex items-center justify-center gap-1.5 text-lg font-bold text-accent-foreground"><span>{roleLabel.icon}</span><span>{roleLabel.text}</span></div>}
                   </div>
                   <h2 className="text-2xl font-bold text-primary-foreground text-center mb-6 leading-relaxed">{questionText}</h2>
+                  <div className="text-center mb-3">
+                    {isMyTurn ? (
+                      <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-semibold">Pilih jawabanmu</span>
+                    ) : (
+                      <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/80 text-sm font-semibold">⏳ Menunggu lawan menjawab...</span>
+                    )}
+                  </div>
                   <div className="space-y-3 mb-5">
                     {(currentQ.options as string[]).map((opt, index) => {
                       const isSelected = selectedAnswer === opt
-                      const myTurn = isSubject ? currentQ.status === "subject_answering" : currentQ.status === "guesser_guessing"
+                      const myTurn = isMyTurn
                       const isSubmitted = isSubject ? submitting : locked || submittedRef.current
                       const isClickable = myTurn && !isSubmitted
 
                       const optionIcons = [Sparkles, Heart, Leaf, Star]
                       const OptionIcon = optionIcons[index % optionIcons.length]
                       
-                      let buttonClasses = "bg-muted text-muted-foreground border-border"
-                      let iconClasses = "bg-muted-foreground text-muted"
+                      let buttonClasses = "bg-muted text-white border-border"
+                      let iconClasses = "bg-white/20 text-white"
 
                       // Selected state
                       if (isSelected) {
-                        buttonClasses = "bg-accent border-accent text-accent-foreground"
+                        buttonClasses = "bg-accent border-accent text-accent-foreground ring-2 ring-accent ring-offset-2 ring-offset-primary scale-[1.02] shadow-lg shadow-accent/30"
                         iconClasses = "bg-accent-foreground text-accent"
                       }
 
@@ -248,7 +256,6 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
                         }
                       }
 
-                      console.log('TEBAK_DEBUG', { round: gameSession.current_round, q_seq: currentQ.sequence_number, q_status: currentQ.status, current_subject: gameSession.current_subject, isPlayerA, isSubject, myTurn, submitting, locked, submittedRef: submittedRef.current, isSubmitted, isClickable })
                       return (
                         <button key={opt} onClick={() => { if (!isClickable) return; if (isSubject) handleSubjectAnswer(opt); else handleGuesserGuess(opt); }} disabled={!isClickable} className={`w-full text-left min-h-[68px] py-5 px-5 rounded-2xl border-2 transition-all duration-200 ${isClickable ? "cursor-pointer hover:border-accent/60" : "cursor-default"} ${buttonClasses}`}>
                           <div className="flex items-center gap-4">
