@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, WifiOff, Volume2, VolumeX } from "lucide-react"
+import { Loader2, WifiOff, Volume2, VolumeX, Sparkles, Heart, Leaf, Star, Check, X } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import {
@@ -202,29 +202,60 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       : isShowingJeda && gameSession.advance_at && revealedQ ? <JedaScreen deadline={gameSession.advance_at} resultType={resultType} subjectName={isSubject ? myName : (opponentIsBot ? null : opponentName)} guesserName={isSubject ? (opponentIsBot ? null : opponentName) : myName} correctAnswer={revealedQ.correct_answer ?? ''} myScore={isPlayerA ? gameSession.score_a : gameSession.score_b} theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a} isLastQuestion={revealedQ.sequence_number === 5} isLastRound={gameSession.current_round === 2} />
       : tension && !revealedQ ? <div className="fixed inset-0 bg-black/90 flex flex-col items-center justify-center z-50 animate-fadeIn" />
       : currentQ ? (
-          <div className="flex-1 flex flex-col px-4 py-4">
-            <div className="bg-surface rounded-2xl border border-border shadow-xl overflow-hidden relative">
+          <div className="flex-1 flex flex-col px-4 py-4 bg-primary text-primary-foreground">
+            <div className="bg-primary/20 rounded-2xl border border-primary/50 shadow-xl overflow-hidden relative">
               <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
               <div className="p-6 relative z-10 min-h-[420px] flex flex-col">
                 <div className="flex-1">
                   <div className="text-center mb-4 space-y-2">
-                    <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">Pertanyaan {currentQ.sequence_number}/5</span>
-                    {roleLabel && <div className="flex items-center justify-center gap-1.5 text-xs font-medium text-text-secondary"><span>{roleLabel.icon}</span><span>{roleLabel.text}</span></div>}
+                    <span className="inline-block px-3 py-1 rounded-full bg-accent/20 text-accent text-base font-medium">Pertanyaan {currentQ.sequence_number}/5</span>
+                    {roleLabel && <div className="flex items-center justify-center gap-1.5 text-lg font-bold text-accent-foreground"><span>{roleLabel.icon}</span><span>{roleLabel.text}</span></div>}
                   </div>
-                  <h2 className="text-lg font-bold text-text-primary text-center mb-6 leading-relaxed">{questionText}</h2>
+                  <h2 className="text-2xl font-bold text-primary-foreground text-center mb-6 leading-relaxed">{questionText}</h2>
                   <div className="space-y-3 mb-5">
-                    {(currentQ.options as string[]).map((opt) => {
+                    {(currentQ.options as string[]).map((opt, index) => {
                       const isSelected = selectedAnswer === opt
                       const myTurn = isSubject ? currentQ.status === "subject_answering" : currentQ.status === "guesser_guessing"
-                      const isSubmitted = isSubject ? submitting : locked
+                      const isSubmitted = isSubject ? submitting : locked || submittedRef.current
                       const isClickable = myTurn && !isSubmitted
-                      let btnStyle = "border-border bg-surface"
-                      if (isSelected) btnStyle = "border-primary bg-primary/5"
+
+                      const optionIcons = [Sparkles, Heart, Leaf, Star]
+                      const OptionIcon = optionIcons[index % optionIcons.length]
+                      
+                      let buttonClasses = "bg-muted text-muted-foreground border-border"
+                      let iconClasses = "bg-muted-foreground text-muted"
+
+                      // Selected state
+                      if (isSelected) {
+                        buttonClasses = "bg-accent border-accent text-accent-foreground"
+                        iconClasses = "bg-accent-foreground text-accent"
+                      }
+
+                      // Revealed state (after answer/timeout)
+                      if (revealedQ) {
+                        const isCorrectAnswer = revealedQ.correct_answer === opt
+                        const isMyGuesserAnswer = currentAnswer?.answer === opt
+                        
+                        if (isCorrectAnswer) {
+                          buttonClasses = "bg-success border-success text-success-foreground"
+                          iconClasses = "bg-success-foreground text-success"
+                        } else if (isMyGuesserAnswer && !isCorrectAnswer) { // My wrong guess
+                          buttonClasses = "bg-destructive border-destructive text-destructive-foreground"
+                          iconClasses = "bg-destructive-foreground text-destructive"
+                        } else if (!isCorrectAnswer) { // Other wrong options
+                          buttonClasses = "opacity-60 bg-muted text-muted-foreground border-border"
+                          iconClasses = "bg-muted-foreground text-muted"
+                        }
+                      }
+
+                      console.log('TEBAK_DEBUG', { round: gameSession.current_round, q_seq: currentQ.sequence_number, q_status: currentQ.status, current_subject: gameSession.current_subject, isPlayerA, isSubject, myTurn, submitting, locked, submittedRef: submittedRef.current, isSubmitted, isClickable })
                       return (
-                        <button key={opt} onClick={() => { if (!isClickable) return; if (isSubject) handleSubjectAnswer(opt); else handleGuesserGuess(opt); }} disabled={!isClickable} className={`w-full text-left min-h-[68px] py-5 px-5 rounded-2xl border-2 transition-all duration-200 ${isClickable ? "cursor-pointer hover:border-primary/40" : "cursor-default"} ${isSubmitted && !isSelected ? "opacity-40" : !myTurn ? "opacity-60" : ""} ${btnStyle}`}>
+                        <button key={opt} onClick={() => { if (!isClickable) return; if (isSubject) handleSubjectAnswer(opt); else handleGuesserGuess(opt); }} disabled={!isClickable} className={`w-full text-left min-h-[68px] py-5 px-5 rounded-2xl border-2 transition-all duration-200 ${isClickable ? "cursor-pointer hover:border-accent/60" : "cursor-default"} ${buttonClasses}`}>
                           <div className="flex items-center gap-4">
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${isSelected ? "border-primary bg-primary scale-110" : "border-border"}`} />
-                            <span className="text-base font-medium text-text-primary leading-tight">{opt}</span>
+                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${iconClasses}`}>
+                              <OptionIcon size={20} />
+                            </div>
+                            <span className="text-base font-medium leading-tight">{opt}</span>
                           </div>
                         </button>
                       )
