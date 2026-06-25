@@ -269,10 +269,16 @@ export async function submitGuesserAnswer(
 
   const { data: q } = await supabase
     .from('tebak_questions')
-    .select('correct_answer, guesser_deadline, round_id, sequence_number')
+    .select('correct_answer, guesser_deadline, round_id, sequence_number, status')
     .eq('id', questionId).single()
 
   if (!q?.correct_answer) throw new Error('Subject has not answered yet')
+
+  // Idempotency guard: if already revealed (e.g. by cron handle_question_timeout
+  // or a concurrent client call), skip silently to prevent double-score.
+  if (q.status !== 'guesser_guessing') {
+    return { isCorrect: false, points: 0 }
+  }
 
   const now = new Date()
   if (new Date(q.guesser_deadline!) < now) {
@@ -286,19 +292,46 @@ export async function submitGuesserAnswer(
   const isCorrect = answer === q.correct_answer
   const timeTaken = Date.now() - startedAt
 
+  // Client-vs-client race guard: check if an answer was already inserted
+  // by a concurrent submitGuesserAnswer call before we insert ours.
+  // Note: .limit(1) not maybeSingle() because legacy data has duplicates
+  // (pre-migration 708 cron inserted multiple __timeout__ rows per question).
+  const { data: existingAnswers } = await supabase
+    .from('tebak_answers')
+    .select('id')
+    .eq('question_id', questionId)
+    .limit(1)
+
+  if (existingAnswers && existingAnswers.length > 0) return { isCorrect: false, points: 0 }
+
   await supabase.from('tebak_answers').insert({
     question_id: questionId, guesser_id: guesserId,
     answer, is_correct: isCorrect, time_ms: timeTaken,
   })
 
-  if (isCorrect) {
-    // ... (score increment logic remains the same)
+  // Determine session context before scoring and setting advance_at
+  const { data: r } = await supabase.from('tebak_rounds').select('session_id, round_number').eq('id', q.round_id).single()
+
+  if (isCorrect && r) {
+    const { data: session } = await supabase
+      .from('tebak_sessions')
+      .select('player_a_id')
+      .eq('id', r.session_id)
+      .single()
+
+    if (session) {
+      // Consistent with botPlayTurn pattern: compare guesserId to player_a_id
+      const isPlayerA = session.player_a_id === guesserId
+      await supabase.rpc('increment_tebak_score', {
+        session_id: r.session_id,
+        column: isPlayerA ? 'score_a' : 'score_b',
+        amount: 10,
+      })
+    }
   }
 
   await supabase.from('tebak_questions').update({ status: 'revealed' }).eq('id', questionId)
 
-  // Set server-timed advance
-  const { data: r } = await supabase.from('tebak_rounds').select('session_id, round_number').eq('id', q.round_id).single()
   if (r) {
     const isLastQOfRound1 = q.sequence_number === 5 && r.round_number === 1;
     await supabase.rpc('set_session_advance_at', { 

@@ -210,7 +210,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
                 <div className="flex-1">
                   <div className="text-center mb-4 space-y-2">
                     <span className="inline-block px-3 py-1 rounded-full bg-accent/20 text-accent text-base font-medium">Pertanyaan {currentQ.sequence_number}/5</span>
-                    {roleLabel && <div className="flex items-center justify-center gap-1.5 text-lg font-bold text-accent-foreground"><span>{roleLabel.icon}</span><span>{roleLabel.text}</span></div>}
+                    {roleLabel && <div className="flex items-center justify-center gap-1.5 text-lg font-bold text-accent"><span>{roleLabel.icon}</span><span>{roleLabel.text}</span></div>}
                   </div>
                   <h2 className="text-2xl font-bold text-primary-foreground text-center mb-6 leading-relaxed">{questionText}</h2>
                   <div className="text-center mb-3">
@@ -230,7 +230,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
                       const optionIcons = [Sparkles, Heart, Leaf, Star]
                       const OptionIcon = optionIcons[index % optionIcons.length]
                       
-                      let buttonClasses = "bg-muted text-white border-border"
+                      let buttonClasses = "bg-[#0d5478] text-white border-white/10"
                       let iconClasses = "bg-white/20 text-white"
 
                       // Selected state
@@ -251,8 +251,8 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
                           buttonClasses = "bg-destructive border-destructive text-destructive-foreground"
                           iconClasses = "bg-destructive-foreground text-destructive"
                         } else if (!isCorrectAnswer) { // Other wrong options
-                          buttonClasses = "opacity-60 bg-muted text-muted-foreground border-border"
-                          iconClasses = "bg-muted-foreground text-muted"
+                          buttonClasses = "opacity-60 bg-[#0d5478] text-white/50 border-white/10"
+                          iconClasses = "bg-white/10 text-white/50"
                         }
                       }
 
