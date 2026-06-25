@@ -141,7 +141,7 @@ export async function botPlayTurn(
       const isBotPlayerA = session.player_a_id === botUserId
       await supabase.rpc('increment_tebak_score', {
         session_id: r.session_id,
-        column: isBotPlayerA ? 'score_a' : 'score_b',
+        col_name: isBotPlayerA ? 'score_a' : 'score_b',
         amount: 10,
       })
     }
@@ -324,7 +324,7 @@ export async function submitGuesserAnswer(
       const isPlayerA = session.player_a_id === guesserId
       await supabase.rpc('increment_tebak_score', {
         session_id: r.session_id,
-        column: isPlayerA ? 'score_a' : 'score_b',
+        col_name: isPlayerA ? 'score_a' : 'score_b',
         amount: 10,
       })
     }
@@ -365,7 +365,7 @@ export async function handleSubjectTimeout(questionId: string, sessionId: string
 
   await supabase.rpc('increment_tebak_score', {
     session_id: sessionId,
-    column: guesserCol,
+    col_name: guesserCol,
     amount: 10,
   })
 
