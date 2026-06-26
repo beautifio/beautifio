@@ -20,12 +20,18 @@ export function DigitalClock({ deadline, onTimeout, label = "Sisa Waktu", compac
   const colonRef = useRef(true)
   const [, forceRender] = useState(0)
 
+  const firedRef = useRef(false)
+
   useEffect(() => {
     setHasMounted(true)
+    firedRef.current = false
     const tick = () => {
       const diff = getRemaining()
       setRemaining(diff)
-      if (diff <= 0) onTimeout()
+      if (diff <= 0 && !firedRef.current) {
+        firedRef.current = true
+        onTimeout()
+      }
     }
     const t = setInterval(tick, 250)
     const c = setInterval(() => {

@@ -74,6 +74,11 @@ export async function decideBotAnswer(
   botWinRate: number,
   isSubject: boolean,
 ): Promise<string> {
+  // DISC self-assessment (no correct answer) — always random
+  if (correctAnswer === null) {
+    return questionOptions[Math.floor(Math.random() * questionOptions.length)]
+  }
+
   if (isSubject) {
     return questionOptions[Math.floor(Math.random() * questionOptions.length)]
   }

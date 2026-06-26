@@ -53,7 +53,7 @@ export function ScoreBoard({ scoreA, scoreB, round, isPlayerA, myName, opponentN
             <div className="flex flex-col items-center gap-0.5">
               <div className="w-1 h-1 rounded-full bg-white/30" />
               <span className="text-[9px] font-semibold tracking-widest uppercase text-white/40">
-                R{round}/2
+                R{round}/4
               </span>
               <div className="w-1 h-1 rounded-full bg-white/30" />
             </div>

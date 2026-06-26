@@ -227,7 +227,7 @@ export async function advanceGame(
   sessionId: string, expectedSeq: number
 ): Promise<{ status: string; new_question: TebakQuestion | null } | null> {
   const supabase = await createServerClient()
-  const { data, error } = await supabase.rpc('advance_tebak_game', {
+  const { data, error } = await supabase.rpc('advance_tebak_game_v2', {
     p_session_id: sessionId,
     p_expected_seq: expectedSeq,
   })
@@ -333,66 +333,121 @@ export async function submitGuesserAnswer(
   await supabase.from('tebak_questions').update({ status: 'revealed' }).eq('id', questionId)
 
   if (r) {
-    const isLastQOfRound1 = q.sequence_number === 5 && r.round_number === 1;
+    const isLastQOfAnyRound = q.sequence_number === 5 && r.round_number < 4;
     await supabase.rpc('set_session_advance_at', { 
       p_session_id: r.session_id,
-      p_delay_seconds: isLastQOfRound1 ? 8 : 3
+      p_delay_seconds: isLastQOfAnyRound ? 8 : 3
     })
   }
 
   return { isCorrect, points: isCorrect ? 10 : 0 }
 }
 
-export async function handleSubjectTimeout(questionId: string, sessionId: string): Promise<void> {
+export async function submitDiscAnswer(
+  questionId: string, answer: string, startedAt: number
+): Promise<{ status: 'answered' | 'revealed' | 'already_answered' }> {
   const supabase = await createServerClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) throw new Error('Unauthorized')
 
-  const { data: q } = await supabase
+  const { data: q, error: qError } = await supabase
     .from('tebak_questions')
-    .select('status')
+    .select('round_id, sequence_number, status')
     .eq('id', questionId)
     .single()
-  if (!q || q.status !== 'subject_answering') return
+  if (qError || !q) throw new Error('Question not found')
 
-  const { data: session } = await supabase
-    .from('tebak_sessions')
-    .select('current_subject, player_a_id, player_b_id')
-    .eq('id', sessionId)
+  if (q.status !== 'both_answering') return { status: 'already_answered' }
+
+  const { data: round, error: roundError } = await supabase
+    .from('tebak_rounds')
+    .select('session_id')
+    .eq('id', q.round_id)
     .single()
-  if (!session) return
+  if (roundError || !round) throw new Error('Round not found')
 
-  const guesserCol = session.current_subject === 'a' ? 'score_b' : 'score_a'
-  const guesserId = session.current_subject === 'a' ? session.player_b_id : session.player_a_id
+  const { data: session, error: sessionError } = await supabase
+    .from('tebak_sessions')
+    .select('player_a_id, player_b_id')
+    .eq('id', round.session_id)
+    .single()
+  if (sessionError || !session) throw new Error('Session not found')
 
-  await supabase.rpc('increment_tebak_score', {
-    session_id: sessionId,
-    col_name: guesserCol,
-    amount: 10,
-  })
-
-  await supabase.from('tebak_answers').insert({
-    question_id: questionId,
-    guesser_id: guesserId,
-    answer: '__subject_timeout__',
-    is_correct: false,
-    time_ms: 15000,
-  })
-
-  await supabase.from('tebak_questions').update({
-    status: 'revealed',
-  }).eq('id', questionId)
-
-  // NEW: Set server-timed advance
-  const { data: q2 } = await supabase.from('tebak_questions').select('sequence_number, round_id').eq('id', questionId).single()
-  if (q2) {
-    const { data: r } = await supabase.from('tebak_rounds').select('session_id, round_number').eq('id', q2.round_id).single()
-    if (r) {
-      const isLastQ = q2.sequence_number === 5 && r.round_number === 1
-      await supabase.rpc('set_session_advance_at', {
-        p_session_id: r.session_id,
-        p_delay_seconds: isLastQ ? 8 : 3
-      })
-    }
+  // ═══ INSERT ATOMIK ═══
+  // Bergantung pada UNIQUE(question_id, guesser_id). Duplikat → error 23505.
+  // Prasyarat: ALTER TABLE tebak_answers ADD CONSTRAINT
+  //   tebak_answers_question_guesser_unique UNIQUE (question_id, guesser_id);
+  const { error: insertError } = await supabase
+    .from('tebak_answers')
+    .insert({
+      question_id: questionId,
+      guesser_id: user.id,
+      answer,
+      is_correct: null,
+      time_ms: Date.now() - startedAt,
+    })
+  if (insertError) {
+    if (insertError.code === '23505') return { status: 'already_answered' }
+    console.error('submitDiscAnswer insert error:', insertError)
+    throw insertError
   }
+
+  // ═══ CEK KEDUA PEMAIN SUDAH JAWAB ═══
+  // Cek eksplisit player_a DAN player_b — BUKAN count total.
+  const { count: countA, error: countAError } = await supabase
+    .from('tebak_answers')
+    .select('*', { count: 'exact', head: true })
+    .eq('question_id', questionId)
+    .eq('guesser_id', session.player_a_id)
+  if (countAError) throw countAError
+
+  const { count: countB, error: countBError } = await supabase
+    .from('tebak_answers')
+    .select('*', { count: 'exact', head: true })
+    .eq('question_id', questionId)
+    .eq('guesser_id', session.player_b_id)
+  if (countBError) throw countBError
+
+  if (!countA || countA < 1 || !countB || countB < 1) return { status: 'answered' }
+
+  // ═══ GUARD RACE: reveal hanya jika masih 'both_answering' ═══
+  // handle_disc_timeout bisa reveal duluan → UPDATE kena 0 row → skip advance_at.
+  const { data: revealed, error: revealError } = await supabase
+    .from('tebak_questions')
+    .update({ status: 'revealed' })
+    .eq('id', questionId)
+    .eq('status', 'both_answering')
+    .select()
+  if (revealError) throw revealError
+
+  if (revealed && revealed.length > 0) {
+    const delay = q.sequence_number === 5 ? 8 : 3
+    const { error: advanceError } = await supabase.rpc('set_session_advance_at', {
+      p_session_id: round.session_id,
+      p_delay_seconds: delay,
+    })
+    if (advanceError) throw advanceError
+  }
+
+  return { status: 'revealed' }
+}
+
+export async function handleDiscTimeout(questionId: string): Promise<void> {
+  const supabase = await createServerClient()
+  const { error } = await supabase.rpc('handle_disc_timeout', {
+    p_question_id: questionId,
+  })
+  if (error) {
+    console.error('handleDiscTimeout RPC error:', error)
+    throw error
+  }
+}
+
+export async function handleSubjectTimeout(questionId: string, _sessionId: string): Promise<void> {
+  const supabase = await createServerClient()
+  await supabase.rpc('handle_question_timeout', {
+    p_question_id: questionId,
+  })
 }
 
 export async function offerRematch(originalSessionId: string, opponentId: string): Promise<string> {

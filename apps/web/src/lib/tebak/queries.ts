@@ -16,8 +16,9 @@ export type TebakSession = {
 export type TebakRound = {
   id: string
   session_id: string
-  subject_player: 'a' | 'b'
+  subject_player: 'a' | 'b' | null
   round_number: number
+  round_type: 'disc' | 'tebak'
   status: string
 }
 
@@ -28,6 +29,7 @@ export type TebakQuestion = {
   question_text: string
   question_for_guesser: string | null
   options: string[]
+  option_disc: string[] | null
   sequence_number: number
   correct_answer: string | null
   subject_answered_at: string | null
