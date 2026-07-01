@@ -11,6 +11,7 @@ export interface CMSState {
   charCount: number
   headings: { level: number; text: string }[]
   keywords: string[]
+  aiCoachOpen: boolean
   setTitle: (t: string) => void
   setSubtitle: (s: string) => void
   setContent: (c: string) => void
@@ -18,6 +19,7 @@ export interface CMSState {
   setKeywords: (k: string[]) => void
   setWordCount: (n: number) => void
   setCharCount: (n: number) => void
+  setAICoachOpen: (v: boolean) => void
 }
 
 const CMSContext = createContext<CMSState | null>(null)
@@ -31,6 +33,7 @@ export function CMSProvider({ children }: { children: ReactNode }) {
   const [charCount, setCharCount] = useState(0)
   const [headings, setHeadings] = useState<{ level: number; text: string }[]>([])
   const [keywords, setKeywords] = useState(["kesadaran diri", "refleksi harian", "pengembangan diri", "psikologi"])
+  const [aiCoachOpen, setAICoachOpen] = useState(false)
 
   // Auto-derive slug from title
   const handleSetTitle = useCallback((t: string) => {
@@ -40,8 +43,8 @@ export function CMSProvider({ children }: { children: ReactNode }) {
 
   return (
     <CMSContext.Provider value={{
-      title, subtitle, slug, content, wordCount, charCount, headings, keywords,
-      setTitle: handleSetTitle, setSubtitle, setContent, setHeadings, setKeywords, setWordCount, setCharCount,
+      title, subtitle, slug, content, wordCount, charCount, headings, keywords, aiCoachOpen,
+      setTitle: handleSetTitle, setSubtitle, setContent, setHeadings, setKeywords, setWordCount, setCharCount, setAICoachOpen,
     }}>
       {children}
     </CMSContext.Provider>

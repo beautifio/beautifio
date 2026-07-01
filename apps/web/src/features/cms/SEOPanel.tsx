@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import { Search, Sparkles, ChevronDown, ChevronUp, RotateCw, Check, AlertTriangle, X } from "lucide-react"
 import { useCMS } from "./CMSContext"
+import { AICoach } from "./AICoach"
 
 function Card({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
@@ -187,6 +188,9 @@ export function SEOPanel() {
           ))}
         </div>
       </Card>
+
+      {/* AI Coach */}
+      <AICoach />
 
       {/* Google Preview */}
       <Card title="🔍 Google Preview" defaultOpen={false}>

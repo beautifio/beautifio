@@ -39,7 +39,7 @@ function ToolbarButton({ icon: Icon, label, onClick, active }: { icon: typeof Bo
 }
 
 export function ArticleEditor() {
-  const { title, subtitle, setTitle, setSubtitle, setContent, setWordCount, setCharCount, setHeadings } = useCMS()
+  const { title, subtitle, setTitle, setSubtitle, setContent, setWordCount, setCharCount, setHeadings, setAICoachOpen } = useCMS()
 
   const editor = useEditor({
     extensions: [
@@ -141,7 +141,7 @@ export function ArticleEditor() {
         <ToolbarButton icon={Quote} label="Quote" onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} />
         <ToolbarButton icon={Minus} label="Divider" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
         <div className="w-px h-5 mx-0.5" style={{ background: "#E2E8F0" }} />
-        <button className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ml-1" style={{ background: "rgba(8,68,99,0.08)", color: "#084463" }}>
+        <button onClick={() => setAICoachOpen(true)} className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ml-1" style={{ background: "rgba(8,68,99,0.08)", color: "#084463" }}>
           <Sparkles size={13} /> AI Writing
         </button>
       </div>
