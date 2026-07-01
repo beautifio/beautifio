@@ -12,7 +12,7 @@ export function CMSLayout({ children, title = "Untitled" }: Props) {
   return (
     <CMSProvider>
       <div className="h-screen flex flex-col" style={{ background: "#F8FAFC" }}>
-        <TopHeader title={title} />
+        <TopHeader />
         <div className="flex-1 flex overflow-hidden">
           <Sidebar />
           <main className="flex-1 flex min-w-0">
