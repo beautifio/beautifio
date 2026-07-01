@@ -42,6 +42,7 @@ function formatDeadline(iso: string): string {
 export default function OpportunityListPage() {
   const [opportunities, setOpportunities] = useState<DBOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -56,16 +57,18 @@ export default function OpportunityListPage() {
       .from("opportunities")
       .select("*")
       .eq("is_active", true)
-      .order("deadline", { ascending: true });
+      .order("deadline", { ascending: true })
+      .limit(50);
 
     if (activeCat) {
       query = query.eq("category", activeCat);
     }
 
-    query.then(({ data }) => {
+    query.then(({ data, error }) => {
+      if (error) { setError("Gagal memuat peluang"); setLoading(false); return }
       setOpportunities(data ?? []);
       setLoading(false);
-    }, () => { setLoading(false); });
+    })
   }, [activeCat]);
 
   const filtered = useMemo(() => {
@@ -132,8 +135,12 @@ export default function OpportunityListPage() {
         </div>
 
         {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#084463", borderTopColor: "transparent" }} />
+          </div>
+        ) : error ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <p className="text-sm text-text-secondary">Memuat peluang...</p>
+            <p className="text-sm text-destructive">{error}</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">

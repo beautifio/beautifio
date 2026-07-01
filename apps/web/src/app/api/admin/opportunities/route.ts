@@ -75,7 +75,11 @@ export async function PATCH(req: NextRequest) {
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
     const update: Record<string, any> = {};
-    if (title !== undefined) update.title = title;
+    if (title !== undefined) {
+      update.title = title;
+      // Regenerate slug when title changes
+      update.slug = title.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "-").slice(0, 80) + "-" + Date.now().toString(36);
+    }
     if (category !== undefined) update.category = category;
     if (organization !== undefined) update.organization = organization;
     if (deadline !== undefined) update.deadline = deadline;

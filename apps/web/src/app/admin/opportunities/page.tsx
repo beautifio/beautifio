@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Briefcase, Plus, Trash2, Save, X, Star, Eye, EyeOff } from "lucide-react";
+import { Pencil, Plus, Trash2, Save, X, Star, Eye, EyeOff } from "lucide-react";
 import { Button, Badge } from "@beautifio/ui";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -66,7 +66,7 @@ export default function OpportunitiesPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-gray-900">Opportunities</h1>
+        <h1 className="text-lg font-bold text-text-primary">Peluang</h1>
         <Button variant="accent" size="sm" onClick={startNew} className="cursor-pointer"><Plus className="w-4 h-4" /> Tambah</Button>
       </div>
 
@@ -97,7 +97,7 @@ export default function OpportunitiesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => startEdit(o)} className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center cursor-pointer"><Briefcase className="w-3.5 h-3.5 text-gray-400" /></button>
+                  <button onClick={() => startEdit(o)} className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center cursor-pointer"><Pencil className="w-3.5 h-3.5 text-gray-400" /></button>
                   <button onClick={() => toggleActive(o.id, o.is_active)}
                     className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer ${o.is_active ? "hover:bg-yellow-50" : "hover:bg-green-50"}`} title={o.is_active ? "Deactivate" : "Activate"}>
                     {o.is_active ? <EyeOff className="w-3.5 h-3.5 text-yellow-500" /> : <Eye className="w-3.5 h-3.5 text-green-500" />}
