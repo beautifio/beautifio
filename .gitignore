@@ -13,3 +13,7 @@ yarn-error.log*
 supabase/.temp/
 
 .env*
+pkcs8.key
+private.key
+public.pem
+outputs/
