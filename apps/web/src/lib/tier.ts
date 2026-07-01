@@ -12,16 +12,22 @@ export interface TierLimits {
 }
 
 const TIER_CONFIG: Record<UserTier, Omit<TierLimits, "tier">> = {
-  reguler: { maxChatsPerWeek: 7, maxTebakPerDay: 5, maxJourneys: 3, maxCircles: 3, eventDiscountPercent: 0 },
-  pro: { maxChatsPerWeek: 30, maxTebakPerDay: 15, maxJourneys: 3, maxCircles: 999, eventDiscountPercent: 10 },
+  reguler: { maxChatsPerWeek: 20, maxTebakPerDay: 5, maxJourneys: 3, maxCircles: 3, eventDiscountPercent: 0 },
+  pro: { maxChatsPerWeek: 50, maxTebakPerDay: 15, maxJourneys: 10, maxCircles: 999, eventDiscountPercent: 10 },
   ultimate: { maxChatsPerWeek: 999999, maxTebakPerDay: 999999, maxJourneys: 999, maxCircles: 999, eventDiscountPercent: 20 },
 };
 
 export async function getUserTier(userId: string): Promise<UserTier> {
   const supabase = await createClient();
+  // Auto-cleanup: expire any stale subscriptions before reading
+  await supabase.from("user_subscriptions")
+    .update({ status: "expired" })
+    .eq("user_id", userId).eq("status", "active")
+    .lt("expires_at", new Date().toISOString());
   const { data: sub } = await supabase.from("user_subscriptions")
     .select("plan:subscription_plans(tier)")
-    .eq("user_id", userId).eq("status", "active").maybeSingle();
+    .eq("user_id", userId).eq("status", "active")
+    .maybeSingle();
   return (sub?.plan as any)?.tier || "reguler";
 }
 

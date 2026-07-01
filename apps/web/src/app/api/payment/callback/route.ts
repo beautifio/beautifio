@@ -92,6 +92,14 @@ export async function POST(request: NextRequest) {
           status: "active", started_at: new Date().toISOString(),
         }).eq("id", sub.id);
 
+        // Count voucher if present in payment_ref
+        if (invoiceNumber.includes("|voucher:")) {
+          const voucherId = invoiceNumber.split("|voucher:")[1];
+          if (voucherId) {
+            await supabase.rpc("increment_subscription_voucher_count", { p_voucher_id: voucherId });
+          }
+        }
+
         await supabase.from("notifications").insert({
           user_id: sub.user_id, type: "subscription_active",
           title: "Subscription aktif!",

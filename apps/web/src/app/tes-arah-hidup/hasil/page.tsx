@@ -61,6 +61,7 @@ function HasilContent() {
   const { user } = useAuth()
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [isPro, setIsPro] = useState(false)
 
   useEffect(() => {
     if (!supabase || !user) return
@@ -68,6 +69,10 @@ function HasilContent() {
       .eq("user_id", user.id).order("completed_at", { ascending: false })
     if (modul) query.eq("module", modul)
     query.then(({ data }) => { setResults(data || []); setLoading(false) })
+    // Check Pro status
+    supabase.from("user_subscriptions").select("id").eq("user_id", user.id).eq("status", "active")
+      .gt("expires_at", new Date().toISOString()).maybeSingle()
+      .then(({ data }) => { setIsPro(!!data) })
   }, [modul, user])
 
   const formatScores = (r: any) => {
@@ -167,11 +172,13 @@ function HasilContent() {
           <div className="mt-6">
             <h3 className="text-xs font-bold mb-3 flex items-center gap-1.5" style={{ color: "#1E2938" }}>📈 Apa Selanjutnya?</h3>
 
+            {!isPro && (
             <div className="p-4 rounded-xl border-2 mb-3" style={{ background: "#FFFFFF", borderColor: "#084463" }}>
               <div className="flex items-center gap-2 mb-2"><Crown size={16} style={{ color: "#FFC64F" }} /><span className="text-xs font-bold" style={{ color: "#084463" }}>Versi Pro</span></div>
               <p className="text-[11px] leading-relaxed mb-3" style={{ color: "#647488" }}>Tes 340 soal standar internasional dengan laporan komprehensif, analisis per dimensi, rekomendasi karir, PDF export. Bonus: 1 sesi konsultasi gratis.</p>
               <button onClick={() => router.push("/bisik/upgrade")} className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-pointer" style={{ background: "#084463", color: "#FFFFFF" }}>Lihat Paket Pro →</button>
             </div>
+            )}
 
             <div className="p-4 rounded-xl border border-dashed" style={{ background: "rgba(255,198,79,0.03)", borderColor: "#FFC64F" }}>
               <div className="flex items-center gap-2 mb-2"><Sparkles size={16} style={{ color: "#FFC64F" }} /><span className="text-xs font-bold" style={{ color: "#1E2938" }}>Konsultasi dengan Psikolog</span></div>

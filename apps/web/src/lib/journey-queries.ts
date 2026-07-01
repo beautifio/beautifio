@@ -127,6 +127,27 @@ export async function createJourney(
   }
 
   const slug = generateJourneySlug(templateSlug, title);
+  // Tier limit: count active journeys for this user
+  const { count: activeCount } = await db()
+    .from("dream_journeys")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("status", "active");
+
+  // Check tier limit (3 for reguler, 3 for pro, 999 for ultimate via subscription)
+  const { data: sub } = await db().from("user_subscriptions")
+    .select("plan:subscription_plans(tier)")
+    .eq("user_id", userId).eq("status", "active")
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+  const userTier = (sub?.plan as any)?.tier || "reguler";
+  const maxJourneys = userTier === "ultimate" ? 999 : userTier === "pro" ? 10 : 3;
+
+  if ((activeCount ?? 0) >= maxJourneys) {
+    console.warn("createJourney: tier limit reached", { userId, activeCount, maxJourneys, tier: userTier });
+    return null;
+  }
+
   const { data: journey, error } = await db()
     .from("dream_journeys")
     .insert({

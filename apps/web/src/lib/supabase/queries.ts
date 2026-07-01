@@ -126,6 +126,19 @@ export async function joinCircle(circleId: string, userId: string) {
   if (circle && circle.member_count >= circle.capacity) {
     throw new Error("Circle is full");
   }
+  // Check tier limit
+  const { count: joinedCount } = await client.from("circle_members")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId).is("left_at", null);
+  const { data: sub } = await client.from("user_subscriptions")
+    .select("plan:subscription_plans(tier)")
+    .eq("user_id", userId).eq("status", "active")
+    .gt("expires_at", new Date().toISOString()).maybeSingle();
+  const tier = (sub?.plan as any)?.tier || "reguler";
+  const maxCircles = tier === "ultimate" ? 999 : tier === "pro" ? 999 : 3;
+  if ((joinedCount ?? 0) >= maxCircles) {
+    throw new Error(`Batas circle tercapai (${maxCircles}). Upgrade ke Pro untuk unlimited circle.`);
+  }
   const { data, error } = await client
     .from("circle_members")
     .insert({ circle_id: circleId, user_id: userId })

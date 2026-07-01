@@ -30,8 +30,9 @@ function QuizContent() {
     if (!authLoading && !user) { router.replace("/login"); return }
     if (!supabase || !user) return
 
-    // Check Pro status for full test access
-    supabase.from("user_subscriptions").select("id").eq("user_id", user.id).eq("status", "active").maybeSingle()
+    // Check Pro status for full test access (must check expires_at)
+    supabase.from("user_subscriptions").select("id").eq("user_id", user.id).eq("status", "active")
+      .gt("expires_at", new Date().toISOString()).maybeSingle()
       .then(({ data }) => { setIsPro(!!data) })
 
     supabase.from("test_arah_hidup_questions").select("*")

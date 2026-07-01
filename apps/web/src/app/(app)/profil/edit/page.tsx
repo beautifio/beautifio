@@ -86,8 +86,9 @@ export default function EditProfilePage() {
       setLoading(false)
     })()
 
-    // Check Pro status
-    supabase.from("user_subscriptions").select("id").eq("user_id", user.id).eq("status", "active").maybeSingle().then(({ data }) => {
+    // Check Pro status (must check expires_at)
+    supabase.from("user_subscriptions").select("id").eq("user_id", user.id).eq("status", "active")
+      .gt("expires_at", new Date().toISOString()).maybeSingle().then(({ data }) => {
       setIsPro(!!data)
     })
 

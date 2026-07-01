@@ -47,11 +47,27 @@ export async function POST(request: NextRequest) {
   // Handle subscription confirmation
   if (sub_id) {
     const { data: sub } = await supabase.from("user_subscriptions")
-      .select("id, status").eq("id", sub_id).eq("user_id", user.id).single();
+      .select("id, status, payment_ref, created_at").eq("id", sub_id).eq("user_id", user.id).single();
 
     if (!sub) return NextResponse.json({ confirmed: false, message: "Subscription tidak ditemukan" });
     if (sub.status === "active") return NextResponse.json({ confirmed: true, message: "Sudah aktif" });
     if (sub.status !== "pending") return NextResponse.json({ confirmed: false, message: "Status tidak valid" });
+
+    // Verify payment was initiated: must have payment_ref and be created within 1 hour
+    if (!sub.payment_ref) return NextResponse.json({ confirmed: false, message: "Pembayaran belum dimulai" });
+    const created = new Date(sub.created_at).getTime();
+    if (Date.now() - created > 3600000) {
+      return NextResponse.json({ confirmed: false, message: "Sesi pembayaran expired. Silakan coba lagi." });
+    }
+
+    // Check Doku callback status first
+    const dokuRes = await fetch("https://api.doku.com/orders/v1/status/" + sub.payment_ref, {
+      headers: { "Client-Id": process.env.DOKU_CLIENT_ID || "", "Request-Id": crypto.randomUUID(), "Request-Timestamp": new Date().toISOString() },
+    }).catch(() => null);
+
+    const dokuOk = dokuRes?.ok ? await dokuRes.json().then((j: any) => j?.transaction?.status === "SUCCESS").catch(() => false) : false;
+
+    if (!dokuOk) return NextResponse.json({ confirmed: false, message: "Pembayaran belum selesai. Silakan selesaikan pembayaran terlebih dahulu." });
 
     await supabase.from("user_subscriptions").update({
       status: "active", started_at: new Date().toISOString(),

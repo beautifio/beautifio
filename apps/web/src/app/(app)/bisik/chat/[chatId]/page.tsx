@@ -241,10 +241,15 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       }
 
       if (!chat?.expires_at) {
-        await supabase
-          .from("bisik_chats")
-          .update({ expires_at: new Date(Date.now() + 24 * 3600000).toISOString() })
-          .eq("id", chatId)
+        // Only Pro/Ultimate users get 24h expiry benefit
+        const { data: activeSub } = await supabase.from("user_subscriptions")
+          .select("id").eq("user_id", user.id).eq("status", "active")
+          .gt("expires_at", new Date().toISOString()).maybeSingle();
+        if (activeSub) {
+          await supabase.from("bisik_chats").update({
+            expires_at: new Date(Date.now() + 24 * 3600000).toISOString()
+          }).eq("id", chatId)
+        }
       }
 
       return true

@@ -125,17 +125,23 @@ export async function POST(request: NextRequest) {
   }).select().single();
   if (subErr) return NextResponse.json({ error: subErr.message }, { status: 500 });
 
-  // Increment voucher used count
-  if (appliedVoucher) {
-    await supabase.from("subscription_vouchers").update({
-      used_count: (appliedVoucher.used_count || 0) + 1,
-    }).eq("id", appliedVoucher.id);
-  }
-
-  // If amount is 0 (free), activate immediately
+  // If amount is 0 (free), activate immediately and count voucher
   if (finalAmount === 0) {
+    if (appliedVoucher) {
+      await supabase.from("subscription_vouchers").update({
+        used_count: (appliedVoucher.used_count || 0) + 1,
+      }).eq("id", appliedVoucher.id);
+    }
     await supabase.from("user_subscriptions").update({ status: "active" }).eq("id", sub.id);
     return NextResponse.json({ payment_url: null, sub_id: sub.id });
+  }
+
+  // For paid plans, voucher counted in payment callback after success
+  // Store voucher info on the subscription for callback use
+  if (appliedVoucher) {
+    await supabase.from("user_subscriptions").update({
+      payment_ref: invoiceId + "|voucher:" + appliedVoucher.id
+    }).eq("id", sub.id);
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;

@@ -8,6 +8,18 @@ const SECRET_KEY = process.env.DOKU_SECRET_KEY || "";
 
 function validateEmail(email: string) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 
+async function getUserTierDiscount(userId: string): Promise<number> {
+  const supabase = await createClient();
+  const { data: sub } = await supabase.from("user_subscriptions")
+    .select("plan:subscription_plans(tier)")
+    .eq("user_id", userId).eq("status", "active")
+    .gt("expires_at", new Date().toISOString()).maybeSingle();
+  const tier = (sub?.plan as any)?.tier || "reguler";
+  if (tier === "ultimate") return 20;
+  if (tier === "pro") return 10;
+  return 0;
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -79,6 +91,15 @@ export async function POST(request: NextRequest) {
       finalAmount = Math.max(0, Math.round(finalAmount));
     } else if (promo_code?.trim()) {
       return NextResponse.json({ error: "Kode promo tidak valid" }, { status: 400 });
+    }
+  }
+
+  // Apply tier-based discount (Pro 10%, Ultimate 20%) on top of promo
+  if (finalAmount > 0) {
+    const tierDiscount = await getUserTierDiscount(user.id);
+    if (tierDiscount > 0) {
+      finalAmount = finalAmount - finalAmount * (tierDiscount / 100);
+      finalAmount = Math.max(0, Math.round(finalAmount));
     }
   }
 

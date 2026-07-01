@@ -66,8 +66,8 @@ export default function UpgradePage() {
   };
 
   const features = tier === "ultimate"
-    ? ["Unlimited chat","Unlimited main Tebak","Unlimited journey","Unlimited circle","Diskon event 20%","Early access 48 jam","Badge Ultimate eksklusif","Semua benefit Pro"]
-    : ["30 chat per minggu (+ top-up)","15x main Tebak/hari","Nama anonim custom","Chat gak expired 24 jam","Pivot Coach AI","Circle unlimited","Diskon event 10%","Badge Pro eksklusif"];
+    ? ["Unlimited chat","Unlimited main Tebak","Unlimited journey","Unlimited circle","Diskon event 20%","Badge Ultimate eksklusif","Semua benefit Pro"]
+    : ["30 chat per minggu (+ top-up)","15x main Tebak/hari","Nama anonim custom","Chat gak expired 24 jam","Circle unlimited","Diskon event 10%","Badge Pro eksklusif"];
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center" style={{ background: CL }}>
