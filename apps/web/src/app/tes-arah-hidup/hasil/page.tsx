@@ -150,7 +150,9 @@ function HasilContent() {
                         {top3.split("").flatMap(c => (HOLLAND_JOBS[c] || []).slice(0, 2)).map((job, i) => (
                           <span key={i} className="text-[10px] px-2 py-1 rounded-full" style={{ background: "rgba(8,68,99,0.06)", color: "#084463" }}>{job}</span>
                         ))}
-                  </div>
+                      </div>
+                    </div>
+                  )}
                   {!isInterest && (
                     <div className="mt-4 p-3 rounded-lg" style={{ background: "#F8FAFC" }}>
                       <p className="text-[10px] uppercase tracking-wider font-semibold mb-2" style={{ color: "#647488" }}>📖 Analisis Singkat</p>
@@ -167,10 +169,8 @@ function HasilContent() {
                         ) : null
                       })}
                       {sorted.slice(0, 2).every(([dim, val]) => val >= 2.5 && val <= 3.5) && (
-                        <p className="text-[11px] leading-relaxed" style={{ color: "#647488" }}>Profil kepribadianmu cukup seimbang — tidak ada dimensi yang terlalu ekstrem. Ini membuatmu fleksibel dalam berbagai situasi.</p>
+                        <p className="text-[11px] leading-relaxed" style={{ color: "#647488" }}>Profil nilai hidupmu cukup seimbang — tidak ada nilai yang terlalu ekstrem. Ini membuatmu fleksibel dalam berbagai situasi.</p>
                       )}
-                    </div>
-                  )}
                     </div>
                   )}
                 </div>
