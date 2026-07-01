@@ -1,16 +1,17 @@
 "use client"
 
-import { FilePlus, LayoutDashboard, FileText, Archive, Calendar, Trash2, Tag, FolderOpen, Image, MessageCircle, BarChart3, Settings, HardDrive } from "lucide-react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { FilePlus, LayoutDashboard, FileText, Archive, Calendar, Trash2, Tag, FolderOpen, Image, MessageCircle, BarChart3, Settings, HardDrive } from "lucide-react"
 
 const primaryItems = [
-  { icon: FilePlus, label: "Artikel Baru", active: true },
-  { icon: LayoutDashboard, label: "Dashboard" },
-  { icon: FileText, label: "Semua Artikel" },
-  { icon: Archive, label: "Draft" },
-  { icon: SendIcon, label: "Published" },
-  { icon: Calendar, label: "Terjadwal" },
-  { icon: Trash2, label: "Trash" },
+  { icon: FilePlus, label: "Artikel Baru", href: "/admin/konten/posts/editor" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
+  { icon: FileText, label: "Semua Artikel", href: "/admin/konten/posts" },
+  { icon: Archive, label: "Draft", href: "/admin/konten/posts?status=draft" },
+  { icon: SendIcon, label: "Published", href: "/admin/konten/posts?status=published" },
+  { icon: Calendar, label: "Terjadwal", href: "/admin/konten/posts?status=scheduled" },
+  { icon: Trash2, label: "Trash", href: "/admin/konten/posts?trash=1" },
 ]
 
 const secondaryItems = [
@@ -31,6 +32,7 @@ function SendIcon(props: any) {
 }
 
 export function Sidebar() {
+  const router = useRouter()
   const [active, setActive] = useState("Artikel Baru")
 
   return (
@@ -49,7 +51,7 @@ export function Sidebar() {
         {primaryItems.map(item => (
           <button
             key={item.label}
-            onClick={() => setActive(item.label)}
+            onClick={() => { setActive(item.label); if (item.href) router.push(item.href) }}
             className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium transition-all text-left cursor-pointer"
             style={{
               background: active === item.label ? "rgba(255,255,255,0.12)" : "transparent",

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Search, Sparkles, ChevronDown, ChevronUp, RotateCw, Check, AlertTriangle, X } from "lucide-react"
 import { useCMS } from "./CMSContext"
 import { AICoach } from "./AICoach"
@@ -19,17 +19,17 @@ function Card({ title, children, defaultOpen = true }: { title: string; children
 }
 
 function calculateSEOScore(params: {
-  title: string; wordCount: number; keywords: string[]; headings: { level: number; text: string }[]
+  title: string; wordCount: number; keywords: string[]; headings: { level: number; text: string }[]; metaDesc: string
 }): { score: number; checks: { label: string; done: boolean }[] } {
   const checks = [
     { label: "Focus Keyword in Title", done: params.keywords.some(k => params.title.toLowerCase().includes(k.toLowerCase())) },
     { label: "SEO Title 50-70 chars", done: params.title.length >= 30 && params.title.length <= 70 },
-    { label: "Meta Description 120-160 chars", done: true },
+    { label: "Meta 120-160 chars", done: params.metaDesc.length >= 120 && params.metaDesc.length <= 160 },
     { label: "Word Count > 300", done: params.wordCount > 300 },
     { label: "Has H2 Headings", done: params.headings.some(h => h.level === 2) },
     { label: "Has H3 Headings", done: params.headings.some(h => h.level === 3) },
     { label: "Internal Links", done: false },
-    { label: "External Links", done: true },
+    { label: "External Links", done: false },
     { label: "Image Alt Text", done: false },
   ]
   const done = checks.filter(c => c.done).length
@@ -40,11 +40,13 @@ export function SEOPanel() {
   const { title, subtitle, slug, wordCount, headings, keywords, seoTitle, metaDesc, setSeoTitle, setMetaDesc } = useCMS()
   const [focusKeyword, setFocusKeyword] = useState("")
 
-  const { score, checks } = useMemo(() => calculateSEOScore({ title, wordCount, keywords, headings }), [title, wordCount, keywords, headings])
+  const { score, checks } = useMemo(() => calculateSEOScore({ title, wordCount, keywords, headings, metaDesc }), [title, wordCount, keywords, headings, metaDesc])
   const scoreColor = score >= 80 ? "#22C55E" : score >= 50 ? "#FFC64F" : "#EF4444"
   const scoreLabel = score >= 80 ? "Baik" : score >= 50 ? "Cukup" : "Perlu Perbaikan"
 
-  // Auto-sync SEO title when article title changes
+  // Sync SEO fields with article title/subtitle
+  useEffect(() => { setSeoTitle(title) }, [title])
+  useEffect(() => { setMetaDesc(subtitle) }, [subtitle])
   useState(() => { setSeoTitle(title) })
   useState(() => { setMetaDesc(subtitle) })
 

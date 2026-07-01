@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sparkles, Loader2, Copy, Check, ChevronDown, ChevronUp, PenLine, RefreshCw, FileText, ListChecks, Lightbulb, Tag } from "lucide-react"
 import { useCMS } from "./CMSContext"
 
@@ -19,8 +19,11 @@ export function AICoach() {
   const [result, setResult] = useState("")
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [expanded, setExpanded] = useState(aiCoachOpen)  // open when toolbar button clicked
+  const [expanded, setExpanded] = useState(false)
   const [activeAction, setActiveAction] = useState("")
+
+  // Sync with toolbar AI button
+  useEffect(() => { if (aiCoachOpen) setExpanded(true) }, [aiCoachOpen])
 
   const executeAI = async (action: string, customPrompt?: string) => {
     setLoading(true)

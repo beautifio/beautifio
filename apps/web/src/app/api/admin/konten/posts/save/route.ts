@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
+  try {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -65,5 +66,9 @@ export async function POST(request: NextRequest) {
 
   const { data: created, error } = await supabase.from("stories").insert(insert).select("id, slug").single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!created) return NextResponse.json({ error: "Gagal membuat artikel" }, { status: 500 })
   return NextResponse.json({ id: created.id, slug: created.slug })
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Internal error" }, { status: 500 })
+  }
 }

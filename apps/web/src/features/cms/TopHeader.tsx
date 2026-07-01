@@ -41,7 +41,10 @@ export function TopHeader() {
         setShowSchedule(false)
         setTimeout(() => setShowToast(""), 2000)
       }
-    } catch {} finally { setSaving(false) }
+    } catch { 
+      setShowToast("Gagal menyimpan. Coba lagi.")
+      setTimeout(() => setShowToast(""), 2000)
+    } finally { setSaving(false) }
   }, [articleId, articleTitle, content, slug, seoTitle, metaDesc, coverUrl, scheduleDate, scheduleTime])
 
   useEffect(() => {

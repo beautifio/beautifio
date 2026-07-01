@@ -44,16 +44,14 @@ export function ArticleEditor() {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
-      Underline,
-      LinkExtension.configure({ openOnClick: false }),
+      Underline, LinkExtension.configure({ openOnClick: false }),
       ImageExtension.configure({ inline: true }),
-      Table.configure({ resizable: true }),
-      TableRow, TableCell, TableHeader,
+      Table.configure({ resizable: true }), TableRow, TableCell, TableHeader,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Placeholder.configure({ placeholder: "Mulai menulis artikelmu di sini..." }),
       HorizontalRule, Blockquote, CodeBlock,
     ],
-    content: "<p>Editor ini dibangun dengan <strong>TipTap</strong> — rich text editor modern berbasis ProseMirror.</p><p>Kamu bisa:</p><ul><li>Format <strong>bold</strong>, <em>italic</em>, <u>underline</u></li><li>Buat heading, list, checklist</li><li>Sisipkan gambar, tabel, kode</li><li>Drag & drop gambar langsung</li></ul><blockquote><p>Menulis adalah cara terbaik untuk berpikir. — David McCullough</p></blockquote>",
+    content: "",
     editorProps: {
       attributes: {
         class: "prose prose-sm max-w-none outline-none min-h-[400px] text-[15px] leading-relaxed",
@@ -74,6 +72,19 @@ export function ArticleEditor() {
       setHeadings(h)
     },
   })
+
+  // Listen for existing article load event (from ?id= param)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const data = (e as CustomEvent).detail
+      if (!data || !editor) return
+      setTitle(data.title || "")
+      setSubtitle(data.subtitle || "")
+      if (data.content) editor.commands.setContent(data.content)
+    }
+    window.addEventListener("cms-load-article", handler)
+    return () => window.removeEventListener("cms-load-article", handler)
+  }, [editor, setTitle, setSubtitle])
 
   const addImage = useCallback(() => {
     const url = window.prompt("URL gambar:")

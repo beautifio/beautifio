@@ -29,14 +29,14 @@ export interface CMSState {
 const CMSContext = createContext<CMSState | null>(null)
 
 export function CMSProvider({ children }: { children: ReactNode }) {
-  const [title, setTitle] = useState("Mengenal Diri Sendiri: Perjalanan Menuju Kesadaran Diri yang Lebih Dalam")
-  const [subtitle, setSubtitle] = useState("Bagaimana memahami kepribadian, nilai hidup, dan potensi diri melalui refleksi harian")
-  const [slug, setSlug] = useState("mengenal-diri-sendiri-kesadaran-diri")
+  const [title, setTitle] = useState("")
+  const [subtitle, setSubtitle] = useState("")
+  const [slug, setSlug] = useState("")
   const [content, setContent] = useState("")
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
   const [headings, setHeadings] = useState<{ level: number; text: string }[]>([])
-  const [keywords, setKeywords] = useState(["kesadaran diri", "refleksi harian", "pengembangan diri", "psikologi"])
+  const [keywords, setKeywords] = useState<string[]>([])
   const [aiCoachOpen, setAICoachOpen] = useState(false)
   const [seoTitle, setSeoTitle] = useState("")
   const [metaDesc, setMetaDesc] = useState("")
