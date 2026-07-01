@@ -76,18 +76,42 @@ export function NotificationBell() {
     const d = notif.data
     if (notif.type === "circle_approved" && d?.circle_id) {
       router.push(`/circle/${d.circle_id}`)
+    } else if (notif.type === "circle_rejected" && d?.circle_id) {
+      router.push("/circle")
+    } else if (notif.type === "circle_new_question" && d?.circle_id) {
+      router.push(`/circle/${d.circle_id}`)
+    } else if (notif.type === "circle_question_answered" && d?.source_url) {
+      router.push(d.source_url)
+    } else if (notif.type === "circle_cohost_promoted" && d?.circle_id) {
+      router.push(`/circle/${d.circle_id}`)
     } else if (notif.type?.startsWith("event_")) {
       router.push("/event/me")
     } else if (notif.type === "subscription_active") {
       router.push("/bisik")
+    } else if (notif.type === "subscription_expiring") {
+      router.push("/bisik/upgrade")
     } else if (notif.type?.startsWith("care_")) {
-      router.push("/care/chat")
+      if (d?.session_id) router.push(`/care/chat/${d.session_id}`)
+      else router.push("/care/chat")
+    } else if (notif.type?.startsWith("tebak_")) {
+      router.push("/tebak")
+    } else if (notif.type?.startsWith("bisik_")) {
+      if (d?.chat_id) router.push(`/bisik/chat/${d.chat_id}`)
+      else router.push("/bisik/chats")
+    } else if (notif.type?.startsWith("curhat_")) {
+      if (d?.source_url) router.push(d.source_url)
+    } else if (notif.type === "journey_milestone") {
+      router.push("/journey")
+    } else if (notif.type === "familia_achievement") {
+      router.push("/profil")
+    } else if (notif.type === "voucher_claimed") {
+      router.push("/voucher/me")
+    } else if (notif.type === "member_banned" || notif.type === "member_joined" || notif.type === "member_left") {
+      if (d?.circle_id) router.push(`/circle/${d.circle_id}`)
     } else if (d?.link_url) {
-      // Broadcast notifications (event, promo, recommendation)
       if (d.link_url.startsWith("/")) router.push(d.link_url)
       else window.open(d.link_url, "_blank")
     } else if (d?.source_url) {
-      // Mention notifications (circle_mention, inspirasi_mention, tanya_answer)
       if (d.source_url.startsWith("/")) router.push(d.source_url)
     }
     setOpen(false)

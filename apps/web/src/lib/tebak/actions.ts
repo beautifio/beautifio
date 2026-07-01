@@ -578,6 +578,17 @@ export async function offerRematch(originalSessionId: string, opponentId: string
     .single()
 
   if (error) throw new Error('Failed to create rematch offer')
+
+  // Notify opponent
+  try {
+    const { insertNotification } = await import("@/lib/notifications/insert")
+    await insertNotification({
+      userId: opponentId, type: "tebak_rematch", title: "Rematch! 🎮",
+      body: "Lawanmu ingin bermain lagi. Terima atau tolak?",
+      data: { session_id: originalSessionId, offer_id: data.id }
+    })
+  } catch { /* non-critical */ }
+
   return data.id
 }
 

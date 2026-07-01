@@ -98,6 +98,16 @@ export async function POST(request: NextRequest) {
       total_vouchers: (merchant.total_vouchers || 0) + 1,
     }).eq("id", merchant_id);
 
+    // Notify user
+    try {
+      const { insertNotification } = await import("@/lib/notifications/insert")
+      await insertNotification({
+        userId: user.id, type: "voucher_claimed", title: "Voucher Diklaim! 🎟️",
+        body: `Kamu berhasil klaim voucher ${code} dari ${merchant.name}. Berlaku sampai ${new Date(session.expires_at).toLocaleDateString("id-ID")}`,
+        data: { voucher_code: code, merchant_id, expires_at: session.expires_at }
+      })
+    } catch { /* non-critical */ }
+
     return NextResponse.json({
       success: true,
       data: {

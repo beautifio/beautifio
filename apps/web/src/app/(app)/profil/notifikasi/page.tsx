@@ -9,18 +9,45 @@ import { useAuth } from "@/hooks/use-auth"
 const GROUPS = [
   { key: "forum", label: "Forum", icon: "💬", items: [
     { key: "circle_mention", label: "@Mention di Forum" },
+    { key: "circle_new_question", label: "Pertanyaan baru" },
+    { key: "circle_question_answered", label: "Pertanyaan dijawab" },
     { key: "member_joined", label: "Member bergabung" },
     { key: "member_left", label: "Member keluar" },
+    { key: "member_banned", label: "Member dibanned" },
   ]},
   { key: "circle", label: "Circle", icon: "👥", items: [
     { key: "circle_approved", label: "Circle disetujui" },
     { key: "circle_rejected", label: "Circle ditolak" },
+    { key: "circle_cohost_promoted", label: "Co-host dipromosikan" },
   ]},
   { key: "content", label: "Konten & Event", icon: "📰", items: [
     { key: "tanya_answer", label: "Jawaban pertanyaan" },
     { key: "inspirasi_mention", label: "@Mention di Inspirasi" },
     { key: "attachment_reported", label: "Lampiran dilaporkan" },
-    { key: "member_banned", label: "Member dibanned" },
+    { key: "event_confirmed", label: "Pendaftaran event dikonfirmasi" },
+    { key: "event_cancelled", label: "Event dibatalkan" },
+  ]},
+  { key: "bisik", label: "Bisik", icon: "💬", items: [
+    { key: "bisik_new_match", label: "Koneksi baru" },
+    { key: "bisik_new_message", label: "Pesan baru" },
+  ]},
+  { key: "tebak", label: "Tebak Aku", icon: "🎮", items: [
+    { key: "tebak_result", label: "Hasil game" },
+    { key: "tebak_rematch", label: "Tantangan rematch" },
+  ]},
+  { key: "care", label: "Beautifio Care", icon: "🩺", items: [
+    { key: "care_new_session", label: "Sesi baru" },
+    { key: "care_new_message", label: "Pesan baru" },
+    { key: "care_closed", label: "Sesi selesai" },
+  ]},
+  { key: "personal", label: "Personal", icon: "🌱", items: [
+    { key: "curhat_comment", label: "Komentar di Curhat" },
+    { key: "curhat_reaction", label: "Reaksi di Curhat" },
+    { key: "journey_milestone", label: "Milestone tercapai" },
+    { key: "familia_achievement", label: "Achievement terbuka" },
+    { key: "subscription_active", label: "Langganan aktif" },
+    { key: "subscription_expiring", label: "Langganan hampir habis" },
+    { key: "voucher_claimed", label: "Voucher diklaim" },
   ]},
   { key: "broadcast", label: "Broadcast", icon: "📢", items: [
     { key: "event", label: "Event" },
@@ -87,16 +114,10 @@ export default function NotifikasiPage() {
   // Preferences logic
   useEffect(() => {
     if (!supabase || !user) return
-    supabase.from("notification_preferences").select("key, enabled").eq("user_id", user.id)
+    supabase.from("notification_preferences").select("notification_type, enabled").eq("user_id", user.id)
       .then(({ data }) => {
         const map: Record<string, boolean> = {}
-        data?.forEach((p: any) => { map[p.key] = p.enabled })
-        setPrefs(map)
-      })
-    supabase.from("notification_preferences").select("key, enabled").eq("user_id", user.id)
-      .then(({ data }) => {
-        const map: Record<string, boolean> = {}
-        data?.forEach((p: any) => { map[p.key] = p.enabled ?? true })
+        data?.forEach((p: any) => { map[p.notification_type] = p.enabled ?? true })
         setPrefs(map)
       })
   }, [user])
@@ -106,9 +127,9 @@ export default function NotifikasiPage() {
     const enabled = !prefs[key]
     setPrefs(prev => ({ ...prev, [key]: enabled }))
     if (prefs[key] !== undefined) {
-      await supabase.from("notification_preferences").update({ enabled }).eq("user_id", user.id).eq("key", key)
+      await supabase.from("notification_preferences").update({ enabled }).eq("user_id", user.id).eq("notification_type", key)
     } else {
-      await supabase.from("notification_preferences").insert({ user_id: user.id, key, enabled })
+      await supabase.from("notification_preferences").insert({ user_id: user.id, notification_type: key, enabled })
     }
   }
 
