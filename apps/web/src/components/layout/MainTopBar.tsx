@@ -1,10 +1,41 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Search, User } from "lucide-react"
 import { NotificationBell } from "@/components/NotificationBell"
+import { useAuth } from "@/hooks/use-auth"
+import { supabase } from "@/lib/supabase/client"
+
+function TierBadge() {
+  const { user } = useAuth()
+  const [tier, setTier] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!supabase || !user) return
+    supabase.from("user_subscriptions")
+      .select("plan_id").eq("user_id", user.id).eq("status", "active")
+      .gt("expires_at", new Date().toISOString()).maybeSingle()
+      .then(async ({ data: sub }) => {
+        if (!sub?.plan_id) return
+        const { data: plan } = await supabase!.from("subscription_plans")
+          .select("tier").eq("id", sub.plan_id).single()
+        if (plan?.tier && plan.tier !== "reguler") setTier(plan.tier)
+      })
+  }, [user])
+
+  if (!tier) return null
+
+  return (
+    <span style={{
+      position: "absolute", bottom: -3, right: -3,
+      width: 12, height: 12, borderRadius: "50%",
+      background: tier === "ultimate" ? "#6BB9D4" : "#FFC64F",
+      border: "1.5px solid #084463",
+    }} title={tier === "ultimate" ? "Ultimate" : "Pro"} />
+  )
+}
 
 export function MainTopBar() {
   const router = useRouter()
@@ -37,10 +68,11 @@ export function MainTopBar() {
         </form>
         <div className="flex-1" />
         <NotificationBell />
-        <Link href="/profil" aria-label="Profil">
+        <Link href="/profil" aria-label="Profil" className="relative">
           <div className="w-8 h-8 rounded-full flex items-center justify-center transition-colors" style={{ background: 'rgba(255,255,255,0.15)' }}>
             <User size={16} style={{ color: '#FFFFFF' }} />
           </div>
+          <TierBadge />
         </Link>
       </div>
     </header>
