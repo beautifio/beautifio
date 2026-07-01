@@ -60,24 +60,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ confirmed: false, message: "Sesi pembayaran expired. Silakan coba lagi." });
     }
 
-    // Try Doku status check as best-effort verification
-    let dokuVerified = false;
-    try {
-      const dokuRes = await fetch("https://api.doku.com/checkout/v1/payment/" + sub.payment_ref, {
-        headers: { "Client-Id": process.env.DOKU_CLIENT_ID || "", "Request-Id": crypto.randomUUID(), "Request-Timestamp": new Date().toISOString() },
-      });
-      if (dokuRes.ok) {
-        const j = await dokuRes.json();
-        dokuVerified = j?.transaction?.status === "SUCCESS" || j?.response?.order?.invoice_number === sub.payment_ref;
-      }
-    } catch {
-      // Doku API unreachable — fallback to time-based activation
+    // Verify payment via Doku callback status — Doku webhook is the source of truth
+    // This endpoint is a polling fallback ONLY if Doku webhook arrives late
+    const dokuRes = await fetch("https://api.doku.com/checkout/v1/payment/" + sub.payment_ref, {
+      headers: { "Client-Id": process.env.DOKU_CLIENT_ID || "", "Request-Id": crypto.randomUUID(), "Request-Timestamp": new Date().toISOString() },
+    }).catch(() => null);
+
+    if (!dokuRes?.ok) {
+      return NextResponse.json({ confirmed: false, message: "Pembayaran belum terverifikasi. Silakan menunggu." });
     }
 
-    // Activate if: (a) Doku verified, OR (b) payment_ref exists + within window + Doku unreachable
-    if (!dokuVerified && !sub.payment_ref.startsWith("SUB-")) {
-      return NextResponse.json({ confirmed: false, message: "Pembayaran belum terverifikasi" });
-    }
+    const j = await dokuRes.json();
+    const dokuOk = j?.transaction?.status === "SUCCESS" || j?.response?.order?.invoice_number === sub.payment_ref;
+
+    if (!dokuOk) return NextResponse.json({ confirmed: false, message: "Pembayaran belum selesai. Silakan selesaikan pembayaran terlebih dahulu." });
 
     await supabase.from("user_subscriptions").update({
       status: "active", started_at: new Date().toISOString(),

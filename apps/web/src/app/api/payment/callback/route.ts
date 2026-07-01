@@ -13,20 +13,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ responseCode: "4005600", responseMessage: "Invalid body" }, { status: 400 });
     }
 
-    // Signature validation — only if headers are present
+    // Signature validation — ALWAYS verify if SECRET_KEY is configured
     const sigHeader = request.headers.get("x-signature");
     const tsHeader = request.headers.get("x-timestamp");
-    const partnerHeader = request.headers.get("x-partner-id");
 
-    if (sigHeader && tsHeader && SECRET_KEY) {
+    if (SECRET_KEY) {
+      if (!sigHeader || !tsHeader) {
+        console.warn("Doku callback: missing signature headers");
+        return NextResponse.json({ responseCode: "4015600", responseMessage: "Missing signature" }, { status: 401 });
+      }
       const valid = verifyNotificationSignature(
         body,
-        { "x-signature": sigHeader, "x-timestamp": tsHeader, "x-partner-id": partnerHeader || undefined },
+        { "x-signature": sigHeader, "x-timestamp": tsHeader, "x-partner-id": request.headers.get("x-partner-id") || undefined },
         "/api/payment/callback",
         SECRET_KEY
       );
       if (!valid) {
-        console.warn("Doku callback: invalid signature", { sigHeader, tsHeader, partnerHeader });
+        console.warn("Doku callback: invalid signature");
         return NextResponse.json({ responseCode: "4015600", responseMessage: "Invalid signature" }, { status: 401 });
       }
     }
