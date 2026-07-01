@@ -44,10 +44,12 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
 
   useEffect(() => {
     if (!supabase) return
+    let cancelled = false
     supabase.from("user_subscriptions")
       .select("id").eq("user_id", userId).eq("status", "active")
       .gt("expires_at", new Date().toISOString()).maybeSingle()
-      .then(({ data }) => { setIsPro(!!data) })
+      .then(({ data }) => { if (!cancelled) setIsPro(!!data) })
+    return () => { cancelled = true }
   }, [userId])
 
   useEffect(() => {

@@ -73,6 +73,7 @@ export default function ActiveChats() {
     isUnread: boolean
     topicEmoji: string | null
   }>>([])
+  const [invites, setInvites] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -107,6 +108,13 @@ export default function ActiveChats() {
 
   const loadDataInner = async () => {
     if (!supabase || !user) return
+
+    // Load pending invites received
+    await supabase.from("bisik_invites")
+      .select("id, from_user, status, created_at, from:from_user(full_name, avatar_url)")
+      .eq("to_user", user.id).eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => { setInvites(data || []) })
 
     // 1. Fetch chats (simple, no joins)
     const { data: chats } = await supabase
@@ -239,6 +247,36 @@ export default function ActiveChats() {
           </div>
           <ChevronRight size={18} className="text-text-secondary shrink-0" />
         </button>
+
+        {invites.length > 0 && (
+          <div className="mb-6">
+            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: "#FFC64F" }}>📨 Undangan Kenalan</p>
+            <div className="space-y-2">
+              {invites.map((inv: any) => (
+                <div key={inv.id} className="flex items-center gap-3 p-3 rounded-xl border" style={{ borderColor: "#FFC64F30", background: "rgba(255,198,79,0.06)" }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: hashColor(inv.from?.full_name || "?") }}>
+                    {getInitial(inv.from?.full_name || "?")}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold" style={{ color: "#1E2938" }}>{inv.from?.full_name || "Seseorang"}</p>
+                    <p className="text-[10px]" style={{ color: "#647488" }}>dari game Tebak</p>
+                  </div>
+                  <button onClick={async () => {
+                    const { respondToBisikInvite } = await import("@/lib/tebak/bisik-bridge")
+                    await respondToBisikInvite(inv.id, false)
+                    setInvites(prev => prev.filter(i => i.id !== inv.id))
+                  }} className="px-3 py-1.5 rounded-lg text-[10px] font-semibold cursor-pointer" style={{ background: "rgba(239,68,68,0.08)", color: "#EF4444" }}>Tolak</button>
+                  <button onClick={async () => {
+                    const { respondToBisikInvite } = await import("@/lib/tebak/bisik-bridge")
+                    const result = await respondToBisikInvite(inv.id, true)
+                    setInvites(prev => prev.filter(i => i.id !== inv.id))
+                    if (result?.chatId) router.push(`/bisik/chat/${result.chatId}`)
+                  }} className="px-3 py-1.5 rounded-lg text-[10px] font-semibold text-white cursor-pointer" style={{ background: "#22C55E" }}>Terima</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-16">

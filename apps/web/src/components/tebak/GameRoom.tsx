@@ -423,12 +423,11 @@ ${advice}`
     botPlayedRef.current.add(currentQ.id)
     setBotThinking(true)
     botPlayTurn(sessionId, currentQ.id, opponentId).then((result) => {
-      setBotThinking(false)
       if (result?.chatMessage) {
         setBotChatMessage(result.chatMessage)
         setTimeout(() => setBotChatMessage(null), 3000)
       }
-    })
+    }).catch(() => {}).finally(() => setBotThinking(false))
   }, [opponentIsBot, currentQ, botThinking, sessionId, opponentId, isPlayerA, gameSession.current_subject])
   
   // --- Handlers ---

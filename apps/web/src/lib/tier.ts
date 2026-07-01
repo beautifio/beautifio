@@ -19,12 +19,11 @@ const TIER_CONFIG: Record<UserTier, Omit<TierLimits, "tier">> = {
 
 export async function getUserTier(userId: string): Promise<UserTier> {
   const supabase = await createClient();
-  // Auto-cleanup: expire any stale subscriptions before reading (best-effort)
+  // Auto-cleanup: expire stale subscriptions, invites, and pro chats
   try {
-    await supabase.from("user_subscriptions")
-      .update({ status: "expired" })
-      .eq("user_id", userId).eq("status", "active")
-      .lt("expires_at", new Date().toISOString());
+    await supabase.from("user_subscriptions").update({ status: "expired" }).eq("user_id", userId).eq("status", "active").lt("expires_at", new Date().toISOString());
+    await supabase.rpc("expire_bisik_invites");
+    await supabase.rpc("expire_pro_tebak_chats");
   } catch { /* non-blocking */ }
 
   // Query active subscription and join plan tier separately
