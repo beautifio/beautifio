@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Underline from "@tiptap/extension-underline"
@@ -15,6 +15,7 @@ import Placeholder from "@tiptap/extension-placeholder"
 import HorizontalRule from "@tiptap/extension-horizontal-rule"
 import Blockquote from "@tiptap/extension-blockquote"
 import CodeBlock from "@tiptap/extension-code-block"
+import { useCMS } from "./CMSContext"
 import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Link as LinkIcon, Image as ImageIcon, Code, Quote, Minus, Sparkles, Heading1, Heading2, Heading3, Table as TableIcon, Undo, Redo } from "lucide-react"
 
 interface ToolbarBtn {
@@ -38,8 +39,7 @@ function ToolbarButton({ icon: Icon, label, onClick, active }: { icon: typeof Bo
 }
 
 export function ArticleEditor() {
-  const [title, setTitle] = useState("Mengenal Diri Sendiri: Perjalanan Menuju Kesadaran Diri yang Lebih Dalam")
-  const [subtitle, setSubtitle] = useState("Bagaimana memahami kepribadian, nilai hidup, dan potensi diri melalui refleksi harian")
+  const { title, subtitle, setTitle, setSubtitle, setContent, setWordCount, setCharCount, setHeadings } = useCMS()
 
   const editor = useEditor({
     extensions: [
@@ -59,6 +59,19 @@ export function ArticleEditor() {
         class: "prose prose-sm max-w-none outline-none min-h-[400px] text-[15px] leading-relaxed",
         style: "color: #1E2938; font-family: Inter, sans-serif; line-height: 1.8;",
       },
+    },
+    onUpdate: ({ editor: ed }) => {
+      const text = ed.getText()
+      const words = text.split(/\s+/).filter(Boolean)
+      setContent(ed.getHTML())
+      setWordCount(words.length)
+      setCharCount(text.length)
+      // Extract headings
+      const h = [] as { level: number; text: string }[]
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "heading") h.push({ level: node.attrs.level, text: node.textContent })
+      })
+      setHeadings(h)
     },
   })
 
