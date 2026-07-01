@@ -71,6 +71,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [locked, setLocked] = useState(false)
   const [tension, setTension] = useState(false)
   const [botThinking, setBotThinking] = useState(false)
+  const [botChatMessage, setBotChatMessage] = useState<string | null>(null)
   
   const [opponentIsBot, setOpponentIsBot] = useState(false)
   const [opponentName, setOpponentName] = useState<string | null>(null)
@@ -421,7 +422,13 @@ ${advice}`
     if (!isBotTurn || botPlayedRef.current.has(currentQ.id)) return
     botPlayedRef.current.add(currentQ.id)
     setBotThinking(true)
-    botPlayTurn(sessionId, currentQ.id, opponentId).finally(() => setBotThinking(false))
+    botPlayTurn(sessionId, currentQ.id, opponentId).then((result) => {
+      setBotThinking(false)
+      if (result?.chatMessage) {
+        setBotChatMessage(result.chatMessage)
+        setTimeout(() => setBotChatMessage(null), 3000)
+      }
+    })
   }, [opponentIsBot, currentQ, botThinking, sessionId, opponentId, isPlayerA, gameSession.current_subject])
   
   // --- Handlers ---
@@ -652,7 +659,7 @@ ${advice}`
       {showIntro ? <MatchIntro myName={myName} opponentName={opponentName} onBegin={() => setShowIntro(false)} deadline={gameSession.created_at ? new Date(new Date(gameSession.created_at).getTime() + 8000).toISOString() : undefined} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={opponentReady} sessionId={sessionId} />
       : showProfileReveal ? <DiscProfileReveal myProfile={myDiscProfile} theirProfile={theirDiscProfile} myName={myName} opponentName={opponentName} deadline={gameSession.advance_at ?? new Date(Date.now() + 20000).toISOString()} onAdvance={() => setShowProfileReveal(false)} />
       : showPanduan && !isFinished ? <PanduanOverlay round={gameSession.current_round} onMulai={() => setShowPanduan(false)} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={!!opponentReady} iAmReady={!!iAmReady} sessionId={sessionId} />
-      : isFinished ? <WinnerScreen session={gameSession} isPlayerA={isPlayerA} userId={userId} opponentId={opponentId} opponentName={opponentName} myName={myName} compatibility={compatibility} compatibilityLabel={compatibilityLabel} compatibilityInsight={compatibilityInsight} onHome={() => router.push('/')} />
+      : isFinished ? <WinnerScreen session={gameSession} isPlayerA={isPlayerA} userId={userId} opponentId={opponentId} opponentName={opponentName} myName={myName} compatibility={compatibility} compatibilityLabel={compatibilityLabel} compatibilityInsight={compatibilityInsight} onHome={() => router.push('/')} opponentIsBot={opponentIsBot} />
       : isShowingRoundResult && gameSession.advance_at ? <RoundResultScreen session={gameSession} round={gameSession.current_round} answers={answers} questions={questions} isPlayerA={isPlayerA} myName={myName} opponentName={opponentIsBot ? null : opponentName} deadline={gameSession.advance_at} onAdvance={handleAdvance} isDiscRound={isDiscRound} />
       : isShowingJeda && gameSession.advance_at && revealedQ ? <JedaScreen deadline={gameSession.advance_at} resultType={resultType} subjectName={isSubject ? myName : (opponentIsBot ? null : opponentName)} guesserName={isSubject ? (opponentIsBot ? null : opponentName) : myName} correctAnswer={revealedQ.correct_answer ?? ''} myScore={isPlayerA ? gameSession.score_a : gameSession.score_b} theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a} isLastQuestion={scoreboardIsDisc ? revealedQ.sequence_number === 5 : revealedQ.sequence_number === 5} isLastRound={gameSession.current_round === 4} onAdvance={handleAdvance} isDiscRound={isDiscRound} opponentName={opponentIsBot ? null : opponentName} myDiscAnswer={answers.find(a => a.question_id === revealedQ!.id && a.guesser_id === userId)?.answer ?? null} theirDiscAnswer={answers.find(a => a.question_id === revealedQ!.id && a.guesser_id === opponentId)?.answer ?? null} sessionId={sessionId} />
       : displayQ ? (
@@ -669,10 +676,25 @@ ${advice}`
                   <div className="text-center mb-3">
                     {isMyTurn ? (
                       <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-semibold">Pilih jawabanmu</span>
+                    ) : opponentIsBot && botThinking ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-sm text-white/60">🦁 {opponentName || 'Lawan'}</span>
+                        <span className="inline-flex gap-0.5">
+                          {[0,1,2].map(i => (
+                            <span key={i} className="w-1.5 h-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                          ))}
+                        </span>
+                        <span className="text-xs text-white/40">mengetik...</span>
+                      </div>
                     ) : (
                       <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/80 text-sm font-semibold">⏳ Menunggu lawan menjawab...</span>
                     )}
                   </div>
+                  {botChatMessage && (
+                    <div className="flex justify-center mb-3">
+                      <span className="inline-block px-3 py-1.5 rounded-2xl text-xs animate-fade-in" style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }}>💬 {botChatMessage}</span>
+                    </div>
+                  )}
                   <div className="space-y-3 mb-5">
                     {(displayQ.options as string[]).map((opt, index) => {
                       const isSelected = selectedAnswer === opt

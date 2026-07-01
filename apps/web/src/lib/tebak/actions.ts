@@ -76,24 +76,24 @@ export async function botPlayTurn(
   sessionId: string,
   questionId: string,
   botUserId: string,
-): Promise<void> {
+): Promise<{ chatMessage?: string }> {
   const supabase = await createServerClient()
 
   const { data: q } = await supabase
     .from('tebak_questions')
-    .select('status, correct_answer, options, round_id')
+    .select('status, correct_answer, options, option_disc, round_id')
     .eq('id', questionId)
     .single()
 
-  if (!q) return
+  if (!q) return {}
 
   const { data: r } = await supabase
     .from('tebak_rounds')
-    .select('session_id, subject_player')
+    .select('session_id, subject_player, round_type')
     .eq('id', q.round_id)
     .single()
 
-  if (!r) return
+  if (!r) return {}
 
   const { data: session } = await supabase
     .from('tebak_sessions')
@@ -101,40 +101,43 @@ export async function botPlayTurn(
     .eq('id', r.session_id)
     .single()
 
-  if (!session) return
+  if (!session) return {}
 
   const isBotSubject = r.subject_player === 'a'
     ? session.player_a_id === botUserId
     : session.player_b_id === botUserId
 
-  const { data: botUser } = await supabase
-    .from('users')
-    .select('bot_win_rate')
-    .eq('id', botUserId)
-    .single()
-
-  const winRate = botUser?.bot_win_rate ?? 50
   const options = q.options as string[]
+  const optionDisc = q.option_disc as string[] | undefined
 
-  // Bot answers after 2-4 seconds (seems human)
-  await new Promise((r) => setTimeout(r, 2000 + Math.random() * 2000))
+  // Get smart bot decision
+  const { getBotDecision } = await import('./bot-decision')
+  const decision = await getBotDecision({
+    botId: botUserId,
+    questionOptions: options,
+    optionDisc,
+    correctAnswer: q.correct_answer,
+    roundType: (r.round_type as 'disc' | 'tebak') || 'tebak',
+    isSubject: isBotSubject,
+  })
 
-  // Re-read question status to avoid race with cron timeout
+  // Wait the natural delay
+  await new Promise(resolve => setTimeout(resolve, decision.delayMs))
+
+  // Re-read question to avoid race with cron timeout
   const { data: freshQ } = await supabase.from('tebak_questions').select('*').eq('id', questionId).single()
-  if (!freshQ) return
+  if (!freshQ) return { chatMessage: decision.chatMessage }
 
   if (freshQ.status === 'both_answering') {
-    // DISC round — bot picks random answer
-    const answer = options[Math.floor(Math.random() * options.length)]
+    // DISC round
     const { error: insertError } = await supabase.from('tebak_answers').insert({
       question_id: questionId,
       guesser_id: botUserId,
-      answer,
+      answer: decision.answer,
       is_correct: false,
-      time_ms: Math.floor(Math.random() * 5000) + 2000,
+      time_ms: decision.delayMs,
     })
     if (!insertError) {
-      // Check if both answered, reveal if so
       const { count } = await supabase.from('tebak_answers')
         .select('*', { count: 'exact', head: true })
         .eq('question_id', questionId)
@@ -144,35 +147,29 @@ export async function botPlayTurn(
         }).eq('id', questionId)
       }
     }
-    return
+    return { chatMessage: decision.chatMessage }
   }
 
   if (isBotSubject && freshQ.status === 'subject_answering') {
-    const answer = options[Math.floor(Math.random() * options.length)]
     const now = new Date()
     const deadline = new Date(now.getTime() + 15_000)
-
     await supabase.from('tebak_questions').update({
-      correct_answer: answer,
+      correct_answer: decision.answer,
       subject_answered_at: now.toISOString(),
       guesser_deadline: deadline.toISOString(),
       status: 'guesser_guessing',
     }).eq('id', questionId)
-  } else if (freshQ.status === 'guesser_guessing') {
-    const roll = Math.random() * 100
-    const isCorrect = roll < winRate && q.correct_answer != null
-    const answer = isCorrect
-      ? q.correct_answer!
-      : options.filter((o: string) => o !== q.correct_answer)[Math.floor(Math.random() * (options.length - 1))]
+    return { chatMessage: decision.chatMessage }
+  }
 
-    const now = new Date()
-
+  if (freshQ.status === 'guesser_guessing') {
+    const isCorrect = decision.answer === q.correct_answer
     await supabase.from('tebak_answers').insert({
       question_id: questionId,
       guesser_id: botUserId,
-      answer,
+      answer: decision.answer,
       is_correct: isCorrect,
-      time_ms: Math.floor(Math.random() * 10000) + 3000,
+      time_ms: decision.delayMs,
     })
 
     if (isCorrect) {
@@ -185,7 +182,10 @@ export async function botPlayTurn(
     }
 
     await supabase.from('tebak_questions').update({ status: 'revealed' }).eq('id', questionId)
+    return { chatMessage: decision.chatMessage }
   }
+
+  return { chatMessage: decision.chatMessage }
 }
 
 export async function checkOpponentDisconnected(sessionId: string, opponentId: string): Promise<boolean> {

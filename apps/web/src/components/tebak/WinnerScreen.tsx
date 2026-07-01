@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Trophy, Home, RotateCcw, Loader2, X, Check, MessageCircle } from "lucide-react"
+import { Trophy, Home, RotateCcw, Loader2, X, Check, MessageCircle, Send } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { offerRematch, respondToRematch } from "@/lib/tebak/actions"
-import { createBisikFromTebak } from "@/lib/tebak/bisik-bridge"
+import { createBisikInvite, createProChatFromTebak } from "@/lib/tebak/bisik-bridge"
 import type { TebakSession } from "@/lib/tebak/queries"
 
 type RematchOffer = {
@@ -26,9 +26,10 @@ type Props = {
   compatibilityLabel?: string
   compatibilityInsight?: string
   onHome: () => void
+  opponentIsBot?: boolean
 }
 
-export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentName, myName, compatibility, compatibilityLabel, compatibilityInsight, onHome }: Props) {
+export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentName, myName, compatibility, compatibilityLabel, compatibilityInsight, onHome, opponentIsBot }: Props) {
   const router = useRouter()
   const myScore = isPlayerA ? session.score_a : session.score_b
   const theirScore = isPlayerA ? session.score_b : session.score_a
@@ -38,6 +39,16 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
   const [rematchState, setRematchState] = useState<'idle' | 'offering' | 'receiving' | 'accepted' | 'declined'>('idle')
   const [rematchOffer, setRematchOffer] = useState<RematchOffer | null>(null)
   const [bisikLoading, setBisikLoading] = useState(false)
+  const [bisikState, setBisikState] = useState<'idle' | 'inviting' | 'sent' | 'chatting'>('idle')
+  const [isPro, setIsPro] = useState(false)
+
+  useEffect(() => {
+    if (!supabase) return
+    supabase.from("user_subscriptions")
+      .select("id").eq("user_id", userId).eq("status", "active")
+      .gt("expires_at", new Date().toISOString()).maybeSingle()
+      .then(({ data }) => { setIsPro(!!data) })
+  }, [userId])
 
   useEffect(() => {
     if (!supabase) return
@@ -75,13 +86,31 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
 
   const handleBisik = async () => {
     setBisikLoading(true)
+    setBisikState(isPro ? 'chatting' : 'inviting')
     try {
-      const chatId = await createBisikFromTebak(session.id)
-      if (chatId) {
-        router.push(`/bisik/chat/${chatId}`)
+      if (isPro) {
+        const result = await createProChatFromTebak(session.id)
+        if (result.chatId) {
+          router.push(`/bisik/chat/${result.chatId}`)
+          return
+        }
+        setBisikState('idle')
+      } else {
+        const result = await createBisikInvite(session.id)
+        if (result.success) {
+          if (result.message === "existing_chat") {
+            router.push(`/bisik/chat/${result.chatId}`)
+          } else {
+            setBisikState('sent')
+          }
+        } else {
+          setBisikState('idle')
+        }
       }
     } catch (err) {
       console.error(err)
+      setBisikState('idle')
+    } finally {
       setBisikLoading(false)
     }
   }
@@ -172,7 +201,14 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
             ) : (
               <>
                 <button onClick={handleOfferRematch} className="w-full max-w-xs py-3 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors cursor-pointer"><RotateCcw size={16} /> Main Lagi</button>
-                <button onClick={handleBisik} disabled={bisikLoading} className="w-full max-w-xs py-3 rounded-xl bg-accent/20 border border-accent/30 text-accent font-semibold text-sm flex items-center justify-center gap-2 hover:bg-accent/30 transition-colors cursor-pointer">{bisikLoading ? <Loader2 className="animate-spin" size={16} /> : <MessageCircle size={16} />} Lanjut Kenalan di Bisik</button>
+                {!opponentIsBot && bisikState === 'sent' ? (
+                  <div className="w-full max-w-xs py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent font-semibold text-sm text-center">✅ Undangan terkirim! Menunggu respon...</div>
+                ) : !opponentIsBot && (
+                  <button onClick={handleBisik} disabled={bisikLoading} className="w-full max-w-xs py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer" style={{ background: isPro ? "rgba(107,185,212,0.2)" : "rgba(255,198,79,0.15)", border: `1px solid ${isPro ? "rgba(107,185,212,0.3)" : "rgba(255,198,79,0.3)"}`, color: isPro ? "#6BB9D4" : "#B8860B" }}>
+                    {bisikLoading ? <Loader2 className="animate-spin" size={16} /> : isPro ? <Send size={16} /> : <MessageCircle size={16} />}
+                    {isPro ? "Chat Langsung di Bisik" : "Kenalan di Bisik"}
+                  </button>
+                )}
                 <button onClick={onHome} className="w-full max-w-xs py-3 rounded-xl border border-border text-text-secondary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-surface transition-colors cursor-pointer"><Home size={16} /> Kembali ke Home</button>
               </>
             )}
