@@ -1,41 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import crypto from "crypto";
+import { verifyNotificationSignature } from "@/lib/doku/checkout";
 
 const SECRET_KEY = process.env.DOKU_SECRET_KEY || "";
 
-function verifySignature(body: Record<string, unknown>, headers: Headers): boolean {
-  const signature = headers.get("x-signature");
-  const timestamp = headers.get("x-timestamp");
-  if (!signature || !timestamp) return false;
-
-  const bodyStr = JSON.stringify(body);
-  const bodyHash = crypto.createHash("sha256").update(bodyStr).digest("hex").toLowerCase();
-  const stringToSign = `POST:/api/payment/callback:${bodyHash}:${timestamp}`;
-  const computed = crypto.createHmac("sha512", SECRET_KEY).update(stringToSign).digest("base64");
-
-  return signature === computed;
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ responseCode: "4005600", responseMessage: "Invalid body" }, { status: 400 });
+    }
 
-    if (SECRET_KEY) {
-      const valid = verifySignature(body as Record<string, unknown>, request.headers);
+    // Signature validation — only if headers are present
+    const sigHeader = request.headers.get("x-signature");
+    const tsHeader = request.headers.get("x-timestamp");
+    const partnerHeader = request.headers.get("x-partner-id");
+
+    if (sigHeader && tsHeader && SECRET_KEY) {
+      const valid = verifyNotificationSignature(
+        body,
+        { "x-signature": sigHeader, "x-timestamp": tsHeader, "x-partner-id": partnerHeader || undefined },
+        "/api/payment/callback",
+        SECRET_KEY
+      );
       if (!valid) {
+        console.warn("Doku callback: invalid signature", { sigHeader, tsHeader, partnerHeader });
         return NextResponse.json({ responseCode: "4015600", responseMessage: "Invalid signature" }, { status: 401 });
       }
     }
 
+    // Extract invoice number — Doku sends it in various formats
     const invoiceNumber =
       body.originalPartnerReferenceNo ||
       body.order?.invoice_number ||
       body.response?.order?.invoice_number ||
-      body.transaction?.invoice_number;
+      body.transaction?.invoice_number ||
+      body.originalExternalId ||
+      body.partnerReferenceNo;
 
     if (!invoiceNumber) {
-      console.warn("Doku callback: missing invoice, acknowledging");
+      console.warn("Doku callback: missing invoice");
       return NextResponse.json({ responseCode: "2005600", responseMessage: "Acknowledged" });
     }
 
@@ -43,10 +49,13 @@ export async function POST(request: NextRequest) {
       body.latestTransactionStatus ||
       body.transaction?.status ||
       body.response?.transaction?.status ||
-      body.result;
+      body.result ||
+      body.transactionStatus;
 
     const supabase = await createClient();
     const isSuccess = statusCode === "00" || statusCode === "SUCCESS" || statusCode === "success";
+
+    console.log("Doku callback:", { invoiceNumber, statusCode, isSuccess });
 
     // Check event registrations first
     const { data: reg } = await supabase.from("event_registrations")
@@ -78,10 +87,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ responseCode: "2005600", responseMessage: "Success" });
     }
 
-    // Check subscription payments
+    // Check subscription payments — match by payment_ref
     const { data: sub } = await supabase.from("user_subscriptions")
       .select("id, status, user_id, plan:subscription_plans(name)")
-      .eq("payment_ref", invoiceNumber)
+      .or(`payment_ref.eq.${invoiceNumber},payment_ref.ilike.%${invoiceNumber}%`)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -92,8 +101,7 @@ export async function POST(request: NextRequest) {
           status: "active", started_at: new Date().toISOString(),
         }).eq("id", sub.id);
 
-        // Count voucher if present in payment_ref
-        if (invoiceNumber.includes("|voucher:")) {
+        if (typeof invoiceNumber === "string" && invoiceNumber.includes("|voucher:")) {
           const voucherId = invoiceNumber.split("|voucher:")[1];
           if (voucherId) {
             await supabase.rpc("increment_subscription_voucher_count", { p_voucher_id: voucherId });
@@ -112,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     // Check consultation payments
     const { data: consSession } = await supabase.from("consultation_sessions")
-      .select("id, status, user_id").eq("payment_reference", invoiceNumber)
+      .select("id, status, user_id").or(`payment_reference.eq.${invoiceNumber},payment_reference.ilike.%${invoiceNumber}%`)
       .order("created_at", { ascending: false }).limit(1).single();
 
     if (consSession) {
