@@ -72,10 +72,28 @@ export async function POST(request: NextRequest) {
     .select("*").eq("id", plan_id).eq("is_active", true).single();
   if (!plan) return NextResponse.json({ error: "Plan tidak ditemukan" }, { status: 404 });
 
-  // Check existing active subscription
+  // Check existing subscription — active OR pending
   const { data: existingSub } = await supabase.from("user_subscriptions")
-    .select("id").eq("user_id", user.id).eq("status", "active").maybeSingle();
-  if (existingSub) return NextResponse.json({ error: "Kamu sudah punya subscription aktif" }, { status: 409 });
+    .select("id, status, created_at").eq("user_id", user.id)
+    .in("status", ["active", "pending"]).order("created_at", { ascending: false }).limit(1).maybeSingle();
+
+  if (existingSub?.status === "active") {
+    return NextResponse.json({ error: "Kamu sudah punya subscription aktif" }, { status: 409 });
+  }
+
+  // If has pending, reuse it instead of creating duplicate
+  if (existingSub?.status === "pending") {
+    // Check if it was created recently (within 30 min) — likely abandoned payment
+    const created = new Date(existingSub.created_at || "").getTime();
+    if (Date.now() - created < 1800000) {
+      return NextResponse.json({
+        error: "Kamu masih punya pembayaran yang belum selesai. Selesaikan atau tunggu 30 menit.",
+        pending_sub_id: existingSub.id,
+      }, { status: 409 });
+    }
+    // Old pending — delete it so user can retry
+    await supabase.from("user_subscriptions").delete().eq("id", existingSub.id);
+  }
 
   let finalAmount = plan.price_idr || 0;
   let appliedVoucher: any = null;
