@@ -1,35 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import { Search, User } from "lucide-react"
 import { NotificationBell } from "@/components/NotificationBell"
-import { useAuth } from "@/hooks/use-auth"
 
-function TierBadge() {
-  const { user } = useAuth()
-  const [tier, setTier] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!user) return
-    fetch("/api/profil/identity")
-      .then(r => r.json())
-      .then(d => { if (d?.user?.tier && d.user.tier !== "reguler") setTier(d.user.tier) })
-      .catch(() => {})
-  }, [user])
-
-  if (!tier) return null
-
-  return (
-    <span style={{
-      position: "absolute", bottom: -4, right: -4,
-      fontSize: 11, lineHeight: 1,
-    }} title={tier === "ultimate" ? "Ultimate" : "Pro"}>
-      {tier === "ultimate" ? "💎" : "👑"}
-    </span>
-  )
-}
+const TierBadge = dynamic(() => import("./TierBadge"), { ssr: false })
 
 export function MainTopBar() {
   const router = useRouter()
