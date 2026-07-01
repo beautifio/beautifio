@@ -6,23 +6,17 @@ import Link from "next/link"
 import { Search, User } from "lucide-react"
 import { NotificationBell } from "@/components/NotificationBell"
 import { useAuth } from "@/hooks/use-auth"
-import { supabase } from "@/lib/supabase/client"
 
 function TierBadge() {
   const { user } = useAuth()
   const [tier, setTier] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!supabase || !user) return
-    supabase.from("user_subscriptions")
-      .select("plan_id").eq("user_id", user.id).eq("status", "active")
-      .gt("expires_at", new Date().toISOString()).maybeSingle()
-      .then(async ({ data: sub }) => {
-        if (!sub?.plan_id) return
-        const { data: plan } = await supabase!.from("subscription_plans")
-          .select("tier").eq("id", sub.plan_id).single()
-        if (plan?.tier && plan.tier !== "reguler") setTier(plan.tier)
-      })
+    if (!user) return
+    fetch("/api/profil/identity")
+      .then(r => r.json())
+      .then(d => { if (d?.user?.tier && d.user.tier !== "reguler") setTier(d.user.tier) })
+      .catch(() => {})
   }, [user])
 
   if (!tier) return null
