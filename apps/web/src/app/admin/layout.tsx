@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import {
-  Gift, ShoppingBag, Trophy, FileText, FilePlus,
+  Gift, ShoppingBag, Trophy, FileText,
   Users, Quote, MessageCircle, HeartHandshake,
   FileSpreadsheet, BookOpen, Briefcase, Menu, X, ChevronDown,
   LayoutDashboard, Shield, Image, Radio, CreditCard, Bell, Megaphone, BarChart3, CalendarDays,
@@ -54,7 +54,6 @@ const navGroups: NavGroup[] = [
     roles: ["redaksi", "superadmin"],
     items: [
       { href: "/admin/konten/posts", label: "Inspirasi", icon: FileSpreadsheet, roles: ["redaksi", "superadmin"] },
-      { href: "/admin/konten/posts/editor", label: "Editor CMS", icon: FilePlus, roles: ["redaksi", "superadmin"] },
       { href: "/admin/konten/stories", label: "Stories", icon: BookOpen, roles: ["redaksi", "superadmin"] },
       { href: "/admin/konten/quotes", label: "Quotes", icon: Quote, roles: ["redaksi", "superadmin"] },
       { href: "/admin/konten/hero", label: "Media Manager", icon: Image, roles: ["redaksi", "superadmin"] },
@@ -153,11 +152,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!role || role === "user" || role === "mentor") return null;
 
-  const isFullScreen = pathname?.startsWith("/admin/konten/posts/editor")
-
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {!isFullScreen && (
       <aside style={{ background: '#084463' }} className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 lg:relative lg:translate-x-0 flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between p-4 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="flex items-center gap-2">
@@ -257,14 +253,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
       </aside>
-      )}
 
-      {!isFullScreen && sidebarOpen && (
+      {sidebarOpen && (
         <div className="fixed inset-0 bg-black/20 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <main className="flex-1 min-w-0">
-        {!isFullScreen && (
         <div style={{ background: '#084463' }} className="sticky top-0 z-30 px-4 py-3 flex items-center gap-3 lg:hidden">
           <button onClick={() => setSidebarOpen(true)} className="cursor-pointer">
             <Menu className="w-5 h-5" style={{ color: '#FFFFFF' }} />
@@ -275,8 +269,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Admin Panel</span>
           )}
         </div>
-        )}
-        <div className={isFullScreen ? "" : "p-4 lg:p-6"}>{children}</div>
+        <div className="p-4 lg:p-6">{children}</div>
       </main>
     </div>
   );
