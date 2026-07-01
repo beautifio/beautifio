@@ -23,15 +23,7 @@ export function NotificationBell() {
   const [unread, setUnread] = useState(0)
   const [notifs, setNotifs] = useState<Notification[]>([])
   const [open, setOpen] = useState(false)
-  const [tier, setTier] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    fetch("/api/auth/tier")
-      .then(r => r.json())
-      .then(d => { if (d?.tier && d.tier !== "reguler") setTier(d.tier) })
-      .catch(() => {})
-  }, [])
 
   useEffect(() => {
     if (!user || !supabase) return
@@ -128,17 +120,7 @@ export function NotificationBell() {
   if (!user) return <div className="w-8 h-8" />;
 
   return (
-    <div ref={ref} className="relative flex items-center gap-1.5">
-      {tier && (
-        <span style={{
-          background: tier === "ultimate" ? "rgba(107,185,212,0.2)" : "rgba(255,198,79,0.2)",
-          color: tier === "ultimate" ? "#6BB9D4" : "#FFC64F",
-          borderRadius: 99, padding: "1px 6px", fontSize: 9, fontWeight: 700,
-          border: tier === "ultimate" ? "1px solid rgba(107,185,212,0.4)" : "1px solid rgba(255,198,79,0.4)",
-        }}>
-          {tier === "ultimate" ? "💎 Ultimate" : "👑 Pro"}
-        </span>
-      )}
+    <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
         className="w-8 h-8 rounded-full flex items-center justify-center transition-colors relative cursor-pointer"
