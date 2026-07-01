@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 interface Banner {
@@ -15,20 +16,21 @@ interface Banner {
 }
 
 export function BannerCarousel() {
+  const router = useRouter();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [current, setCurrent] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const pointerX = useRef<number | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
-    supabase!
+    supabase
       .from("home_banners")
       .select("*")
       .eq("is_active", true)
       .order("display_order", { ascending: true })
       .then(({ data }) => {
         if (data) setBanners(data);
-      });
+      }, () => {});
   }, []);
 
   const next = useCallback(() => {
@@ -49,41 +51,46 @@ export function BannerCarousel() {
 
   if (banners.length === 0) return null;
 
-  const b = banners[current];
+  function handlePointerDown(e: React.PointerEvent) {
+    pointerX.current = e.clientX;
+  }
 
-  function handleTouchEnd(endX: number) {
-    if (touchStart === null) return;
-    const diff = touchStart - endX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) next();
+  function handlePointerUp(e: React.PointerEvent) {
+    const startX = pointerX.current;
+    pointerX.current = null;
+    if (startX === null) return;
+    const delta = startX - e.clientX;
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) next();
       else prev();
+    } else {
+      // Tap — navigate to active banner link
+      const active = banners[current];
+      if (active?.redirect_url) {
+        if (active.redirect_url.startsWith("http")) window.open(active.redirect_url, "_blank");
+        else router.push(active.redirect_url);
+      }
     }
-    setTouchStart(null);
   }
 
   return (
     <div
-      className="relative w-full aspect-[2/1] rounded-2xl overflow-hidden bg-gray-100"
-      onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
-      onTouchEnd={(e) => handleTouchEnd(e.changedTouches[0].clientX)}
+      className="relative w-full aspect-[2/1] rounded-2xl overflow-hidden bg-gray-100 cursor-pointer"
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
     >
       {banners.map((banner, idx) => (
         <div
           key={banner.id}
-          className={`absolute inset-0 transition-opacity duration-500 ${idx === current ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${idx === current ? "opacity-100" : "opacity-0"}`}
         >
-          <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" />
-          {banner.redirect_url && (
-            <a
-              href={banner.redirect_url}
-              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12"
-            >
-              {banner.redirect_label && (
-                <span className="inline-block bg-[#FFC64F] text-[#1E2938] text-xs font-bold px-3 py-1.5 rounded-lg">
-                  {banner.redirect_label}
-                </span>
-              )}
-            </a>
+          <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          {banner.redirect_label && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12">
+              <span className="inline-block bg-[#FFC64F] text-[#1E2938] text-xs font-bold px-3 py-1.5 rounded-lg">
+                {banner.redirect_label}
+              </span>
+            </div>
           )}
         </div>
       ))}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sunrise, Sun, CloudSun, Moon, Heart, RefreshCw } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 type DBQuote = {
   id: string;
@@ -39,16 +39,21 @@ function timeGreeting(): { text: string; icon: React.ReactNode } {
 
 function dayOfYear(): number {
   const now = Date.now();
-  const start = new Date(new Date().getFullYear(), 0, 0).getTime();
+  const start = new Date(new Date().getFullYear(), 0, 1).getTime();
   return Math.floor((now - start) / 86400000);
+}
+
+function safeGetSavedQuotes(): string[] {
+  try { return JSON.parse(localStorage.getItem("savedQuotes") || "[]"); }
+  catch { return []; }
 }
 
 export function QuoteCard({ userName }: { userName: string }) {
   const [quote, setQuote] = useState<DBQuote | null>(null);
   const [saved, setSaved] = useState(false);
+  const [err, setErr] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
     if (!supabase) return;
 
     supabase
@@ -60,16 +65,11 @@ export function QuoteCard({ userName }: { userName: string }) {
         const idx = dayOfYear() % data.length;
         const q = data[idx];
         setQuote(q);
-        setSaved(
-          JSON.parse(localStorage.getItem("savedQuotes") || "[]").includes(
-            q.id
-          )
-        );
-      });
+        setSaved(safeGetSavedQuotes().includes(q.id));
+      }, () => setErr(true));
   }, []);
 
   function handleShuffle() {
-    const supabase = createClient();
     if (!supabase) return;
 
     supabase
@@ -80,18 +80,13 @@ export function QuoteCard({ userName }: { userName: string }) {
         if (!data || data.length === 0) return;
         const random = data[Math.floor(Math.random() * data.length)];
         setQuote(random);
-        setSaved(
-          JSON.parse(localStorage.getItem("savedQuotes") || "[]").includes(
-            random.id
-          )
-        );
-      });
+        setSaved(safeGetSavedQuotes().includes(random.id));
+      }, () => {});
   }
 
   function handleSave() {
     if (!quote) return;
-    const savedRaw = localStorage.getItem("savedQuotes") || "[]";
-    const savedIds: string[] = JSON.parse(savedRaw);
+    const savedIds = safeGetSavedQuotes();
     const idx = savedIds.indexOf(quote.id);
     if (idx > -1) {
       savedIds.splice(idx, 1);
@@ -101,13 +96,14 @@ export function QuoteCard({ userName }: { userName: string }) {
       setSaved(true);
     }
     localStorage.setItem("savedQuotes", JSON.stringify(savedIds));
+    localStorage.setItem("savedQuotes", JSON.stringify(savedIds));
   }
 
   if (!quote) {
     const greeting = timeGreeting();
     return (
       <div className="rounded-2xl p-5" style={{ background: "#FFF8E7", borderLeft: "4px solid #FFC64F" }}>
-        <div className="flex items-center gap-2 text-amber-700 mb-3">
+        <div className="flex items-center gap-2 text-amber-700 mb-0.5">
           {greeting.icon}
           <span className="text-sm font-semibold">
             {greeting.text}, {userName}.
@@ -126,21 +122,21 @@ export function QuoteCard({ userName }: { userName: string }) {
 
   return (
     <div className="rounded-2xl p-5" style={{ background: "#FFF8E7", borderLeft: "4px solid #FFC64F" }}>
-      <div className="flex items-center gap-2 text-amber-700 mb-3">
+      <div className="flex items-center gap-2 text-amber-700 mb-0.5">
         {greeting.icon}
         <span className="text-sm font-semibold">
           {greeting.text}, {userName}.
         </span>
       </div>
 
-      <div className="mb-1">
+      <div className="mb-0">
         <span className="text-xs text-amber-500 font-medium">
           {CAT_EMOJI[quote.category] || "💬"}{" "}
           {CAT_LABEL[quote.category] || quote.category}
         </span>
       </div>
 
-      <blockquote className="text-base font-medium text-text-primary leading-relaxed mb-3">
+      <blockquote className="text-base font-medium text-text-primary leading-relaxed mb-0.5">
         &ldquo;{quote.content}&rdquo;
       </blockquote>
 

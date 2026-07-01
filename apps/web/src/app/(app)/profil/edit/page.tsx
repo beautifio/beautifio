@@ -20,7 +20,11 @@ interface Regency {
 
 export default function EditProfilePage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace("/login");
+  }, [user, authLoading, router]);
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -35,6 +39,7 @@ export default function EditProfilePage() {
   const [dateOfBirth, setDateOfBirth] = useState("")
   const [address, setAddress] = useState("")
   const [bio, setBio] = useState("")
+  const [phone, setPhone] = useState("")
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   // Province & City
@@ -59,7 +64,7 @@ export default function EditProfilePage() {
     ;(async () => {
       const { data } = await supabase
         .from("users")
-        .select("full_name, bisik_anonymous_name, bisik_custom_name, date_of_birth, city, address, bio, avatar_url")
+        .select("full_name, bisik_anonymous_name, bisik_custom_name, date_of_birth, city, province, address, bio, avatar_url, phone")
         .eq("id", user.id)
         .single()
       if (data) {
@@ -72,6 +77,10 @@ export default function EditProfilePage() {
         setAvatarUrl(data.avatar_url)
         if (data.city) {
           setSelectedRegency(data.city)
+        }
+        if (data.province) {
+        if (data.phone) { setPhone(data.phone) }
+          setSelectedProvince(data.province)
         }
       }
       setLoading(false)
@@ -146,7 +155,7 @@ export default function EditProfilePage() {
         setAvatarUrl(publicUrl)
       }
     } catch (err: any) {
-      console.error("Upload error:", err)
+      // console.error("Upload error:", err)
       setError(err.message || "Gagal upload foto. Coba lagi.")
     }
     setUploading(false)
@@ -185,6 +194,8 @@ export default function EditProfilePage() {
         full_name: fullName,
         date_of_birth: dateOfBirth || null,
         city: selectedRegency || "",
+        province: selectedProvince || "",
+        phone: phone || null,
         address,
         bio,
         avatar_url: avatarUrl,
@@ -424,6 +435,17 @@ export default function EditProfilePage() {
               {bio.length}/150
             </span>
           </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-text-primary mb-1.5 block">Nomor HP</label>
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="628123456789" className="w-full px-4 py-3 rounded-xl border border-border bg-bg text-sm text-text-primary outline-none focus:border-primary transition-colors" />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-text-primary mb-1.5 block">Email</label>
+          <input value={user?.email || ""} disabled className="w-full px-4 py-3 rounded-xl border border-border bg-muted/30 text-sm text-text-secondary outline-none cursor-not-allowed" />
+          <p className="text-[10px] text-text-secondary mt-1">Email tidak dapat diubah</p>
         </div>
 
         {/* Save button at bottom */}

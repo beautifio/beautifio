@@ -4,7 +4,7 @@ import { useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { BookOpen, Heart, Sparkles, TrendingUp, Users, Feather, Monitor } from "lucide-react"
 import type { InspirasiItem } from "@/lib/inspirasi-data"
-import { CATEGORY_LABELS, SOURCE_LABEL, AUTHOR_TYPE_BADGE, ARCH_LABELS } from "@/lib/inspirasi-data"
+import { CATEGORY_LABELS, CATEGORY_COLORS, SOURCE_LABEL, AUTHOR_TYPE_BADGE, ARCH_LABELS } from "@/lib/inspirasi-data"
 
 interface InspirasiCardProps {
   item: InspirasiItem
@@ -32,6 +32,8 @@ export default function InspirasiCard({ item }: InspirasiCardProps) {
   const authorBadge = AUTHOR_TYPE_BADGE[authorType] || AUTHOR_TYPE_BADGE.cerita_pembaca
   const categoryLabel = item.category_label || (item.category_id ? CATEGORY_LABELS[item.category_id] : item.category) || item.category
   const CategoryIcon = item.category_id ? CATEGORY_ICONS[item.category_id] : null
+  const categoryKey = item.category_id || Object.entries(CATEGORY_LABELS).find(([,v]) => v === item.category)?.[0]
+  const categoryColor = categoryKey ? CATEGORY_COLORS[categoryKey] : null
   const initials = item.initials || item.author?.charAt(0) || "?"
 
   return (
@@ -39,17 +41,18 @@ export default function InspirasiCard({ item }: InspirasiCardProps) {
       onClick={handleClick}
       className="flex gap-3 py-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
     >
-      {/* Thumbnail */}
-      <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100 relative">
+      {/* Thumbnail — 2:1 */}
+      <div className="w-40 aspect-[2/1] rounded-xl overflow-hidden shrink-0 bg-gray-100 relative">
         {item.cover_image ? (
-          <img
-            src={item.cover_image}
-            alt={item.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
+          <img src={item.cover_image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+        ) : categoryColor ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1"
+            style={{ background: categoryColor.primary + "15" }}>
+            {CategoryIcon && <CategoryIcon size={22} style={{ color: categoryColor.primary, opacity: 0.4 }} />}
+            <span className="text-[8px] font-semibold uppercase tracking-wider" style={{ color: categoryColor.primary, opacity: 0.5 }}>{categoryLabel}</span>
+          </div>
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
             <BookOpen className="w-6 h-6 text-gray-300" />
           </div>
         )}

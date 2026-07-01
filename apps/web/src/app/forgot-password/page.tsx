@@ -25,10 +25,14 @@ export default function ForgotPasswordPage() {
       }
       const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
         email,
-        { redirectTo: `${window.location.origin}/login` }
+        { redirectTo: `${window.location.origin}/reset-password` }
       );
       if (resetErr) {
-        setError(resetErr.message);
+        const msg = resetErr.message?.toLowerCase() || "";
+        if (msg.includes("rate limit")) setError("Terlalu banyak percobaan. Coba lagi nanti.");
+        else if (msg.includes("not found")) setError("Email tidak terdaftar.");
+        else if (msg.includes("invalid")) setError("Format email tidak valid.");
+        else setError("Gagal mengirim. Coba lagi.");
         setSubmitting(false);
         return;
       }

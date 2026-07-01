@@ -166,6 +166,7 @@ export default function JourneyDetailPage() {
 
   const loadData = useCallback(async () => {
     if (!user || !slug) {
+      if (!user) router.replace("/login");
       setLoading(false);
       return;
     }
@@ -239,7 +240,7 @@ export default function JourneyDetailPage() {
             return !pool.some((t: string) => t.toLowerCase().trim() === a.title.toLowerCase().trim());
           });
           if (hasMismatch) {
-            console.warn("Data leak detected: regenerating activities for journey", j.id);
+            // console.warn("Activity mismatch: regenerating", j.id);
             await generateAndInsertActivities(j, sp, undefined);
             loadedActivities = [];
           }

@@ -155,7 +155,7 @@ export default function InspirasiDetailClient({
         time_spent_seconds: timeSpentRef.current,
       });
     } catch (e) {
-      console.warn("Failed to update reading progress:", e);
+      // console.warn("Failed to update reading progress:", e);
     }
 
     if (activityId) {
@@ -228,7 +228,7 @@ export default function InspirasiDetailClient({
           });
         }, 1000);
       } catch (e) {
-        console.warn("Journey tracking error:", e);
+        // console.warn("Journey tracking error:", e);
       }
     })();
 
@@ -363,8 +363,13 @@ export default function InspirasiDetailClient({
   }, [slug, item]);
 
   const handleReport = useCallback(() => {
-    alert("Laporan telah dikirim. Terima kasih atas partisipasi Anda.");
-  }, []);
+    if (item?.id && supabase) {
+      supabase.from('article_reports').insert({
+        article_id: item.id, reason: 'user_report',
+      }).then(() => {}, () => {});
+    }
+    alert("Laporan telah diterima. Terima kasih.");
+  }, [item]);
 
   if (loading) {
     return (

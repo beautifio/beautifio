@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowRight, Check, Sparkles, Target, Clock,
@@ -117,10 +117,11 @@ function MatchingScreen({
     );
   };
 
-  useState(() => {
+  useEffect(() => {
+    if (phase !== "matching") return;
     const timer = setTimeout(() => setPhase("results"), 2500);
     return () => clearTimeout(timer);
-  });
+  }, [phase]);
 
   if (phase === "matching") {
     return (
@@ -207,6 +208,11 @@ function MatchingScreen({
 export default function OnboardingPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+
+  useEffect(() => {
+    if (!user) router.replace("/login");
+  }, [user, router]);
+
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [showMatching, setShowMatching] = useState(false);

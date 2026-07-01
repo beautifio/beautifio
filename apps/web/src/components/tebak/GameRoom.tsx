@@ -11,6 +11,8 @@ import {
   submitDiscAnswer,
   handleSubjectTimeout as handleSubjectTimeoutAction,
   startQuestionTimer,
+  signalMatchIntroReady,
+  resetReadyFlags,
   advanceGame,
   botPlayTurn,
   replaceDisconnectedWithBot,
@@ -24,6 +26,8 @@ import { ScoreBoard } from "./ScoreBoard"
 import { JedaScreen } from "./JedaScreen"
 import { RoundResultScreen } from "./RoundResultScreen"
 import { WinnerScreen } from "./WinnerScreen"
+import { PanduanOverlay } from "./PanduanOverlay"
+import { DiscProfileReveal } from "./DiscProfileReveal"
 import type { TebakSession, TebakQuestion, TebakAnswer, TebakRound } from "@/lib/tebak/queries"
 
 // --- Helper Functions ---
@@ -72,16 +76,22 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [opponentName, setOpponentName] = useState<string | null>(null)
   const [myName, setMyName] = useState<string | null>(null)
   
-  const [showIntro, setShowIntro] = useState(initialSession.status === 'waiting')
+  const [showIntro, setShowIntro] = useState(true)
+  const [showPanduan, setShowPanduan] = useState(false)
+  const [showProfileReveal, setShowProfileReveal] = useState(false)
   const [hasMounted, setHasMounted] = useState(false)
   const [syncFailed, setSyncFailed] = useState(false)
+  const [, setSyncTick] = useState(0)
 
   const { play, isMuted, toggleMute } = useSound()
   const botPlayedRef = useRef<Set<string>>(new Set())
+  const panduanShownRef = useRef<Set<number>>(new Set())
+  const profileRevealShownRef = useRef(false)
   const prevQuestionId = useRef<string | null>(null)
   const submittedRef = useRef(false)
   const tensionStartRef = useRef(0)
   const advancingRef = useRef(false)
+  const reconcilingRef = useRef(false)
   const lastQuestionRef = useRef<TebakQuestion | null>(null)
   const roundOfRef = useRef<Record<string, number>>({})
   const roundTypeRef = useRef<Record<string, 'disc' | 'tebak'>>({})
@@ -98,11 +108,110 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const isSubject = isDiscRound ? false : (gameSession.current_subject === (isPlayerA ? "a" : "b"))
   const subjectName = isDiscRound ? myName : (isSubject ? myName : opponentName)
 
+  // ScoreBoard DISC: cek tipe ronde saat ini lewat roundTypeRef, independen dari currentQ/revealedQ
+  const scoreboardIsDisc = Object.entries(roundTypeRef.current)
+    .some(([rid, rtype]) => roundOfRef.current[rid] === gameSession.current_round && rtype === 'disc')
+  const discProgress = scoreboardIsDisc ? questions.filter(q => {
+    const rn = roundOfRef.current[q.round_id]
+    return rn === gameSession.current_round && answers.some(a => a.question_id === q.id && a.guesser_id === userId)
+  }).length : 0
+  const discTotal = scoreboardIsDisc ? questions.filter(q => roundOfRef.current[q.round_id] === gameSession.current_round).length : 0
+
+  const iAmReady = isPlayerA ? gameSession.player_a_ready : gameSession.player_b_ready
+  const opponentReady = isPlayerA ? gameSession.player_b_ready : gameSession.player_a_ready
+  const bothReady = iAmReady && opponentReady
+
   const isFinished = gameSession.status === 'finished'
-  const isShowingRoundResult = !!gameSession.advance_at && !!revealedQ && revealedQ.sequence_number === 5 && gameSession.current_round !== 4
-  const isShowingJeda = !!gameSession.advance_at && !!revealedQ && !(revealedQ.sequence_number === 5 && gameSession.current_round !== 4)
+  const isShowingRoundResult = !!gameSession.advance_at && !!revealedQ && ((scoreboardIsDisc ? revealedQ.sequence_number === 5 : revealedQ.sequence_number === 5)) && gameSession.current_round !== 4
+  const isShowingJeda = !!gameSession.advance_at && !!revealedQ && !(((scoreboardIsDisc ? revealedQ.sequence_number === 5 : revealedQ.sequence_number === 5)) && gameSession.current_round !== 4)
   const isLoading = !currentQ && !revealedQ && !isFinished && !showIntro
   const displayQ = currentQ || (tension && !revealedQ && lastQuestionRef.current ? lastQuestionRef.current : null)
+
+  // --- DISC Profile Computation ---
+  const computeProfile = (playerId: string) => {
+    const discCounts: Record<string, number> = { D: 0, I: 0, S: 0, C: 0 }
+    const commCounts: Record<string, number> = { Langsung: 0, Empatik: 0, Ekspresif: 0, Tenang: 0 }
+    questions.forEach(q => {
+      const rtype = roundTypeRef.current[q.round_id]
+      if (rtype !== 'disc') return
+      const ans = answers.find(a => a.question_id === q.id && a.guesser_id === playerId)
+      if (!ans || !ans.answer || ans.answer === '__timeout__' || !q.option_disc) return
+      const opts = q.options as string[]
+      const idx = opts.indexOf(ans.answer)
+      if (idx < 0 || idx >= (q.option_disc as string[]).length) return
+      const trait = (q.option_disc as string[])[idx]
+      const rn = roundOfRef.current[q.round_id]
+      if (rn === 1) { if (trait in discCounts) discCounts[trait]++ }
+      else if (rn === 2) { if (trait in commCounts) commCounts[trait]++ }
+      else { if (trait in discCounts) discCounts[trait]++; else if (trait in commCounts) commCounts[trait]++ }
+    })
+    const discDom = Object.entries(discCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '?'
+    const commDom = Object.entries(commCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '?'
+    return { discCounts, commCounts, discDominant: discDom, commDominant: commDom }
+  }
+  const myDiscProfile = computeProfile(userId)
+  const theirDiscProfile = computeProfile(opponentId)
+
+  // --- Compatibility Computation ---
+  const DISC_PAIRS: Record<string, Record<string, { label: string; base: number; emoji: string }>> = {
+    D: { D: { label: 'Perlu Usaha', base: 35, emoji: '🔥' }, I: { label: 'Saling Melengkapi', base: 65, emoji: '🔄' }, S: { label: 'Perlu Usaha', base: 35, emoji: '🔥' }, C: { label: 'Saling Melengkapi', base: 65, emoji: '🔄' } },
+    I: { D: { label: 'Saling Melengkapi', base: 65, emoji: '🔄' }, I: { label: 'Satu Frekuensi', base: 85, emoji: '🎯' }, S: { label: 'Saling Melengkapi', base: 65, emoji: '🔄' }, C: { label: 'Perlu Usaha', base: 35, emoji: '🔥' } },
+    S: { D: { label: 'Perlu Usaha', base: 35, emoji: '🔥' }, I: { label: 'Saling Melengkapi', base: 65, emoji: '🔄' }, S: { label: 'Satu Frekuensi', base: 85, emoji: '🎯' }, C: { label: 'Satu Frekuensi', base: 75, emoji: '🎯' } },
+    C: { D: { label: 'Saling Melengkapi', base: 65, emoji: '🔄' }, I: { label: 'Perlu Usaha', base: 35, emoji: '🔥' }, S: { label: 'Satu Frekuensi', base: 75, emoji: '🎯' }, C: { label: 'Perlu Usaha', base: 35, emoji: '🔥' } },
+  }
+  const discPair = DISC_PAIRS[myDiscProfile.discDominant]?.[theirDiscProfile.discDominant]
+  let compatLabel = discPair?.label ?? 'Saling Melengkapi'
+  let compatEmoji = discPair?.emoji ?? '🔄'
+  let compatScore = discPair?.base ?? 60
+
+  // Communication modifier
+  if (myDiscProfile.commDominant === theirDiscProfile.commDominant) {
+    compatScore = Math.min(95, compatScore + 15)
+    if (compatScore >= 80) { compatLabel = 'Satu Frekuensi'; compatEmoji = '🎯' }
+    else if (compatScore >= 55) { compatLabel = 'Saling Melengkapi'; compatEmoji = '🔄' }
+  } else if ((myDiscProfile.commDominant === 'Langsung' && theirDiscProfile.commDominant === 'Empatik') || (myDiscProfile.commDominant === 'Empatik' && theirDiscProfile.commDominant === 'Langsung')) {
+    compatScore = Math.max(20, compatScore - 15)
+    if (compatScore < 45) { compatLabel = 'Perlu Usaha'; compatEmoji = '🔥' }
+  }
+
+  const compatibility = compatScore
+  const compatibilityLabel = `${compatEmoji} ${compatLabel}`
+
+  const DISC_DESC: Record<string, string> = {
+    D: 'tegas, gas pol, ambil keputusan cepet, dan nggak suka basa-basi',
+    I: 'sosial, antusias, sumber keseruan, dan gampang nyambung sama siapa aja',
+    S: 'sabar, setia, pendengar yang baik, dan selalu ada buat orang lain',
+    C: 'teliti, analitis, suka data & fakta, dan punya standar tinggi',
+  }
+  const COMM_DESC: Record<string, string> = {
+    Langsung: 'blak-blakan, to the point, nggak muter-muter',
+    Empatik: 'dengerin dulu, jaga perasaan, penuh pertimbangan',
+    Ekspresif: 'antusias, cerita pakai emosi, gestur lebar',
+    Tenang: 'pendiam, mikir dulu baru ngomong, secukupnya aja',
+  }
+  const PAIR_ADVICE: Record<string, string> = {
+    'D_D': 'Kalian berdua sama-sama gas pol dan blak-blakan. Kekuatannya: kalau satu visi, kalian tim paling efisien — nggak ada waktu kebuang buat basa-basi. Risikonya: bisa tabrakan kalau beda arah. Kuncinya: bagi wilayah. Siapa pegang kendali di situasi apa.',
+    'D_I': 'Kamu bawa arah dan ketegasan, lawanmu bawa energi dan koneksi sosial. Kamu yang mulai, dia yang bikin semuanya lebih hidup. Kuncinya: hargai gayanya yang santai — itu yang bikin kamu nggak terlalu kaku.',
+    'D_S': 'Kamu gas, lawanmu rem. Kamu buru-buru, dia santai. Ini bisa bikin kamu frustrasi. Tapi justru lawanmu adalah penyeimbang terbaikmu — dia yang memastikan nggak ada yang terlewat. Kuncinya: sabar. Dia nggak lambat, dia teliti.',
+    'D_C': 'Kamu fokus ke hasil, lawanmu fokus ke proses. Kamu gambar besarnya, dia urusin detailnya. Kombinasi ideal untuk eksekusi — selama kamu nggak ngegas dia yang lagi mikir. Kuncinya: kasih dia waktu analisis.',
+    'I_I': 'Dua sumber energi bertemu! Kalian sama-sama sosial dan ekspresif. Seru banget, tapi kadang rebutan panggung. Kuncinya: ingat buat jadi pendengar juga. Lawanmu juga punya cerita.',
+    'I_S': 'Kamu pembicara, lawanmu pendengar. Alami banget — kamu ngalir, dia menikmati. Lawanmu bikin kamu merasa didengerin. Kuncinya: jangan dominasi. Tanya pendapatnya juga.',
+    'I_C': 'Kamu spontan dan ekspresif, lawanmu terstruktur dan analitis. Kamu mungkin ngerasa dia kaku, dia mungkin ngerasa kamu impulsif. Tapi justru kalian bisa belajar banyak: dia belajar fleksibel, kamu belajar terencana.',
+    'S_S': 'Dua penenang. Harmonis, damai, dan saling ngerti. Jarang konflik karena kalian sama-sama menghindarinya. Kuncinya: jangan stuck di zona nyaman. Kadang perlu ada yang mulai duluan.',
+    'S_C': 'Kalian sama-sama telaten dan hati-hati. Nyambung di ritme — nggak ada yang ngegas, semua terencana. Kuncinya: kadang perlu sedikit spontanitas biar nggak monoton.',
+    'C_C': 'Dua analis. Kalian sama-sama teliti dan suka data. Diskusinya dalam dan berbobot. Tapi bisa overthinking bareng. Kuncinya: kadang keputusan cukup diambil, nggak perlu dianalisis terus.',
+  }
+
+  const pairKey = `${myDiscProfile.discDominant}_${theirDiscProfile.discDominant}`
+  const pairKeyRev = `${theirDiscProfile.discDominant}_${myDiscProfile.discDominant}`
+  const advice = PAIR_ADVICE[pairKey] ?? PAIR_ADVICE[pairKeyRev] ?? ''
+
+  const DISC_LABEL: Record<string, string> = { D: 'Dominan', I: 'Influence', S: 'Steadiness', C: 'Conscientiousness' }
+  const compatibilityInsight = `${myName || 'Kamu'} tipe ${DISC_LABEL[myDiscProfile.discDominant] ?? myDiscProfile.discDominant} — ${DISC_DESC[myDiscProfile.discDominant] ?? ''}. Cara ngomongmu ${myDiscProfile.commDominant} — ${COMM_DESC[myDiscProfile.commDominant] ?? ''}.
+
+${opponentName || 'Lawan'} tipe ${DISC_LABEL[theirDiscProfile.discDominant] ?? theirDiscProfile.discDominant} — ${DISC_DESC[theirDiscProfile.discDominant] ?? ''}. Cara ngomongnya ${theirDiscProfile.commDominant} — ${COMM_DESC[theirDiscProfile.commDominant] ?? ''}.
+
+${advice}`
 
   // --- Data Sync ---
   const syncFullState = useCallback(async () => {
@@ -163,7 +272,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
             newRoundIds.push(r.id)
           }
         })
-        if (newRoundIds.length === 0) { setSyncFailed(false); return true }
+        if (newRoundIds.length === 0) { setSyncFailed(false); setSyncTick(t => t + 1); return true }
 
         const { data: qData, error: qErr } = await sb
           .from('tebak_questions')
@@ -190,6 +299,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
           }
         }
         setSyncFailed(false)
+        setSyncTick(t => t + 1)
         return true
       } catch {
       }
@@ -209,6 +319,49 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
       doSyncNewRound(3)
     }
   }, [gameSession.current_round, doSyncNewRound])
+
+  // Panduan: tampilkan overlay info saat masuk ronde baru (R1-3)
+  useEffect(() => {
+    const r = gameSession.current_round
+    if (r < 1 || r > 3) return
+    if (panduanShownRef.current.has(r)) return
+    if (isLoading) return
+    panduanShownRef.current.add(r)
+    setShowPanduan(true)
+  }, [gameSession.current_round, isLoading])
+
+  // DiscProfileReveal: tampilkan profil DISC saat masuk R3 (setelah R2 selesai)
+  useEffect(() => {
+    if (isLoading) return
+    if (gameSession.current_round !== 3) return
+    if (profileRevealShownRef.current) return
+    profileRevealShownRef.current = true
+    setShowProfileReveal(true)
+  }, [gameSession.current_round, isLoading])
+
+  // MatchIntro auto-dismiss: kedua siap ATAU countdown 20s habis
+  useEffect(() => {
+    if (showIntro && bothReady) {
+      resetReadyFlags(sessionId)
+      setShowIntro(false)
+    }
+  }, [showIntro, bothReady, sessionId])
+
+  useEffect(() => {
+    if (!showIntro || !gameSession.created_at) return
+    const deadline = new Date(gameSession.created_at).getTime() + 8000
+    let fired = false
+    const check = () => {
+      if (Date.now() >= deadline && !fired) {
+        fired = true
+        resetReadyFlags(sessionId)
+        setShowIntro(false)
+      }
+    }
+    check()
+    const t = setInterval(check, 500)
+    return () => clearInterval(t)
+  }, [showIntro, gameSession.created_at, sessionId])
 
   // Watchdog: jika isLoading > 5s & roundOfRef belum punya round ini → retry
   useEffect(() => {
@@ -253,11 +406,12 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   }, [currentQ, play])
 
   useEffect(() => {
+    if (showIntro || showPanduan) return
     if (!currentQ || currentQ.subject_deadline) return
     if (currentQ.status === 'subject_answering' || currentQ.status === 'both_answering') {
       startQuestionTimer(sessionId, currentQ.sequence_number)
     }
-  }, [currentQ, sessionId])
+  }, [currentQ, sessionId, showIntro, showPanduan])
   
   useEffect(() => {
     if (!opponentIsBot || !currentQ || botThinking || !supabase) return
@@ -325,6 +479,8 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   // Reconcile: re-fetch full state + reset flags — dipanggil handleAdvance gagal & window online
   const reconcileGameState = useCallback(async () => {
     if (!supabase) return
+    if (reconcilingRef.current) return
+    reconcilingRef.current = true
     try {
       const { data: sessionData } = await supabase.from('tebak_sessions').select('*').eq('id', sessionId).single()
       if (sessionData) setGameSession(sessionData as TebakSession)
@@ -351,6 +507,8 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
         }
       }
     } catch {
+    } finally {
+      reconcilingRef.current = false
     }
   }, [sessionId])
 
@@ -423,8 +581,33 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     return () => clearInterval(interval)
   }, [])
 
+  // Health-check polling — jaring pengaman independen dari realtime (WebSocket bisa putus)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.hidden) return
+      const gs = gameSessionRef.current
+      if (gs.status === 'finished' || gs.status === 'waiting') return
+      if (!supabase) return
+
+      supabase.from('tebak_sessions')
+        .select('current_round, current_q_seq, advance_at, status')
+        .eq('id', sessionId)
+        .single()
+        .then(({ data }) => {
+          if (!data) return
+          const current = gameSessionRef.current
+          if (data.current_round !== current.current_round ||
+              data.current_q_seq !== current.current_q_seq ||
+              data.status !== current.status ||
+              data.advance_at !== current.advance_at) {
+            reconcileGameState()
+          }
+        })
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [sessionId])
+
   // --- UI Computations ---
-  const compatibility = 0; // Placeholder
   const myDots = questions.map(q => {
     if (roundTypeRef.current[q.round_id] === 'disc') {
       return answers.find(a => a.question_id === q.id && a.guesser_id === userId) ? true : null
@@ -463,13 +646,15 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   return (
     <div className="min-h-screen bg-bg flex flex-col">
       <div className="bg-surface border-b border-border">
-        <ScoreBoard scoreA={gameSession.score_a} scoreB={gameSession.score_b} round={gameSession.current_round} isPlayerA={isPlayerA} myName={myName} opponentName={opponentName} myDots={myDots} theirDots={theirDots} />
+        <ScoreBoard scoreA={gameSession.score_a} scoreB={gameSession.score_b} round={gameSession.current_round} isPlayerA={isPlayerA} myName={myName} opponentName={opponentName} myDots={myDots} theirDots={theirDots} isDiscRound={scoreboardIsDisc} discProgress={discProgress} discTotal={discTotal} />
       </div>
 
-      {showIntro ? <MatchIntro myName={myName} opponentName={opponentName} onBegin={() => setShowIntro(false)} />
-      : isFinished ? <WinnerScreen session={gameSession} isPlayerA={isPlayerA} userId={userId} opponentId={opponentId} opponentName={opponentName} myName={myName} compatibility={compatibility} onHome={() => router.push('/')} />
-      : isShowingRoundResult && gameSession.advance_at ? <RoundResultScreen session={gameSession} round={gameSession.current_round} answers={answers} questions={questions} isPlayerA={isPlayerA} myName={myName} opponentName={opponentIsBot ? null : opponentName} deadline={gameSession.advance_at} onAdvance={handleAdvance} />
-      : isShowingJeda && gameSession.advance_at && revealedQ ? <JedaScreen deadline={gameSession.advance_at} resultType={resultType} subjectName={isSubject ? myName : (opponentIsBot ? null : opponentName)} guesserName={isSubject ? (opponentIsBot ? null : opponentName) : myName} correctAnswer={revealedQ.correct_answer ?? ''} myScore={isPlayerA ? gameSession.score_a : gameSession.score_b} theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a} isLastQuestion={revealedQ.sequence_number === 5} isLastRound={gameSession.current_round === 4} onAdvance={handleAdvance} />
+      {showIntro ? <MatchIntro myName={myName} opponentName={opponentName} onBegin={() => setShowIntro(false)} deadline={gameSession.created_at ? new Date(new Date(gameSession.created_at).getTime() + 8000).toISOString() : undefined} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={opponentReady} sessionId={sessionId} />
+      : showProfileReveal ? <DiscProfileReveal myProfile={myDiscProfile} theirProfile={theirDiscProfile} myName={myName} opponentName={opponentName} deadline={gameSession.advance_at ?? new Date(Date.now() + 20000).toISOString()} onAdvance={() => setShowProfileReveal(false)} />
+      : showPanduan && !isFinished ? <PanduanOverlay round={gameSession.current_round} onMulai={() => setShowPanduan(false)} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={!!opponentReady} iAmReady={!!iAmReady} sessionId={sessionId} />
+      : isFinished ? <WinnerScreen session={gameSession} isPlayerA={isPlayerA} userId={userId} opponentId={opponentId} opponentName={opponentName} myName={myName} compatibility={compatibility} compatibilityLabel={compatibilityLabel} compatibilityInsight={compatibilityInsight} onHome={() => router.push('/')} />
+      : isShowingRoundResult && gameSession.advance_at ? <RoundResultScreen session={gameSession} round={gameSession.current_round} answers={answers} questions={questions} isPlayerA={isPlayerA} myName={myName} opponentName={opponentIsBot ? null : opponentName} deadline={gameSession.advance_at} onAdvance={handleAdvance} isDiscRound={isDiscRound} />
+      : isShowingJeda && gameSession.advance_at && revealedQ ? <JedaScreen deadline={gameSession.advance_at} resultType={resultType} subjectName={isSubject ? myName : (opponentIsBot ? null : opponentName)} guesserName={isSubject ? (opponentIsBot ? null : opponentName) : myName} correctAnswer={revealedQ.correct_answer ?? ''} myScore={isPlayerA ? gameSession.score_a : gameSession.score_b} theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a} isLastQuestion={scoreboardIsDisc ? revealedQ.sequence_number === 5 : revealedQ.sequence_number === 5} isLastRound={gameSession.current_round === 4} onAdvance={handleAdvance} isDiscRound={isDiscRound} opponentName={opponentIsBot ? null : opponentName} myDiscAnswer={answers.find(a => a.question_id === revealedQ!.id && a.guesser_id === userId)?.answer ?? null} theirDiscAnswer={answers.find(a => a.question_id === revealedQ!.id && a.guesser_id === opponentId)?.answer ?? null} sessionId={sessionId} />
       : displayQ ? (
           <div className="flex-1 flex flex-col px-4 py-4 bg-primary text-primary-foreground">
             <div className="bg-primary/20 rounded-2xl border border-primary/50 shadow-xl overflow-hidden relative">
@@ -477,7 +662,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
               <div className="p-6 relative z-10 min-h-[420px] flex flex-col">
                 <div className="flex-1">
                   <div className="text-center mb-4 space-y-2">
-                    <span className="inline-block px-3 py-1 rounded-full bg-accent/20 text-accent text-base font-medium">Pertanyaan {displayQ.sequence_number}/5</span>
+                    <span className="inline-block px-3 py-1 rounded-full bg-accent/20 text-accent text-base font-medium">Pertanyaan {displayQ.sequence_number}/{scoreboardIsDisc ? 10 : 5}</span>
                     {roleLabel && <div className="flex items-center justify-center gap-1.5 text-lg font-bold text-accent"><span>{roleLabel.icon}</span><span>{roleLabel.text}</span></div>}
                   </div>
                   <h2 className="text-2xl font-bold text-primary-foreground text-center mb-6 leading-relaxed">{questionText}</h2>
@@ -540,7 +725,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
                   </div>
                   {displayQ.status === "subject_answering" && displayQ.subject_deadline && <div className="mb-4"><DigitalClock deadline={displayQ.subject_deadline} onTimeout={handleSubjectTimeout} label={isSubject ? "Jawab sebelum waktu habis" : "Menunggu lawan menjawab"} isUrgent={!!isSubject} /></div>}
                   {displayQ.status === "guesser_guessing" && displayQ.guesser_deadline && <div className="mb-4">{isSubject ? <DigitalClock deadline={displayQ.guesser_deadline} onTimeout={() => {}} label="Menunggu lawan menebak" /> : <Timer deadline={displayQ.guesser_deadline} onTimeout={handleGuesserTimeout} />}</div>}
-                  {displayQ.status === "both_answering" && displayQ.subject_deadline && <div className="mb-4"><DigitalClock deadline={displayQ.subject_deadline} onTimeout={() => {}} label="Jawab sebelum waktu habis" isUrgent={true} /></div>}
+                  {displayQ.status === "both_answering" && displayQ.subject_deadline && <div className="mb-4"><DigitalClock deadline={displayQ.subject_deadline} onTimeout={() => reconcileGameState()} label="Jawab sebelum waktu habis" isUrgent={true} /></div>}
                   {tension && !revealedQ && (
                     <div className="flex items-center justify-center gap-2 py-2">
                       <Loader2 className="w-4 h-4 text-accent animate-spin" />

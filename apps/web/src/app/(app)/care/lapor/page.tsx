@@ -57,11 +57,11 @@ export default function LaporPage() {
             onClick={() => step > 1
               ? setStep(step-1) : router.back()}
             style={{ background: 'none', border: 'none',
-              color: '#FFFFFF', cursor: 'pointer',
+              color: '#1E2938', cursor: 'pointer',
               fontSize: 20, padding: 0 }}>←</button>
           <div style={{ flex: 1 }}>
             <h1 style={{ fontFamily: 'Poppins', fontSize: 16,
-              fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
+              fontWeight: 700, color: '#1E2938', margin: 0 }}>
               Laporkan Masalah
             </h1>
             <p style={{ fontFamily: 'Inter', fontSize: 11,
@@ -164,7 +164,7 @@ export default function LaporPage() {
                 }}>
                   <div style={{
                     width: 28, height: 28, borderRadius: '50%',
-                    background: '#084463', color: '#FFFFFF',
+                    background: '#084463', color: '#1E2938',
                     display: 'flex', alignItems: 'center',
                     justifyContent: 'center',
                     fontFamily: 'Poppins', fontSize: 12,
@@ -178,7 +178,7 @@ export default function LaporPage() {
             </div>
             <button onClick={() => setStep(3)} style={{
               width: '100%', background: '#084463',
-              color: '#FFFFFF', border: 'none',
+              color: '#1E2938', border: 'none',
               borderRadius: 14, padding: '14px',
               fontFamily: 'Poppins', fontSize: 15,
               fontWeight: 700, cursor: 'pointer',
@@ -258,7 +258,7 @@ export default function LaporPage() {
               setStep(4);
             }} style={{
               width: '100%', background: '#084463',
-              color: '#FFFFFF', border: 'none',
+              color: '#1E2938', border: 'none',
               borderRadius: 14, padding: '14px',
               fontFamily: 'Poppins', fontSize: 15,
               fontWeight: 700, cursor: 'pointer',
@@ -452,7 +452,7 @@ export default function LaporPage() {
                       border: 'none', borderRadius: 10,
                       padding: '10px', fontFamily: 'Inter',
                       fontSize: 12, fontWeight: 600,
-                      color: '#FFFFFF', cursor: 'pointer',
+                      color: '#1E2938', cursor: 'pointer',
                     }}>Buka Email App</button>
                   </div>
                 </div>

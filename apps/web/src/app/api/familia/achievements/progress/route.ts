@@ -20,15 +20,19 @@ export async function GET() {
       .order("created_at");
 
     if (rewError) {
-      console.error("GET /api/familia/achievements/progress:", rewError);
+      // console.error("GET /api/familia/achievements/progress:", rewError);
       return NextResponse.json({ error: "Failed to fetch achievements" }, { status: 500 });
     }
 
     // fetch user's progress for these achievements
-    const { data: userProgress } = await supabase
+    const { data: userProgress, error: progErr } = await supabase
       .from("familia_user_achievements")
       .select("*")
       .eq("user_id", user.id);
+
+    if (progErr) {
+      return NextResponse.json({ error: "Failed to fetch progress" }, { status: 500 });
+    }
 
     const progressMap = new Map(
       (userProgress || []).map((up) => [up.achievement_id, up])
@@ -48,7 +52,7 @@ export async function GET() {
 
     return NextResponse.json({ data: merged });
   } catch (error) {
-    console.error("GET /api/familia/achievements/progress:", error);
+    // console.error("GET /api/familia/achievements/progress:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing trigger_type" }, { status: 400 });
     }
 
-    const validTriggers = ["discovery_complete", "mentor_program"];
+    const validTriggers = ["discovery_complete", "mentor_program", "roadmap_milestones", "circle_days", "journal_entries", "story_posted"];
     if (!validTriggers.includes(trigger_type)) {
       return NextResponse.json({ error: "Invalid trigger_type" }, { status: 400 });
     }
@@ -83,13 +87,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (rpcError) {
-      console.error("POST /api/familia/achievements/progress:", rpcError);
+      // console.error("POST /api/familia/achievements/progress:", rpcError);
       return NextResponse.json({ error: "Failed to update progress" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("POST /api/familia/achievements/progress:", error);
+    // console.error("POST /api/familia/achievements/progress:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -59,7 +59,8 @@ export default function MimpiPreviewPage() {
         window.location.href = "/journey";
       } else {
         // Already authenticated → just go to journey
-        router.push("/journey?mimpi=" + slug);
+        localStorage.setItem("pending_template", slug);
+        router.push("/journey");
       }
     } catch (err: any) {
       setError(err?.message || "Gagal memulai. Coba lagi.");

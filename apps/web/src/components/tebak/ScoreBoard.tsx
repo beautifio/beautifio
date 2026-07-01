@@ -9,6 +9,9 @@ type Props = {
   opponentName?: string | null
   myDots?: (boolean | null)[]
   theirDots?: (boolean | null)[]
+  isDiscRound?: boolean
+  discProgress?: number
+  discTotal?: number
 }
 
 function Dot({ value }: { value: boolean | null }) {
@@ -24,14 +27,14 @@ function Dot({ value }: { value: boolean | null }) {
   )
 }
 
-export function ScoreBoard({ scoreA, scoreB, round, isPlayerA, myName, opponentName, myDots = [], theirDots = [] }: Props) {
+export function ScoreBoard({ scoreA, scoreB, round, isPlayerA, myName, opponentName, myDots = [], theirDots = [], isDiscRound = false, discProgress = 0, discTotal = 0 }: Props) {
   const myScore = isPlayerA ? scoreA : scoreB
   const theirScore = isPlayerA ? scoreB : scoreA
 
   return (
     <div className="bg-[#0B1120] px-4 py-3">
       <div className="max-w-md mx-auto">
-        {/* Top row: names + score */}
+        {/* Top row: names + score / progress */}
         <div className="flex items-stretch gap-0 mb-2">
           {/* My side */}
           <div className="flex-1 flex flex-col justify-center items-end pr-3 min-w-0">
@@ -45,22 +48,39 @@ export function ScoreBoard({ scoreA, scoreB, round, isPlayerA, myName, opponentN
             )}
           </div>
 
-          {/* Score */}
-          <div className="flex items-center gap-2.5">
-            <span className="text-2xl font-bold font-mono tabular-nums text-white">
-              {String(myScore).padStart(2, "0")}
-            </span>
+          {/* Score or Progress */}
+          {isDiscRound ? (
             <div className="flex flex-col items-center gap-0.5">
-              <div className="w-1 h-1 rounded-full bg-white/30" />
+              <span className="text-xs font-bold text-accent">
+                Profil {discProgress}/{discTotal}
+              </span>
+              <div className="w-16 h-1 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-accent transition-all duration-500"
+                  style={{ width: `${discTotal > 0 ? (discProgress / discTotal) * 100 : 0}%` }}
+                />
+              </div>
               <span className="text-[9px] font-semibold tracking-widest uppercase text-white/40">
                 R{round}/4
               </span>
-              <div className="w-1 h-1 rounded-full bg-white/30" />
             </div>
-            <span className="text-2xl font-bold font-mono tabular-nums text-white/70">
-              {String(theirScore).padStart(2, "0")}
-            </span>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl font-bold font-mono tabular-nums text-white">
+                {String(myScore).padStart(2, "0")}
+              </span>
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="w-1 h-1 rounded-full bg-white/30" />
+                <span className="text-[9px] font-semibold tracking-widest uppercase text-white/40">
+                  R{round}/4
+                </span>
+                <div className="w-1 h-1 rounded-full bg-white/30" />
+              </div>
+              <span className="text-2xl font-bold font-mono tabular-nums text-white/70">
+                {String(theirScore).padStart(2, "0")}
+              </span>
+            </div>
+          )}
 
           {/* Their side */}
           <div className="flex-1 flex flex-col justify-center items-start pl-3 min-w-0">
@@ -70,7 +90,7 @@ export function ScoreBoard({ scoreA, scoreB, round, isPlayerA, myName, opponentN
           </div>
         </div>
 
-        {/* Bottom row: penalty dots */}
+        {/* Bottom row: dots */}
         <div className="flex items-center gap-0">
           <div className="flex-1 flex justify-end pr-3 gap-[3px]">
             {myDots.map((d, i) => <Dot key={i} value={d} />)}

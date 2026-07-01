@@ -60,6 +60,17 @@ export async function PUT(
         is_active: body.is_active,
         logo_url: body.logo_url,
         cover_url: body.cover_url,
+        max_per_user: body.max_per_user,
+        claim_start: body.claim_start,
+        claim_end: body.claim_end,
+        redeem_hours: body.redeem_hours,
+        redeem_minutes: body.redeem_minutes,
+        code_prefix: body.code_prefix,
+        city: body.city,
+        free_product_name: body.free_product_name,
+        discount_value: body.discount_value,
+        promo_buy: body.promo_buy,
+        promo_get: body.promo_get,
       })
       .eq("id", id)
       .select()

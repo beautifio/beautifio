@@ -31,6 +31,7 @@ export {
   FAMILIA_MERCHANTS, FAMILIA_AFFILIATE_DEALS,
   FAMILIA_ACHIEVEMENT_REWARDS,
   VOUCHER_TYPE_LABELS, VOUCHER_TYPE_EMOJIS, FAMILIA_CATEGORIES,
+  getVoucherDetailLabel, getVoucherDetailBrief,
 } from "./familia-seed";
 
 export {

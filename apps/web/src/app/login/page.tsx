@@ -233,6 +233,7 @@ export default function LoginPage({
                   className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
                 />
                 <span className="text-xs text-text-secondary">Ingat saya</span>
+              <Link href="/forgot-password" className="text-xs font-medium cursor-pointer" style={{ color: "#6BB9D4" }}>Lupa Password?</Link>
               </label>
             </div>
 

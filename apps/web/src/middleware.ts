@@ -6,6 +6,8 @@ const PUBLIC_ROUTES = [
   "/home",
   "/login",
   "/register",
+  "/forgot-password",
+  "/reset-password",
   "/mimpi",
   "/journey",
   "/inspirasi",
@@ -13,6 +15,7 @@ const PUBLIC_ROUTES = [
   "/profil",
   "/auth/callback",
   "/trial-expired",
+  "/laporkan",
 ];
 
 const ANONYMOUS_BLOCKED = [
@@ -156,7 +159,11 @@ export async function middleware(request: NextRequest) {
         .select("role")
         .eq("id", user.id)
         .single();
-      if (!profile || !["admin", "superadmin", "redaksi"].includes(profile.role)) {
+      const isCareRoute = pathname === "/admin/care" || pathname.startsWith("/admin/care/");
+      const allowedRoles = isCareRoute
+        ? ["admin", "superadmin", "redaksi", "care_volunteer"]
+        : ["admin", "superadmin", "redaksi"];
+      if (!profile || !allowedRoles.includes(profile.role)) {
         const url = request.nextUrl.clone();
         url.pathname = "/";
         return NextResponse.redirect(url);
@@ -166,6 +173,17 @@ export async function middleware(request: NextRequest) {
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
+  }
+
+  // Mitra routes → require psychologist role
+  const isMitraRoute = pathname === "/mitra" || pathname.startsWith("/mitra/");
+  if (isMitraRoute) {
+    const url = request.nextUrl.clone();
+    if (!isAuth || isAnonymous) { url.pathname = "/login"; return NextResponse.redirect(url); }
+    try {
+      const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+      if (!profile || profile.role !== "psychologist") { url.pathname = "/"; return NextResponse.redirect(url); }
+    } catch { url.pathname = "/login"; return NextResponse.redirect(url); }
   }
 
   // Authenticated on landing or auth pages → redirect based on role
@@ -193,11 +211,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect deprecated pages to new Journey system
+  // Redirect deprecated pages to new Journey system (non-anon auth only)
   const deprecatedMatch = Object.entries(deprecatedPages).find(
-    ([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    ([oldPath]) => pathname === oldPath || pathname.startsWith(oldPath + "/")
   );
-  if (isAuth && deprecatedMatch) {
+  if (isAuth && !isAnonymous && deprecatedMatch) {
     const url = request.nextUrl.clone();
     url.pathname = deprecatedMatch[1];
     return NextResponse.redirect(url);

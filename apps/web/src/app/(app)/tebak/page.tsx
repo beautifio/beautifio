@@ -1,23 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Users, HelpCircle, ArrowRight, Loader2, Check, X, Trophy } from "lucide-react"
+import { Users, HelpCircle, ArrowRight, Loader2, Check, X, Trophy, Crown } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { joinTebakQueue } from "@/lib/tebak/actions"
 
 export default function TebakPage() {
   const router = useRouter()
   const { user, isLoading } = useAuth()
+
+  useEffect(() => {
+    if (!isLoading && !user) router.replace("/login");
+  }, [user, isLoading, router]);
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState("")
+  const [limitMsg, setLimitMsg] = useState<{ max: number } | null>(null)
 
   const handleStart = async () => {
     setJoining(true)
     setError("")
+    setLimitMsg(null)
     try {
-      const { sessionId } = await joinTebakQueue()
-      router.push(`/tebak/${sessionId}`)
+      const result = await joinTebakQueue()
+      if (result.limitReached) {
+        setLimitMsg({ max: result.maxPerDay || 0 })
+        setJoining(false)
+        return
+      }
+      router.push(`/tebak/${result.sessionId}`)
     } catch (e) {
       setError("Gagal bergabung. Coba lagi.")
       setJoining(false)
@@ -37,7 +48,7 @@ export default function TebakPage() {
       <div className="bg-surface border-b border-border">
         <div className="max-w-content mx-auto px-4 py-4">
           <h1 className="text-xl font-bold text-text-primary">Tebak Aku</h1>
-          <p className="text-xs text-text-secondary mt-0.5">Seberapa kenal kamu dengan lawan bicaramu?</p>
+          <p className="text-xs text-text-secondary mt-0.5">Kenali kepribadianmu & lawan bicaramu</p>
         </div>
       </div>
 
@@ -48,10 +59,10 @@ export default function TebakPage() {
             <Users size={48} className="text-primary" />
           </div>
           <h2 className="text-lg font-bold text-text-primary text-center mb-2">
-            Seru-seruan tebak-tebakan!
+            4 Ronde Seru, 1 Profil Kepribadian
           </h2>
           <p className="text-sm text-text-secondary text-center max-w-xs">
-            Setiap pemain menjawab 5 pertanyaan tentang diri mereka, lalu lawan harus menebak jawabannya.
+            Jawab pertanyaan tentang dirimu, tebak kepribadian lawan, lalu lihat kecocokan untuk jadi teman ngobrol.
           </p>
         </div>
 
@@ -60,11 +71,11 @@ export default function TebakPage() {
           <h3 className="text-sm font-semibold text-text-primary">Cara bermain:</h3>
           <div className="space-y-2.5">
             {[
-              "Setiap pemain mendapat giliran jadi subjek",
-              "Subjek menjawab 5 pertanyaan tentang dirinya",
-              "Lawan menebak jawaban subjek dalam 15 detik",
-              "Tebakan benar = 10 poin",
-              "Poin tertinggi menang!",
+              "Ronde 1 — Jawab 10 pertanyaan DISC tentang dirimu (serentak dengan lawan)",
+              "Ronde 2 — Jawab 10 pertanyaan gaya komunikasimu (serentak dengan lawan)",
+              "Ronde 3 & 4 — Giliran tebak jawaban lawan dalam 15 detik, benar = 10 poin",
+              "Lihat Profil Kepribadian DISC kamu & lawan (Dominan / Influence / Steadiness / Conscientious)",
+              "Cek skor kecocokan kalian & lanjut ngobrol di Bisik!",
             ].map((rule, i) => (
               <div key={i} className="flex items-start gap-3">
                 <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
@@ -79,6 +90,18 @@ export default function TebakPage() {
         {error && (
           <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600">
             {error}
+          </div>
+        )}
+
+        {limitMsg && (
+          <div className="p-4 rounded-xl border text-center" style={{ background: "#F8FAFC", borderColor: "#FFC64F" }}>
+            <Crown size={20} className="mx-auto mb-2" style={{ color: "#FFC64F" }} />
+            <p className="text-sm font-semibold" style={{ color: "#1E2938" }}>Batas harian tercapai</p>
+            <p className="text-xs mt-1" style={{ color: "#647488" }}>Kamu sudah main {limitMsg.max}x hari ini. Upgrade untuk main lebih banyak.</p>
+            <button onClick={() => router.push("/bisik/upgrade")}
+              className="mt-3 px-6 py-2 rounded-xl text-xs font-bold cursor-pointer" style={{ background: "#FFC64F", color: "#084463" }}>
+              Upgrade Sekarang
+            </button>
           </div>
         )}
 

@@ -13,6 +13,8 @@ interface UploadWithPreviewProps {
   hint?: string;
   specs?: string[];
   bucketName?: string;
+  minWidth?: number;
+  minHeight?: number;
   onUploadSuccess: (url: string, file: File | Blob) => void;
   onUploadError?: (msg: string) => void;
 }
@@ -30,6 +32,8 @@ export function UploadWithPreview({
   hint,
   specs,
   bucketName = "landing-assets",
+  minWidth,
+  minHeight,
   onUploadSuccess,
   onUploadError,
 }: UploadWithPreviewProps) {
@@ -75,6 +79,36 @@ export function UploadWithPreview({
       setState("error");
       setFile(null);
       setPreviewUrl("");
+      return;
+    }
+    // Validate min dimensions if set
+    if (minWidth || minHeight) {
+      const url = URL.createObjectURL(f);
+      const img = new Image();
+      img.onload = () => {
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        if ((minWidth && w < minWidth) || (minHeight && h < minHeight)) {
+          setErrorMsg(`Ukuran gambar terlalu kecil (${w}×${h}px). Minimal ${minWidth || "?"}×${minHeight || "?"}px.`);
+          setState("error");
+          setFile(null);
+          setPreviewUrl("");
+          URL.revokeObjectURL(url);
+          return;
+        }
+        URL.revokeObjectURL(url);
+        setFile(f);
+        setErrorMsg("");
+        setPreviewUrl(URL.createObjectURL(f));
+        setShowCrop(true);
+        setState("selected");
+      };
+      img.onerror = () => {
+        setErrorMsg("Gagal membaca file gambar.");
+        setState("error");
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
       return;
     }
     setFile(f);
@@ -278,39 +312,59 @@ function CropStep({
   onSkip: () => void;
 }) {
   const imgRef = useRef<HTMLImageElement>(null);
-  const [crop, setCrop] = useState<Crop>({
-    unit: "%",
-    x: 5,
-    y: 5,
-    width: 90,
-    height: 90,
+  const [crop, setCrop] = useState<Crop>(() => {
+    // default: center crop covering 80% of the image
+    return { unit: "%", x: 10, y: 10, width: 80, height: 80 }
   });
 
   async function handleConfirm() {
     const img = imgRef.current;
     if (!img || !crop.width || !crop.height) return;
 
-    const canvas = document.createElement("canvas");
-    const scaleX = img.naturalWidth / img.width;
-    const scaleY = img.naturalHeight / img.height;
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
 
-    canvas.width = Math.round(crop.width * scaleX);
-    canvas.height = Math.round(crop.height * scaleY);
+    // Convert crop to natural pixels — unit may be '%' or 'px'
+    let sx: number, sy: number, sw: number, sh: number;
+    if (crop.unit === '%') {
+      sx = Math.round((crop.x / 100) * nw);
+      sy = Math.round((crop.y / 100) * nh);
+      sw = Math.round((crop.width / 100) * nw);
+      sh = Math.round((crop.height / 100) * nh);
+    } else {
+      // pixel values are relative to the displayed image, scale to natural
+      const dw = img.width;   // CSS displayed width
+      const dh = img.height;  // CSS displayed height
+      const scaleX = dw > 0 ? nw / dw : 1;
+      const scaleY = dh > 0 ? nh / dh : 1;
+      sx = Math.round(crop.x * scaleX);
+      sy = Math.round(crop.y * scaleY);
+      sw = Math.round(crop.width * scaleX);
+      sh = Math.round(crop.height * scaleY);
+    }
+
+    // Enforce exact target aspect ratio (natural pixel percentages
+    // may drift from the target when the image has a different native ratio)
+    const targetRatio = aspectRatio;
+    const currentRatio = sw / sh;
+    if (currentRatio > targetRatio + 0.01) {
+      const newSw = Math.round(sh * targetRatio);
+      sx = Math.round(sx + (sw - newSw) / 2);
+      sw = newSw;
+    } else if (currentRatio < targetRatio - 0.01) {
+      const newSh = Math.round(sw / targetRatio);
+      sy = Math.round(sy + (sh - newSh) / 2);
+      sh = newSh;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = sw;
+    canvas.height = sh;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.drawImage(
-      img,
-      Math.round(crop.x * scaleX),
-      Math.round(crop.y * scaleY),
-      Math.round(crop.width * scaleX),
-      Math.round(crop.height * scaleY),
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.92)
@@ -321,7 +375,7 @@ function CropStep({
   return (
     <div>
       <p className="text-xs text-gray-500 mb-3">
-        Crop gambar sesuai area yang diinginkan, lalu klik Konfirmasi.
+        Seret kotak crop sesuai area yang diinginkan, lalu klik Konfirmasi.
       </p>
       <ReactCrop
         crop={crop}
@@ -330,7 +384,7 @@ function CropStep({
         className="max-w-full"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img ref={imgRef} src={imageUrl} alt="Crop preview" className="max-w-full max-h-[400px]" />
+        <img ref={imgRef} src={imageUrl} alt="Crop preview" className="max-w-full max-h-[600px]" style={{ display: "block" }} />
       </ReactCrop>
       <div className="flex gap-2 mt-3">
         <button

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
 
 interface CareMessage {
   id: string; session_id: string; sender_id: string | null;
@@ -23,7 +24,12 @@ export default function CareChatRoom() {
   const router = useRouter();
   const params = useParams();
   const sessionId = params.sessionId as string;
+  const { user, isLoading: authLoading } = useAuth();
   const [session, setSession] = useState<CareSession | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace("/login");
+  }, [user, authLoading, router]);
   const [schedule, setSchedule] = useState<CareSchedule | null>(null);
   const [messages, setMessages] = useState<CareMessage[]>([]);
   const [input, setInput] = useState('');
@@ -56,7 +62,7 @@ export default function CareChatRoom() {
         event: 'INSERT', schema: 'public',
         table: 'care_chat_messages',
         filter: `session_id=eq.${sessionId}`,
-      }, p => setMessages(prev => [...prev, p.new as CareMessage]))
+      }, p => setMessages(prev => prev.some(m => m.id === (p.new as CareMessage).id) ? prev : [...prev, p.new as CareMessage]))
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -70,7 +76,7 @@ export default function CareChatRoom() {
     if (!input.trim() || sending) return;
     setSending(true);
     const supabase = createClient();
-    if (!supabase) return;
+    if (!supabase) { setSending(false); return; }
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from('care_chat_messages').insert({
       session_id: sessionId,

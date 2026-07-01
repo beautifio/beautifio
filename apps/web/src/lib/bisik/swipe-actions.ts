@@ -40,6 +40,7 @@ export async function enterBisikQueue(
 export async function getDiscoverCards(
   userId: string,
   topicIds: string[],
+  opts?: { skipTopicFilter?: boolean },
 ): Promise<BisikCard[]> {
   const supabase = await createClient()
 
@@ -59,7 +60,7 @@ export async function getDiscoverCards(
     .order("created_at", { ascending: false })
     .limit(20)
 
-  if (topicIds.length > 0) {
+  if (!opts?.skipTopicFilter && topicIds.length > 0) {
     query = query.in("topic_id", topicIds)
   }
 
@@ -92,13 +93,15 @@ export async function getDiscoverCards(
 }
 
 export async function swipeLeft(
-  swiperId: string,
   cardId: string,
   cardOwnerId: string,
 ): Promise<void> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
+
   await supabase.from("bisik_swipes").insert({
-    swiper_id: swiperId,
+    swiper_id: user.id,
     card_id: cardId,
     card_owner_id: cardOwnerId,
     direction: "left",
@@ -106,18 +109,19 @@ export async function swipeLeft(
 }
 
 export async function swipeRight(
-  swiperId: string,
   card: BisikCard,
 ): Promise<{ error: string | null; maxAllowed?: number }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
 
   const { data: maxChats } = await supabase
-    .rpc("get_user_max_chats", { p_user_id: swiperId })
+    .rpc("get_user_max_chats", { p_user_id: user.id })
 
   const { count: activeCount } = await supabase
     .from("bisik_chats")
     .select("*", { count: "exact", head: true })
-    .or(`initiator_id.eq.${swiperId},receiver_id.eq.${swiperId}`)
+    .or(`initiator_id.eq.${user.id},receiver_id.eq.${user.id}`)
     .in("status", ["pending", "active"])
 
   if ((activeCount ?? 0) >= (maxChats ?? 5)) {
@@ -125,7 +129,7 @@ export async function swipeRight(
   }
 
   await supabase.from("bisik_swipes").insert({
-    swiper_id: swiperId,
+    swiper_id: user.id,
     card_id: card.id,
     card_owner_id: card.user_id,
     direction: "right",

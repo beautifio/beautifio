@@ -185,7 +185,7 @@ export interface JournalMilestone {
   created_at: string;
 }
 
-export type VoucherType = "free_drink" | "bogof" | "discount" | "free_addon" | "buy1get1";
+export type VoucherType = "free_drink" | "bogof" | "discount" | "free_addon" | "buy1get1" | "discount_pct" | "discount_nominal" | "free_product" | "bogo";
 export type DealPlatform = "tokopedia" | "shopee" | "tiktok" | "website";
 export type AchievementTrigger = "discovery_complete" | "roadmap_milestones" | "circle_days" | "mentor_program" | "journal_entries" | "story_posted";
 export type RewardType = "voucher" | "discount" | "special_benefit";
@@ -208,6 +208,19 @@ export interface FamiliaMerchant {
   total_vouchers: number;
   total_redeemed: number;
   total_expired: number;
+  max_per_user?: number;
+  claim_start?: string | null;
+  claim_end?: string | null;
+  redeem_hours?: number;
+  redeem_minutes?: number;
+  code_prefix?: string | null;
+  city?: string | null;
+  free_product_name?: string | null;
+  discount_type?: "pct" | "nominal" | null;
+  discount_value?: number | null;
+  promo_buy?: number | null;
+  promo_get?: number | null;
+  report_token?: string | null;
   created_at: string;
 }
 
@@ -225,7 +238,17 @@ export interface FamiliaAffiliateDeal {
   is_featured: boolean;
   click_count: number;
   is_active: boolean;
+  hot_deal_order?: number | null;
+  hot_deal_expires?: string | null;
+  partners?: PartnerInfo[] | null;
   created_at: string;
+}
+
+export interface PartnerInfo {
+  name: string;
+  url: string;
+  description?: string;
+  image_url?: string;
 }
 
 export interface FamiliaAchievementReward {

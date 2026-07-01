@@ -40,10 +40,11 @@ export default function CarePage() {
     const supabase = createClient();
     if (!supabase) { setAccepting(false); return; }
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('users').update({
+    const { error } = await supabase.from('users').update({
       care_agreement_accepted: true,
       care_agreement_accepted_at: new Date().toISOString(),
     }).eq('id', user?.id);
+    if (error) { setAccepting(false); return; }
     setShowAgreement(false);
     setAccepting(false);
   }
@@ -167,24 +168,12 @@ export default function CarePage() {
         <div style={{ background: '#F8FAFC',
           minHeight: '100svh', paddingBottom: 80 }}>
 
-          <div style={{ background: '#084463',
-            padding: '16px 20px',
-            display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button onClick={() => router.back()}
-              style={{ background: 'none', border: 'none',
-                color: '#FFFFFF', cursor: 'pointer',
-                fontSize: 20, padding: 0 }}>←</button>
-            <div>
-              <h1 style={{ fontFamily: 'Poppins', fontSize: 18,
-                fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                Beautifio Care
-              </h1>
-              <p style={{ fontFamily: 'Inter', fontSize: 12,
-                color: 'rgba(255,255,255,0.75)', margin: 0 }}>
-                Kami ada untukmu
-              </p>
-            </div>
-          </div>
+           <div className="max-w-content mx-auto px-5 pt-4">
+             <button onClick={() => router.back()}
+               className="flex items-center gap-1 text-sm cursor-pointer mb-2" style={{ color: "#647488" }}>← Kembali</button>
+             <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Beautifio Care</h1>
+             <p className="text-xs" style={{ color: "#647488" }}>Kami ada untukmu</p>
+           </div>
 
           <div style={{ padding: '20px 16px',
             display: 'flex', flexDirection: 'column',

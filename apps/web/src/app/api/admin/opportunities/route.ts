@@ -44,7 +44,16 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await supabase
       .from("opportunities")
-      .insert({ ...body, slug })
+      .insert({
+        title: body.title, category: body.category, organization: body.organization,
+        deadline: body.deadline, slug,
+        description: body.description || null,
+        url: body.url || null,
+        location: body.location || null,
+        type: body.type || "full-time",
+        is_active: body.is_active ?? true,
+        is_featured: body.is_featured ?? false,
+      })
       .select()
       .single();
 
@@ -62,12 +71,24 @@ export async function PATCH(req: NextRequest) {
     const user = await checkRole(supabase);
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { id, ...body } = await req.json();
+    const { id, title, category, organization, deadline, description, url, location, type, is_active, is_featured } = await req.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+    const update: Record<string, any> = {};
+    if (title !== undefined) update.title = title;
+    if (category !== undefined) update.category = category;
+    if (organization !== undefined) update.organization = organization;
+    if (deadline !== undefined) update.deadline = deadline;
+    if (description !== undefined) update.description = description;
+    if (url !== undefined) update.url = url;
+    if (location !== undefined) update.location = location;
+    if (type !== undefined) update.type = type;
+    if (is_active !== undefined) update.is_active = is_active;
+    if (is_featured !== undefined) update.is_featured = is_featured;
 
     const { data, error } = await supabase
       .from("opportunities")
-      .update(body)
+      .update(update)
       .eq("id", id)
       .select()
       .single();

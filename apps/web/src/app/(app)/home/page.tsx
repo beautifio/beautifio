@@ -16,7 +16,7 @@ import { ArticlePick } from "./components/ArticlePick"
 import { BannerCarousel } from "./components/BannerCarousel"
 
 import { AchievementNotif } from "@/features/familia/components/AchievementNotif"
-import { Ticket, ShoppingBag, Calendar, Briefcase, Shield } from "lucide-react"
+import { Ticket, ShoppingBag, Calendar, Briefcase, Shield, Compass, HeartHandshake } from "lucide-react"
 import { journeyUrl } from "@/lib/journey-queries"
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false })
@@ -45,6 +45,7 @@ export default function HomeScreen({
   const [ruangAmanOpen, setRuangAmanOpen] = useState(false)
 
   const [growthZone, setGrowthZone] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState(false)
 
   const mimpiSlug = resolvedParams?.mimpi
 
@@ -86,7 +87,7 @@ export default function HomeScreen({
           const lastShown = localStorage.getItem("growth_zone_last_shown")
           const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
           if (!lastShown || parseInt(lastShown) < weekAgo) {
-            const engineData = await getLifeEngineData(user.id)
+            const engineData = await getLifeEngineData()
             if (engineData?.growthZone) {
               setGrowthZone(engineData.growthZone)
               localStorage.setItem("growth_zone_last_shown", String(Date.now()))
@@ -137,7 +138,7 @@ export default function HomeScreen({
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-5">
+      <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-3">
         {/* Trial banner */}
         {trialDays && (
           <div className="bg-accent/5 border border-accent rounded-2xl p-4">
@@ -160,37 +161,74 @@ export default function HomeScreen({
 
         <BannerCarousel />
 
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 rounded-2xl bg-surface border border-border animate-pulse" />
-            ))}
-          </div>
-        ) : user ? (
-          <JourneySnapshot activity={journey ? journeyActivity : null} />
-        ) : (
-          <GuestCTA variant="landing" />
-        )}
-
-        {/* Feature Buttons — 4 kolom */}
+        {/* Feature Buttons */}
         <div className="grid grid-cols-4 gap-2">
           {FEATURE_BUTTONS.map((btn) => {
             const Icon = btn.icon
             return (
-              <button
-                key={btn.href}
-                onClick={() => router.push(btn.href)}
-                className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-surface border border-border hover:bg-muted transition-colors cursor-pointer"
-              >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${btn.color}`}>
-                  <Icon size={14} />
-                </div>
+              <button key={btn.href} onClick={() => router.push(btn.href)}
+                className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-surface border border-border hover:bg-muted transition-colors cursor-pointer">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${btn.color}`}><Icon size={14} /></div>
                 <span className="text-[9px] font-medium text-text-primary">{btn.label}</span>
               </button>
             )
           })}
         </div>
 
+        {/* Bold Cards */}
+        <button onClick={() => router.push(journey ? journeyUrl(journey) : "/journey")}
+          className="w-full flex items-center gap-3 p-4 rounded-2xl transition-colors text-left cursor-pointer"
+          style={{ background: "#E8F4F8", border: "2px solid #6BB9D4" }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#6BB9D4" }}>
+            <Compass size={20} style={{ color: "#FFFFFF" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold" style={{ color: "#084463" }}>Mulai Journey</p>
+            <p className="text-xs" style={{ color: "#647488" }}>{journey ? "Lanjutkan perjalananmu" : "Mulai perjalanan barumu"}</p>
+          </div>
+          <span className="text-lg" style={{ color: "#6BB9D4" }}>→</span>
+        </button>
+
+        <button onClick={() => router.push("/tes-arah-hidup")}
+          className="w-full flex items-center gap-3 p-4 rounded-2xl transition-colors text-left cursor-pointer"
+          style={{ background: "#FFF8E1", border: "2px solid #FFC64F" }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FFC64F" }}>
+            <Compass size={20} style={{ color: "#084463" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold" style={{ color: "#1E2938" }}>Tes Arah Hidup</p>
+            <p className="text-xs" style={{ color: "#647488" }}>Kenali kepribadian, minat, dan nilai hidupmu</p>
+          </div>
+          <span className="text-lg" style={{ color: "#FFC64F" }}>→</span>
+        </button>
+
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-24 rounded-2xl bg-surface border border-border animate-pulse" />
+            ))}
+          </div>
+        ) : loadError ? (
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-center">
+            <p className="text-sm text-red-600">Gagal memuat data</p>
+            <button onClick={() => { setLoadError(false); setLoading(true); setJourney(null); }} className="mt-2 text-xs text-red-500 underline">Coba lagi</button>
+          </div>
+        ) : null}
+
+        {/* Beautifio Care */}
+        <button
+          onClick={() => router.push("/care")}
+          className="w-full flex items-center gap-3 p-4 rounded-2xl transition-colors text-left cursor-pointer"
+          style={{ background: "#FFF8E1", border: "2px solid #FFC64F" }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FFC64F" }}>
+            <Shield size={20} style={{ color: "#084463" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold" style={{ color: "#1E2938" }}>Beautifio Care</p>
+            <p className="text-xs" style={{ color: "#647488" }}>Konsultasi & bantuan darurat</p>
+          </div>
+          <span className="text-lg" style={{ color: "#FFC64F" }}>→</span>
+        </button>
         <ArticlePick journey={journey} />
 
         {growthZone && (() => {
@@ -206,19 +244,17 @@ export default function HomeScreen({
           )
         })()}
 
-        {/* Butuh Bantuan? */}
-        <button
-          onClick={() => router.push("/care")}
-          className="w-full flex items-center gap-3 p-4 rounded-2xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-colors text-left cursor-pointer"
-        >
-          <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
-            <Shield className="w-5 h-5 text-primary" />
+        <button onClick={() => router.push("/daftar-mitra")}
+          className="w-full flex items-center gap-3 p-4 rounded-2xl transition-colors text-left cursor-pointer"
+          style={{ background: "#F0FDF4", border: "2px solid #22C55E" }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#22C55E" }}>
+            <HeartHandshake size={20} style={{ color: "#FFFFFF" }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-primary">Butuh Bantuan?</p>
-            <p className="text-xs text-text-secondary">Kontak darurat & lembaga bantuan</p>
+            <p className="text-sm font-bold" style={{ color: "#1E2938" }}>Ingin Membantu Sesama?</p>
+            <p className="text-xs" style={{ color: "#647488" }}>Bergabung sebagai Volunteer atau Psikolog. Dampingi komunitas untuk tumbuh.</p>
           </div>
-          <span className="text-lg text-accent">→</span>
+          <span className="text-lg" style={{ color: "#22C55E" }}>→</span>
         </button>
       </div>
 

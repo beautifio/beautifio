@@ -123,15 +123,17 @@ export function JourneyOnboardingModal({
     try {
       if (!supabase) throw new Error("Supabase not configured");
 
-      const birthDate = new Date();
-      birthDate.setFullYear(birthDate.getFullYear() - age!);
-      const birthDateStr = birthDate.toISOString().split("T")[0];
-
-      const { error: updateErr } = await supabase
-        .from("users")
-        .update({ birth_date: birthDateStr })
-        .eq("id", user.id);
-      if (updateErr) console.error("Failed to save birth_date", updateErr);
+      // Only save birth_date if user doesn't already have one (OAuth users)
+      const { data: existingUser } = await supabase.from("users").select("birth_date").eq("id", user.id).single();
+      if (!existingUser?.birth_date) {
+        const birthDate = new Date();
+        birthDate.setFullYear(birthDate.getFullYear() - age!);
+        const { error: updateErr } = await supabase
+          .from("users")
+          .update({ birth_date: birthDate.toISOString().split("T")[0] })
+          .eq("id", user.id);
+        if (updateErr) { /* silent — non-critical */ }
+      }
 
       if (Object.keys(answers).length > 0) {
         await supabase

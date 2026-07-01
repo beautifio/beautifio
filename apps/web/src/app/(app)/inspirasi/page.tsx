@@ -173,28 +173,15 @@ export default function InspirasiPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between px-4 pt-4 pb-1">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                Inspirasi
-              </h1>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Temukan cerita dan bagikan pengalamanmu
-              </p>
-            </div>
-            <Link
-              href="/inspirasi/post"
-              className="text-xs text-[#084463] font-medium hover:underline shrink-0"
-            >
-              Bagikan ceritamu &rarr;
-            </Link>
+         <div className="max-w-content mx-auto">
+           <div className="flex items-center justify-between px-4 pt-4 pb-1">
+              <h1 className="text-xl font-bold text-gray-900">Inspirasi</h1>
           </div>
           <SourceBar active={activeTab} onChange={(t) => { setActiveTab(t); setCategoryFilter(""); }} />
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-3">
+      <div className="max-w-content mx-auto px-5 py-3">
         <div className="flex overflow-x-auto gap-2 pb-1">
           <button
             onClick={() => setCategoryFilter("")}
@@ -226,7 +213,7 @@ export default function InspirasiPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 pb-4">
+      <div className="max-w-content mx-auto px-5 pb-4">
         {filteredItems.length === 0 ? (
           <EmptyState
             icon={TAB_ICONS[activeTabInfo.icon]!}

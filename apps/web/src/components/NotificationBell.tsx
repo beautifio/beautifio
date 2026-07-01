@@ -73,13 +73,27 @@ export function NotificationBell() {
 
   const handleClick = (notif: Notification) => {
     handleMarkRead(notif)
-    if (notif.type === "circle_approved" && notif.data?.circle_id) {
-      router.push(`/circle/${notif.data.circle_id}`)
+    const d = notif.data
+    if (notif.type === "circle_approved" && d?.circle_id) {
+      router.push(`/circle/${d.circle_id}`)
+    } else if (notif.type?.startsWith("event_")) {
+      router.push("/event/me")
+    } else if (notif.type === "subscription_active") {
+      router.push("/bisik")
+    } else if (notif.type?.startsWith("care_")) {
+      router.push("/care/chat")
+    } else if (d?.link_url) {
+      // Broadcast notifications (event, promo, recommendation)
+      if (d.link_url.startsWith("/")) router.push(d.link_url)
+      else window.open(d.link_url, "_blank")
+    } else if (d?.source_url) {
+      // Mention notifications (circle_mention, inspirasi_mention, tanya_answer)
+      if (d.source_url.startsWith("/")) router.push(d.source_url)
     }
     setOpen(false)
   }
 
-  if (!user) return null
+  if (!user) return <div className="w-8 h-8" />;
 
   return (
     <div ref={ref} className="relative">
@@ -137,6 +151,13 @@ export function NotificationBell() {
                 </button>
               ))}
             </div>
+          )}
+          {notifs.length > 0 && (
+            <Link href="/profil/notifikasi" onClick={() => setOpen(false)}
+              className="block w-full text-center px-4 py-2.5 text-xs font-semibold border-t border-border hover:bg-muted/30 transition-colors cursor-pointer"
+              style={{ color: "#6BB9D4" }}>
+              Lihat Semua →
+            </Link>
           )}
         </div>
       )}

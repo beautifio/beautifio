@@ -50,7 +50,7 @@ export default function AdminCareReply() {
         event: 'INSERT', schema: 'public',
         table: 'care_chat_messages',
         filter: `session_id=eq.${sessionId}`,
-      }, p => setMessages(prev => [...prev, p.new as CareMessage]))
+      }, p => setMessages(prev => prev.some(m => m.id === (p.new as CareMessage).id) ? prev : [...prev, p.new as CareMessage]))
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -140,6 +140,21 @@ export default function AdminCareReply() {
               📞 {session.user_phone}
               {session?.user_address && ` · ${session.user_address}`}
             </p>
+          )}
+          {session?.status === "active" && (
+            <button onClick={async () => {
+              if (!confirm("Akhiri sesi konsultasi ini?")) return;
+              await fetch(`/api/care/sessions/${sessionId}/close`, {
+                method: "PUT", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ by: "officer" }),
+              });
+              setSession((s: any) => s ? { ...s, status: "closed" } : s);
+            }}
+              style={{ marginTop: 6, padding: '2px 10px', borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.1)',
+                color: '#FFFFFF', fontSize: 11, cursor: 'pointer' }}>
+              ✓ Selesai
+            </button>
           )}
         </div>
       </div>

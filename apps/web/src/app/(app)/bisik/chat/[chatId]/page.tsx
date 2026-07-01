@@ -71,6 +71,8 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
   // Ban state
   const [banInfo, setBanInfo] = useState<{ isBanned: boolean; message: string; bannedUntil: string } | null>(null)
   const [banCount, setBanCount] = useState(0)
+  const banCountRef = useRef(banCount);
+  banCountRef.current = banCount;
   const [sensorNotif, setSensorNotif] = useState<string | null>(null)
 
   // Track sent content to detect server-side masking
@@ -176,7 +178,7 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
         filter: `chat_id=eq.${chatId}`,
       }, (payload) => {
         const msg = payload.new as BisikMessage
-        setMessages((prev) => [...prev, msg])
+        setMessages((prev) => prev.some(m => m.id === msg.id) ? prev : [...prev, msg])
 
         // Check if our own message was modified by server-side masking
         if (msg.sender_id === user?.id) {
@@ -184,7 +186,7 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
           if (originalContent && originalContent !== msg.content) {
             setSensorNotif(
               `⚠️ Informasi pribadi terdeteksi dan disensor. ` +
-              `Peringatan ke-${banCount + 1}/3. Setelah 3x kamu akan dibanned 3 jam.`
+              `Peringatan ke-${banCountRef.current + 1}/3. Setelah 3x kamu akan dibanned 3 jam.`
             )
             setTimeout(() => setSensorNotif(null), 8000)
             checkBan()
@@ -208,7 +210,7 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [chatId, router, user?.id, banCount])
+  }, [chatId, router, user?.id])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -238,7 +240,7 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
         sentContentRef.current.set(msg.id, content)
       }
 
-      if (isInitiator && !chat?.expires_at) {
+      if (!chat?.expires_at) {
         await supabase
           .from("bisik_chats")
           .update({ expires_at: new Date(Date.now() + 24 * 3600000).toISOString() })

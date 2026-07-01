@@ -32,7 +32,7 @@ export interface BisikParticipant {
 export async function getBisikChat(chatId: string): Promise<BisikChat | null> {
   const supabase = createClient()
   if (!supabase) return null
-  const { data } = await supabase.from("bisik_chats").select("*").eq("id", chatId).single()
+  const { data } = await supabase.from("bisik_chats").select("*").eq("id", chatId).maybeSingle()
   return data
 }
 
@@ -54,7 +54,7 @@ export async function getBisikParticipants(chatId: string): Promise<BisikPartici
     .from("bisik_chats")
     .select("initiator_id, receiver_id")
     .eq("id", chatId)
-    .single()
+    .maybeSingle()
   if (!chat) return []
 
   const { data: users } = await supabase

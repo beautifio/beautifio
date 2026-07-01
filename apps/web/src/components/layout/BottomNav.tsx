@@ -34,7 +34,7 @@ export function BottomNav() {
       }}
       className="fixed bottom-0 left-0 right-0 h-16 z-50 safe-area-bottom"
     >
-      <div className="flex items-end justify-around h-full px-2 pb-1">
+      <div className="flex items-end justify-around h-full px-2 pb-1 max-w-sm mx-auto">
         <NavItem tab={NAV_TABS[0]} active={activeTab === "home"} />
         <NavItem tab={NAV_TABS[1]} active={activeTab === "journey"} />
         <NavItem

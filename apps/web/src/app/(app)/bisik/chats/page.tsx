@@ -64,6 +64,9 @@ export default function ActiveChats() {
   const router = useRouter()
   const supabase = createClient()
 
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   const [rows, setRows] = useState<Array<ChatRow & {
     opponentName: string
     lastMsg: LastMsg | null
@@ -79,7 +82,10 @@ export default function ActiveChats() {
 
     const channel = supabase
       .channel("bisik-chats-live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "bisik_messages" }, () => refreshData())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "bisik_chats", filter: `initiator_id=eq.${user.id}` }, () => refreshData())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "bisik_chats", filter: `receiver_id=eq.${user.id}` }, () => refreshData())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bisik_chats", filter: `initiator_id=eq.${user.id}` }, () => refreshData())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bisik_chats", filter: `receiver_id=eq.${user.id}` }, () => refreshData())
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
@@ -192,10 +198,12 @@ export default function ActiveChats() {
       .neq("sender_id", user.id)
   }
 
-  if (authLoading) {
+  if (!mounted || authLoading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="min-h-screen bg-bg pb-24">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
       </div>
     )
   }

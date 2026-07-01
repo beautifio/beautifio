@@ -35,14 +35,17 @@ export async function PATCH(req: NextRequest) {
     const user = await checkRole(supabase);
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { id, is_published, ...rest } = await req.json();
+    const { id, is_published, title, content, excerpt, image_url } = await req.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-    const update: Record<string, any> = { ...rest };
-    if (is_published !== undefined) {
-      update.is_published = is_published;
-      if (is_published) update.published_at = new Date().toISOString();
-    }
+    const update: Record<string, any> = {};
+    if (is_published !== undefined) update.is_published = is_published;
+    if (title !== undefined) update.title = title;
+    if (content !== undefined) update.content = content;
+    if (excerpt !== undefined) update.excerpt = excerpt;
+    if (image_url !== undefined) update.image_url = image_url;
+    update.updated_at = new Date().toISOString();
+    if (is_published) update.published_at = new Date().toISOString();
 
     const { error } = await supabase.from("stories").update(update).eq("id", id);
     if (error) throw error;

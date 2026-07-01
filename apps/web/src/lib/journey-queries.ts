@@ -99,7 +99,7 @@ export async function createJourney(
     .from("dream_templates")
     .select("*", { count: "exact", head: true })
     .eq("slug", templateSlug);
-  if (countErr) console.error("createJourney: template count query failed", countErr);
+  if (countErr) {}
   if ((count ?? 0) === 0) {
     const templates = buildDreamTemplates();
     const tpl = templates[templateSlug];
@@ -122,7 +122,7 @@ export async function createJourney(
         min_age: tpl.min_age ?? 0,
         max_age: tpl.max_age ?? 99,
       });
-      if (seedErr) console.error("createJourney: auto-seed template failed", seedErr);
+      if (seedErr) {}
     }
   }
 
@@ -142,7 +142,7 @@ export async function createJourney(
     .single();
 
   if (error || !journey) {
-    console.error("createJourney: dream_journeys insert failed", { error, userId, templateSlug });
+    // console.error("createJourney: dream_journeys insert failed", { error, userId, templateSlug });
     return null;
   }
 
@@ -191,7 +191,7 @@ export async function createJourney(
       .select();
 
     if (bwError) {
-      console.error("createJourney: big_wins insert failed", bwError);
+      // console.error("createJourney: big_wins insert failed", bwError);
     } else if (insertedBigWins) {
       // Auto-complete the first big win — user already chose their dream
       await db()
@@ -220,7 +220,7 @@ export async function createJourney(
 
       if (allSmallWins.length > 0) {
         const { error: swError } = await db().from("small_wins").insert(allSmallWins);
-        if (swError) console.error("createJourney: small_wins insert failed", swError);
+        if (swError) {}
       }
     }
   }
@@ -231,7 +231,7 @@ export async function createJourney(
   });
   if (activities.length > 0) {
     const { error: actError } = await db().from("daily_activities").insert(activities);
-    if (actError) console.error("createJourney: daily_activities insert failed", actError);
+    if (actError) {}
   }
 
   // Determine & save current phase
@@ -264,7 +264,7 @@ export async function createJourney(
         }
       }
     } catch (e) {
-      console.error("createJourney: phase detection failed", e);
+      // console.error("createJourney: phase detection failed", e);
     }
   }
 

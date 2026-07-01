@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/inspirasi-data";
 import type { DreamJourney } from "@beautifio/types";
 
 interface Article {
@@ -36,7 +38,6 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
     (async () => {
       setLoading(true);
       try {
-        const { supabase } = await import("@/lib/supabase/client");
         if (!supabase) return;
 
         if (journey) {
@@ -55,8 +56,8 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
                 return;
               }
             }
-          } catch (e) {
-            console.error("ArticlePick: RPC failed", e);
+          } catch {
+            // RPC failed, fall through to general articles
           }
         }
 
@@ -67,8 +68,8 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
           .order("created_at", { ascending: false })
           .limit(10);
         if (data) setArticles(data);
-      } catch (e) {
-        console.error("ArticlePick: fetch failed", e);
+      } catch {
+        // silent fallback — show empty or cached state
       } finally {
         setLoading(false);
       }
@@ -114,17 +115,19 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
             >
               <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100">
                 {a.cover_image ? (
-                  <img
-                    src={a.cover_image}
-                    alt={a.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <BookOpen className="w-6 h-6 text-gray-300" />
-                  </div>
-                )}
+                  <img src={a.cover_image} alt={a.title} className="w-full h-full object-cover" loading="lazy" />
+                ) : (() => {
+                  const cKey = Object.entries(CATEGORY_LABELS).find(([,v]) => v === (a as any).category)?.[0]
+                  const color = cKey ? CATEGORY_COLORS[cKey] : null
+                  return color ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1" style={{ background: color.primary + "15" }}>
+                      <BookOpen size={18} style={{ color: color.primary, opacity: 0.4 }} />
+                      <span className="text-[7px] font-semibold uppercase" style={{ color: color.primary, opacity: 0.5 }}>{CATEGORY_LABELS[cKey!]}</span>
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><BookOpen className="w-6 h-6 text-gray-300" /></div>
+                  )
+                })()}
               </div>
               <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                 <div>

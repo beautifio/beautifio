@@ -21,7 +21,8 @@ export function AchievementNotif() {
         if (!res.ok) return;
         const { data } = await res.json();
 
-        const dismissed: string[] = JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]");
+        let dismissed: string[] = [];
+        try { dismissed = JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]"); } catch {}
 
         const newlyCompleted = (data || []).filter(
           (a: any) =>

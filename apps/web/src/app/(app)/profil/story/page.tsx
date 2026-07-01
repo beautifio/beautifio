@@ -130,7 +130,7 @@ export default function StoryPage() {
       const data = await getStoryEntries(user.id);
       setEntries(data);
     } catch (e) {
-      console.error("Failed to load story:", e);
+      // console.error("Failed to load story:", e);
     } finally {
       setLoading(false);
     }

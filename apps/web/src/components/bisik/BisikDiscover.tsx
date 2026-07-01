@@ -38,7 +38,7 @@ export default function BisikDiscover({
     if (!current) return
     setError("")
     try {
-      await swipeLeft(userId, current.id, current.user_id)
+      await swipeLeft(current.id, current.user_id)
       setCards((prev) => prev.slice(1))
     } catch {
       setError("Gagal, coba lagi")
@@ -52,7 +52,7 @@ export default function BisikDiscover({
     setError("")
 
     try {
-      const result = await swipeRight(userId, current)
+      const result = await swipeRight(current)
 
       if (result.error === "CHAT_LIMIT_REACHED") {
         setMaxAllowed(result.maxAllowed ?? 5)

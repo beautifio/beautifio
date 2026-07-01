@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { UploadWithPreview } from "@/features/media/UploadWithPreview";
+import ReactCrop, { type Crop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 
 type Tab = "hero" | "banners" | "logo";
 
@@ -66,6 +68,7 @@ const MOBILE_SPECS = [
 function HeroSection() {
   const [desktopUrl, setDesktopUrl] = useState("");
   const [mobileUrl, setMobileUrl] = useState("");
+  const [heroMsg, setHeroMsg] = useState("");
 
   useEffect(() => {
     if (!supabase) return;
@@ -82,17 +85,26 @@ function HeroSection() {
   }
 
   async function handleDesktopSuccess(url: string) {
-    await supabase!.from("app_settings").upsert({ key: "hero_image_url", value: url, updated_at: new Date().toISOString() });
     setDesktopUrl(url);
+    const { error } = await supabase!.from("app_settings").upsert({ key: "hero_image_url", value: url, updated_at: new Date().toISOString() });
+    setHeroMsg(error ? "Gagal menyimpan hero desktop" : "Hero desktop tersimpan!");
+    setTimeout(() => setHeroMsg(""), 3000);
   }
 
   async function handleMobileSuccess(url: string) {
-    await supabase!.from("app_settings").upsert({ key: "hero_image_mobile_url", value: url, updated_at: new Date().toISOString() });
     setMobileUrl(url);
+    const { error } = await supabase!.from("app_settings").upsert({ key: "hero_image_mobile_url", value: url, updated_at: new Date().toISOString() });
+    setHeroMsg(error ? "Gagal menyimpan hero mobile" : "Hero mobile tersimpan!");
+    setTimeout(() => setHeroMsg(""), 3000);
   }
 
   return (
     <div className="space-y-8">
+      {heroMsg && (
+        <div className={`p-3 rounded-xl text-sm font-medium ${heroMsg.includes("Gagal") ? "bg-red-50 text-red-600 border border-red-200" : "bg-green-50 text-green-600 border border-green-200"}`}>
+          {heroMsg}
+        </div>
+      )}
       <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-800">
         <p className="font-semibold mb-1">💡 Cara Kerja Hero Image</p>
         <p>Desktop (&ge;768px) pakai Hero Desktop. HP (&lt;768px) pakai Hero Mobile (fallback ke Desktop kalau kosong).</p>
@@ -130,7 +142,7 @@ function HeroSection() {
 /* ─── SECTION B: BANNER BERANDA (10 SLOT TETAP) ─── */
 
 const BANNER_SPECS = [
-  "📐 Ukuran banner: 1200 × 300px (rasio 4:1)",
+  "📐 Ukuran: 1200 × 600px (rasio 2:1), minimal 400 × 200px",
   "📁 Format: JPG, PNG, WebP, GIF",
   "📦 Maks: 5MB",
   "💡 Gambar landscape horizontal. Di mobile akan auto-crop bagian tengah. Hindari teks penting di pinggir kiri/kanan.",
@@ -274,8 +286,10 @@ function BannerFormModal({ slotIndex, onClose, onDone }: {
         <div className="mt-3">
           <UploadWithPreview
             label={`Banner-${slotIndex}`}
-            aspectRatio={4 / 1}
-            hint="4:1"
+            aspectRatio={2 / 1}
+            hint="2:1"
+            minWidth={400}
+            minHeight={200}
             onUploadSuccess={handleInsert}
           />
         </div>
@@ -324,58 +338,63 @@ function EditBannerModal({ banner, onClose, onDone }: {
   const [error, setError] = useState("");
 
   async function handleSave() {
-    if (!title || !supabase) return;
+    if (!title || !imageUrl || !supabase) return;
     setSaving(true);
     setError("");
-    try {
-      await supabase.from("home_banners").update({
-        title, image_url: imageUrl, redirect_url: redirectUrl || null, redirect_label: redirectLabel || null, interval_seconds: intervalSec,
-      }).eq("id", banner.id);
-      onDone();
-    } catch (err: any) {
-      setError(err?.message || "Gagal update banner");
-    } finally {
+    const { error: updateErr } = await supabase.from("home_banners").update({
+      title, image_url: imageUrl, redirect_url: redirectUrl || null, redirect_label: redirectLabel || null, interval_seconds: intervalSec,
+    }).eq("id", banner.id);
+    if (updateErr) {
+      setError(updateErr.message || "Gagal update banner");
       setSaving(false);
+      return;
     }
+    onDone();
+    setSaving(false);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto w-full max-w-lg mx-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="relative bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto w-full max-w-lg mx-4 space-y-3">
+        <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-gray-900">Edit Banner — Slot {banner.display_order + 1}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
         </div>
 
-        <UploadWithPreview label={`Banner-${banner.display_order}`} currentUrl={banner.image_url}
-          aspectRatio={4 / 1} hint="4:1" onUploadSuccess={(url) => setImageUrl(url)} />
+        <UploadWithPreview
+          label={`Banner-${banner.display_order}`}
+          currentUrl={banner.image_url}
+          aspectRatio={2 / 1}
+          hint="2:1"
+          minWidth={400}
+          minHeight={200}
+          onUploadSuccess={(url) => setImageUrl(url)}
+        />
 
-        <div className="mt-4 space-y-3">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul banner"
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#084463]" />
-          <input value={redirectUrl} onChange={(e) => setRedirectUrl(e.target.value)} placeholder="Link tujuan"
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#084463]" />
-          <input value={redirectLabel} onChange={(e) => setRedirectLabel(e.target.value)} placeholder="Label tombol CTA"
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#084463]" />
-          <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Interval slide (detik)</label>
-            <div className="flex gap-2">
-              {INTERVAL_OPTIONS.map((s) => (
-                <button key={s} onClick={() => setIntervalSec(s)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${intervalSec === s ? "bg-[#084463] text-white border-[#084463]" : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"}`}>
-                  {s}s
-                </button>
-              ))}
-            </div>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul banner"
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#084463]" />
+        <input value={redirectUrl} onChange={(e) => setRedirectUrl(e.target.value)} placeholder="Link tujuan (opsional)"
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#084463]" />
+        <input value={redirectLabel} onChange={(e) => setRedirectLabel(e.target.value)} placeholder="Label tombol CTA (opsional)"
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#084463]" />
+        <div>
+          <label className="text-xs font-medium text-gray-600 mb-1 block">Interval slide (detik)</label>
+          <div className="flex gap-2">
+            {INTERVAL_OPTIONS.map((s) => (
+              <button key={s} onClick={() => setIntervalSec(s)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${intervalSec === s ? "bg-[#084463] text-white border-[#084463]" : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"}`}>
+                {s}s
+              </button>
+            ))}
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <button onClick={handleSave} disabled={!title || saving}
-            className="w-full py-3 rounded-lg text-sm font-semibold cursor-pointer transition-all disabled:opacity-50"
-            style={{ backgroundColor: "#084463", color: "#FFFFFF" }}>
-            {saving ? "Menyimpan..." : "Simpan Perubahan"}
-          </button>
         </div>
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        <button onClick={handleSave} disabled={!title || saving}
+          className="w-full py-3 rounded-lg text-sm font-semibold cursor-pointer transition-all disabled:opacity-50"
+          style={{ backgroundColor: "#084463", color: "#FFFFFF" }}>
+          {saving ? "Menyimpan..." : "Simpan Perubahan"}
+        </button>
       </div>
     </div>
   );
@@ -392,6 +411,7 @@ const LOGO_SPECS = [
 
 function LogoSection() {
   const [currentUrl, setCurrentUrl] = useState("");
+  const [msg, setMsg] = useState("");
 
   useEffect(() => {
     if (!supabase) return;
@@ -404,12 +424,18 @@ function LogoSection() {
   }
 
   async function handleUploadSuccess(url: string) {
-    await supabase!.from("app_settings").upsert({ key: "logo_url", value: url, updated_at: new Date().toISOString() });
     setCurrentUrl(url);
+    const { error } = await supabase!.from("app_settings").upsert({ key: "logo_url", value: url, updated_at: new Date().toISOString() });
+    setMsg(error ? "Gagal menyimpan logo" : "Logo tersimpan!");
+    if (!error) window.dispatchEvent(new CustomEvent("logo-updated", { detail: url }));
+    setTimeout(() => setMsg(""), 3000);
   }
 
   return (
     <div>
+      {msg && (
+        <p className={`mb-3 text-sm font-medium ${msg.includes("Gagal") ? "text-red-500" : "text-green-500"}`}>{msg}</p>
+      )}
       <p className="text-sm text-gray-500 mb-4">Logo akan tampil di sidebar admin panel dan landing page.</p>
       <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 space-y-0.5 mb-4">
         {LOGO_SPECS.map((s, i) => <p key={i}>{s}</p>)}

@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import {
   Loader2, Heart, X, Crown, Plus, MessageCircle,
   Clock, ChevronRight, AlertTriangle, ArrowLeft,
   Send, Edit2, Sparkles, Search,
 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { useAuth } from "@/hooks/use-auth"
 import { swipeLeft, swipeRight, getDiscoverCards } from "@/lib/bisik/swipe-actions"
 import type { BisikCard as BisikCardType } from "@/lib/bisik/swipe-actions"
@@ -44,12 +44,18 @@ interface BisikChat {
 export default function BisikHome() {
   const { user, isLoading: authLoading } = useAuth()
   const router = useRouter()
-  const supabase = createClient()
+  // const supabase = createClient() // use singleton
+
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   const [view, setView] = useState<View>("menu")
   const [tab, setTab] = useState<Tab>("cards")
   const [loading, setLoading] = useState(true)
   const [bisikName, setBisikName] = useState("")
+  const bisikNameRef = useRef(bisikName);
+  bisikNameRef.current = bisikName;
   const [isPro, setIsPro] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -130,7 +136,7 @@ export default function BisikHome() {
         .rpc("get_user_max_chats", { p_user_id: user!.id })
       setMaxCards(mx ?? 5)
     } catch (err) {
-      console.error("Bisik loadProfile error:", err)
+      // console.error("Bisik loadProfile error:", err)
       setError("Gagal memuat profil. Coba lagi.")
     }
     setLoading(false)
@@ -149,66 +155,68 @@ export default function BisikHome() {
         filter: `receiver_id=eq.${user.id}`,
       }, async (payload) => {
         const newChat = payload.new as any
-        const { data: owner } = await supabase
+        const { data: owner } = await supabase!
           .from("users")
           .select("bisik_anonymous_name, bisik_custom_name")
           .eq("id", newChat.initiator_id)
           .single()
         const matchName = owner?.bisik_custom_name || owner?.bisik_anonymous_name || "Anonymous"
+        const name = bisikNameRef.current
         setMatchPopup({
           chatId: newChat.id,
           name: matchName,
-          myInitial: (bisikName[0] || "?").toUpperCase(),
+          myInitial: (name[0] || "?").toUpperCase(),
           theirInitial: (matchName[0] || "?").toUpperCase(),
-          color1: hashColor(bisikName),
-          color2: hashColor(matchName),
-        })
-        loadChats()
-      })
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "bisik_chats",
-        filter: `initiator_id=eq.${user.id}`,
-      }, async (payload) => {
-        const newChat = payload.new as any
-        const { data: owner } = await supabase
-          .from("users")
-          .select("bisik_anonymous_name, bisik_custom_name")
-          .eq("id", newChat.receiver_id)
-          .single()
-        const matchName = owner?.bisik_custom_name || owner?.bisik_anonymous_name || "Anonymous"
-        setMatchPopup({
-          chatId: newChat.id,
-          name: matchName,
-          myInitial: (bisikName[0] || "?").toUpperCase(),
-          theirInitial: (matchName[0] || "?").toUpperCase(),
-          color1: hashColor(bisikName),
+          color1: hashColor(name),
           color2: hashColor(matchName),
         })
         loadChats()
       })
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => { supabase?.removeChannel(channel) }
   }, [user, supabase])
 
   const loadChats = async () => {
     if (!supabase || !user) return
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("bisik_chats")
-      .select("*, card:bisik_cards(content), last_message:bisik_messages(content, created_at)")
+      .select("*")
       .or(`initiator_id.eq.${user.id},receiver_id.eq.${user.id}`)
-      .in("status", ["active"])
+      .in("status", ["active", "pending"])
       .order("created_at", { ascending: false })
 
-    setChats((data ?? []).map((c: any) => {
-      const msgs = c.last_message
-      return {
-        ...c,
-        last_message: Array.isArray(msgs) ? msgs[msgs.length - 1] || null : msgs || null,
-      }
-    }))
+    if (error) { setChats([]); return }
+    if (!data || data.length === 0) { setChats([]); return }
+
+    const chats = data as any[]
+    const cardIds = [...new Set(chats.map((c: any) => c.card_id).filter(Boolean))]
+    const chatIds = chats.map(c => c.id)
+
+    // Fetch card content and last messages in parallel
+    const [cardRes, msgRes] = await Promise.all([
+      cardIds.length > 0
+        ? supabase.from("bisik_cards").select("id, content").in("id", cardIds)
+        : Promise.resolve({ data: [] }),
+      supabase.from("bisik_messages")
+        .select("chat_id, content, created_at")
+        .in("chat_id", chatIds)
+        .order("created_at", { ascending: false })
+    ])
+
+    const cardMap: Record<string, any> = {}
+    ;((cardRes as any)?.data ?? []).forEach((c: any) => { cardMap[c.id] = c })
+
+    const msgMap: Record<string, { content: string; created_at: string }> = {}
+    ;((msgRes as any)?.data ?? []).forEach((m: any) => {
+      if (!msgMap[m.chat_id]) msgMap[m.chat_id] = m
+    })
+
+    setChats(chats.map((c: any) => ({
+      ...c,
+      card: c.card_id ? cardMap[c.card_id] || null : null,
+      last_message: msgMap[c.id] || null,
+    })))
   }
 
   // Load chats on mount and when view/tab changes
@@ -252,7 +260,7 @@ export default function BisikHome() {
         }])
       }
     } catch (err) {
-      console.error("Create card error:", err)
+      // console.error("Create card error:", err)
       setError("Gagal membuat kartu. Coba lagi.")
     }
     setCardSubmitting(false)
@@ -268,43 +276,45 @@ export default function BisikHome() {
 
   // ---- SWIPE ----
 
-  const loadSwipeCards = async () => {
+  const loadSwipeCards = async (skipTopicFilter = false) => {
     if (!user || !supabase) return
     setLoading(true)
     try {
-      const { data: profile } = await supabase!
+      const { data: profile } = await supabase
         .from("users")
         .select("bisik_topic_ids")
         .eq("id", user.id)
         .single()
 
       const topicIds = (profile?.bisik_topic_ids as string[]) ?? []
-      const cards = await getDiscoverCards(user.id, topicIds)
+      const cards = await getDiscoverCards(user.id, topicIds, { skipTopicFilter })
       setSwipeCards(cards as BisikCardType[])
     } catch (err) {
-      console.error("Load swipe cards error:", err)
+      // console.error("Load swipe cards error:", err)
     }
     setLoading(false)
   }
 
   const handleSwipeLeft = async (card: BisikCardType) => {
     if (!user) return
-    await swipeLeft(user.id, card.id, card.user_id)
+    await swipeLeft(card.id, card.user_id)
     setSwipeCards(prev => prev.filter(c => c.id !== card.id))
   }
 
   const handleSwipeRight = async (card: BisikCardType) => {
     if (!user) return
     setIsMatching(true)
-    const result = await swipeRight(user.id, card)
-    if (result.error === "CHAT_LIMIT_REACHED") {
-      setMaxAllowed(result.maxAllowed ?? 5)
-      setShowLimitModal(true)
+    try {
+      const result = await swipeRight(card)
+      if (result.error === "CHAT_LIMIT_REACHED") {
+        setMaxAllowed(result.maxAllowed ?? 5)
+        setShowLimitModal(true)
+        return
+      }
+      setSwipeCards(prev => prev.filter(c => c.id !== card.id))
+    } finally {
       setIsMatching(false)
-      return
     }
-    setSwipeCards(prev => prev.filter(c => c.id !== card.id))
-    setIsMatching(false)
   }
 
   // ---- NAME MODAL ----
@@ -333,10 +343,12 @@ export default function BisikHome() {
 
   // ---- RENDER ----
 
-  if (authLoading) {
+  if (!mounted || authLoading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="min-h-screen bg-bg pb-24">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
       </div>
     )
   }
@@ -387,7 +399,7 @@ export default function BisikHome() {
       <button
         onClick={async () => {
           setView("find-chat")
-          await loadSwipeCards()
+          await loadSwipeCards(true)
         }}
         className="w-full p-5 rounded-2xl bg-surface border border-border hover:shadow-card-hover hover:-translate-y-0.5 transition-all text-left cursor-pointer"
         style={{ borderLeft: '4px solid #6BB9D4' }}
@@ -407,14 +419,37 @@ export default function BisikHome() {
       </button>
 
       {chats.length > 0 && (
-        <div
-          onClick={() => router.push("/bisik/chats")}
-          className="flex items-center justify-between px-4 py-3.5 border-t border-b border-border mt-2 cursor-pointer hover:bg-muted/50 transition-colors"
-        >
-          <span className="text-sm font-semibold text-text-primary">
-            💬 Obrolan Aktifmu ({chats.length})
-          </span>
-          <span className="text-sm font-medium" style={{ color: "#6BB9D4" }}>Lihat →</span>
+        <div className="space-y-2 mt-3">
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">💬 Obrolan Aktif</p>
+          {chats.slice(0, 3).map((chat) => (
+            <button
+              key={chat.id}
+              onClick={() => router.push(`/bisik/chat/${chat.id}`)}
+              className="w-full flex items-start gap-3 p-3 rounded-xl bg-surface border border-border hover:border-primary/30 transition-all text-left cursor-pointer"
+            >
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <MessageCircle size={16} className="text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-text-primary truncate">
+                  {chat.card?.content?.slice(0, 40) || "Percakapan"}
+                </p>
+                {chat.last_message ? (
+                  <p className="text-[11px] text-text-secondary truncate mt-0.5">
+                    {chat.last_message.content.slice(0, 60)}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-text-secondary/50 mt-0.5">Menunggu balasan...</p>
+                )}
+              </div>
+              <ChevronRight size={12} className="text-text-secondary shrink-0 mt-1" />
+            </button>
+          ))}
+          {chats.length > 3 && (
+            <button onClick={() => router.push("/bisik/chats")} className="w-full text-center text-xs font-medium py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors" style={{ color: "#6BB9D4" }}>
+              Lihat semua ({chats.length}) →
+            </button>
+          )}
         </div>
       )}
 
@@ -556,7 +591,7 @@ export default function BisikHome() {
         <button
           onClick={async () => {
             setView("find-chat")
-            await loadSwipeCards()
+            await loadSwipeCards(true)
           }}
           className="w-full py-3 rounded-xl bg-primary text-white text-sm font-medium cursor-pointer"
         >
@@ -651,6 +686,12 @@ export default function BisikHome() {
                   }}
                 >
                   💭 Buat Kartu Curhat
+                </button>
+                <button
+                  onClick={() => loadSwipeCards(true)}
+                  className="mt-3 px-4 py-2 rounded-lg border border-border text-sm text-text-secondary hover:bg-muted cursor-pointer"
+                >
+                  🔄 Segarkan
                 </button>
               </div>
             ) : (
@@ -782,7 +823,7 @@ export default function BisikHome() {
         {chats.map((chat) => (
           <button
             key={chat.id}
-            onClick={() => { window.history.replaceState(null, '', '/bisik/chats'); router.push(`/bisik/chat/${chat.id}`) }}
+            onClick={() => { router.push(`/bisik/chat/${chat.id}`) }}
             className="w-full flex items-start gap-3 p-4 rounded-xl bg-surface border border-border hover:border-primary/30 transition-all text-left cursor-pointer"
           >
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -797,7 +838,7 @@ export default function BisikHome() {
                   {chat.last_message.content.slice(0, 80)}
                 </p>
               ) : (
-                <p className="text-xs text-text-secondary/50 mt-0.5">Menunggu balasan...</p>
+                <p className="text-xs text-text-secondary/50">Menunggu balasan...</p>
               )}
             </div>
             <ChevronRight size={14} className="text-text-secondary shrink-0" />
@@ -897,7 +938,7 @@ export default function BisikHome() {
               <button
                 onClick={() => {
                   setMatchPopup(null)
-                  window.history.replaceState(null, '', '/bisik/chats')
+                  // removed history hack
                   router.push(`/bisik/chat/${matchPopup.chatId}`)
                 }}
                 className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-medium cursor-pointer"

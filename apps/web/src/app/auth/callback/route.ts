@@ -6,7 +6,9 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const nextRaw = searchParams.get("next") ?? "/";
-  const next = nextRaw.startsWith("/") ? nextRaw : "/home";
+  const allowedPaths = ["/", "/home", "/journey", "/profil", "/bisik", "/event", "/circle", "/belanja", "/voucher"];
+  const next = (nextRaw.startsWith("/") && allowedPaths.some(p => nextRaw === p || nextRaw.startsWith(p + "/")))
+    ? nextRaw : "/home";
 
   if (code) {
     const cookieStore = await cookies();

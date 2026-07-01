@@ -3,10 +3,20 @@ import { createClient as createServerClient } from "@/lib/supabase/server"
 import { getRandomBotId } from "./bot"
 import type { TebakQuestion } from "./queries"
 
-export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole: 'a' | 'b'; isNew: boolean }> {
+import { getDailyTebakCount, getUserTier, getTierLimits } from "@/lib/tier"
+
+export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole: 'a' | 'b'; isNew: boolean; limitReached?: boolean; maxPerDay?: number }> {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
+
+  const tier = await getUserTier(user.id)
+  const limits = getTierLimits(tier)
+  const todayCount = await getDailyTebakCount(user.id)
+
+  if (todayCount >= limits.maxTebakPerDay) {
+    return { sessionId: "", playerRole: "a" as const, isNew: false, limitReached: true, maxPerDay: limits.maxTebakPerDay }
+  }
 
   const { data: result, error } = await supabase.rpc('find_or_create_tebak_session', {
     p_user_id: user.id,
@@ -109,7 +119,35 @@ export async function botPlayTurn(
   // Bot answers after 2-4 seconds (seems human)
   await new Promise((r) => setTimeout(r, 2000 + Math.random() * 2000))
 
-  if (isBotSubject) {
+  // Re-read question status to avoid race with cron timeout
+  const { data: freshQ } = await supabase.from('tebak_questions').select('*').eq('id', questionId).single()
+  if (!freshQ) return
+
+  if (freshQ.status === 'both_answering') {
+    // DISC round — bot picks random answer
+    const answer = options[Math.floor(Math.random() * options.length)]
+    const { error: insertError } = await supabase.from('tebak_answers').insert({
+      question_id: questionId,
+      guesser_id: botUserId,
+      answer,
+      is_correct: false,
+      time_ms: Math.floor(Math.random() * 5000) + 2000,
+    })
+    if (!insertError) {
+      // Check if both answered, reveal if so
+      const { count } = await supabase.from('tebak_answers')
+        .select('*', { count: 'exact', head: true })
+        .eq('question_id', questionId)
+      if (count && count >= 2) {
+        await supabase.from('tebak_questions').update({
+          status: 'revealed', advance_at: new Date(Date.now() + 6000).toISOString(),
+        }).eq('id', questionId)
+      }
+    }
+    return
+  }
+
+  if (isBotSubject && freshQ.status === 'subject_answering') {
     const answer = options[Math.floor(Math.random() * options.length)]
     const now = new Date()
     const deadline = new Date(now.getTime() + 15_000)
@@ -120,7 +158,7 @@ export async function botPlayTurn(
       guesser_deadline: deadline.toISOString(),
       status: 'guesser_guessing',
     }).eq('id', questionId)
-  } else if (q.status === 'guesser_guessing') {
+  } else if (freshQ.status === 'guesser_guessing') {
     const roll = Math.random() * 100
     const isCorrect = roll < winRate && q.correct_answer != null
     const answer = isCorrect
@@ -227,6 +265,8 @@ export async function advanceGame(
   sessionId: string, expectedSeq: number
 ): Promise<{ status: string; new_question: TebakQuestion | null } | null> {
   const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
   const { data, error } = await supabase.rpc('advance_tebak_game_v2', {
     p_session_id: sessionId,
     p_expected_seq: expectedSeq,
@@ -240,6 +280,8 @@ export async function advanceGame(
 
 export async function startQuestionTimer(sessionId: string, seq: number): Promise<string | null> {
   const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
   const { data, error } = await supabase.rpc('start_question_timer', {
     p_session_id: sessionId,
     p_seq: seq,
@@ -250,6 +292,8 @@ export async function startQuestionTimer(sessionId: string, seq: number): Promis
 
 export async function submitSubjectAnswer(questionId: string, answer: string): Promise<void> {
   const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
   const now = new Date()
   // +15.5s = 15s for the guesser + 500ms network latency buffer
   const deadline = new Date(now.getTime() + 15_500)
@@ -266,6 +310,8 @@ export async function submitGuesserAnswer(
   questionId: string, guesserId: string, answer: string, startedAt: number
 ): Promise<{ isCorrect: boolean; points: number }> {
   const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
 
   const { data: q } = await supabase
     .from('tebak_questions')
@@ -421,7 +467,7 @@ export async function submitDiscAnswer(
   if (revealError) throw revealError
 
   if (revealed && revealed.length > 0) {
-    const delay = q.sequence_number === 5 ? 8 : 3
+    const delay = q.sequence_number === 10 ? 8 : 6
     const { error: advanceError } = await supabase.rpc('set_session_advance_at', {
       p_session_id: round.session_id,
       p_delay_seconds: delay,
@@ -443,8 +489,39 @@ export async function handleDiscTimeout(questionId: string): Promise<void> {
   }
 }
 
+export async function signalMatchIntroReady(sessionId: string): Promise<void> {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: session, error } = await supabase
+    .from('tebak_sessions')
+    .select('player_a_id, player_b_id')
+    .eq('id', sessionId)
+    .single()
+
+  if (error || !session) throw new Error('Session not found')
+
+  if (session.player_a_id === user.id) {
+    await supabase.from('tebak_sessions').update({ player_a_ready: true }).eq('id', sessionId)
+  } else if (session.player_b_id === user.id) {
+    await supabase.from('tebak_sessions').update({ player_b_ready: true }).eq('id', sessionId)
+  }
+}
+
+export async function resetReadyFlags(sessionId: string): Promise<void> {
+  const supabase = await createServerClient()
+  const { error } = await supabase
+    .from('tebak_sessions')
+    .update({ player_a_ready: false, player_b_ready: false })
+    .eq('id', sessionId)
+  if (error) throw error
+}
+
 export async function handleSubjectTimeout(questionId: string, _sessionId: string): Promise<void> {
   const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
   await supabase.rpc('handle_question_timeout', {
     p_question_id: questionId,
   })

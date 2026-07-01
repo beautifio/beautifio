@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Trophy, Home, RotateCcw, Loader2, X, Check } from "lucide-react"
+import { Trophy, Home, RotateCcw, Loader2, X, Check, MessageCircle } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { offerRematch, respondToRematch } from "@/lib/tebak/actions"
+import { createBisikFromTebak } from "@/lib/tebak/bisik-bridge"
 import type { TebakSession } from "@/lib/tebak/queries"
 
 type RematchOffer = {
@@ -22,10 +23,12 @@ type Props = {
   opponentName: string | null
   myName: string | null
   compatibility: number
+  compatibilityLabel?: string
+  compatibilityInsight?: string
   onHome: () => void
 }
 
-export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentName, myName, compatibility, onHome }: Props) {
+export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentName, myName, compatibility, compatibilityLabel, compatibilityInsight, onHome }: Props) {
   const router = useRouter()
   const myScore = isPlayerA ? session.score_a : session.score_b
   const theirScore = isPlayerA ? session.score_b : session.score_a
@@ -34,6 +37,7 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
   
   const [rematchState, setRematchState] = useState<'idle' | 'offering' | 'receiving' | 'accepted' | 'declined'>('idle')
   const [rematchOffer, setRematchOffer] = useState<RematchOffer | null>(null)
+  const [bisikLoading, setBisikLoading] = useState(false)
 
   useEffect(() => {
     if (!supabase) return
@@ -65,7 +69,20 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
       await offerRematch(session.id, opponentId)
     } catch (err) {
       console.error(err)
-      setRematchState('idle') // Reset on error
+      setRematchState('idle')
+    }
+  }
+
+  const handleBisik = async () => {
+    setBisikLoading(true)
+    try {
+      const chatId = await createBisikFromTebak(session.id)
+      if (chatId) {
+        router.push(`/bisik/chat/${chatId}`)
+      }
+    } catch (err) {
+      console.error(err)
+      setBisikLoading(false)
     }
   }
 
@@ -85,35 +102,6 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
     } catch (err) {
       console.error(err)
       setRematchState('receiving')
-    }
-  }
-
-  const RematchUI = () => {
-    switch (rematchState) {
-      case 'offering':
-        return <div className="flex flex-col items-center gap-2"><Loader2 className="animate-spin" /><span>Menunggu {opponentName || 'lawan'}...</span></div>
-      case 'receiving':
-        return (
-          <div className="w-full max-w-xs flex flex-col items-center gap-3">
-            <span className="text-sm font-semibold">{opponentName || 'Lawan'} ingin main lagi!</span>
-            <div className="w-full flex gap-3">
-              <button onClick={() => handleRespond(false)} className="flex-1 py-3 rounded-xl border border-border text-text-secondary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-muted transition-colors"><X size={16} /> Tolak</button>
-              <button onClick={() => handleRespond(true)} className="flex-1 py-3 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"><Check size={16} /> Terima</button>
-            </div>
-          </div>
-        )
-      case 'accepted':
-        return <div className="flex flex-col items-center gap-2 text-green-600"><Check /><span>Tantangan diterima! Memulai game baru...</span></div>
-      case 'declined':
-        return <div className="flex flex-col items-center gap-2 text-red-500"><X /><span>{rematchOffer?.offered_by_id === userId ? `${opponentName || 'Lawan'} menolak` : 'Tantangan ditolak'}.</span></div>
-      case 'idle':
-      default:
-        return (
-          <>
-            <button onClick={handleOfferRematch} className="w-full max-w-xs py-3 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors cursor-pointer"><RotateCcw size={16} /> Main Lagi</button>
-            <button onClick={onHome} className="w-full max-w-xs py-3 rounded-xl border border-border text-text-secondary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-surface transition-colors cursor-pointer"><Home size={16} /> Kembali ke Home</button>
-          </>
-        )
     }
   }
 
@@ -158,10 +146,36 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
             <div className="flex justify-between px-4 py-3 rounded-xl bg-muted/50 border border-border"><span className="text-sm text-text-secondary">{opponentName || "Lawan"}</span><span className="text-sm font-bold text-text-primary">{theirScore} poin</span></div>
           </div>
           
-          <div className="w-full max-w-xs mt-2"><div className="p-4 rounded-xl bg-muted/50 border border-border text-center"><p className="text-[11px] font-semibold tracking-widest uppercase text-text-secondary mb-2">Tingkat Kecocokan</p><div className="h-2 rounded-full bg-muted overflow-hidden mb-2"><div className={`h-full rounded-full transition-all duration-1000 ${compatibility <= 30 ? "bg-red-400" : compatibility <= 60 ? "bg-orange-400" : compatibility <= 85 ? "bg-green-400" : "bg-accent"}`} style={{ width: `${compatibility}%` }}/></div><p className={`text-sm font-bold ${compatibility <= 30 ? "text-red-500" : compatibility <= 60 ? "text-orange-500" : compatibility <= 85 ? "text-green-600" : "text-accent"}`}>{compatibility <= 30 ? "Kurang cocok" : compatibility <= 60 ? "Cukup cocok" : compatibility <= 85 ? "Cocok!" : "Soulmate! 😱"}</p></div></div>
+          <div className="w-full max-w-xs mt-2"><div className="p-4 rounded-xl bg-muted/50 border border-border text-center">
+            <p className="text-[11px] font-semibold tracking-widest uppercase text-text-secondary mb-2">Kompatibilitas</p>
+            <p className="text-2xl font-bold mb-1">{compatibilityLabel || '🔄 Saling Melengkapi'}</p>
+            <div className="h-2 rounded-full bg-muted overflow-hidden mb-2"><div className={`h-full rounded-full transition-all duration-1000 ${compatibility <= 30 ? "bg-red-400" : compatibility <= 60 ? "bg-orange-400" : compatibility <= 85 ? "bg-green-400" : "bg-accent"}`} style={{ width: `${compatibility}%` }}/></div>
+            <p className={`text-sm font-bold mb-1 ${compatibility <= 30 ? "text-red-500" : compatibility <= 60 ? "text-orange-500" : compatibility <= 85 ? "text-green-600" : "text-accent"}`}>{compatibility}% cocok</p>
+            {compatibilityInsight ? <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">{compatibilityInsight}</p> : null}
+          </div></div>
 
           <div className="mt-auto pt-4 w-full flex flex-col items-center gap-3 text-sm">
-            <RematchUI />
+            {rematchState === 'offering' ? (
+              <div className="flex flex-col items-center gap-2"><Loader2 className="animate-spin" /><span>Menunggu {opponentName || 'lawan'}...</span></div>
+            ) : rematchState === 'receiving' ? (
+              <div className="w-full max-w-xs flex flex-col items-center gap-3">
+                <span className="text-sm font-semibold">{opponentName || 'Lawan'} ingin main lagi!</span>
+                <div className="w-full flex gap-3">
+                  <button onClick={() => handleRespond(false)} className="flex-1 py-3 rounded-xl border border-border text-text-secondary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-muted transition-colors"><X size={16} /> Tolak</button>
+                  <button onClick={() => handleRespond(true)} className="flex-1 py-3 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"><Check size={16} /> Terima</button>
+                </div>
+              </div>
+            ) : rematchState === 'accepted' ? (
+              <div className="flex flex-col items-center gap-2 text-green-600"><Check /><span>Tantangan diterima! Memulai game baru...</span></div>
+            ) : rematchState === 'declined' ? (
+              <div className="flex flex-col items-center gap-2 text-red-500"><X /><span>{rematchOffer?.offered_by_id === userId ? `${opponentName || 'Lawan'} menolak` : 'Tantangan ditolak'}.</span></div>
+            ) : (
+              <>
+                <button onClick={handleOfferRematch} className="w-full max-w-xs py-3 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors cursor-pointer"><RotateCcw size={16} /> Main Lagi</button>
+                <button onClick={handleBisik} disabled={bisikLoading} className="w-full max-w-xs py-3 rounded-xl bg-accent/20 border border-accent/30 text-accent font-semibold text-sm flex items-center justify-center gap-2 hover:bg-accent/30 transition-colors cursor-pointer">{bisikLoading ? <Loader2 className="animate-spin" size={16} /> : <MessageCircle size={16} />} Lanjut Kenalan di Bisik</button>
+                <button onClick={onHome} className="w-full max-w-xs py-3 rounded-xl border border-border text-text-secondary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-surface transition-colors cursor-pointer"><Home size={16} /> Kembali ke Home</button>
+              </>
+            )}
           </div>
         </div>
       </div>

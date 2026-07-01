@@ -1,178 +1,199 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { ArrowLeft, Check, Copy, ExternalLink, Crown, Loader2 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/hooks/use-auth"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Check, Crown, Loader2, Star } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Plan {
-  id: string
-  name: string
-  duration_type: string
-  price_idr: number
-  max_active_chats: number
-  features: string[]
-  display_order: number
+  id: string; name: string; duration_type: string; tier: string;
+  price_idr: number; original_price_idr: number | null;
+  features: string[]; display_order: number;
 }
 
+const P = "#084463"; const SF = "#FFC64F"; const IC = "#6BB9D4";
+const GR = "#22C55E"; const DS = "#1E2938"; const SL = "#647488";
+const BD = "#E2E8F0"; const CL = "#F8FAFC"; const WH = "#FFFFFF";
+
 export default function UpgradePage() {
-  const router = useRouter()
-  const { user } = useAuth()
-  const supabase = createClient()
-  const [plans, setPlans] = useState<Plan[]>([])
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [bankAccount, setBankAccount] = useState("")
-  const [waLink, setWaLink] = useState("")
-  const [copied, setCopied] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const router = useRouter();
+  const { user } = useAuth();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [payLoading, setPayLoading] = useState(false);
+  const [tier, setTier] = useState<"pro" | "ultimate">("pro");
+  const [duration, setDuration] = useState<"monthly" | "yearly">("monthly");
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherData, setVoucherData] = useState<any>(null);
+  const [voucherLoading, setVoucherLoading] = useState(false);
 
   useEffect(() => {
-    if (!supabase) return
-    ;(async () => {
-      const [plansRes, settingsRes] = await Promise.all([
-        supabase.from("subscription_plans").select("*").eq("is_active", true).order("display_order"),
-        supabase.from("app_settings").select("key, value").in("key", ["payment_bank_account", "payment_wa_link"]),
-      ])
-      setPlans(plansRes.data ?? [])
-      const s = settingsRes.data ?? []
-      setBankAccount(s.find((x) => x.key === "payment_bank_account")?.value ?? "")
-      setWaLink(s.find((x) => x.key === "payment_wa_link")?.value ?? "")
-      if (plansRes.data?.length) setSelectedPlan(plansRes.data[1]?.id ?? plansRes.data[0].id)
-      setLoading(false)
-    })()
-  }, [])
+    fetch("/api/subscription/plans")
+      .then(r => r.json()).then(d => setPlans(d.plans || [])).finally(() => setLoading(false));
+  }, []);
 
-  const selected = plans.find((p) => p.id === selectedPlan)
+  const plan = plans.find(p => p.tier === tier && p.duration_type === duration);
+  const fp = (v: number) => `Rp ${v.toLocaleString("id-ID")}`;
+  const saving = plan?.original_price_idr ? Math.round((1 - plan.price_idr / plan.original_price_idr) * 100) : 0;
 
-  const formatPrice = (v: number) =>
-    `Rp ${v.toLocaleString("id-ID")}`
+  const finalPrice = voucherData?.final_price ?? plan?.price_idr ?? 0;
+  const voucherDiscount = voucherData?.discount_amount ?? 0;
 
-  const handleCopy = () => {
-    if (!selected || !user) return
-    const text = `Halo, saya mau subscribe ${selected.name} (${formatPrice(selected.price_idr)}). Username: ${user.email}`
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
-  }
+  const applyVoucher = async () => {
+    if (!voucherCode.trim() || !plan) return;
+    setVoucherLoading(true);
+    const res = await fetch("/api/subscription/voucher", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: voucherCode.trim(), tier, base_price: plan.price_idr }),
+    });
+    const json = await res.json();
+    if (!res.ok) { setVoucherData({ error: json.error }); setVoucherLoading(false); return; }
+    setVoucherData(json);
+    setVoucherLoading(false);
+  };
 
-  const handleWA = () => {
-    if (!selected || !user || !waLink) return
-    const text = encodeURIComponent(
-      `Halo, saya mau subscribe ${selected.name} (${formatPrice(selected.price_idr)}). Username: ${user.email}`,
-    )
-    window.open(`${waLink}?text=${text}`, "_blank")
-  }
+  const handlePay = async () => {
+    if (!plan || !user) return;
+    setPayLoading(true);
+    const res = await fetch("/api/payment/subscribe", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan_id: plan.id, voucher_code: voucherData?.code || undefined }),
+    });
+    const json = await res.json();
+    if (!res.ok) { alert(json.error || "Gagal"); setPayLoading(false); return; }
+    if (json.payment_url) window.location.href = json.payment_url;
+    else router.push("/bisik");
+  };
+
+  const features = tier === "ultimate"
+    ? ["Unlimited chat","Unlimited main Tebak","Unlimited journey","Unlimited circle","Diskon event 20%","Early access 48 jam","Badge Ultimate eksklusif","Semua benefit Pro"]
+    : ["30 chat per minggu (+ top-up)","15x main Tebak/hari","Nama anonim custom","Chat gak expired 24 jam","Pivot Coach AI","Circle unlimited","Diskon event 10%","Badge Pro eksklusif"];
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    )
+    return <div className="min-h-screen flex items-center justify-center" style={{ background: CL }}>
+      <div className="w-8 h-8 animate-spin rounded-full border-2 border-neutral-300" style={{ borderTopColor: P }} /></div>;
   }
 
   return (
-    <div className="min-h-screen bg-bg pb-24">
-      <div className="max-w-content mx-auto px-4 py-6">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary mb-6 cursor-pointer"
-        >
-          <ArrowLeft size={16} /> Kembali
-        </button>
-
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Crown size={32} className="text-primary" />
-          </div>
-          <h1 className="text-xl font-bold text-text-primary">Upgrade ke Bisik Pro</h1>
-          <p className="text-sm text-text-secondary mt-1">Ngobrol lebih banyak, lebih dalam.</p>
+    <div className="min-h-screen pb-32" style={{ background: CL }}>
+      {/* Header */}
+      <div className="pt-8 pb-14 text-center relative overflow-hidden" style={{ background: `linear-gradient(180deg, ${IC} 0%, ${P} 100%)` }}>
+        <button onClick={() => router.back()} className="absolute left-4 top-8 text-sm cursor-pointer" style={{ color: "rgba(255,255,255,0.7)" }}><ArrowLeft size={16} /></button>
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(255,255,255,0.15)" }}>
+          <Crown size={22} style={{ color: SF }} />
         </div>
+        <h1 className="text-lg font-bold" style={{ color: WH, fontFamily: "Poppins, sans-serif" }}>Upgrade Akunmu</h1>
+        <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.6)" }}>Lebih banyak ngobrol. Lebih bebas berekspresi.</p>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          {plans.map((plan) => {
-            const isSelected = plan.id === selectedPlan
-            const isBest = plan.duration_type === "monthly"
-            return (
-              <button
-                key={plan.id}
-                onClick={() => setSelectedPlan(plan.id)}
-                className={`relative p-5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
-                  isSelected
-                    ? "border-[#FFC64F] bg-amber-50/50 shadow-md"
-                    : "border-border bg-surface hover:border-primary/30"
-                }`}
-              >
-                {isBest && (
-                  <span className="absolute -top-2.5 right-4 px-3 py-0.5 rounded-full bg-[#FFC64F] text-[10px] font-bold text-[#084463]">
-                    TERBAIK
-                  </span>
-                )}
-                <p className="text-sm font-bold text-text-primary">{plan.name}</p>
-                <p className="text-2xl font-bold text-[#084463] mt-2">{formatPrice(plan.price_idr)}</p>
-                <p className="text-[10px] text-text-secondary mt-3">Fitur:</p>
-                <ul className="mt-1 space-y-1">
-                  {(plan.features as string[]).map((f: string, i: number) => (
-                    <li key={i} className="flex items-start gap-1.5 text-[11px] text-text-secondary">
-                      <Check size={12} className="text-green-500 shrink-0 mt-0.5" /> {f}
-                    </li>
-                  ))}
-                </ul>
-              </button>
-            )
-          })}
-        </div>
-
-        {selected && (
-          <div className="p-5 rounded-2xl bg-[#084463] text-white text-center mb-8">
-            <p className="text-sm opacity-80">Kamu pilih</p>
-            <p className="text-lg font-bold mt-1">
-              {selected.name} — {formatPrice(selected.price_idr)}
-            </p>
-            <p className="text-xs opacity-70 mt-1">
-              Hingga {selected.max_active_chats} obrolan aktif
-            </p>
-          </div>
-        )}
-
-        <div className="rounded-2xl border border-border bg-surface p-5">
-          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">
-            Cara Pembayaran
-          </p>
-
-          {bankAccount && (
-            <div className="mb-4">
-              <p className="text-xs text-text-secondary mb-1">Transfer ke:</p>
-              <p className="text-sm font-bold text-text-primary">{bankAccount}</p>
-            </div>
-          )}
-
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={handleCopy}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm font-medium text-text-primary hover:bg-muted transition-colors cursor-pointer"
-            >
-              <Copy size={14} />
-              {copied ? "Tersalin!" : "Copy Pesan"}
+      {/* Tier switch */}
+      <div className="px-4 max-w-sm mx-auto -mt-8 relative z-10 mb-3">
+        <div className="flex rounded-2xl p-1" style={{ background: WH, boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
+          {(["pro","ultimate"] as const).map(t => (
+            <button key={t} onClick={() => setTier(t)}
+              className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer"
+              style={{ background: tier === t ? P : "transparent", color: tier === t ? WH : SL }}>
+              {t === "ultimate" ? <Star size={12} /> : <Crown size={12} />}
+              {t === "ultimate" ? "Ultimate" : "Pro"}
             </button>
-            {waLink && (
-              <button
-                onClick={handleWA}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors cursor-pointer"
-              >
-                <ExternalLink size={14} />
-                Konfirmasi via WA
-              </button>
-            )}
-          </div>
+          ))}
+        </div>
+      </div>
 
-          <p className="text-[11px] text-text-secondary text-center">
-            Pembayaran diproses manual oleh tim Beautifio. Akun Pro aktif dalam 1x24 jam setelah konfirmasi.
-          </p>
+      {/* Duration pills */}
+      <div className="flex justify-center gap-2 mb-4">
+        {(["monthly","yearly"] as const).map(d => (
+          <button key={d} onClick={() => setDuration(d)}
+            className="px-4 py-1.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer border"
+            style={{
+              background: duration === d ? P : WH,
+              color: duration === d ? WH : SL,
+              borderColor: duration === d ? "transparent" : IC,
+            }}>
+            {d === "monthly" ? "Bulanan" : "Tahunan"}
+          </button>
+        ))}
+      </div>
+
+      {/* Hero Price */}
+      {plan && (
+        <div className="px-4 max-w-sm mx-auto text-center mb-4">
+          <div className="py-6 px-4 rounded-2xl" style={{ background: WH, border: `1px solid ${IC}`, boxShadow: `0 1px 8px rgba(8,68,99,0.06)` }}>
+            <p className="text-[10px] uppercase tracking-widest font-semibold mb-3" style={{ color: P }}>
+              {tier === "ultimate" ? "💎 Ultimate" : "👑 Pro"} {duration === "monthly" ? "Bulanan" : "Tahunan"}
+            </p>
+            {plan.original_price_idr && (
+              <p className="text-sm line-through mb-1" style={{ color: SL }}>{fp(plan.original_price_idr)}</p>
+            )}
+            <p className="text-4xl font-extrabold" style={{ color: DS, fontFamily: "Poppins, sans-serif" }}>{fp(plan.price_idr)}</p>
+            <p className="text-xs mt-0.5" style={{ color: SL }}>/ {duration === "yearly" ? "tahun" : "bulan"}</p>
+            {saving > 0 && (
+              <p className="text-xs mt-2 font-semibold" style={{ color: GR }}>
+                Hemat {saving}% · +PPN 11%
+              </p>
+            )}
+            {duration === "yearly" && (
+              <p className="text-[10px] mt-0.5" style={{ color: SL }}>
+                Setara {fp(Math.round(plan.price_idr / 12))}/bln
+              </p>
+            )}
+
+            {/* Voucher */}
+            <div className="mt-4 pt-4 border-t" style={{ borderColor: BD }}>
+              <div className="flex gap-1.5">
+                <input value={voucherCode} onChange={e => { setVoucherCode(e.target.value); setVoucherData(null); }}
+                  placeholder="Kode voucher" className="flex-1 px-3 py-2 rounded-lg text-xs border outline-none text-center uppercase tracking-wider"
+                  style={{ borderColor: voucherData?.error ? "#EF4444" : BD, color: DS }} />
+                <button onClick={applyVoucher} disabled={voucherLoading || !voucherCode.trim()}
+                  className="px-3 py-2 rounded-lg text-[11px] font-semibold cursor-pointer disabled:opacity-50"
+                  style={{ background: `rgba(107,185,212,0.1)`, color: P }}>
+                  {voucherLoading ? "..." : "Pakai"}
+                </button>
+              </div>
+              {voucherData?.error && (
+                <p className="text-[10px] mt-1 text-center" style={{ color: "#EF4444" }}>{voucherData.error}</p>
+              )}
+              {voucherData?.discount_amount > 0 && (
+                <div className="mt-2 text-center">
+                  <p className="text-[10px]" style={{ color: GR }}>
+                    Diskon voucher: -{fp(voucherData.discount_amount)}
+                  </p>
+                  <p className="text-sm font-bold mt-0.5" style={{ color: DS }}>
+                    {fp(voucherData.final_price)}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feature list */}
+      <div className="px-4 max-w-sm mx-auto mb-4">
+        <div className="space-y-1.5 flex flex-col items-center">
+          {features.map((f, i) => (
+            <div key={i} className="flex items-center gap-2.5 text-xs py-1.5" style={{ color: DS }}>
+              <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: `rgba(8,68,99,0.06)` }}>
+                <Check size={10} style={{ color: P }} />
+              </div>
+              {f}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="fixed bottom-16 left-0 right-0 px-4 py-3" style={{ background: `linear-gradient(0deg, ${CL} 60%, transparent)` }}>
+        <div className="max-w-sm mx-auto">
+          <button onClick={handlePay} disabled={payLoading || !plan}
+            className="w-full py-3 rounded-2xl text-sm font-bold cursor-pointer disabled:opacity-50 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            style={{ background: SF, color: DS }}>
+            {payLoading ? <Loader2 size={16} className="animate-spin" /> : (tier === "ultimate" ? <Star size={16} /> : <Crown size={16} />)}
+            {payLoading ? "Memproses..." : `Bayar ${fp(finalPrice)}`}
+          </button>
+          <p className="text-[10px] text-center mt-2" style={{ color: SL }}>Aktif segera setelah pembayaran</p>
         </div>
       </div>
     </div>
-  )
+  );
 }

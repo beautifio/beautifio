@@ -55,10 +55,10 @@ export default function LandingPage() {
     }}>
       {/* Hero Image */}
       {activeHero && (
-        <img
-          src={activeHero}
-          alt=""
-          style={{
+          <img
+            src={activeHero}
+            alt="" fetchPriority="high"
+            style={{
             position: "absolute",
             inset: 0,
             width: "100%",

@@ -46,11 +46,10 @@ export function findGrowthZone(capitals: Record<string, LifeCapital>): string | 
   return sorted[0]?.dimension ?? null;
 }
 
-export async function getLifeEngineData(userId: string): Promise<LifeEngineResult | null> {
+export async function getLifeEngineData(): Promise<LifeEngineResult | null> {
   if (!supabase) return null;
 
-  const { data, error } = await supabase.rpc("get_life_capital", { p_user_id: userId });
-
+  const { data, error } = await supabase.rpc("get_life_capital");
   if (error || !data) return null;
 
   const capitalMap: Record<string, LifeCapital> = {};

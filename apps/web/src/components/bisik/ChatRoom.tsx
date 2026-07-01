@@ -98,6 +98,8 @@ export function ChatRoom({ sessionId, participants, currentUserId, initialMessag
         status: "ended",
         ended_at: new Date().toISOString(),
         ended_by: me?.id,
+        report_reason: reportReason,
+        report_detail: reportDetail || null,
       }).eq("id", sessionId)
     }
     onEnded()

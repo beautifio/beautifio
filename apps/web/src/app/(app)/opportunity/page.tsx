@@ -65,7 +65,7 @@ export default function OpportunityListPage() {
     query.then(({ data }) => {
       setOpportunities(data ?? []);
       setLoading(false);
-    });
+    }, () => { setLoading(false); });
   }, [activeCat]);
 
   const filtered = useMemo(() => {

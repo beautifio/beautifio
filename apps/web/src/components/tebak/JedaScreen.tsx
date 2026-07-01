@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { Check, X, Clock } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { DigitalClock } from "./DigitalClock"
+import { AdBanner } from "./AdBanner"
 
 type Props = {
   resultType: 'correct' | 'wrong' | 'subject_timeout' | 'guesser_timeout'
@@ -16,6 +17,12 @@ type Props = {
   isLastRound: boolean
   deadline: string
   onAdvance: () => void
+  // DISC variant props (optional — default false/null untuk backward compat callsite)
+  isDiscRound?: boolean
+  myDiscAnswer?: string | null
+  theirDiscAnswer?: string | null
+  opponentName?: string | null
+  sessionId?: string
 }
 
 export function JedaScreen({
@@ -29,6 +36,11 @@ export function JedaScreen({
   isLastRound,
   deadline,
   onAdvance,
+  isDiscRound = false,
+  myDiscAnswer,
+  theirDiscAnswer,
+  opponentName,
+  sessionId,
 }: Props) {
   const [bannerUrl, setBannerUrl] = useState<string | null>(null)
 
@@ -44,6 +56,54 @@ export function JedaScreen({
       })
   }, [])
 
+  // ═══ VARIAN DISC — render lebih awal, tanpa sentuh logika tebak ═══
+  if (isDiscRound) {
+    const countdownLabel = isLastRound && isLastQuestion
+      ? 'Menuju hasil akhir'
+      : !isLastRound && isLastQuestion
+      ? 'Bersiap tukar peran'
+      : 'Pertanyaan berikutnya'
+
+    return (
+      <div className="flex-1 flex flex-col px-4 py-4 bg-primary text-primary-foreground">
+        <div className="bg-primary/20 rounded-2xl border border-primary/50 shadow-xl overflow-hidden relative">
+          <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
+          <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
+          <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
+
+          <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center bg-accent/20">
+              <span className="text-3xl">💬</span>
+            </div>
+            <h2 className="text-xl font-bold text-primary-foreground text-center">Jawaban tersimpan!</h2>
+
+            {/* Reveal perbandingan */}
+            <div className="w-full max-w-xs space-y-3">
+              <div className="px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-semibold text-center">
+                <span className="text-primary-foreground/70">Kamu pilih: </span>
+                <span className="text-accent">{myDiscAnswer ?? '—'}</span>
+              </div>
+              <div className="px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-semibold text-center">
+                <span className="text-primary-foreground/70">{opponentName ?? 'Lawan'} pilih: </span>
+                <span className="text-accent">{theirDiscAnswer ?? '—'}</span>
+              </div>
+              {myDiscAnswer && theirDiscAnswer && myDiscAnswer === theirDiscAnswer && (
+                <p className="text-sm text-accent text-center font-semibold">Kalian sama! ✨</p>
+              )}
+            </div>
+
+            {/* Countdown */}
+            <div className="mt-auto pt-4">
+              <DigitalClock deadline={deadline} onTimeout={onAdvance} label={countdownLabel} />
+            </div>
+          </div>
+          {sessionId ? <div className="mt-2"><AdBanner location="jeda" sessionId={sessionId} /></div> : null}
+        </div>
+      </div>
+    )
+  }
+
+  // ═══ VARIAN TEBAK — TIDAK BERUBAH ═══
   const icon = resultType === 'correct'
     ? <Check size={40} className="text-green-500" />
     : resultType === 'wrong'
@@ -133,6 +193,7 @@ export function JedaScreen({
           <div className="mt-auto pt-4">
             <DigitalClock deadline={deadline} onTimeout={onAdvance} label={countdownLabel} />
           </div>
+          {sessionId ? <div className="mt-2"><AdBanner location="jeda" sessionId={sessionId} /></div> : null}
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { X, Clock, Shield, CheckCircle2, AlertCircle, Gift } from "lucide-react";
+import { X, Clock, Shield, CheckCircle2, AlertCircle, Gift, Copy } from "lucide-react";
 import type { FamiliaMerchant } from "@beautifio/types";
 import { VOUCHER_TYPE_EMOJIS, VOUCHER_TYPE_LABELS } from "@beautifio/utils";
 
@@ -24,6 +24,7 @@ export function VoucherClaimModal({
   const [remaining, setRemaining] = useState(900);
   const [errorMsg, setErrorMsg] = useState("");
   const [claimedToday, setClaimedToday] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (open && merchant) {
@@ -32,8 +33,18 @@ export function VoucherClaimModal({
       setPinError("");
       setErrorMsg("");
       setClaimedToday(false);
+      setCopied(false);
+      setRemaining(((merchant.redeem_hours ?? 24) * 60 + (merchant.redeem_minutes ?? 0)) * 60);
     }
   }, [open, merchant]);
+
+  const handleCopy = useCallback(() => {
+    if (!voucherCode) return;
+    navigator.clipboard.writeText(voucherCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  }, [voucherCode]);
 
   const handleActivate = useCallback(async () => {
     if (!merchant) return;
@@ -58,7 +69,7 @@ export function VoucherClaimModal({
 
       setVoucherCode(json.data.voucher_code);
       setVoucherId(json.data.id);
-      setRemaining(900);
+      setRemaining(((merchant.redeem_hours ?? 24) * 60 + (merchant.redeem_minutes ?? 0)) * 60);
       setStep("activated");
     } catch (e) {
       console.error("Claim voucher failed", e);
@@ -125,14 +136,18 @@ export function VoucherClaimModal({
 
         {step === "confirm" && (
           <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-4">
-              <Gift className="w-8 h-8 text-white" />
-            </div>
+            {merchant.logo_url ? (
+              <img src={merchant.logo_url} alt={merchant.name} className="w-16 h-16 rounded-full object-cover mx-auto mb-4" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-4">
+                <Gift className="w-8 h-8 text-white" />
+              </div>
+            )}
             <h2 className="text-lg font-bold text-gray-900">Klaim Voucher</h2>
             <p className="text-sm text-gray-500 mt-1">{merchant.name}</p>
-            <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
-              <p className="text-xs text-amber-800">
-                Voucher akan aktif selama <strong>15 menit</strong>. Jika tidak digunakan dalam 15 menit, voucher akan otomatis hangus.
+            <div className="mt-3 p-3 rounded-xl" style={{ background: "rgba(8,68,99,0.06)", border: "1px solid rgba(8,68,99,0.15)" }}>
+              <p className="text-xs" style={{ color: "#1E2938" }}>
+                Voucher aktif selama <strong>{merchant.redeem_hours ?? 24} jam{(merchant.redeem_minutes ?? 0) > 0 ? ` ${merchant.redeem_minutes} menit` : ""}</strong>. Jika tidak digunakan, voucher akan otomatis hangus.
               </p>
             </div>
             {claimedToday && (
@@ -172,6 +187,11 @@ export function VoucherClaimModal({
             <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
               <p className="text-xs text-gray-500 mb-1">Kode Voucher</p>
               <p className="text-2xl font-bold tracking-wider text-gray-900 font-mono">{voucherCode}</p>
+              <button onClick={handleCopy}
+                className="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 mx-auto transition-all cursor-pointer"
+                style={{ background: copied ? "#22C55E" : "#084463", color: "#FFFFFF" }}>
+                <Copy size={12} /> {copied ? "Tersalin!" : "Salin Kode"}
+              </button>
               <div className="flex items-center justify-center gap-1.5 mt-3 text-amber-600">
                 <Clock className="w-4 h-4" />
                 <span className="text-sm font-bold font-mono">{formatTime(remaining)}</span>

@@ -125,14 +125,14 @@ export default function CareChatPage() {
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100svh',
       paddingBottom: 40 }}>
-      <div style={{ background: '#084463', padding: '16px 20px',
+      <div style={{ background: '#FFFFFF', padding: '16px 20px', borderBottom: '1px solid #E2E8F0',
         display: 'flex', alignItems: 'center', gap: 12 }}>
         <button onClick={() => router.back()}
           style={{ background: 'none', border: 'none',
-            color: '#FFFFFF', cursor: 'pointer',
+            color: '#1E2938', cursor: 'pointer',
             fontSize: 20, padding: 0 }}>←</button>
         <h1 style={{ fontFamily: 'Poppins', fontSize: 18,
-          fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
+          fontWeight: 700, color: '#1E2938', margin: 0 }}>
           Chat Beautifio Care
         </h1>
       </div>
@@ -294,7 +294,7 @@ export default function CareChatPage() {
               style={{
                 width: '100%',
                 background: starting ? '#9CA3AF' : '#084463',
-                color: '#FFFFFF', border: 'none',
+                color: '#1E2938', border: 'none',
                 borderRadius: 14, padding: '14px',
                 fontFamily: 'Poppins', fontSize: 15,
                 fontWeight: 700,
@@ -324,7 +324,7 @@ export default function CareChatPage() {
                 </p>
                 <button onClick={() => setActiveTab('new')} style={{
                   marginTop: 16, background: '#084463',
-                  color: '#FFFFFF', border: 'none',
+                  color: '#1E2938', border: 'none',
                   borderRadius: 12, padding: '12px 24px',
                   fontFamily: 'Poppins', fontSize: 14,
                   fontWeight: 600, cursor: 'pointer',

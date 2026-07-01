@@ -31,21 +31,61 @@ export const FAMILIA_ACHIEVEMENT_REWARDS = [
   { id: "ar5", title: "Rajin Menulis", description: "Tulis 20 entri jurnal untuk reward spesial", trigger_type: "journal_entries", trigger_value: 20, reward_type: "voucher", reward_description: "Free drink di Cafe Ruang Baca", icon: "BookOpen", color: "from-indigo-500 to-purple-500", is_active: true, created_at: "2026-06-01T00:00:00Z" },
 ];
 
-export const VOUCHER_TYPE_LABELS: Record<VoucherType, string> = {
+export const VOUCHER_TYPE_LABELS: Record<string, string> = {
   free_drink: "Free Drink",
   bogof: "Buy 1 Get 1",
   discount: "Diskon",
   free_addon: "Free Add-On",
   buy1get1: "Buy 1 Get 1",
+  discount_pct: "Diskon %",
+  discount_nominal: "Diskon Rp",
+  free_product: "Free Product",
+  bogo: "Beli 1 Gratis 1",
 };
 
-export const VOUCHER_TYPE_EMOJIS: Record<VoucherType, string> = {
+export const VOUCHER_TYPE_EMOJIS: Record<string, string> = {
   free_drink: "🥤",
   bogof: "2️⃣",
   discount: "💰",
   free_addon: "➕",
   buy1get1: "2️⃣",
+  discount_pct: "💰",
+  discount_nominal: "💵",
+  free_product: "🎁",
+  bogo: "🛒",
 };
+
+export function getVoucherDetailLabel(merchant: {
+  voucher_types?: string[];
+  free_product_name?: string | null;
+  discount_type?: string | null;
+  discount_value?: number | null;
+  promo_buy?: number | null;
+  promo_get?: number | null;
+}): string {
+  const types = merchant.voucher_types || [];
+  if (types.includes("free_product")) return `🎁 ${merchant.free_product_name || "Free Product"}`;
+  if (types.includes("discount_pct")) return `💰 Diskon ${merchant.discount_value ?? 0}%`;
+  if (types.includes("discount_nominal")) return `💵 Diskon Rp ${(merchant.discount_value ?? 0).toLocaleString()}`;
+  if (types.includes("bogo")) return `🛒 Beli ${merchant.promo_buy ?? 1} Gratis ${merchant.promo_get ?? 1}`;
+  return "";
+}
+
+export function getVoucherDetailBrief(merchant: {
+  voucher_types?: string[];
+  free_product_name?: string | null;
+  discount_type?: string | null;
+  discount_value?: number | null;
+  promo_buy?: number | null;
+  promo_get?: number | null;
+}): string {
+  const types = merchant.voucher_types || [];
+  if (types.includes("free_product")) return merchant.free_product_name || "Free";
+  if (types.includes("discount_pct")) return `${merchant.discount_value ?? 0}%`;
+  if (types.includes("discount_nominal")) return `Rp${(merchant.discount_value ?? 0).toLocaleString()}`;
+  if (types.includes("bogo")) return `B${merchant.promo_buy ?? 1}G${merchant.promo_get ?? 1}`;
+  return "";
+}
 
 export const FAMILIA_CATEGORIES = [
   { key: "all", label: "Semua", emoji: "✨" },
