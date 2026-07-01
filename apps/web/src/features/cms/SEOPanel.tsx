@@ -37,10 +37,8 @@ function calculateSEOScore(params: {
 }
 
 export function SEOPanel() {
-  const { title, subtitle, slug, wordCount, headings, keywords } = useCMS()
+  const { title, subtitle, slug, wordCount, headings, keywords, seoTitle, metaDesc, setSeoTitle, setMetaDesc } = useCMS()
   const [focusKeyword, setFocusKeyword] = useState("")
-  const [seoTitle, setSeoTitle] = useState(title)
-  const [metaDesc, setMetaDesc] = useState(subtitle)
 
   const { score, checks } = useMemo(() => calculateSEOScore({ title, wordCount, keywords, headings }), [title, wordCount, keywords, headings])
   const scoreColor = score >= 80 ? "#22C55E" : score >= 50 ? "#FFC64F" : "#EF4444"

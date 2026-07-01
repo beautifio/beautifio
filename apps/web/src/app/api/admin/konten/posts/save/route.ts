@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const { article_id, title, subtitle, content, slug, status, seo_title, meta_description, cover_image, category_id } = await request.json()
+  const { article_id, title, subtitle, content, slug, status, seo_title, meta_description, cover_image, category_id, scheduled_at } = await request.json()
 
   if (!title?.trim()) return NextResponse.json({ error: "Judul wajib diisi" }, { status: 400 })
   if (!content?.trim()) return NextResponse.json({ error: "Konten wajib diisi" }, { status: 400 })
@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
   const wordCount = content.replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length
   const readingTime = Math.max(1, Math.ceil(wordCount / 200))
   const isPublished = status === "publish"
+  const isScheduled = status === "schedule"
   const now = new Date().toISOString()
 
   // Resolve category
@@ -37,8 +38,11 @@ export async function POST(request: NextRequest) {
     const update: any = { title, content, slug: finalSlug, reading_time: readingTime, updated_at: now }
     if (subtitle !== undefined) update.subtitle = subtitle
     if (cover_image) update.cover_image = cover_image
-    if (isPublished) { update.is_published = true; update.published_at = update.published_at || now }
-    if (status === "draft") { update.is_published = false }
+    if (seo_title) update.seo_title = seo_title
+    if (meta_description) update.meta_description = meta_description
+    if (isPublished) { update.is_published = true; update.published_at = now; update.scheduled_at = null }
+    if (isScheduled && scheduled_at) { update.is_published = false; update.scheduled_at = scheduled_at }
+    if (status === "draft") { update.is_published = false; update.scheduled_at = null }
 
     const { error } = await supabase.from("stories").update(update).eq("id", article_id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -51,10 +55,13 @@ export async function POST(request: NextRequest) {
     author_id: user.id, author_name: profile?.full_name || "Redaksi", author_avatar: profile?.avatar_url || null,
     category_id: catId, reading_time: readingTime,
     is_published: isPublished, published_at: isPublished ? now : null,
+    scheduled_at: isScheduled ? scheduled_at : null,
     created_at: now, updated_at: now,
   }
   if (subtitle) insert.subtitle = subtitle
   if (cover_image) insert.cover_image = cover_image
+  if (seo_title) insert.seo_title = seo_title
+  if (meta_description) insert.meta_description = meta_description
 
   const { data: created, error } = await supabase.from("stories").insert(insert).select("id, slug").single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
