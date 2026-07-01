@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   // Handle subscription confirmation
   if (sub_id) {
     const { data: sub } = await supabase.from("user_subscriptions")
-      .select("id, status, payment_ref, created_at").eq("id", sub_id).eq("user_id", user.id).single();
+      .select("id, status, payment_ref, created_at, plan_id, expires_at").eq("id", sub_id).eq("user_id", user.id).single();
 
     if (!sub) return NextResponse.json({ confirmed: false, message: "Subscription tidak ditemukan" });
     if (sub.status === "active") return NextResponse.json({ confirmed: true, message: "Sudah aktif" });
@@ -83,9 +83,14 @@ export async function POST(request: NextRequest) {
       status: "active", started_at: new Date().toISOString(),
     }).eq("id", sub.id);
 
+    const { data: plan } = await supabase.from("subscription_plans")
+      .select("name").eq("id", sub.plan_id).single();
+    const expiryStr = new Date(sub.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+
     await supabase.from("notifications").insert({
       user_id: user.id, type: "subscription_active",
-      title: "Subscription aktif!", body: "Fitur Pro/Ultimate sudah bisa kamu pakai sekarang.",
+      title: "Subscription aktif!",
+      body: `Langganan ${plan?.name || "Pro"} sudah aktif sampai ${expiryStr}. Selamat menikmati!`,
       data: { sub_id: sub.id },
     });
 
@@ -96,7 +101,7 @@ export async function POST(request: NextRequest) {
   if (!invoice_id) return NextResponse.json({ confirmed: false, message: "Missing invoice" }, { status: 400 });
 
   const { data: reg } = await supabase.from("event_registrations")
-    .select("id, status")
+    .select("id, status, event:familia_event_benefits(title)")
     .eq("user_id", user.id)
     .or(`invoice_id.eq.${invoice_id},payment_proof_url.eq.${invoice_id}`)
     .order("created_at", { ascending: false })
@@ -123,7 +128,7 @@ export async function POST(request: NextRequest) {
     user_id: user.id,
     type: "event_confirmed",
     title: "Pembayaran berhasil!",
-    body: "Pendaftaranmu telah dikonfirmasi. Cek tiketmu di Eventku.",
+    body: `Pendaftaranmu untuk "${(reg.event as any)?.title || "Event"}" telah dikonfirmasi. Cek tiketmu di Eventku.`,
     data: { reg_id: reg.id },
   });
 

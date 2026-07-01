@@ -40,11 +40,12 @@ export async function POST(request: NextRequest) {
         user_id: app.user_id, name: app.full_name, is_active: true,
       });
     }
+    const roleLabel = app.role === "psychologist" ? "Psikolog" : "Volunteer Care";
     await supabase.from("mitra_applications").update({ status: "approved", reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", app_id);
-    await supabase.from("notifications").insert({ user_id: app.user_id, type: "info", title: "Pendaftaran diterima!", body: "Selamat! Kamu diterima sebagai Mitra Beautifio.", data: { link_url: "/mitra" } });
+    await supabase.from("notifications").insert({ user_id: app.user_id, type: "info", title: "Pendaftaran diterima!", body: `Selamat! Kamu diterima sebagai ${roleLabel} Beautifio.`, data: { link_url: "/mitra" } });
   } else {
     await supabase.from("mitra_applications").update({ status: "rejected", admin_notes, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", app_id);
-    await supabase.from("notifications").insert({ user_id: app.user_id, type: "info", title: "Pendaftaran ditinjau", body: admin_notes || "Maaf, pendaftaran kamu belum diterima." });
+    await supabase.from("notifications").insert({ user_id: app.user_id, type: "info", title: "Pendaftaran ditinjau", body: admin_notes || "Maaf, pendaftaran kamu belum diterima. Silakan coba lagi atau hubungi admin." });
   }
 
   return NextResponse.json({ success: true });

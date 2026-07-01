@@ -26,10 +26,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   // Notify the other party
   const notifyUserId = isOfficer ? session.user_id : session.officer_id;
   if (notifyUserId) {
+    const closerName = by === "officer" ? "Petugas Care" : "Pengguna";
     await supabase.from("notifications").insert({
       user_id: notifyUserId, type: "care_closed",
       title: "Sesi konsultasi selesai",
-      body: "Konsultasi telah diakhiri. Terima kasih.",
+      body: `${closerName} telah mengakhiri sesi konsultasi. Terima kasih telah menggunakan Beautifio Care.`,
       data: { session_id: id },
     });
   }

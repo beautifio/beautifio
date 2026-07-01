@@ -582,9 +582,10 @@ export async function offerRematch(originalSessionId: string, opponentId: string
   // Notify opponent
   try {
     const { insertNotification } = await import("@/lib/notifications/insert")
+    const { data: offerer } = await supabase.from("users").select("full_name").eq("id", user.id).single();
     await insertNotification({
       userId: opponentId, type: "tebak_rematch", title: "Rematch! 🎮",
-      body: "Lawanmu ingin bermain lagi. Terima atau tolak?",
+      body: `${offerer?.full_name || "Lawanmu"} ingin bermain lagi. Terima atau tolak?`,
       data: { session_id: originalSessionId, offer_id: data.id }
     })
   } catch { /* non-critical */ }

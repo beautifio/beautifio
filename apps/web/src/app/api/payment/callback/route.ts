@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     // Check subscription payments — match by payment_ref
     const { data: sub } = await supabase.from("user_subscriptions")
-      .select("id, status, user_id, plan:subscription_plans(name)")
+      .select("id, status, user_id, expires_at, plan:subscription_plans(name)")
       .or(`payment_ref.eq.${invoiceNumber},payment_ref.ilike.%${invoiceNumber}%`)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -108,10 +108,11 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        const expiryStr = sub.expires_at ? new Date(sub.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "";
         await supabase.from("notifications").insert({
           user_id: sub.user_id, type: "subscription_active",
           title: "Subscription aktif!",
-          body: `Langganan ${(sub.plan as any)?.name || "kamu"} sudah aktif.`,
+          body: `Langganan ${(sub.plan as any)?.name || "Pro"} sudah aktif${expiryStr ? " sampai " + expiryStr : ""}. Selamat menikmati!`,
           data: { sub_id: sub.id },
         });
       }
@@ -120,15 +121,16 @@ export async function POST(request: NextRequest) {
 
     // Check consultation payments
     const { data: consSession } = await supabase.from("consultation_sessions")
-      .select("id, status, user_id").or(`payment_reference.eq.${invoiceNumber},payment_reference.ilike.%${invoiceNumber}%`)
+      .select("id, status, user_id, psychologist:psychologists(full_name)").or(`payment_reference.eq.${invoiceNumber},payment_reference.ilike.%${invoiceNumber}%`)
       .order("created_at", { ascending: false }).limit(1).single();
 
     if (consSession) {
       if (isSuccess && consSession.status === "pending_payment") {
+        const psyName = (consSession.psychologist as any)?.full_name || "Psikolog";
         await supabase.from("consultation_sessions").update({ status: "scheduled" }).eq("id", consSession.id);
         await supabase.from("notifications").insert({
           user_id: consSession.user_id, type: "care_new_session",
-          title: "Konsultasi terjadwal!", body: "Psikolog akan segera menghubungimu.",
+          title: "Konsultasi terjadwal!", body: `${psyName} akan segera menghubungimu.`,
           data: { session_id: consSession.id, link_url: "/care/chat" },
         });
       }
