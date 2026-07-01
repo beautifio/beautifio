@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle, Search } from "lucide-react";
 import { Button, Badge } from "@beautifio/ui";
 import { RichTextEditor } from "@/features/editor/RichTextEditor";
 
@@ -77,6 +77,9 @@ export default function InspirasiPostsPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [seriesList, setSeriesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filterCat, setFilterCat] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -246,6 +249,35 @@ export default function InspirasiPostsPage() {
   }
 
   const authorType = form.author_type;
+
+  // --- Filtered posts ---
+  const filteredPosts = useMemo(() => {
+    let list = posts;
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(p => p.title?.toLowerCase().includes(q) || p.excerpt?.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q));
+    }
+    if (filterCat) list = list.filter(p => p.category_id === filterCat);
+    if (filterStatus) list = list.filter(p => postStatus(p) === filterStatus);
+    return list;
+  }, [posts, search, filterCat, filterStatus]);
+
+  // --- Resume stats ---
+  const statsResume = useMemo(() => {
+    const byCat: Record<string, number> = {};
+    let total = 0, published = 0, draft = 0, scheduled = 0;
+    posts.forEach(p => {
+      const cat = p.category_id || "other";
+      byCat[cat] = (byCat[cat] || 0) + 1;
+      total++;
+      const st = postStatus(p);
+      if (st === "published") published++;
+      if (st === "draft") draft++;
+      if (st === "scheduled") scheduled++;
+    });
+    return { byCat, total, published, draft, scheduled };
+  }, [posts]);
+
   const CatIcon = ({ id }: { id: string }) => {
     const icons: Record<string, string> = { heart: "\u2764", sparkles: "\u2728", "trending-up": "\uD83D\uDCC8", users: "\uD83D\uDC65", feather: "\u270F\uFE0F", monitor: "\uD83D\uDDA5\uFE0F" };
     return <span>{icons[id] || "\u2764"}</span>;
@@ -294,8 +326,8 @@ export default function InspirasiPostsPage() {
         )
       ) : (
         <div className="space-y-2">
-          {posts.length === 0 && <p className="text-sm text-gray-500 text-center py-8">Belum ada post</p>}
-          {posts.map((p) => {
+          {filteredPosts.length === 0 && <p className="text-sm text-gray-500 text-center py-8">{search || filterCat || filterStatus ? "Tidak ada hasil" : "Belum ada post"}</p>}
+          {filteredPosts.map((p) => {
             const st = postStatus(p);
             const authorBadge = AUTHOR_TYPE_BADGE[p.author_type || "redaksi"];
             return (
@@ -333,7 +365,54 @@ export default function InspirasiPostsPage() {
                           <div id={`schedule-${p.id}`} className="hidden absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-3 flex items-center gap-2">
                             <input type="datetime-local" className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs w-44" value={scheduleInputs[p.id] || ""} onChange={(e) => setScheduleInputs((prev: any) => ({ ...prev, [p.id]: e.target.value }))} />
                             <button onClick={() => schedulePost(p.id, scheduleInputs[p.id] || "")} className="px-2.5 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 cursor-pointer">Atur</button>
-                          </div>
+      </div>
+
+      {/* Resume Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+        <div className="p-3 rounded-xl border bg-white border-gray-200 text-center" title="Total">
+          <p className="text-[10px] text-gray-400">Total</p>
+          <p className="text-lg font-bold text-gray-900">{statsResume.total}</p>
+        </div>
+        <div className="p-3 rounded-xl border bg-white border-gray-200 text-center" title="Published">
+          <p className="text-[10px] text-gray-400">Published</p>
+          <p className="text-lg font-bold text-green-600">{statsResume.published}</p>
+        </div>
+        <div className="p-3 rounded-xl border bg-white border-gray-200 text-center" title="Draft">
+          <p className="text-[10px] text-gray-400">Draft</p>
+          <p className="text-lg font-bold text-gray-500">{statsResume.draft}</p>
+        </div>
+        <div className="p-3 rounded-xl border bg-white border-gray-200 text-center" title="Scheduled">
+          <p className="text-[10px] text-gray-400">Terjadwal</p>
+          <p className="text-lg font-bold text-blue-500">{statsResume.scheduled}</p>
+        </div>
+        {CATEGORIES.map(c => (
+          <div key={c.id} className="p-3 rounded-xl border bg-white border-gray-200 text-center" title={c.label}>
+            <p className="text-[10px] text-gray-400 truncate">{c.label}</p>
+            <p className="text-lg font-bold text-gray-900">{statsResume.byCat[c.id] || 0}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Search + Filter */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 max-w-md">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari judul, excerpt, slug..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm bg-white outline-none focus:border-gray-300" />
+        </div>
+        <select value={filterCat || ""} onChange={e => setFilterCat(e.target.value || null)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white outline-none">
+          <option value="">Semua Kategori</option>
+          {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+        </select>
+        <select value={filterStatus || ""} onChange={e => setFilterStatus(e.target.value || null)} className="px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white outline-none">
+          <option value="">Semua Status</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+          <option value="scheduled">Terjadwal</option>
+        </select>
+        {(search || filterCat || filterStatus) && (
+          <button onClick={() => { setSearch(""); setFilterCat(null); setFilterStatus(null) }} className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer">Reset</button>
+        )}
+      </div>
                         </div>
                       </>
                     )}
