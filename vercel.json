@@ -1,5 +1,7 @@
 {
   "framework": "nextjs",
+  "buildCommand": "cd apps/web && npx next build",
+  "outputDirectory": "apps/web/.next",
   "crons": [
     {
       "path": "/api/admin/konten/posts/publish-scheduled",
