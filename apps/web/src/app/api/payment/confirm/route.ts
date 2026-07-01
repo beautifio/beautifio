@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -10,10 +11,18 @@ export async function POST(request: NextRequest) {
 
   // Handle consultation payment first (check before subscription)
   const { data: consSession } = await supabase.from("consultation_sessions")
-    .select("id, status").eq("id", sub_id || ref_id || "").eq("user_id", user.id).maybeSingle();
+    .select("id, status, payment_reference").eq("id", sub_id || ref_id || "").eq("user_id", user.id).maybeSingle();
   if (consSession) {
     if (consSession.status === "scheduled" || consSession.status === "active") return NextResponse.json({ confirmed: true, message: "Sudah aktif" });
     if (consSession.status === "pending_payment") {
+      // Verify payment via Doku
+      if (consSession.payment_reference) {
+        const dokuRes = await fetch("https://api.doku.com/checkout/v1/payment/" + consSession.payment_reference, {
+          headers: { "Client-Id": process.env.DOKU_CLIENT_ID || "", "Request-Id": crypto.randomUUID(), "Request-Timestamp": new Date().toISOString() },
+        }).catch(() => null);
+        if (!dokuRes?.ok) return NextResponse.json({ confirmed: false, message: "Pembayaran belum terverifikasi. Silakan menunggu." });
+      }
+
       const { data: fullSession } = await supabase.from("consultation_sessions")
         .select("*, psychologist:psychologists(full_name)").eq("id", consSession.id).single();
       await supabase.from("consultation_sessions").update({ status: "scheduled" }).eq("id", consSession.id);
