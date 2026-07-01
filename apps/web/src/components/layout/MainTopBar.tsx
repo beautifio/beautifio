@@ -29,11 +29,11 @@ function TierBadge() {
 
   return (
     <span style={{
-      position: "absolute", bottom: -3, right: -3,
-      width: 12, height: 12, borderRadius: "50%",
-      background: tier === "ultimate" ? "#6BB9D4" : "#FFC64F",
-      border: "1.5px solid #084463",
-    }} title={tier === "ultimate" ? "Ultimate" : "Pro"} />
+      position: "absolute", bottom: -4, right: -4,
+      fontSize: 11, lineHeight: 1,
+    }} title={tier === "ultimate" ? "Ultimate" : "Pro"}>
+      {tier === "ultimate" ? "💎" : "👑"}
+    </span>
   )
 }
 
