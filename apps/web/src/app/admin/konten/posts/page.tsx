@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle, Search } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle, Search, Sparkles, TrendingUp, Target, Users as UsersIcon, Lightbulb } from "lucide-react";
 import { Button, Badge } from "@beautifio/ui";
 import { RichTextEditor } from "@/features/editor/RichTextEditor";
 
@@ -95,6 +95,8 @@ export default function InspirasiPostsPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [scheduleInputs, setScheduleInputs] = useState<Record<string, string>>({});
+  const [insight, setInsight] = useState<any>(null);
+  const [insightLoading, setInsightLoading] = useState(true);
 
   const fetchPosts = async () => {
     try {
@@ -117,7 +119,14 @@ export default function InspirasiPostsPage() {
     } catch (e) { console.error("Failed to load series", e); }
   };
 
-  useEffect(() => { fetchPosts(); fetchSeries(); }, []);
+  const fetchInsight = async () => {
+    try {
+      const res = await fetch("/api/admin/konten/insight");
+      if (res.ok) { setInsight(await res.json()); }
+    } catch { /* non-critical */ } finally { setInsightLoading(false) }
+  };
+
+  useEffect(() => { fetchPosts(); fetchSeries(); fetchInsight(); }, []);
 
   const [trashPosts, setTrashPosts] = useState<any[]>([]);
 
@@ -249,6 +258,24 @@ export default function InspirasiPostsPage() {
   }
 
   const authorType = form.author_type;
+
+  const generateFromInsight = (title: string) => {
+    setEditId(null);
+    setForm({
+      title: title, content: "", excerpt: "", category_id: "mind-body",
+      cover_image: "", author_name: "", read_time_minutes: 5,
+      slug: "", meta_title: "", meta_description: "", og_image: "",
+      scheduled_at: "", author_type: "redaksi", architecture: "",
+      disclaimer_type: "none", disclaimer_custom: "",
+      author_credentials: { gelar: "", institusi: "", linkedin: "", foto_url: "" },
+      author_anon_name: "", series_id: "",
+    });
+    setShowAdd(true);
+    setTimeout(() => {
+      const editor = document.querySelector(".ProseMirror") as any;
+      if (editor) editor.focus();
+    }, 300);
+  };
 
   // --- Filtered posts ---
   const filteredPosts = useMemo(() => {
@@ -392,6 +419,60 @@ export default function InspirasiPostsPage() {
           </div>
         ))}
       </div>
+
+      {/* Insight Panel */}
+      {!insightLoading && insight && (insight.curhat || insight.journey || insight.circle || insight.aiArticle) && (
+        <div className="p-5 rounded-2xl border-2 bg-gradient-to-r" style={{ borderColor: "rgba(255,198,79,0.3)", background: "linear-gradient(135deg, rgba(255,198,79,0.04), rgba(8,68,99,0.02))" }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles size={16} style={{ color: "#FFC64F" }} />
+            <h3 className="text-sm font-bold" style={{ color: "#1E2938" }}>🔥 Insight Hari Ini</h3>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {insight.curhat && (
+              <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <TrendingUp size={13} style={{ color: "#EF4444" }} />
+                  <span className="text-[10px] font-semibold" style={{ color: "#647488" }}>Curhat sedang ramai</span>
+                </div>
+                <p className="text-xs font-bold" style={{ color: "#1E2938" }}>{insight.curhat.title}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#647488" }}>{insight.curhat.users} pengguna</p>
+              </div>
+            )}
+            {insight.journey && (
+              <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Target size={13} style={{ color: "#FFC64F" }} />
+                  <span className="text-[10px] font-semibold" style={{ color: "#647488" }}>Journey sering gagal</span>
+                </div>
+                <p className="text-xs font-bold" style={{ color: "#1E2938" }}>{insight.journey.title}</p>
+              </div>
+            )}
+            {insight.circle && (
+              <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <UsersIcon size={13} style={{ color: "#6BB9D4" }} />
+                  <span className="text-[10px] font-semibold" style={{ color: "#647488" }}>Circle paling aktif</span>
+                </div>
+                <p className="text-xs font-bold" style={{ color: "#1E2938" }}>{insight.circle.name}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#647488" }}>{insight.circle.members} member baru</p>
+              </div>
+            )}
+            {insight.aiArticle && (
+              <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Lightbulb size={13} style={{ color: "#22C55E" }} />
+                  <span className="text-[10px] font-semibold" style={{ color: "#647488" }}>Artikel AI</span>
+                </div>
+                <p className="text-xs font-bold" style={{ color: "#1E2938" }}>{insight.aiArticle}</p>
+                <div className="flex items-center gap-1 mt-1 text-[10px]" style={{ color: "#FFC64F" }}>{"★".repeat(5)}</div>
+              </div>
+            )}
+          </div>
+          <button onClick={() => generateFromInsight(insight.aiArticle || insight.curhat?.title || "")} className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-opacity hover:opacity-90" style={{ background: "#084463", color: "#FFFFFF" }}>
+            <Sparkles size={13} style={{ color: "#FFC64F" }} /> Generate Artikel
+          </button>
+        </div>
+      )}
 
       {/* Search + Filter */}
       <div className="flex items-center gap-2">
