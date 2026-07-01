@@ -15,7 +15,7 @@ export default function OpportunitiesPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<any>({ title: "", category: "pekerjaan", organization: "", description: "", deadline: "", url: "", location: "", is_featured: false, is_active: true });
+  const [form, setForm] = useState<any>({ title: "", category: "pekerjaan", organization: "", description: "", deadline: "", url: "", location: "", cover_image: "", is_featured: false, is_active: true });
   const [saving, setSaving] = useState(false);
 
   const fetchOpps = async () => {
@@ -29,7 +29,7 @@ export default function OpportunitiesPage() {
 
   function startEdit(o: any) {
     setEditId(o.id);
-    setForm({ title: o.title, category: o.category, organization: o.organization, description: o.description || "", deadline: o.deadline?.slice(0, 16) || "", url: o.url || "", location: o.location || "", is_featured: o.is_featured, is_active: o.is_active });
+    setForm({ title: o.title, category: o.category, organization: o.organization, description: o.description || "", deadline: o.deadline?.slice(0, 16) || "", url: o.url || "", location: o.location || "", cover_image: o.cover_image || "", is_featured: o.is_featured, is_active: o.is_active });
     setShowAdd(true);
   }
 
@@ -135,6 +135,7 @@ export default function OpportunitiesPage() {
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">URL</label><input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Location</label><input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
               </div>
+              <div><label className="text-xs font-medium text-gray-600 block mb-1">Cover Image URL</label><input value={form.cover_image || ""} onChange={(e) => setForm({ ...form, cover_image: e.target.value })} placeholder="https://..." className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} /> Featured</label>
                 <label className="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} /> Active</label>

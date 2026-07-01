@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
         description: body.description || null,
         url: body.url || null,
         location: body.location || null,
+        cover_image: body.cover_image || null,
         type: body.type || "full-time",
         is_active: body.is_active ?? true,
         is_featured: body.is_featured ?? false,
@@ -71,7 +72,7 @@ export async function PATCH(req: NextRequest) {
     const user = await checkRole(supabase);
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { id, title, category, organization, deadline, description, url, location, type, is_active, is_featured } = await req.json();
+    const { id, title, category, organization, deadline, description, url, location, type, cover_image, is_active, is_featured } = await req.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
     const update: Record<string, any> = {};
@@ -86,6 +87,7 @@ export async function PATCH(req: NextRequest) {
     if (description !== undefined) update.description = description;
     if (url !== undefined) update.url = url;
     if (location !== undefined) update.location = location;
+    if (cover_image !== undefined) update.cover_image = cover_image;
     if (type !== undefined) update.type = type;
     if (is_active !== undefined) update.is_active = is_active;
     if (is_featured !== undefined) update.is_featured = is_featured;

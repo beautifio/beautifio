@@ -24,6 +24,7 @@ type DBOpportunity = {
   url: string | null;
   location: string | null;
   is_featured: boolean;
+  cover_image: string | null;
 };
 
 const catIcons: Record<string, typeof GraduationCap> = {
@@ -149,6 +150,12 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
             </div>
           </div>
         </div>
+
+        {opp.cover_image && (
+          <div className="aspect-[16/9] overflow-hidden">
+            <img src={opp.cover_image} alt={opp.title} className="w-full h-full object-cover" />
+          </div>
+        )}
 
         <div className="px-6 pt-6 pb-24 space-y-6">
           <div className="grid grid-cols-2 gap-3">

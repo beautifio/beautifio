@@ -21,6 +21,7 @@ type DBOpportunity = {
   url: string | null;
   location: string | null;
   is_featured: boolean;
+  cover_image: string | null;
 };
 
 const catIcons: Record<string, typeof GraduationCap> = {
@@ -197,6 +198,11 @@ function OpportunityCard({ opp }: { opp: DBOpportunity }) {
   return (
     <Link href={`/opportunity/${opp.slug}`}>
       <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group active:scale-[0.98]">
+        {opp.cover_image && (
+          <div className="w-40 shrink-0 aspect-[2/1] rounded-xl overflow-hidden">
+            <img src={opp.cover_image} alt={opp.title} className="w-full h-full object-cover" loading="lazy" />
+          </div>
+        )}
         <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center flex-shrink-0">
           {Icon && <Icon size={18} className="text-primary" />}
         </div>
