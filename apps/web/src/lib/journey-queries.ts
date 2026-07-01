@@ -134,13 +134,15 @@ export async function createJourney(
     .eq("user_id", userId)
     .eq("status", "active");
 
-  // Check tier limit (3 for reguler, 3 for pro, 999 for ultimate via subscription)
+  // Check tier limit (3 for reguler, 10 for pro, 999 for ultimate)
+  let userTier = "reguler";
   const { data: sub } = await db().from("user_subscriptions")
-    .select("plan:subscription_plans(tier)")
-    .eq("user_id", userId).eq("status", "active")
-    .gt("expires_at", new Date().toISOString())
-    .maybeSingle();
-  const userTier = (sub?.plan as any)?.tier || "reguler";
+    .select("plan_id").eq("user_id", userId).eq("status", "active")
+    .gt("expires_at", new Date().toISOString()).maybeSingle();
+  if (sub?.plan_id) {
+    const { data: plan } = await db().from("subscription_plans").select("tier").eq("id", sub.plan_id).single();
+    userTier = plan?.tier || "reguler";
+  }
   const maxJourneys = userTier === "ultimate" ? 999 : userTier === "pro" ? 10 : 3;
 
   if ((activeCount ?? 0) >= maxJourneys) {

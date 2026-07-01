@@ -19,16 +19,25 @@ const TIER_CONFIG: Record<UserTier, Omit<TierLimits, "tier">> = {
 
 export async function getUserTier(userId: string): Promise<UserTier> {
   const supabase = await createClient();
-  // Auto-cleanup: expire any stale subscriptions before reading
-  await supabase.from("user_subscriptions")
-    .update({ status: "expired" })
-    .eq("user_id", userId).eq("status", "active")
-    .lt("expires_at", new Date().toISOString());
+  // Auto-cleanup: expire any stale subscriptions before reading (best-effort)
+  try {
+    await supabase.from("user_subscriptions")
+      .update({ status: "expired" })
+      .eq("user_id", userId).eq("status", "active")
+      .lt("expires_at", new Date().toISOString());
+  } catch { /* non-blocking */ }
+
+  // Query active subscription and join plan tier separately
   const { data: sub } = await supabase.from("user_subscriptions")
-    .select("plan:subscription_plans(tier)")
-    .eq("user_id", userId).eq("status", "active")
+    .select("plan_id").eq("user_id", userId).eq("status", "active")
     .maybeSingle();
-  return (sub?.plan as any)?.tier || "reguler";
+
+  if (!sub?.plan_id) return "reguler";
+
+  const { data: plan } = await supabase.from("subscription_plans")
+    .select("tier").eq("id", sub.plan_id).single();
+
+  return (plan?.tier as UserTier) || "reguler";
 }
 
 export function getTierLimits(tier: UserTier): TierLimits {
