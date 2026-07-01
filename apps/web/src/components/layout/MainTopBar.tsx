@@ -1,17 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import dynamic from "next/dynamic"
 import { Search, User } from "lucide-react"
 import { NotificationBell } from "@/components/NotificationBell"
-
-const TierBadge = dynamic(() => import("./TierBadge"), { ssr: false })
 
 export function MainTopBar() {
   const router = useRouter()
   const [query, setQuery] = useState("")
+  const [tier, setTier] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch("/api/auth/tier")
+      .then(r => r.json())
+      .then(d => { if (d?.tier && d.tier !== "reguler") setTier(d.tier) })
+      .catch(() => {})
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,11 +45,18 @@ export function MainTopBar() {
         </form>
         <div className="flex-1" />
         <NotificationBell />
-        <Link href="/profil" aria-label="Profil" className="relative">
+        <Link href="/profil" aria-label="Profil" style={{ position: "relative" }}>
           <div className="w-8 h-8 rounded-full flex items-center justify-center transition-colors" style={{ background: 'rgba(255,255,255,0.15)' }}>
             <User size={16} style={{ color: '#FFFFFF' }} />
           </div>
-          <TierBadge />
+          {tier && (
+            <span style={{
+              position: "absolute", bottom: -4, right: -4,
+              fontSize: 11, lineHeight: 1, pointerEvents: "none",
+            }} title={tier === "ultimate" ? "Ultimate" : "Pro"}>
+              {tier === "ultimate" ? "💎" : "👑"}
+            </span>
+          )}
         </Link>
       </div>
     </header>
