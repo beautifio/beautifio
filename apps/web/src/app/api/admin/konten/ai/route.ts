@@ -37,9 +37,15 @@ Usia 15-25 tahun, anak SMA dan kuliah, lagi cari jati diri dan arah hidup, aktif
 
 function fallbackArticle(t: string): string {
   const topic = t || "Pengembangan Diri"
+  const slug = topic.toLowerCase().replace(/\s+/g, "-")
   return JSON.stringify({
     title: `Mengenal ${topic}: Panduan Lengkap untuk Anak Muda`,
+    slug: `mengenal-${slug}-panduan-lengkap`,
+    excerpt: `Pernah merasa bingung dengan ${topic}? Artikel ini akan membantumu memahami dan mengatasinya.`,
     content: `<p>Pernahkah kamu merasa bingung dengan ${topic}? Kamu nggak sendirian.</p><h2>Apa Itu ${topic}?</h2><p>${topic} adalah topik yang paling banyak dicari generasi muda. Yuk bahas.</p><h2>Kenapa Penting?</h2><p>Memahami ${topic} bisa mengubah cara pandangmu.</p><h2>Langkah Praktis</h2><p>Mulai dari yang sederhana.</p><blockquote>"Perubahan besar dimulai dari langkah kecil."</blockquote><p>Kamu nggak harus sempurna — kamu hanya perlu mulai.</p>`,
+    meta_title: `Mengenal ${topic}: Panduan Lengkap | Beautifio`,
+    meta_description: `Pelajari apa itu ${topic}, kenapa penting, dan langkah praktis mengatasinya. Panduan lengkap untuk anak muda Indonesia.`,
+    read_time_minutes: 5,
   })
 }
 
@@ -76,7 +82,12 @@ ${context ? `Konteks tambahan: ${context}` : ""}
 Format output sebagai JSON:
 {
   "title": "Judul artikel (max 70 karakter, clickable, ada power word)",
-  "content": "HTML konten artikel lengkap. Gunakan tag <h2> untuk subheading, <p> untuk paragraf, <blockquote> untuk kutipan, <ul>/<ol> untuk list. Maksimal 1200 kata."
+  "slug": "url-slug-dari-judul (lowercase, dash-separated, tanpa tahun)",
+  "excerpt": "Deskripsi singkat 1-2 kalimat (max 160 karakter) yang bikin penasaran",
+  "content": "HTML konten artikel lengkap. Gunakan tag <h2> untuk subheading, <p> untuk paragraf, <blockquote> untuk kutipan, <ul>/<ol> untuk list. Maksimal 1200 kata.",
+  "meta_title": "SEO title (max 70 karakter, mengandung keyword utama)",
+  "meta_description": "SEO meta description (120-160 karakter, mengandung keyword, ada CTA)",
+  "read_time_minutes": 5 (angka estimasi waktu baca)
 }
 
 HANYA balas JSON. Jangan ada teks lain.`

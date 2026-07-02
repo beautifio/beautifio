@@ -275,9 +275,9 @@ export default function InspirasiPostsPage() {
       if (!res.ok) throw new Error("AI service unavailable")
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      let article = { title, content: "" }
+      let article: any = { title, content: "" }
       try { article = JSON.parse(data.result) } catch { article = { title, content: data.result } }
-      openEditorWithContent(article.title, article.content)
+      openEditorWithContent(article.title, article.content, article)
     } catch (e: any) { alert("Gagal generate: " + (e.message || "coba lagi")) } finally { setGenLoading(false); setShowGenerate(false) }
   }
 
@@ -292,18 +292,18 @@ export default function InspirasiPostsPage() {
       if (!res.ok) throw new Error("AI service unavailable")
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      let article = { title: genKeyword, content: "" }
+      let article: any = { title: genKeyword, content: "" }
       try { article = JSON.parse(data.result) } catch { article = { title: genKeyword, content: data.result } }
-      openEditorWithContent(article.title, article.content)
+      openEditorWithContent(article.title, article.content, article)
     } catch (e: any) { alert("Gagal generate: " + (e.message || "coba lagi")) } finally { setGenLoading(false); setShowGenerate(false) }
   }
 
-  const openEditorWithContent = (title: string, content: string) => {
+  const openEditorWithContent = (title: string, content: string, meta?: any) => {
     setEditId(null)
     setForm({
-      title: title, content: content, excerpt: "", category_id: genCategory || "mind-body",
-      cover_image: "", author_name: "", read_time_minutes: 5,
-      slug: "", meta_title: "", meta_description: "", og_image: "",
+      title: title, content: content, excerpt: meta?.excerpt || "", category_id: genCategory || "mind-body",
+      cover_image: "", author_name: "", read_time_minutes: meta?.read_time_minutes || 5,
+      slug: meta?.slug || "", meta_title: meta?.meta_title || "", meta_description: meta?.meta_description || "", og_image: "",
       scheduled_at: "", author_type: "redaksi", architecture: "",
       disclaimer_type: "none", disclaimer_custom: "",
       author_credentials: { gelar: "", institusi: "", linkedin: "", foto_url: "" },
