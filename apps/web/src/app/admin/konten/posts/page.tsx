@@ -12,6 +12,7 @@ const CATEGORIES = [
   { id: "relationship", label: "Relationship", icon: "users" },
   { id: "creative-space", label: "Creative Space", icon: "feather" },
   { id: "tech-gaming", label: "Tech & Gaming", icon: "monitor" },
+  { id: "lifetaintment", label: "Lifetaintment", icon: "clapperboard" },
 ];
 
 const AUTHOR_TYPES = [
@@ -340,7 +341,7 @@ export default function InspirasiPostsPage() {
   }, [posts]);
 
   const CatIcon = ({ id }: { id: string }) => {
-    const icons: Record<string, string> = { heart: "\u2764", sparkles: "\u2728", "trending-up": "\uD83D\uDCC8", users: "\uD83D\uDC65", feather: "\u270F\uFE0F", monitor: "\uD83D\uDDA5\uFE0F" };
+    const icons: Record<string, string> = { heart: "\u2764", sparkles: "\u2728", "trending-up": "\uD83D\uDCC8", users: "\uD83D\uDC65", feather: "\u270F\uFE0F", monitor: "\uD83D\uDDA5\uFE0F", clapperboard: "\uD83C\uDFAC" };
     return <span>{icons[id] || "\u2764"}</span>;
   };
 

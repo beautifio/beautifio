@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   ArrowLeft, BookHeart, Clock, Heart, Bookmark, Share2, Flag,
   MessageSquare, Sparkles, BookOpen, X, MapPin,
-  Users, Feather, Monitor, TrendingUp, AlertTriangle,
+  Users, Feather, Monitor, TrendingUp, Clapperboard, AlertTriangle,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
 import { CATEGORY_LABELS, AUTHOR_TYPE_BADGE, ARCH_LABELS } from "@/lib/inspirasi-data";
@@ -21,6 +21,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 
 const CATEGORY_ICONS: Record<string, typeof Sparkles> = {
+  "lifetaintment": Clapperboard,
   "mind-body": Heart,
   "glow-glowup": Sparkles,
   "levelup-career": TrendingUp,

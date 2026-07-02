@@ -49,6 +49,7 @@ export const CATEGORIES = [
   { id: "relationship", label: "Relationship", icon: "users" },
   { id: "creative-space", label: "Creative Space", icon: "feather" },
   { id: "tech-gaming", label: "Tech & Gaming", icon: "monitor" },
+  { id: "lifetaintment", label: "Lifetaintment", icon: "clapperboard" },
 ];
 
 export const CATEGORY_LABELS: Record<string, string> = {
@@ -58,6 +59,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "relationship": "Relationship",
   "creative-space": "Creative Space",
   "tech-gaming": "Tech & Gaming",
+  "lifetaintment": "Lifetaintment",
   "Kesehatan Mental": "Mind & Body",
   "Pendidikan": "Level Up & Career",
   "Karir": "Level Up & Career",
@@ -81,6 +83,7 @@ export const CATEGORY_COLORS: Record<string, { primary: string }> = {
   "relationship": { primary: "#F49B7A" },
   "creative-space": { primary: "#A68AE3" },
   "tech-gaming": { primary: "#00B7D9" },
+  "lifetaintment": { primary: "#E85D75" },
   "wellness": { primary: "#5DBB89" },
   "style": { primary: "#9B7EDE" },
   "entertainment": { primary: "#FF8C42" },
