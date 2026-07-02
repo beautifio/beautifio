@@ -35,6 +35,14 @@ Usia 15-25 tahun, anak SMA dan kuliah, lagi cari jati diri dan arah hidup, aktif
 - JANGAN lebih dari 1500 kata
 - JANGAN gunakan bahasa Inggris campur Indonesia berlebihan`
 
+function fallbackArticle(t: string): string {
+  const topic = t || "Pengembangan Diri"
+  return JSON.stringify({
+    title: `Mengenal ${topic}: Panduan Lengkap untuk Anak Muda`,
+    content: `<p>Pernahkah kamu merasa bingung dengan ${topic}? Kamu nggak sendirian.</p><h2>Apa Itu ${topic}?</h2><p>${topic} adalah topik yang paling banyak dicari generasi muda. Yuk bahas.</p><h2>Kenapa Penting?</h2><p>Memahami ${topic} bisa mengubah cara pandangmu.</p><h2>Langkah Praktis</h2><p>Mulai dari yang sederhana.</p><blockquote>"Perubahan besar dimulai dari langkah kecil."</blockquote><p>Kamu nggak harus sempurna — kamu hanya perlu mulai.</p>`,
+  })
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -82,33 +90,38 @@ HANYA balas JSON. Jangan ada teks lain.`
     let result = ""
 
     if (OPENAI_KEY) {
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${OPENAI_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: bible },
-            { role: "user", content: prompt },
-          ],
-          max_tokens: action === "generate_full" ? 2500 : 500,
-        }),
-      })
-      const json = await res.json()
-      result = json?.choices?.[0]?.message?.content || ""
-    } else {
-      // Template fallback
-      if (action === "generate_full") {
-        const t = topic || keyword || "Pengembangan Diri"
-        const catName = category || "Mind & Body"
-        result = JSON.stringify({
-          title: `Mengenal ${t}: Panduan Lengkap untuk Anak Muda`,
-          content: `<p>Pernahkah kamu merasa bingung dengan ${t}? Kamu nggak sendirian. Banyak anak muda mengalami hal yang sama.</p><h2>Apa Itu ${t}?</h2><p>${t} adalah salah satu topik yang paling banyak dicari oleh generasi muda Indonesia. Yuk kita bahas lebih dalam.</p><h2>Kenapa ${t} Penting?</h2><p>Memahami ${t} bisa mengubah cara pandangmu terhadap hidup. Berikut beberapa alasannya.</p><h2>Cara Menghadapi ${t}</h2><p>Ada beberapa langkah praktis yang bisa kamu coba. Mulai dari yang paling sederhana.</p><blockquote>"Perubahan besar dimulai dari langkah kecil."</blockquote><p>Jadi, sudah siap menghadapi ${t}? Ingat, kamu nggak harus sempurna — kamu hanya perlu mulai.</p>`,
+      try {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${OPENAI_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: bible },
+              { role: "user", content: prompt },
+            ],
+            max_tokens: action === "generate_full" ? 2500 : 500,
+          }),
         })
+        const json = await res.json()
+        result = json?.choices?.[0]?.message?.content || ""
+        if (!result) console.warn("OpenAI returned empty or error:", json?.error || json)
+      } catch (e: any) {
+        console.warn("OpenAI unreachable:", e?.message)
+        result = ""
       }
     }
 
-    return NextResponse.json({ [resultKey]: result })
+    // Fallback template if OpenAI didn't produce result
+    if (!result && action === "generate_full") {
+      const t = topic || keyword || "Pengembangan Diri"
+      result = JSON.stringify({
+        title: `Mengenal ${t}: Panduan Lengkap untuk Anak Muda`,
+        content: `<p>Pernahkah kamu merasa bingung dengan ${t}? Kamu nggak sendirian. Banyak anak muda mengalami hal yang sama.</p><h2>Apa Itu ${t}?</h2><p>${t} adalah salah satu topik yang paling banyak dicari oleh generasi muda Indonesia. Yuk kita bahas lebih dalam.</p><h2>Kenapa ${t} Penting?</h2><p>Memahami ${t} bisa mengubah cara pandangmu terhadap hidup. Berikut beberapa alasannya.</p><h2>Cara Menghadapi ${t}</h2><p>Ada beberapa langkah praktis yang bisa kamu coba. Mulai dari yang paling sederhana.</p><blockquote>"Perubahan besar dimulai dari langkah kecil."</blockquote><p>Jadi, sudah siap menghadapi ${t}? Ingat, kamu nggak harus sempurna — kamu hanya perlu mulai.</p>`,
+      })
+    }
+
+    return NextResponse.json({ [resultKey]: result || fallbackArticle(topic || keyword) })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "AI error" }, { status: 500 })
   }
