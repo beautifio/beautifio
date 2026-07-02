@@ -54,6 +54,7 @@ const navGroups: NavGroup[] = [
     roles: ["redaksi", "superadmin"],
     items: [
       { href: "/admin/konten/posts", label: "Inspirasi", icon: FileSpreadsheet, roles: ["redaksi", "superadmin"] },
+      { href: "/admin/settings/bible", label: "Bible Konten", icon: BookOpen, roles: ["redaksi", "superadmin"] },
       { href: "/admin/konten/stories", label: "Stories", icon: BookOpen, roles: ["redaksi", "superadmin"] },
       { href: "/admin/konten/quotes", label: "Quotes", icon: Quote, roles: ["redaksi", "superadmin"] },
       { href: "/admin/konten/hero", label: "Media Manager", icon: Image, roles: ["redaksi", "superadmin"] },
