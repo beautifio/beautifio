@@ -42,8 +42,11 @@ export async function GET() {
       aiArticle = json?.choices?.[0]?.message?.content?.trim() || ""
     } catch { /* fallback below */ }
   }
-  if (!aiArticle && curhat?.title) {
-    aiArticle = `Cara Mengatasi ${curhat.title} untuk Hidup Lebih Tenang`
+  if (!aiArticle) {
+    if (curhat?.title) aiArticle = `Cara Mengatasi ${curhat.title} untuk Hidup Lebih Tenang`
+    else if (journey?.title) aiArticle = `Panduan Sukses ${journey.title} untuk Pemula`
+    else if (circles?.[0]?.name) aiArticle = `Mengenal Lebih Dekat ${circles[0].name}: Tips & Trik`
+    else aiArticle = "Cara Mengenal Diri Sendiri Lebih Dalam"
   }
 
   return NextResponse.json({
