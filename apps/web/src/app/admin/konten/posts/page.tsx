@@ -352,48 +352,7 @@ export default function InspirasiPostsPage() {
           </div>
         )
       ) : (
-        <div className="space-y-2">
-          {filteredPosts.length === 0 && <p className="text-sm text-gray-500 text-center py-8">{search || filterCat || filterStatus ? "Tidak ada hasil" : "Belum ada post"}</p>}
-          {filteredPosts.map((p) => {
-            const st = postStatus(p);
-            const authorBadge = AUTHOR_TYPE_BADGE[p.author_type || "redaksi"];
-            return (
-              <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[st] || "bg-gray-100 text-gray-700"}`}>{STATUS_LABELS[st] || st}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${authorBadge.color}`}>{authorBadge.label}</span>
-                      <Badge variant="accent" className="text-[10px]">{p.category_label || p.category}</Badge>
-                      {p.architecture && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-cyan-100 text-cyan-700">{ARCH_LABELS[p.architecture] || p.architecture}</span>}
-                      {p.review_status && p.review_status !== "ready" && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${REVIEW_COLORS[p.review_status] || ""}`}>
-                          {REVIEW_LABELS[p.review_status] || p.review_status}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm font-semibold text-gray-900">{p.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{p.excerpt || p.content?.slice(0, 100)}</p>
-                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400">
-                      <span>{p.author || p.author_name || "\u2014"}</span>
-                      <span>{new Date(p.created_at).toLocaleString("id-ID")}</span>
-                      {p.scheduled_at && !p.is_published && <span className="text-blue-500 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(p.scheduled_at).toLocaleString("id-ID")}</span>}
-                      {p.read_time_minutes && <span>{p.read_time_minutes} menit</span>}
-                      {p.slug && <span className="font-mono">/{p.slug}</span>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={() => startEdit(p)} className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center cursor-pointer" title="Edit"><FileText className="w-3.5 h-3.5 text-gray-400" /></button>
-                    {st === "draft" && (
-                      <>
-                        <button onClick={() => updateStatus(p.id, "published")} className="w-7 h-7 rounded-lg hover:bg-green-50 flex items-center justify-center cursor-pointer" title="Publish"><Send className="w-3.5 h-3.5 text-green-500" /></button>
-                        <div className="relative">
-                          <button onClick={() => { const el = document.getElementById(`schedule-${p.id}`); if (el) el.classList.toggle("hidden"); }} className="w-7 h-7 rounded-lg hover:bg-blue-50 flex items-center justify-center cursor-pointer" title="Jadwalkan"><CalendarClock className="w-3.5 h-3.5 text-blue-500" /></button>
-                          <div id={`schedule-${p.id}`} className="hidden absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-3 flex items-center gap-2">
-                            <input type="datetime-local" className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs w-44" value={scheduleInputs[p.id] || ""} onChange={(e) => setScheduleInputs((prev: any) => ({ ...prev, [p.id]: e.target.value }))} />
-                            <button onClick={() => schedulePost(p.id, scheduleInputs[p.id] || "")} className="px-2.5 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 cursor-pointer">Atur</button>
-      </div>
-
+      <>
       {/* Resume Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
         <div className="p-3 rounded-xl border bg-white border-gray-200 text-center" title="Total">
@@ -494,6 +453,48 @@ export default function InspirasiPostsPage() {
           <button onClick={() => { setSearch(""); setFilterCat(null); setFilterStatus(null) }} className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer">Reset</button>
         )}
       </div>
+        <div className="space-y-2">
+          {filteredPosts.length === 0 && <p className="text-sm text-gray-500 text-center py-8">{search || filterCat || filterStatus ? "Tidak ada hasil" : "Belum ada post"}</p>}
+          {filteredPosts.map((p) => {
+            const st = postStatus(p);
+            const authorBadge = AUTHOR_TYPE_BADGE[p.author_type || "redaksi"];
+            return (
+              <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[st] || "bg-gray-100 text-gray-700"}`}>{STATUS_LABELS[st] || st}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${authorBadge.color}`}>{authorBadge.label}</span>
+                      <Badge variant="accent" className="text-[10px]">{p.category_label || p.category}</Badge>
+                      {p.architecture && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-cyan-100 text-cyan-700">{ARCH_LABELS[p.architecture] || p.architecture}</span>}
+                      {p.review_status && p.review_status !== "ready" && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${REVIEW_COLORS[p.review_status] || ""}`}>
+                          {REVIEW_LABELS[p.review_status] || p.review_status}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">{p.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{p.excerpt || p.content?.slice(0, 100)}</p>
+                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400">
+                      <span>{p.author || p.author_name || "\u2014"}</span>
+                      <span>{new Date(p.created_at).toLocaleString("id-ID")}</span>
+                      {p.scheduled_at && !p.is_published && <span className="text-blue-500 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(p.scheduled_at).toLocaleString("id-ID")}</span>}
+                      {p.read_time_minutes && <span>{p.read_time_minutes} menit</span>}
+                      {p.slug && <span className="font-mono">/{p.slug}</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => startEdit(p)} className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center cursor-pointer" title="Edit"><FileText className="w-3.5 h-3.5 text-gray-400" /></button>
+                    {st === "draft" && (
+                      <>
+                        <button onClick={() => updateStatus(p.id, "published")} className="w-7 h-7 rounded-lg hover:bg-green-50 flex items-center justify-center cursor-pointer" title="Publish"><Send className="w-3.5 h-3.5 text-green-500" /></button>
+                        <div className="relative">
+                          <button onClick={() => { const el = document.getElementById(`schedule-${p.id}`); if (el) el.classList.toggle("hidden"); }} className="w-7 h-7 rounded-lg hover:bg-blue-50 flex items-center justify-center cursor-pointer" title="Jadwalkan"><CalendarClock className="w-3.5 h-3.5 text-blue-500" /></button>
+                          <div id={`schedule-${p.id}`} className="hidden absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-3 flex items-center gap-2">
+                            <input type="datetime-local" className="px-2 py-1.5 rounded-lg border border-gray-200 text-xs w-44" value={scheduleInputs[p.id] || ""} onChange={(e) => setScheduleInputs((prev: any) => ({ ...prev, [p.id]: e.target.value }))} />
+                            <button onClick={() => schedulePost(p.id, scheduleInputs[p.id] || "")} className="px-2.5 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 cursor-pointer">Atur</button>
+      </div>
+
                         </div>
                       </>
                     )}
@@ -507,6 +508,7 @@ export default function InspirasiPostsPage() {
             );
           })}
         </div>
+      </>
       )}
 
       {showAdd && (
