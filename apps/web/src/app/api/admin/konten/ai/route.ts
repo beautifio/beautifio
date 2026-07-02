@@ -45,10 +45,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const { action, topic, keyword, category, tone, length, context } = await request.json()
+  const { action, topic, keyword, category, tone, length, style, context } = await request.json()
 
-  // Load bible from app_settings (or use default)
-  const { data: bibleSettings } = await supabase.from("app_settings").select("value").eq("key", "content_bible").maybeSingle()
+  // Load bible from app_settings based on style
+  const bibleKey = `content_bible_${style || "standard"}`
+  const { data: bibleSettings } = await supabase.from("app_settings").select("value").eq("key", bibleKey).maybeSingle()
   const bible = bibleSettings?.value || DEFAULT_BIBLE
 
   try {

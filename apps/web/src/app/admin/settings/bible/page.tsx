@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Save, Lock, Eye, EyeOff, RotateCcw, Loader2 } from "lucide-react"
 
-const DEFAULT_BIBLE = `# STANDAR KONTEN BEAUTIFIO
+const DEFAULT_STANDARD = `# STANDAR KONTEN BEAUTIFIO
 
 ## Nada
 Santai, insightful, seperti kakak ngobrol ke adik. Pakai "kamu", bukan "Anda". Gak menggurui.
@@ -35,9 +35,50 @@ Usia 15-25 tahun, anak SMA dan kuliah, lagi cari jati diri dan arah hidup, aktif
 - JANGAN lebih dari 1500 kata
 - JANGAN gunakan bahasa Inggris campur Indonesia berlebihan`
 
+const DEFAULT_CERPEN = `# GAYA CERPEN BEAUTIFIO
+
+## Format
+- Naratif dengan sudut pandang orang pertama ("aku")
+- Alur: pembuka → konflik → klimaks → resolusi
+- 800-1200 kata
+- Dialog sesekali (natural, gak kaku)
+
+## Nada
+- Puitis tapi gak lebay
+- Emosional, menyentuh, personal
+- Deskriptif — pembaca bisa "melihat" adegan
+
+## Struktur
+- Pembuka: deskripsi suasana atau momen yang kuat
+- Tengah: konflik internal tokoh, keraguan, pergulatan batin
+- Akhir: refleksi atau pelajaran — gak harus happy ending
+
+## Aturan
+- Tokoh harus relatable (anak muda Indonesia)
+- Setting di Indonesia (kampus, kos, rumah, kafe, jalanan)
+- Konflik realistis — bukan fantasi
+- Akhiri dengan satu kalimat yang ngena di hati
+
+## Dilarang
+- JANGAN tokoh yang sempurna
+- JANGAN akhir yang menggurui atau "dan dia pun berubah"
+- JANGAN setting di luar negeri
+- JANGAN lebih dari 1500 kata`
+
+const STYLES = [
+  { key: "standard", label: "📝 Standar" },
+  { key: "cerpen", label: "📖 Cerpen" },
+]
+
+const DEFAULTS: Record<string, string> = {
+  standard: DEFAULT_STANDARD,
+  cerpen: DEFAULT_CERPEN,
+}
+
 export default function BiblePage() {
-  const [bible, setBible] = useState("")
+  const [bibles, setBibles] = useState<Record<string, string>>({})
   const [storePin, setStorePin] = useState("")
+  const [activeStyle, setActiveStyle] = useState("standard")
   const [editMode, setEditMode] = useState(false)
   const [showPinPopup, setShowPinPopup] = useState(false)
   const [pinInput, setPinInput] = useState("")
@@ -52,9 +93,17 @@ export default function BiblePage() {
   useEffect(() => {
     fetch("/api/admin/settings/bible")
       .then(r => r.json())
-      .then(d => { setBible(d.bible || DEFAULT_BIBLE); setStorePin(d.pin || "123456"); setLoading(false) })
+      .then(d => {
+        setBibles({ standard: d.standard || DEFAULTS.standard, cerpen: d.cerpen || DEFAULTS.cerpen })
+        setStorePin(d.pin || "123456")
+        setLoading(false)
+      })
     fetch("/api/auth/me").then(r => r.json()).then(d => setRole(d?.data?.role || ""))
   }, [])
+
+  const bible = bibles[activeStyle] || ""
+
+  const setBible = (v: string) => setBibles(prev => ({ ...prev, [activeStyle]: v }))
 
   const verifyPin = () => {
     if (pinInput === storePin) { setEditMode(true); setShowPinPopup(false); setPinError(""); setPinInput("") }
@@ -65,7 +114,7 @@ export default function BiblePage() {
     setSaving(true)
     const res = await fetch("/api/admin/settings/bible", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bible, current_pin: storePin }),
+      body: JSON.stringify({ bible, style: activeStyle, current_pin: storePin }),
     })
     if (res.ok) { setSaved(true); setEditMode(false); setTimeout(() => setSaved(false), 2000) }
     else { const d = await res.json(); alert(d.error || "Gagal menyimpan") }
@@ -84,7 +133,7 @@ export default function BiblePage() {
     setSaving(false)
   }
 
-  const resetBible = () => { setBible(DEFAULT_BIBLE) }
+  const resetBible = () => setBible(DEFAULTS[activeStyle] || "")
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 text-gray-400 animate-spin" /></div>
 
@@ -96,6 +145,16 @@ export default function BiblePage() {
           <p className="text-xs text-gray-500 mt-0.5">Panduan penulisan AI — dipakai saat generate artikel.</p>
         </div>
         {saved && <span className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-full">✅ Tersimpan</span>}
+      </div>
+
+      {/* Style Tabs */}
+      <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+        {STYLES.map(s => (
+          <button key={s.key} onClick={() => { setActiveStyle(s.key); setEditMode(false) }}
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeStyle === s.key ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"}`}>
+            {s.label}
+          </button>
+        ))}
       </div>
 
       {editMode ? (

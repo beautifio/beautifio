@@ -100,6 +100,7 @@ export default function InspirasiPostsPage() {
   const [showGenerate, setShowGenerate] = useState(false);
   const [genKeyword, setGenKeyword] = useState("");
   const [genCategory, setGenCategory] = useState("mind-body");
+  const [genStyle, setGenStyle] = useState("standard");
   const [genLoading, setGenLoading] = useState(false);
 
   const fetchPosts = async () => {
@@ -268,7 +269,7 @@ export default function InspirasiPostsPage() {
     try {
       const res = await fetch("/api/admin/konten/ai", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate_full", topic: title, category: "mind-body" }),
+        body: JSON.stringify({ action: "generate_full", topic: title, category: "mind-body", style: "standard" }),
       })
       const data = await res.json()
       let article = { title, content: "" }
@@ -283,7 +284,7 @@ export default function InspirasiPostsPage() {
     try {
       const res = await fetch("/api/admin/konten/ai", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate_full", topic: genKeyword, category: genCategory }),
+        body: JSON.stringify({ action: "generate_full", topic: genKeyword, category: genCategory, style: genStyle }),
       })
       const data = await res.json()
       let article = { title: genKeyword, content: "" }
@@ -737,6 +738,13 @@ export default function InspirasiPostsPage() {
                 <label className="text-xs font-medium text-gray-600 block mb-1">Kategori</label>
                 <select value={genCategory} onChange={e => setGenCategory(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none">
                   {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Gaya Penulisan</label>
+                <select value={genStyle} onChange={e => setGenStyle(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none">
+                  <option value="standard">📝 Standar — Artikel inspiratif</option>
+                  <option value="cerpen">📖 Cerpen — Cerita pendek naratif</option>
                 </select>
               </div>
             </div>
