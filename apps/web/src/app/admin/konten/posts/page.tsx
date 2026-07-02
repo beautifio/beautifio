@@ -272,11 +272,13 @@ export default function InspirasiPostsPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "generate_full", topic: title, category: "mind-body", style: "standard" }),
       })
+      if (!res.ok) throw new Error("AI service unavailable")
       const data = await res.json()
+      if (data.error) throw new Error(data.error)
       let article = { title, content: "" }
       try { article = JSON.parse(data.result) } catch { article = { title, content: data.result } }
       openEditorWithContent(article.title, article.content)
-    } catch (e) { console.error(e) } finally { setGenLoading(false); setShowGenerate(false) }
+    } catch (e: any) { alert("Gagal generate: " + (e.message || "coba lagi")) } finally { setGenLoading(false); setShowGenerate(false) }
   }
 
   const handleGenerate = async () => {
@@ -287,11 +289,13 @@ export default function InspirasiPostsPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "generate_full", topic: genKeyword, category: genCategory, style: genStyle }),
       })
+      if (!res.ok) throw new Error("AI service unavailable")
       const data = await res.json()
+      if (data.error) throw new Error(data.error)
       let article = { title: genKeyword, content: "" }
       try { article = JSON.parse(data.result) } catch { article = { title: genKeyword, content: data.result } }
       openEditorWithContent(article.title, article.content)
-    } catch (e) { console.error(e) } finally { setGenLoading(false); setShowGenerate(false) }
+    } catch (e: any) { alert("Gagal generate: " + (e.message || "coba lagi")) } finally { setGenLoading(false); setShowGenerate(false) }
   }
 
   const openEditorWithContent = (title: string, content: string) => {
