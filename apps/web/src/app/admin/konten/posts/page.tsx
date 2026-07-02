@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle, Search, Sparkles, TrendingUp, Target, Users as UsersIcon, Lightbulb } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle, Search, Sparkles, TrendingUp, Target, Users as UsersIcon, Lightbulb, Loader2 } from "lucide-react";
 import { Button, Badge } from "@beautifio/ui";
 import { RichTextEditor } from "@/features/editor/RichTextEditor";
 
@@ -97,6 +97,10 @@ export default function InspirasiPostsPage() {
   const [scheduleInputs, setScheduleInputs] = useState<Record<string, string>>({});
   const [insight, setInsight] = useState<any>(null);
   const [insightLoading, setInsightLoading] = useState(true);
+  const [showGenerate, setShowGenerate] = useState(false);
+  const [genKeyword, setGenKeyword] = useState("");
+  const [genCategory, setGenCategory] = useState("mind-body");
+  const [genLoading, setGenLoading] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -259,23 +263,52 @@ export default function InspirasiPostsPage() {
 
   const authorType = form.author_type;
 
-  const generateFromInsight = (title: string) => {
-    setEditId(null);
+  const generateFromInsight = async (title: string) => {
+    setGenLoading(true)
+    try {
+      const res = await fetch("/api/admin/konten/ai", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "generate_full", topic: title, category: "mind-body" }),
+      })
+      const data = await res.json()
+      let article = { title, content: "" }
+      try { article = JSON.parse(data.result) } catch { article = { title, content: data.result } }
+      openEditorWithContent(article.title, article.content)
+    } catch (e) { console.error(e) } finally { setGenLoading(false); setShowGenerate(false) }
+  }
+
+  const handleGenerate = async () => {
+    if (!genKeyword.trim()) return
+    setGenLoading(true)
+    try {
+      const res = await fetch("/api/admin/konten/ai", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "generate_full", topic: genKeyword, category: genCategory }),
+      })
+      const data = await res.json()
+      let article = { title: genKeyword, content: "" }
+      try { article = JSON.parse(data.result) } catch { article = { title: genKeyword, content: data.result } }
+      openEditorWithContent(article.title, article.content)
+    } catch (e) { console.error(e) } finally { setGenLoading(false); setShowGenerate(false) }
+  }
+
+  const openEditorWithContent = (title: string, content: string) => {
+    setEditId(null)
     setForm({
-      title: title, content: "", excerpt: "", category_id: "mind-body",
+      title: title, content: content, excerpt: "", category_id: genCategory || "mind-body",
       cover_image: "", author_name: "", read_time_minutes: 5,
       slug: "", meta_title: "", meta_description: "", og_image: "",
       scheduled_at: "", author_type: "redaksi", architecture: "",
       disclaimer_type: "none", disclaimer_custom: "",
       author_credentials: { gelar: "", institusi: "", linkedin: "", foto_url: "" },
       author_anon_name: "", series_id: "",
-    });
-    setShowAdd(true);
+    })
+    setShowAdd(true)
     setTimeout(() => {
-      const editor = document.querySelector(".ProseMirror") as any;
-      if (editor) editor.focus();
-    }, 300);
-  };
+      const editor = document.querySelector(".ProseMirror") as any
+      if (editor) editor.focus()
+    }, 500)
+  }
 
   // --- Filtered posts ---
   const filteredPosts = useMemo(() => {
@@ -318,6 +351,7 @@ export default function InspirasiPostsPage() {
           {showTrash && <Button variant="ghost" size="sm" onClick={() => setShowTrash(false)} className="cursor-pointer">Kembali</Button>}
           <Button variant={showTrash ? "accent" : "ghost"} size="sm" onClick={() => { setShowTrash(!showTrash); if (!showTrash) fetchTrash(); }} className="cursor-pointer"><Trash className="w-4 h-4" /> Sampah</Button>
           {!showTrash && <Button variant="accent" size="sm" onClick={startNew} className="cursor-pointer"><Plus className="w-4 h-4" /> Tambah Post</Button>}
+          {!showTrash && <Button size="sm" onClick={() => setShowGenerate(true)} className="cursor-pointer" style={{ background: "#FFC64F", color: "#1E2938" }}><Sparkles className="w-4 h-4" /> Generate</Button>}
         </div>
       </div>
 
@@ -678,6 +712,40 @@ export default function InspirasiPostsPage() {
             <div className="flex gap-2 mt-5">
               <Button variant="ghost" size="sm" className="flex-1 cursor-pointer" onClick={() => setShowAdd(false)} disabled={saving}>Batal</Button>
               <Button variant="accent" size="sm" className="flex-1 cursor-pointer" onClick={save} disabled={saving || !form.title || !form.content}><Save className="w-4 h-4" /> {saving ? "Menyimpan..." : "Simpan"}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showGenerate && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 px-4" onClick={() => setShowGenerate(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles size={18} style={{ color: "#FFC64F" }} />
+                <h3 className="text-sm font-bold text-gray-900">Generate Artikel AI</h3>
+              </div>
+              <button onClick={() => setShowGenerate(false)} className="cursor-pointer"><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">AI akan menulis artikel sesuai standar konten Beautifio.</p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Keyword / Topik</label>
+                <input value={genKeyword} onChange={e => setGenKeyword(e.target.value)} placeholder="Contoh: overthinking pada remaja" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none" autoFocus />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Kategori</label>
+                <select value={genCategory} onChange={e => setGenCategory(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none">
+                  {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setShowGenerate(false)} disabled={genLoading} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500 cursor-pointer hover:bg-gray-50">Batal</button>
+              <button onClick={handleGenerate} disabled={genLoading || !genKeyword.trim()} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: "#084463" }}>
+                {genLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                {genLoading ? "Menulis..." : "Generate"}
+              </button>
             </div>
           </div>
         </div>
