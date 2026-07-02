@@ -141,7 +141,7 @@ export default function BiblePage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-gray-900">📖 Content Bible</h1>
+          <h1 className="text-lg font-bold text-gray-900">📖 Panduan Konten</h1>
           <p className="text-xs text-gray-500 mt-0.5">Panduan penulisan AI — dipakai saat generate artikel.</p>
         </div>
         {saved && <span className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-full">✅ Tersimpan</span>}
@@ -166,19 +166,19 @@ export default function BiblePage() {
           <div className="flex gap-2">
             <button onClick={() => setEditMode(false)} className="flex-1 py-2.5 rounded-xl border text-sm cursor-pointer hover:bg-gray-50" style={{ borderColor: "#E2E8F0", color: "#647488" }}>Batal</button>
             <button onClick={saveBible} disabled={saving} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: "#084463" }}>
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Simpan Bible
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Simpan Panduan
             </button>
           </div>
         </div>
       ) : (
         <div className="p-5 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
-          <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed" style={{ color: "#1E2938" }}>{bible || "Belum ada Bible. Klik Edit untuk membuat."}</pre>
+          <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed" style={{ color: "#1E2938" }}>{bible || "Belum ada panduan. Klik Edit untuk membuat."}</pre>
           <div className="flex gap-2 mt-4 pt-4" style={{ borderTop: "1px solid #E2E8F0" }}>
             <button onClick={resetBible} className="flex-1 py-2.5 rounded-xl border text-sm cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2" style={{ borderColor: "#E2E8F0", color: "#647488" }}>
               <RotateCcw size={14} /> Reset ke Default
             </button>
             <button onClick={() => { setShowPinPopup(true); setPinInput(""); setPinError("") }} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer flex items-center justify-center gap-2" style={{ background: "#084463" }}>
-              <Lock size={14} /> Edit Bible
+              <Lock size={14} /> Edit Panduan
             </button>
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function BiblePage() {
                 <Lock size={24} style={{ color: "#084463" }} />
               </div>
               <h3 className="text-sm font-bold text-gray-900">Masukkan PIN</h3>
-              <p className="text-xs text-gray-500 mt-1">Verifikasi untuk mengedit Bible.</p>
+              <p className="text-xs text-gray-500 mt-1">Verifikasi untuk mengedit panduan.</p>
             </div>
             <input type="text" value={pinInput} onChange={e => { setPinInput(e.target.value.replace(/\D/g, "")); setPinError("") }} onKeyDown={e => e.key === "Enter" && verifyPin()} maxLength={6} placeholder="••••••" className="w-full text-center text-2xl tracking-widest py-3 rounded-lg border outline-none mb-2" style={{ borderColor: pinError ? "#EF4444" : "#E2E8F0" }} autoFocus />
             {pinError && <p className="text-xs text-center text-red-500 mb-2">{pinError}</p>}
