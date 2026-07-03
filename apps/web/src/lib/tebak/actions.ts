@@ -290,6 +290,18 @@ export async function startQuestionTimer(sessionId: string, seq: number): Promis
   return data as string | null
 }
 
+export async function startDiscQuestionTimer(sessionId: string, seq: number): Promise<string | null> {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
+  const { data, error } = await supabase.rpc('start_disc_question_timer', {
+    p_session_id: sessionId,
+    p_seq: seq,
+  })
+  if (error) { console.error('startDiscQuestionTimer error', error); return null }
+  return data as string | null
+}
+
 export async function submitSubjectAnswer(questionId: string, answer: string): Promise<void> {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()

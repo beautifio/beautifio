@@ -11,6 +11,7 @@ import {
   submitDiscAnswer,
   handleSubjectTimeout as handleSubjectTimeoutAction,
   startQuestionTimer,
+  startDiscQuestionTimer,
   signalMatchIntroReady,
   resetReadyFlags,
   advanceGame,
@@ -410,7 +411,9 @@ ${advice}`
   useEffect(() => {
     if (showIntro || showPanduan) return
     if (!currentQ || currentQ.subject_deadline) return
-    if (currentQ.status === 'subject_answering' || currentQ.status === 'both_answering') {
+    if (currentQ.status === 'both_answering') {
+      startDiscQuestionTimer(sessionId, currentQ.sequence_number)
+    } else if (currentQ.status === 'subject_answering') {
       startQuestionTimer(sessionId, currentQ.sequence_number)
     }
   }, [currentQ, sessionId, showIntro, showPanduan])
