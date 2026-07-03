@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, WifiOff, Volume2, VolumeX, Sparkles, Heart, Leaf, Star, Check, X } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
@@ -78,6 +78,7 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
   const [myName, setMyName] = useState<string | null>(null)
   
   const [showIntro, setShowIntro] = useState(true)
+  const introDeadline = useMemo(() => new Date(Date.now() + 8000).toISOString(), [showIntro])
   const [showPanduan, setShowPanduan] = useState(false)
   const [showProfileReveal, setShowProfileReveal] = useState(false)
   const [hasMounted, setHasMounted] = useState(false)
@@ -349,8 +350,8 @@ ${advice}`
   }, [showIntro, bothReady, sessionId])
 
   useEffect(() => {
-    if (!showIntro || !gameSession.created_at) return
-    const deadline = new Date(gameSession.created_at).getTime() + 8000
+    if (!showIntro) return
+    const deadline = Date.now() + 8000
     let fired = false
     const check = () => {
       if (Date.now() >= deadline && !fired) {
@@ -362,7 +363,7 @@ ${advice}`
     check()
     const t = setInterval(check, 500)
     return () => clearInterval(t)
-  }, [showIntro, gameSession.created_at, sessionId])
+  }, [showIntro, sessionId])
 
   // Watchdog: jika isLoading > 5s & roundOfRef belum punya round ini → retry
   useEffect(() => {
@@ -655,7 +656,7 @@ ${advice}`
         <ScoreBoard scoreA={gameSession.score_a} scoreB={gameSession.score_b} round={gameSession.current_round} isPlayerA={isPlayerA} myName={myName} opponentName={opponentName} myDots={myDots} theirDots={theirDots} isDiscRound={scoreboardIsDisc} discProgress={discProgress} discTotal={discTotal} />
       </div>
 
-      {showIntro ? <MatchIntro myName={myName} opponentName={opponentName} onBegin={() => setShowIntro(false)} deadline={new Date(Date.now() + 8000).toISOString()} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={opponentReady} sessionId={sessionId} />
+      {showIntro ? <MatchIntro myName={myName} opponentName={opponentName} onBegin={() => setShowIntro(false)} deadline={introDeadline} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={opponentReady} sessionId={sessionId} />
       : showProfileReveal ? <DiscProfileReveal myProfile={myDiscProfile} theirProfile={theirDiscProfile} myName={myName} opponentName={opponentName} deadline={gameSession.advance_at ?? new Date(Date.now() + 20000).toISOString()} onAdvance={() => setShowProfileReveal(false)} />
       : showPanduan && !isFinished ? <PanduanOverlay round={gameSession.current_round} onMulai={() => setShowPanduan(false)} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={!!opponentReady} iAmReady={!!iAmReady} sessionId={sessionId} />
       : isFinished ? <WinnerScreen session={gameSession} isPlayerA={isPlayerA} userId={userId} opponentId={opponentId} opponentName={opponentName} myName={myName} compatibility={compatibility} compatibilityLabel={compatibilityLabel} compatibilityInsight={compatibilityInsight} onHome={() => router.push('/')} opponentIsBot={opponentIsBot} />
