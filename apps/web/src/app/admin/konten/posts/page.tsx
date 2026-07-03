@@ -18,6 +18,8 @@ const CATEGORIES = [
   { id: "tech-gaming", label: "Tech & Gaming", icon: "monitor" },
   { id: "opinion", label: "Opini & Aksi", icon: "newspaper" },
   { id: "news", label: "Update & Berita", icon: "megaphone" },
+  { id: "sports", label: "Olahraga", icon: "trophy" },
+  { id: "tokoh", label: "Tokoh", icon: "star" },
 ];
 
 const AUTHOR_TYPES = [
@@ -378,7 +380,7 @@ export default function InspirasiPostsPage() {
   }, [posts]);
 
   const CatIcon = ({ id }: { id: string }) => {
-    const icons: Record<string, string> = { heart: "\u2764", sparkles: "\u2728", "trending-up": "\uD83D\uDCC8", users: "\uD83D\uDC65", feather: "\u270F\uFE0F", monitor: "\uD83D\uDDA5\uFE0F", clapperboard: "\uD83C\uDFAC", utensils: "\uD83C\uDF7D\uFE0F", activity: "\uD83C\uDFC3", "shopping-bag": "\uD83D\uDECD\uFE0F", newspaper: "\uD83D\uDCF0", megaphone: "\uD83D\uDCE3" };
+    const icons: Record<string, string> = { heart: "\u2764", sparkles: "\u2728", "trending-up": "\uD83D\uDCC8", users: "\uD83D\uDC65", feather: "\u270F\uFE0F", monitor: "\uD83D\uDDA5\uFE0F", clapperboard: "\uD83C\uDFAC", utensils: "\uD83C\uDF7D\uFE0F", activity: "\uD83C\uDFC3", "shopping-bag": "\uD83D\uDECD\uFE0F", newspaper: "\uD83D\uDCF0", megaphone: "\uD83D\uDCE3", trophy: "\uD83C\uDFC6", star: "\u2B50" };
     return <span>{icons[id] || "\u2764"}</span>;
   };
 

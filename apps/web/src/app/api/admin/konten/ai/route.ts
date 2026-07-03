@@ -60,7 +60,7 @@ Balas JSON dengan SEMUA field ini — jangan ada yang kosong:
 {
   "title": "Judul (50-60 char, ada keyword, bukan clickbait)",
   "slug": "url-slug-indonesia-huruf-kecil",
-  "category": "mind-body|beauty-skincare|wellness|style-shopping|entertainment|lifetainment|relationship|levelup-career|creative-space|tech-gaming|opinion|news",
+  "category": "mind-body|beauty-skincare|wellness|style-shopping|entertainment|lifetainment|relationship|levelup-career|creative-space|tech-gaming|opinion|news|sports|tokoh",
   "tipe_penulis": "Redaksi",
   "byline": "Kak Nara — Editorial Beautifio",
   "keyword_utama": "satu keyword",

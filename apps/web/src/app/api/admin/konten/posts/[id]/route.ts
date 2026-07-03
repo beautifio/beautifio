@@ -34,6 +34,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         "levelup-career": "Level Up & Career", "relationship": "Relationship",
         "creative-space": "Creative Space", "tech-gaming": "Tech & Gaming",
         "opinion": "Opini & Aksi", "news": "Update & Berita",
+        "sports": "Olahraga", "tokoh": "Tokoh",
         "glow-glowup": "Beauty & Skincare",
       };
       updateData.category = labels[body.category_id] || body.category_id;

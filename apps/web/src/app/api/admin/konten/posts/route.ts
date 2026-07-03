@@ -24,6 +24,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   "tech-gaming": "Tech & Gaming",
   "opinion": "Opini & Aksi",
   "news": "Update & Berita",
+  "sports": "Olahraga",
+  "tokoh": "Tokoh",
   // Legacy
   "glow-glowup": "Beauty & Skincare",
 };

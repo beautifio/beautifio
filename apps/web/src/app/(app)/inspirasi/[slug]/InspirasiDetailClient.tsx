@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   ArrowLeft, BookHeart, Clock, Heart, Bookmark, Share2, Flag,
   MessageSquare, Sparkles, BookOpen, X, MapPin,
-  Users, Feather, Monitor, TrendingUp, Clapperboard, Utensils, Activity, ShoppingBag, Newspaper, Megaphone, AlertTriangle,
+  Users, Feather, Monitor, TrendingUp, Clapperboard, Utensils, Activity, ShoppingBag, Newspaper, Megaphone, Trophy, Star, AlertTriangle,
 } from "lucide-react";
 import { Badge } from "@beautifio/ui";
 import { CATEGORY_LABELS, AUTHOR_TYPE_BADGE, ARCH_LABELS } from "@/lib/inspirasi-data";
@@ -28,6 +28,8 @@ const CATEGORY_ICONS: Record<string, typeof Sparkles> = {
   "lifetainment": Utensils,
   "opinion": Newspaper,
   "news": Megaphone,
+  "sports": Trophy,
+  "tokoh": Star,
   "mind-body": Heart,
   "glow-glowup": Sparkles,
   "levelup-career": TrendingUp,

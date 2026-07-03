@@ -55,6 +55,8 @@ export const CATEGORIES = [
   { id: "tech-gaming", label: "Tech & Gaming", icon: "monitor" },
   { id: "opinion", label: "Opini & Aksi", icon: "newspaper" },
   { id: "news", label: "Update & Berita", icon: "megaphone" },
+  { id: "sports", label: "Olahraga", icon: "trophy" },
+  { id: "tokoh", label: "Tokoh", icon: "star" },
 ];
 
 export const CATEGORY_LABELS: Record<string, string> = {
@@ -70,6 +72,8 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "tech-gaming": "Tech & Gaming",
   "opinion": "Opini & Aksi",
   "news": "Update & Berita",
+  "sports": "Olahraga",
+  "tokoh": "Tokoh",
   // Legacy mappings
   "glow-glowup": "Beauty & Skincare",
   "Kesehatan Mental": "Mind & Body",
@@ -102,6 +106,8 @@ export const CATEGORY_COLORS: Record<string, { primary: string }> = {
   "tech-gaming": { primary: "#00B7D9" },
   "opinion": { primary: "#F59E0B" },
   "news": { primary: "#647488" },
+  "sports": { primary: "#22C55E" },
+  "tokoh": { primary: "#FFC64F" },
   "cerita_pembaca": { primary: "#C89C72" },
   "Kesehatan Mental": { primary: "#084463" },
   "Pendidikan": { primary: "#0B4F8A" },
