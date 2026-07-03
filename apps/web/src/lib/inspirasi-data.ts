@@ -53,6 +53,8 @@ export const CATEGORIES = [
   { id: "levelup-career", label: "Level Up & Career", icon: "trending-up" },
   { id: "creative-space", label: "Creative Space", icon: "feather" },
   { id: "tech-gaming", label: "Tech & Gaming", icon: "monitor" },
+  { id: "opinion", label: "Opini & Aksi", icon: "newspaper" },
+  { id: "news", label: "Update & Berita", icon: "megaphone" },
 ];
 
 export const CATEGORY_LABELS: Record<string, string> = {
@@ -66,6 +68,8 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "levelup-career": "Level Up & Career",
   "creative-space": "Creative Space",
   "tech-gaming": "Tech & Gaming",
+  "opinion": "Opini & Aksi",
+  "news": "Update & Berita",
   // Legacy mappings
   "glow-glowup": "Beauty & Skincare",
   "Kesehatan Mental": "Mind & Body",
@@ -96,6 +100,8 @@ export const CATEGORY_COLORS: Record<string, { primary: string }> = {
   "levelup-career": { primary: "#0B4F8A" },
   "creative-space": { primary: "#A68AE3" },
   "tech-gaming": { primary: "#00B7D9" },
+  "opinion": { primary: "#F59E0B" },
+  "news": { primary: "#647488" },
   "cerita_pembaca": { primary: "#C89C72" },
   "Kesehatan Mental": { primary: "#084463" },
   "Pendidikan": { primary: "#0B4F8A" },
