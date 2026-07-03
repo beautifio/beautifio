@@ -50,6 +50,8 @@ export const CATEGORIES = [
   { id: "creative-space", label: "Creative Space", icon: "feather" },
   { id: "tech-gaming", label: "Tech & Gaming", icon: "monitor" },
   { id: "lifetaintment", label: "Lifetaintment", icon: "clapperboard" },
+  { id: "opinion", label: "Opini & Aksi", icon: "newspaper" },
+  { id: "news", label: "Update & Berita", icon: "megaphone" },
 ];
 
 export const CATEGORY_LABELS: Record<string, string> = {
@@ -60,6 +62,8 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "creative-space": "Creative Space",
   "tech-gaming": "Tech & Gaming",
   "lifetaintment": "Lifetaintment",
+  "opinion": "Opini & Aksi",
+  "news": "Update & Berita",
   "Kesehatan Mental": "Mind & Body",
   "Pendidikan": "Level Up & Career",
   "Karir": "Level Up & Career",
@@ -84,6 +88,8 @@ export const CATEGORY_COLORS: Record<string, { primary: string }> = {
   "creative-space": { primary: "#A68AE3" },
   "tech-gaming": { primary: "#00B7D9" },
   "lifetaintment": { primary: "#E85D75" },
+  "opinion": { primary: "#F59E0B" },
+  "news": { primary: "#647488" },
   "wellness": { primary: "#5DBB89" },
   "style": { primary: "#9B7EDE" },
   "entertainment": { primary: "#FF8C42" },

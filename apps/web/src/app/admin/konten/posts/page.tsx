@@ -13,6 +13,8 @@ const CATEGORIES = [
   { id: "creative-space", label: "Creative Space", icon: "feather" },
   { id: "tech-gaming", label: "Tech & Gaming", icon: "monitor" },
   { id: "lifetaintment", label: "Lifetaintment", icon: "clapperboard" },
+  { id: "opinion", label: "Opini & Aksi", icon: "newspaper" },
+  { id: "news", label: "Update & Berita", icon: "megaphone" },
 ];
 
 const AUTHOR_TYPES = [
@@ -103,6 +105,9 @@ export default function InspirasiPostsPage() {
   const [genCategory, setGenCategory] = useState("mind-body");
   const [genStyle, setGenStyle] = useState("standard");
   const [genLoading, setGenLoading] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+  const [tagList, setTagList] = useState<string[]>([]);
 
   const fetchPosts = async () => {
     try {
@@ -132,7 +137,18 @@ export default function InspirasiPostsPage() {
     } catch { /* non-critical */ } finally { setInsightLoading(false) }
   };
 
-  useEffect(() => { fetchPosts(); fetchSeries(); fetchInsight(); }, []);
+  const fetchTags = async () => {
+    try {
+      const { supabase } = await import("@/lib/supabase/client")
+      if (!supabase) return
+      const { data } =     await supabase.from("app_settings").select("value").eq("key", "content_tags").single()
+      if (data?.value) setTagSuggestions(JSON.parse(data.value))
+    } catch { /* ignore */ }
+  };
+
+  const addTagsToForm = (tags: string[]) => { setTagList(tags); setForm((prev: any) => ({ ...prev, tags })); };
+
+  useEffect(() => { fetchPosts(); fetchSeries(); fetchInsight(); fetchTags(); }, []);
 
   const [trashPosts, setTrashPosts] = useState<any[]>([]);
 
@@ -155,6 +171,7 @@ export default function InspirasiPostsPage() {
       author_anon_name: p.author_anon_name || "",
       series_id: p.series_id || "",
     });
+    setTagList(p.tags || []);
     setShowAdd(true);
   }
 
@@ -167,8 +184,9 @@ export default function InspirasiPostsPage() {
       scheduled_at: "", author_type: "redaksi", architecture: "",
       disclaimer_type: "none", disclaimer_custom: "",
       author_credentials: { gelar: "", institusi: "", linkedin: "", foto_url: "" },
-      author_anon_name: "", series_id: "",
+      author_anon_name: "",       series_id: "",
     });
+    setTagList([]);
     setShowAdd(true);
   }
 
@@ -309,6 +327,7 @@ export default function InspirasiPostsPage() {
       author_credentials: { gelar: "", institusi: "", linkedin: "", foto_url: "" },
       author_anon_name: "", series_id: "",
     })
+    setTagList(meta?.tags || []);
     setShowAdd(true)
     setTimeout(() => {
       const editor = document.querySelector(".ProseMirror") as any
@@ -345,7 +364,7 @@ export default function InspirasiPostsPage() {
   }, [posts]);
 
   const CatIcon = ({ id }: { id: string }) => {
-    const icons: Record<string, string> = { heart: "\u2764", sparkles: "\u2728", "trending-up": "\uD83D\uDCC8", users: "\uD83D\uDC65", feather: "\u270F\uFE0F", monitor: "\uD83D\uDDA5\uFE0F", clapperboard: "\uD83C\uDFAC" };
+    const icons: Record<string, string> = { heart: "\u2764", sparkles: "\u2728", "trending-up": "\uD83D\uDCC8", users: "\uD83D\uDC65", feather: "\u270F\uFE0F", monitor: "\uD83D\uDDA5\uFE0F", clapperboard: "\uD83C\uDFAC", newspaper: "\uD83D\uDCF0", megaphone: "\uD83D\uDCE3" };
     return <span>{icons[id] || "\u2764"}</span>;
   };
 
@@ -507,6 +526,9 @@ export default function InspirasiPostsPage() {
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${authorBadge.color}`}>{authorBadge.label}</span>
                       <Badge variant="accent" className="text-[10px]">{p.category_label || p.category}</Badge>
                       {p.architecture && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-cyan-100 text-cyan-700">{ARCH_LABELS[p.architecture] || p.architecture}</span>}
+                      {p.tags?.slice(0, 3).map((t: string) => (
+                        <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-gray-100 text-gray-500">#{t}</span>
+                      ))}
                       {p.review_status && p.review_status !== "ready" && (
                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${REVIEW_COLORS[p.review_status] || ""}`}>
                           {REVIEW_LABELS[p.review_status] || p.review_status}
@@ -654,6 +676,36 @@ export default function InspirasiPostsPage() {
                   <option value="">Tidak masuk series</option>
                   {seriesList.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}
                 </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Tags</label>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {tagList.map(tag => (
+                    <span key={tag} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-blue-50 text-blue-700">
+                      #{tag}
+                      <button onClick={() => setTagList(prev => prev.filter(t => t !== tag))} className="cursor-pointer"><X size={10} /></button>
+                    </span>
+                  ))}
+                </div>
+                <div className="relative">
+                  <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => {
+                    if (e.key === "Enter" && tagInput.trim()) {
+                      const t = tagInput.trim().toLowerCase().replace(/\s+/g, "-")
+                      if (!tagList.includes(t)) setTagList(prev => [...prev, t])
+                      setTagInput("")
+                    }
+                    if (e.key === "Backspace" && !tagInput && tagList.length > 0) setTagList(prev => prev.slice(0, -1))
+                  }} placeholder="Tambah tag..." className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none" />
+                  {tagInput && tagSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 mt-1 w-full rounded-xl border shadow-lg bg-white z-50 max-h-40 overflow-y-auto" style={{ borderColor: "#E2E8F0" }}>
+                      {tagSuggestions.filter(s => s.includes(tagInput.toLowerCase())).slice(0, 8).map(s => (
+                        <button key={s} onClick={() => { if (!tagList.includes(s)) setTagList(prev => [...prev, s]); setTagInput("") }}
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 cursor-pointer" style={{ color: "#1E2938" }}>#{s}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>

@@ -46,6 +46,7 @@ function fallbackArticle(t: string): string {
     meta_title: `Mengenal ${topic}: Panduan Lengkap | Beautifio`,
     meta_description: `Pelajari apa itu ${topic}, kenapa penting, dan langkah praktis mengatasinya. Panduan lengkap untuk anak muda Indonesia.`,
     read_time_minutes: 5,
+    tags: ["self-care", "mental-health", "tips"],
   })
 }
 
@@ -87,7 +88,8 @@ Format output sebagai JSON:
   "content": "HTML konten artikel lengkap. Gunakan tag <h2> untuk subheading, <p> untuk paragraf, <blockquote> untuk kutipan, <ul>/<ol> untuk list. Maksimal 1200 kata.",
   "meta_title": "SEO title (max 70 karakter, mengandung keyword utama)",
   "meta_description": "SEO meta description (120-160 karakter, mengandung keyword, ada CTA)",
-  "read_time_minutes": 5 (angka estimasi waktu baca)
+   "read_time_minutes": 5 (angka estimasi waktu baca),
+   "tags": ["tag1", "tag2", "tag3"] (3-5 tag paling relevan, lowercase, dash-separated)
 }
 
 HANYA balas JSON. Jangan ada teks lain.`
