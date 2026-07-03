@@ -17,6 +17,8 @@ interface Article {
   source?: string;
   author_type?: string;
   is_featured?: boolean;
+  created_at?: string;
+  published_at?: string;
 }
 
 const AUTHOR_TYPE_LABEL: Record<string, string> = {
@@ -29,6 +31,12 @@ const AUTHOR_TYPE_COLORS: Record<string, string> = {
   redaksi: "text-blue-600",
   mentor: "text-purple-600",
   cerita_pembaca: "text-orange-600",
+}
+
+function formatDate(iso?: string): string {
+  if (!iso) return ""
+  const d = new Date(iso)
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
 }
 
 export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
@@ -49,7 +57,7 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
             if (matched && matched.length > 0) {
               const { data: personal } = await supabase
                 .from("articles")
-                .select("id, slug, title, cover_image, category, author, source, author_type")
+                .select("id, slug, title, cover_image, category, author, source, author_type, is_featured, created_at, published_at")
                 .in("id", matched.slice(0, 10))
                 .eq("is_published", true);
               if (personal && personal.length > 0) {
@@ -69,7 +77,7 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
         // 1. Get top 5 featured
         const { data: feat } = await supabase
           .from("articles")
-          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured")
+          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured, created_at, published_at")
           .eq("is_published", true).eq("is_featured", true)
           .order("created_at", { ascending: false }).limit(5)
         featured = feat || []
@@ -78,7 +86,7 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
         const featuredIds = featured.map(f => f.id)
         const { data: rest } = await supabase
           .from("articles")
-          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured")
+          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured, created_at, published_at")
           .eq("is_published", true)
           .order("created_at", { ascending: false }).limit(15)
         latest = (rest || []).filter(a => !featuredIds.includes(a.id)).slice(0, 10 - featured.length)
@@ -165,6 +173,7 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
                     {initials}
                   </div>
                   <span className="text-[11px] text-gray-500 truncate">{a.author}</span>
+                  <span className="text-[10px] text-gray-400">· {formatDate(a.published_at || a.created_at)}</span>
                 </div>
               </div>
             </Link>

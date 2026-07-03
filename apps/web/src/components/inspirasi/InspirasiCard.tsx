@@ -85,12 +85,13 @@ export default function InspirasiCard({ item }: InspirasiCardProps) {
           </h3>
         </div>
 
-        {/* Author */}
+        {/* Author + Date */}
         <div className="flex items-center gap-1.5">
           <div className="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center text-[7px] font-bold text-purple-700 shrink-0">
             {initials}
           </div>
           <span className="text-[11px] text-gray-500 truncate">{item.author}</span>
+          {item.published_at && <span className="text-[10px] text-gray-400">· {new Date(item.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>}
         </div>
       </div>
     </div>

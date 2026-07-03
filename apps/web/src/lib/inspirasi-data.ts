@@ -32,6 +32,8 @@ export interface InspirasiItem {
   createdAt?: string;
   author_type?: AuthorType;
   architecture?: Architecture;
+  published_at?: string;
+  is_featured?: boolean;
   author_credentials?: { gelar?: string; institusi?: string; linkedin?: string; foto_url?: string };
   author_anon_name?: string;
   series_id?: string;
