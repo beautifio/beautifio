@@ -94,6 +94,7 @@ export default function BiblePage() {
   const [activeStyle, setActiveStyle] = useState("standard")
   const [editMode, setEditMode] = useState(false)
   const [showPinPopup, setShowPinPopup] = useState(false)
+  const [pinTarget, setPinTarget] = useState<"bible" | "example">("bible")
   const [pinInput, setPinInput] = useState("")
   const [pinError, setPinError] = useState("")
   const [saving, setSaving] = useState(false)
@@ -104,6 +105,10 @@ export default function BiblePage() {
   const [role, setRole] = useState("")
   const [examples, setExamples] = useState<Record<string, any>>({})
   const [activeExample, setActiveExample] = useState("mind-body")
+  const [exEditMode, setExEditMode] = useState(false)
+  const [exEditContent, setExEditContent] = useState("")
+  const [exEditTitle, setExEditTitle] = useState("")
+  const [exSaving, setExSaving] = useState(false)
 
   useEffect(() => {
     fetch("/api/admin/settings/bible")
@@ -125,8 +130,15 @@ export default function BiblePage() {
   const setBible = (v: string) => setBibles(prev => ({ ...prev, [activeStyle]: v }))
 
   const verifyPin = () => {
-    if (pinInput === storePin) { setEditMode(true); setShowPinPopup(false); setPinError(""); setPinInput("") }
-    else { setPinError("PIN salah. Coba lagi."); setPinInput("") }
+    if (pinInput === storePin) {
+      setShowPinPopup(false); setPinError(""); setPinInput("")
+      if (pinTarget === "bible") setEditMode(true)
+      else if (pinTarget === "example") {
+        const cur = examples[activeExample] || { title: "", content: "" }
+        setExEditTitle(cur.title); setExEditContent(cur.content)
+        setExEditMode(true)
+      }
+    } else { setPinError("PIN salah. Coba lagi."); setPinInput("") }
   }
 
   const saveBible = async () => {
@@ -153,6 +165,19 @@ export default function BiblePage() {
   }
 
   const resetBible = () => setBible(DEFAULTS[activeStyle] || "")
+
+  const saveExample = async () => {
+    if (!exEditTitle.trim() || !exEditContent.trim()) return
+    setExSaving(true)
+    const updated = { ...examples, [activeExample]: { title: exEditTitle, content: exEditContent } }
+    const res = await fetch("/api/admin/settings/bible/examples", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ examples: updated, current_pin: storePin }),
+    })
+    if (res.ok) { setExamples(updated); setExEditMode(false) }
+    else { const d = await res.json(); alert(d.error || "Gagal menyimpan") }
+    setExSaving(false)
+  }
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 text-gray-400 animate-spin" /></div>
 
@@ -196,7 +221,7 @@ export default function BiblePage() {
             <button onClick={resetBible} className="flex-1 py-2.5 rounded-xl border text-sm cursor-pointer hover:bg-gray-50 flex items-center justify-center gap-2" style={{ borderColor: "#E2E8F0", color: "#647488" }}>
               <RotateCcw size={14} /> Reset ke Default
             </button>
-            <button onClick={() => { setShowPinPopup(true); setPinInput(""); setPinError("") }} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer flex items-center justify-center gap-2" style={{ background: "#084463" }}>
+            <button onClick={() => { setShowPinPopup(true); setPinInput(""); setPinError(""); setPinTarget("bible") }} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer flex items-center justify-center gap-2" style={{ background: "#084463" }}>
               <Lock size={14} /> Edit Panduan
             </button>
           </div>
@@ -249,14 +274,26 @@ export default function BiblePage() {
             </button>
           ))}
         </div>
-        {examples[activeExample] ? (
-          <div className="p-4 rounded-xl border bg-white space-y-3" style={{ borderColor: "#E2E8F0" }}>
-            <h4 className="text-sm font-bold" style={{ color: "#1E2938" }}>{examples[activeExample].title}</h4>
-            <div className="text-sm leading-relaxed prose prose-sm max-w-none" style={{ color: "#647488" }} dangerouslySetInnerHTML={{ __html: examples[activeExample].content }} />
+        {exEditMode ? (
+          <div className="space-y-2">
+            <input value={exEditTitle} onChange={e => setExEditTitle(e.target.value)} placeholder="Judul contoh..." className="w-full px-3 py-2 rounded-lg border text-sm outline-none" style={{ borderColor: "#E2E8F0", color: "#1E2938" }} />
+            <textarea value={exEditContent} onChange={e => setExEditContent(e.target.value)}
+              className="w-full min-h-[250px] p-4 rounded-xl border border-gray-200 text-sm outline-none resize-y"
+              style={{ color: "#1E2938", background: "#FAFBFC" }} />
+            <div className="flex gap-2">
+              <button onClick={() => setExEditMode(false)} className="flex-1 py-2.5 rounded-xl border text-sm cursor-pointer" style={{ borderColor: "#E2E8F0", color: "#647488" }}>Batal</button>
+              <button onClick={saveExample} disabled={exSaving} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer disabled:opacity-50" style={{ background: "#084463" }}>{exSaving ? "..." : "Simpan Contoh"}</button>
+            </div>
           </div>
         ) : (
-          <div className="p-4 rounded-xl border bg-white text-center" style={{ borderColor: "#E2E8F0" }}>
-            <p className="text-xs text-gray-400">Belum ada contoh untuk kategori ini</p>
+          <div className="space-y-3">
+            <div className="p-4 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
+              <h4 className="text-sm font-bold mb-2" style={{ color: "#1E2938" }}>{examples[activeExample]?.title || "Belum ada contoh"}</h4>
+              <div className="text-sm leading-relaxed prose prose-sm max-w-none" style={{ color: "#647488" }} dangerouslySetInnerHTML={{ __html: examples[activeExample]?.content || "<p>Belum ada contoh untuk kategori ini.</p>" }} />
+            </div>
+            <button onClick={() => { setShowPinPopup(true); setPinInput(""); setPinError(""); setPinTarget("example") }} className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-pointer flex items-center justify-center gap-2" style={{ background: "rgba(8,68,99,0.06)", color: "#084463" }}>
+              <Lock size={14} /> Edit Contoh
+            </button>
           </div>
         )}
       </div>
