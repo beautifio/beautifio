@@ -663,16 +663,16 @@ ${advice}`
       : isShowingRoundResult && gameSession.advance_at ? <RoundResultScreen session={gameSession} round={gameSession.current_round} answers={answers} questions={questions} isPlayerA={isPlayerA} myName={myName} opponentName={opponentIsBot ? null : opponentName} deadline={gameSession.advance_at} onAdvance={handleAdvance} isDiscRound={isDiscRound} />
       : isShowingJeda && gameSession.advance_at && revealedQ ? <JedaScreen deadline={gameSession.advance_at} resultType={resultType} subjectName={isSubject ? myName : (opponentIsBot ? null : opponentName)} guesserName={isSubject ? (opponentIsBot ? null : opponentName) : myName} correctAnswer={revealedQ.correct_answer ?? ''} myScore={isPlayerA ? gameSession.score_a : gameSession.score_b} theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a} isLastQuestion={scoreboardIsDisc ? revealedQ.sequence_number === 5 : revealedQ.sequence_number === 5} isLastRound={gameSession.current_round === 4} onAdvance={handleAdvance} isDiscRound={isDiscRound} opponentName={opponentIsBot ? null : opponentName} myDiscAnswer={answers.find(a => a.question_id === revealedQ!.id && a.guesser_id === userId)?.answer ?? null} theirDiscAnswer={answers.find(a => a.question_id === revealedQ!.id && a.guesser_id === opponentId)?.answer ?? null} sessionId={sessionId} />
       : displayQ ? (
-          <div className="flex-1 flex flex-col max-w-content mx-auto w-full px-4 py-4 bg-primary text-primary-foreground">
+          <div className="flex-1 flex flex-col px-4 py-4 bg-primary text-primary-foreground">
             <div className="bg-primary/20 rounded-2xl border border-primary/50 shadow-xl overflow-hidden relative">
               <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
-              <div className="p-4 relative z-10 flex flex-col">
+              <div className="p-6 relative z-10 min-h-[420px] flex flex-col">
                 <div className="flex-1">
                   <div className="text-center mb-4 space-y-2">
                     <span className="inline-block px-3 py-1 rounded-full bg-accent/20 text-accent text-base font-medium">Pertanyaan {displayQ.sequence_number}/{scoreboardIsDisc ? 10 : 5}</span>
                     {roleLabel && <div className="flex items-center justify-center gap-1.5 text-lg font-bold text-accent"><span>{roleLabel.icon}</span><span>{roleLabel.text}</span></div>}
                   </div>
-                  <h2 className="text-xl font-bold text-primary-foreground text-center mb-4 leading-relaxed">{questionText}</h2>
+                  <h2 className="text-2xl font-bold text-primary-foreground text-center mb-6 leading-relaxed">{questionText}</h2>
                   <div className="text-center mb-3">
                     {isMyTurn ? (
                       <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-semibold">Pilih jawabanmu</span>
@@ -695,7 +695,7 @@ ${advice}`
                       <span className="inline-block px-3 py-1.5 rounded-2xl text-xs animate-fade-in" style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }}>💬 {botChatMessage}</span>
                     </div>
                   )}
-                  <div className="space-y-2 mb-4">
+                  <div className="space-y-3 mb-5">
                     {(displayQ.options as string[]).map((opt, index) => {
                       const isSelected = selectedAnswer === opt
                       const myTurn = isMyTurn
@@ -734,7 +734,7 @@ ${advice}`
                       }
 
                       return (
-                        <button key={opt} onClick={() => { if (!isClickable) return; if (isDiscRound) handleDiscAnswer(opt); else if (isSubject) handleSubjectAnswer(opt); else handleGuesserGuess(opt); }} disabled={!isClickable} className={`w-full text-left min-h-[52px] py-3 px-4 rounded-2xl border-2 transition-all duration-200 ${isClickable ? "cursor-pointer hover:border-accent/60" : "cursor-default"} ${buttonClasses}`}>
+                        <button key={opt} onClick={() => { if (!isClickable) return; if (isDiscRound) handleDiscAnswer(opt); else if (isSubject) handleSubjectAnswer(opt); else handleGuesserGuess(opt); }} disabled={!isClickable} className={`w-full text-left min-h-[68px] py-5 px-5 rounded-2xl border-2 transition-all duration-200 ${isClickable ? "cursor-pointer hover:border-accent/60" : "cursor-default"} ${buttonClasses}`}>
                           <div className="flex items-center gap-4">
                             <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${iconClasses}`}>
                               <OptionIcon size={20} />
