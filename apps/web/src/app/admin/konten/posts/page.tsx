@@ -321,15 +321,16 @@ export default function InspirasiPostsPage() {
   const openEditorWithContent = (title: string, content: string, meta?: any) => {
     setEditId(null)
     setForm({
-      title: title, content: content, excerpt: meta?.excerpt || "", category_id: genCategory || "mind-body",
-      cover_image: "", author_name: "", read_time_minutes: meta?.read_time_minutes || 5,
+      title: title, content: content, excerpt: meta?.excerpt || "", category_id: meta?.category || genCategory || "mind-body",
+      cover_image: "", author_name: meta?.byline || "", read_time_minutes: meta?.read_time_minutes || 5,
       slug: meta?.slug || "", meta_title: meta?.meta_title || "", meta_description: meta?.meta_description || "", og_image: "",
       scheduled_at: "", author_type: "redaksi", architecture: genArch || meta?.architecture || "",
-      disclaimer_type: "none", disclaimer_custom: "",
+      disclaimer_type: meta?.tag_sensitivitas?.includes("merah") ? "red" : meta?.tag_sensitivitas?.includes("kuning") ? "yellow" : "none",
+      disclaimer_custom: meta?.disclaimer || "",
       author_credentials: { gelar: "", institusi: "", linkedin: "", foto_url: "" },
       author_anon_name: "", series_id: "",
     })
-    setTagList(meta?.tags || []);
+    setTagList(meta?.tag_topik || meta?.tags || []);
     setShowAdd(true)
     setTimeout(() => {
       const editor = document.querySelector(".ProseMirror") as any

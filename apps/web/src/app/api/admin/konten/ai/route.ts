@@ -3,52 +3,83 @@ import { createClient } from "@/lib/supabase/server"
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY || ""
 
-const DEFAULT_BIBLE = `# STANDAR KONTEN BEAUTIFIO
+const SYSTEM_PROMPT = `# BEAUTIFIO AI CONTENT GENERATOR — SYSTEM PROMPT
 
-## Nada
-Santai, insightful, seperti kakak ngobrol ke adik. Pakai "kamu", bukan "Anda". Gak menggurui.
+## IDENTITAS
+Kamu adalah Kak Nara — perempuan 24 tahun, baru kerja, pernah struggle kuliah, 
+pernah nangis di toilet kampus, pernah di-ghosting. Kamu menulis sebagai kakak 
+yang pernah jalan di tempat yang sama, bukan konselor berbayar. 
 
-## Struktur
-- Hook: 1-2 kalimat pembuka yang bikin penasaran
-- Body: 3-5 section dengan H2 subheading
-- Masing-masing section: 2-3 paragraf pendek (2-3 kalimat)
-- Closing: 1 kalimat call-to-action positif
+Target pembaca: cewek SMA/Mahasiswi/Fresh graduate yang lagi figuring out life.
+Satu prinsip: "Kalau adikku baca ini, dia ngerasa dipahami atau diceramahi?"
 
-## Target Pembaca
-Usia 15-25 tahun, anak SMA dan kuliah, lagi cari jati diri dan arah hidup, aktif di sosmed
+## ATURAN SUARA (WAJIB)
+- Panggil "kamu" — bukan "Anda", "teman-teman", "Sobat Beautifio"
+- Bicara seperti ngobrol di kafe
+- Akui kalau sesuatu memang susah sebelum kasih solusi
+- Pakai data/riset tapi jelaskan seperti cerita
+- Tutup dengan personal dan jujur — boleh gak happy ending
 
-## Format
-- Gunakan bullet points dan numbered list untuk poin penting
-- Sisipkan 1-2 blockquote inspiratif
-- Akhiri dengan pertanyaan reflektif untuk pembaca
-- Maksimal 1200 kata
+## BAN LIST (satu saja = artikel ditolak)
+JANGAN PERNAH pakai: "Di era modern ini", "Tidak dapat dipungkiri", 
+"Sebagai generasi penerus bangsa", "Tips and tricks", "Yuk simak", 
+"you got this", "keep going", "stay positive", "fighting!", "Sobat Beautifio"
+JANGAN mulai kalimat dengan "Sobat Beautifio"
+JANGAN lebih dari 1 tanda seru per paragraf
+JANGAN menggurui — kamu bukan guru BK
 
-## SEO
-- Keyword utama di judul dan paragraf pertama
-- Gunakan H2 setiap 250-350 kata
-- Hindari keyword stuffing
+## FORMAT DATA ILMIAH (J.A.R.E.)
+J - Jurnal/Data aslinya apa? (satu fakta kunci)
+A - Artinya apa buat pembaca? (hubungkan ke hidup mereka)
+R - Reaksi yang relatable (bayangkan reaksi mereka)
+E - Eksekusi praktis (satu langkah konkret)
+Aturan: sebut sumber tapi jangan kutip akademik. Angka harus divisualisasikan 
+("30%" = "1 dari 3 orang di kelasmu"). Maks 2 data per artikel.
 
-## Dilarang
-- JANGAN pakai "tentunya", "pastinya", "jelaslah", "sudah seharusnya"
-- JANGAN akhiri dengan "Semoga bermanfaat" atau "Selamat mencoba"
-- JANGAN gunakan kalimat pasif berlebihan
-- JANGAN lebih dari 1500 kata
-- JANGAN gunakan bahasa Inggris campur Indonesia berlebihan`
+## STRUKTUR PER FORMAT
+- PANDUAN: Hook momen spesifik → Bridge validasi → 3-5 section → Penutup jujur → CTA
+- REVIEW: Konteks kenapa coba → Detail subjek → Pengalaman nyata → Yang bagus + kurang → Verdict berani
+- LISTICLE: Intro konteks → Min 2 paragraf per poin → Penutup percakapan
+- LIFETAINMENT: Hook relatable → Koneksi tren/hiburan → Isi kuliner → Verdict fun
 
-function fallbackArticle(t: string): string {
-  const topic = t || "Pengembangan Diri"
-  const slug = topic.toLowerCase().replace(/\s+/g, "-")
-  return JSON.stringify({
-    title: `Mengenal ${topic}: Panduan Lengkap untuk Anak Muda`,
-    slug: `mengenal-${slug}-panduan-lengkap`,
-    excerpt: `Pernah merasa bingung dengan ${topic}? Artikel ini akan membantumu memahami dan mengatasinya.`,
-    content: `<p>Pernahkah kamu merasa bingung dengan ${topic}? Kamu nggak sendirian.</p><h2>Apa Itu ${topic}?</h2><p>${topic} adalah topik yang paling banyak dicari generasi muda. Yuk bahas.</p><h2>Kenapa Penting?</h2><p>Memahami ${topic} bisa mengubah cara pandangmu.</p><h2>Langkah Praktis</h2><p>Mulai dari yang sederhana.</p><blockquote>"Perubahan besar dimulai dari langkah kecil."</blockquote><p>Kamu nggak harus sempurna — kamu hanya perlu mulai.</p>`,
-    meta_title: `Mengenal ${topic}: Panduan Lengkap | Beautifio`,
-    meta_description: `Pelajari apa itu ${topic}, kenapa penting, dan langkah praktis mengatasinya. Panduan lengkap untuk anak muda Indonesia.`,
-    read_time_minutes: 5,
-    tags: ["self-care", "mental-health", "tips"],
-  })
+## ARSITEKTUR
+- PILAR: 2500-4000 kata, komprehensif, 5-8 section, 3+ referensi, tone otoritatif
+- KLUSTER: 1500-2500 kata, actionable, 3-4 section, tone "langsung coba"
+- TRENDING: 800-1200 kata, ringkas, 2-3 poin, tone cepat & energik
+
+## SENSITIVITAS
+- MERAH (self-harm, bunuh diri, eating disorder detail): generate kerangka + placeholder 
+  "[BAGIAN INI HARUS DITULIS OLEH PSIKOLOG]" + disclaimer wajib
+- KUNING (investasi, medis, hukum): boleh generate + disclaimer wajib
+- AMAN: generate normal
+
+## FORMAT OUTPUT WAJIB
+Balas JSON dengan SEMUA field ini — jangan ada yang kosong:
+
+{
+  "title": "Judul (50-60 char, ada keyword, bukan clickbait)",
+  "slug": "url-slug-indonesia-huruf-kecil",
+  "category": "mind-body|beauty-skincare|wellness|style-shopping|entertainment|lifetainment|relationship|levelup-career|creative-space|tech-gaming",
+  "tipe_penulis": "Redaksi",
+  "byline": "Kak Nara — Editorial Beautifio",
+  "keyword_utama": "satu keyword",
+  "keyword_pendukung": "kw2, kw3, kw4",
+  "tag_topik": ["tag1","tag2","tag3"],
+  "tag_format": "panduan|review|tutorial|opini|cerita-nyata|listicle|comparison|deep-dive",
+  "tag_audiens": "SMA|mahasiswa|fresh-graduate|usia-20an|perempuan-aktif",
+  "tag_penulis": "dari-redaksi",
+  "tag_sensitivitas": "aman|topik-sensitif-kuning|topik-sensitif-merah",
+  "meta_title": "SEO title (50-60 char, keyword utama)",
+  "meta_description": "SEO meta (140-160 char, teaser, keyword)",
+  "excerpt": "1-2 kalimat teaser maks 160 karakter",
+  "read_time_minutes": 5,
+  "disclaimer": "isi disclaimer jika kuning/merah, kosongkan jika aman",
+  "internal_links": ["topik1","topik2"],
+  "cta": "Kalimat CTA ke fitur Beautifio",
+  "content": "HTML konten artikel lengkap"
 }
+
+HANYA balas JSON. Tidak ada teks lain.`
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -62,54 +93,34 @@ export async function POST(request: NextRequest) {
 
   const { action, topic, keyword, category, tone, length, style, architecture, context } = await request.json()
 
-  // Architecture brief
-  const archBriefs: Record<string, string> = {
-    pilar: "Ini artikel PILAR (evergreen, 2.500-4.000 kata). Komprehensif, mendalam, rujukan utama. 5-8 section, 3+ referensi. Tone otoritatif tetap santai.",
-    kluster: "Ini artikel KLUSTER (sub-topik, 1.500-2.500 kata). Spesifik, actionable, praktis. 3-4 section. Tone 'kamu bisa langsung coba'.",
-    trending: "Ini artikel TRENDING (real-time, 800-1.200 kata). Ringkas, to-the-point, energik. 2-3 poin utama. Tone cepat dan relevan.",
-  }
-  const archBrief = archBriefs[architecture] || ""
-
-  // Load bible from app_settings based on style
+  // Load bible override if exists
   const bibleKey = `content_bible_${style || "standard"}`
   const { data: bibleSettings } = await supabase.from("app_settings").select("value").eq("key", bibleKey).maybeSingle()
-  const bible = bibleSettings?.value || DEFAULT_BIBLE
+  const userBible = bibleSettings?.value || ""
+
+  const archBriefs: Record<string, string> = {
+    pilar: "Ini artikel PILAR: 2500-4000 kata, komprehensif, 5-8 section, 3+ referensi.",
+    kluster: "Ini artikel KLUSTER: 1500-2500 kata, actionable, 3-4 section.",
+    trending: "Ini artikel TRENDING: 800-1200 kata, ringkas, 2-3 poin, to-the-point.",
+  }
+  const archBrief = archBriefs[architecture] || archBriefs.trending
 
   try {
-    let prompt = ""
-    let resultKey = "result"
-
-    if (action === "generate_full") {
-      prompt = `Buat artikel lengkap untuk Beautifio.
+    const prompt = `Buat artikel Beautifio.
 
 Topik: ${topic || keyword || ""}
-Kategori: ${category || "Mind & Body"}
-Arsitektur: ${architecture || "trending"} — ${archBrief}
+Kategori: ${category || "mind-body"}
+${archBrief}
 ${tone ? `Nada: ${tone}` : ""}
-${length ? `Target panjang: ${length} kata` : ""}
-${context ? `Konteks tambahan: ${context}` : ""}
+${length ? `Target: ${length} kata` : ""}
+${context ? `Konteks: ${context}` : ""}
+${userBible ? `\n## PANDUAN TAMBAHAN DARI REDAKSI:\n${userBible}` : ""}
 
-Format output sebagai JSON:
-{
-  "title": "Judul artikel (max 70 karakter, clickable, ada power word)",
-  "slug": "url-slug-dari-judul (lowercase, dash-separated, tanpa tahun)",
-  "excerpt": "Deskripsi singkat 1-2 kalimat (max 160 karakter) yang bikin penasaran",
-  "content": "HTML konten artikel lengkap. Gunakan tag <h2> untuk subheading, <p> untuk paragraf, <blockquote> untuk kutipan, <ul>/<ol> untuk list. Maksimal 1200 kata.",
-  "meta_title": "SEO title (max 70 karakter, mengandung keyword utama)",
-  "meta_description": "SEO meta description (120-160 karakter, mengandung keyword, ada CTA)",
-   "read_time_minutes": 5 (angka estimasi waktu baca),
-   "tags": ["tag1", "tag2", "tag3"] (3-5 tag paling relevan, lowercase, dash-separated)
-}
-
-HANYA balas JSON. Jangan ada teks lain.`
-      resultKey = "result"
-    } else if (action === "suggest_title") {
-      prompt = `Berdasarkan topik "${topic || keyword}", berikan 5 alternatif judul artikel yang clickable, SEO-friendly, dan sesuai tone Beautifio. Balas sebagai JSON array string.`
-    } else if (action === "improve") {
-      prompt = `Perbaiki konten artikel berikut sesuai standar Beautifio. Jaga tone dan makna asli. Balas langsung HTML yang sudah diperbaiki:\n\n${context}`
-    }
+Output HARUS JSON lengkap sesuai format. HANYA JSON.`
 
     let result = ""
+
+    const systemMsg = userBible ? SYSTEM_PROMPT + "\n\n## PANDUAN REDAKSI:\n" + userBible : SYSTEM_PROMPT
 
     if (OPENAI_KEY) {
       try {
@@ -119,32 +130,47 @@ HANYA balas JSON. Jangan ada teks lain.`
           body: JSON.stringify({
             model: "gpt-4o-mini",
             messages: [
-              { role: "system", content: bible },
+              { role: "system", content: systemMsg },
               { role: "user", content: prompt },
             ],
-            max_tokens: action === "generate_full" ? 2500 : 500,
+            max_tokens: 3000,
           }),
         })
         const json = await res.json()
-        result = json?.choices?.[0]?.message?.content || ""
-        if (!result) console.warn("OpenAI returned empty or error:", json?.error || json)
-      } catch (e: any) {
-        console.warn("OpenAI unreachable:", e?.message)
-        result = ""
-      }
+        if (res.ok && json?.choices?.[0]?.message?.content) {
+          result = json.choices[0].message.content
+        }
+      } catch { /* fallback */ }
     }
 
-    // Fallback template if OpenAI didn't produce result
-    if (!result && action === "generate_full") {
-      const t = topic || keyword || "Pengembangan Diri"
-      result = JSON.stringify({
-        title: `Mengenal ${t}: Panduan Lengkap untuk Anak Muda`,
-        content: `<p>Pernahkah kamu merasa bingung dengan ${t}? Kamu nggak sendirian. Banyak anak muda mengalami hal yang sama.</p><h2>Apa Itu ${t}?</h2><p>${t} adalah salah satu topik yang paling banyak dicari oleh generasi muda Indonesia. Yuk kita bahas lebih dalam.</p><h2>Kenapa ${t} Penting?</h2><p>Memahami ${t} bisa mengubah cara pandangmu terhadap hidup. Berikut beberapa alasannya.</p><h2>Cara Menghadapi ${t}</h2><p>Ada beberapa langkah praktis yang bisa kamu coba. Mulai dari yang paling sederhana.</p><blockquote>"Perubahan besar dimulai dari langkah kecil."</blockquote><p>Jadi, sudah siap menghadapi ${t}? Ingat, kamu nggak harus sempurna — kamu hanya perlu mulai.</p>`,
-      })
-    }
-
-    return NextResponse.json({ [resultKey]: result || fallbackArticle(topic || keyword) })
+    return NextResponse.json({ result: result || fallbackFullArticle(topic || keyword || "Pengembangan Diri", category || "mind-body") })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "AI error" }, { status: 500 })
   }
+}
+
+function fallbackFullArticle(t: string, cat: string): string {
+  const topic = t || "Pengembangan Diri"
+  return JSON.stringify({
+    title: `${topic}: Panduan Lengkap untuk Anak Muda`,
+    slug: topic.toLowerCase().replace(/\s+/g, "-"),
+    category: cat,
+    tipe_penulis: "Redaksi",
+    byline: "Kak Nara — Editorial Beautifio",
+    keyword_utama: topic.toLowerCase(),
+    keyword_pendukung: "tips, panduan, anak muda",
+    tag_topik: ["self-care", "mental-health"],
+    tag_format: "panduan",
+    tag_audiens: "mahasiswa",
+    tag_penulis: "dari-redaksi",
+    tag_sensitivitas: "aman",
+    meta_title: `${topic}: Panduan Lengkap | Beautifio`,
+    meta_description: `Pelajari tentang ${topic}, kenapa penting, dan langkah praktis yang bisa kamu coba.`,
+    excerpt: `Penasaran tentang ${topic}? Yuk kita bahas dengan cara yang santai dan mudah dipahami.`,
+    read_time_minutes: 5,
+    disclaimer: "",
+    internal_links: [],
+    cta: "Kalau kamu butuh tempat cerita tanpa dihakimi, fitur Bisik ada buat kamu.",
+    content: `<p>Coba inget kapan terakhir kali kamu beneran berhenti sejenak dan mikir tentang ${topic}. Susah diingat, kan? Kamu nggak sendirian.</p><h2>Kenapa ${topic} Penting?</h2><p>Sebagai anak muda yang lagi figuring out life, ${topic} itu bukan sekadar topik random — ini adalah hal yang bisa ngebantu kamu lebih paham sama diri sendiri.</p><h2>Apa yang Bisa Kamu Lakukan?</h2><p>Mulai dari langkah kecil. Gak perlu langsung jago. Gak perlu langsung ngerti semuanya. Satu langkah aja udah cukup buat hari ini.</p><blockquote>"Kamu nggak harus sempurna. Kamu hanya perlu mulai."</blockquote><p>Sampai jumpa di langkah berikutnya.</p>`,
+  })
 }
