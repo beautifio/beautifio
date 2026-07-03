@@ -21,8 +21,8 @@ interface UploadWithPreviewProps {
 
 type UploadState = "idle" | "selected" | "uploading" | "success" | "error";
 
-const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
-const ALLOWED_EXT = ["PNG", "JPG", "JPEG", "WEBP", "GIF"];
+const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"];
+const ALLOWED_EXT = ["PNG", "JPG", "JPEG", "WEBP", "GIF", "SVG"];
 
 export function UploadWithPreview({
   label,
@@ -61,7 +61,9 @@ export function UploadWithPreview({
   }
 
   function validate(f: File): string | null {
-    if (!ALLOWED_TYPES.includes(f.type)) {
+    const ext = f.name.split(".").pop()?.toUpperCase() || "";
+    const isValidType = ALLOWED_TYPES.includes(f.type) || ALLOWED_EXT.includes(ext);
+    if (!isValidType) {
       return `Format tidak didukung. Gunakan: ${ALLOWED_EXT.join(", ")}`;
     }
     if (f.size > maxSizeMb * 1024 * 1024) {
