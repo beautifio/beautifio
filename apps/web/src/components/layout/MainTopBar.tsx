@@ -31,7 +31,7 @@ export function MainTopBar() {
     >
       <div className="max-w-content mx-auto w-full flex items-center gap-3">
         {logoUrl && (
-          <img src={logoUrl} alt="Beautifio" className="h-6 w-auto flex-shrink-0" style={{ background: "rgba(255,255,255,0.1)" }} />
+          <img src={logoUrl} alt="Beautifio" className="h-6 w-auto flex-shrink-0"  />
         )}
         <form
           onSubmit={handleSearch}
