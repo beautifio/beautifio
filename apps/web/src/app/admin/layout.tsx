@@ -159,7 +159,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex items-center justify-between p-4 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="flex items-center gap-2">
             {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="h-7 w-auto" />
+              <img src={logoUrl} alt="Logo" className="h-7 w-auto" style={{ background: "rgba(255,255,255,0.1)" }} />
             ) : (
               <>
                 <Shield className="w-5 h-5" style={{ color: '#FFC64F' }} />

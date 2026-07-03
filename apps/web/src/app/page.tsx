@@ -101,6 +101,9 @@ export default function LandingPage() {
                 maxWidth: 380,
                 maxHeight: 120,
                 objectFit: "contain",
+                background: "rgba(255,255,255,0.08)",
+                borderRadius: 16,
+                padding: 8,
               }}
             />
           ) : (
