@@ -14,13 +14,13 @@ export default function LandingPage() {
   useEffect(() => {
     if (!supabase) return;
     supabase.from("app_settings").select("key, value")
-      .in("key", ["hero_image_url", "hero_image_mobile_url", "logo_url"])
+      .in("key", ["hero_image_url", "hero_image_mobile_url", "logo_horizontal_url"])
       .then(({ data }) => {
         if (!data) return;
         data.forEach((row: any) => {
           if (row.key === "hero_image_url") setHeroUrl(row.value || "");
           if (row.key === "hero_image_mobile_url") setMobileHeroUrl(row.value || "");
-          if (row.key === "logo_url") setLogoUrl(row.value || "");
+          if (row.key === "logo_horizontal_url") setLogoUrl(row.value || "");
         });
       });
   }, []);

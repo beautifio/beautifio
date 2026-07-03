@@ -33,7 +33,7 @@ export default function MediaManagerPage() {
         {[
           { id: "hero" as Tab, label: "Hero Landing" },
           { id: "banners" as Tab, label: "Banner Beranda" },
-          { id: "logo" as Tab, label: "Logo Website" },
+          { id: "logo" as Tab, label: "Logo (2 Versi)" },
           { id: "favicon" as Tab, label: "Favicon" },
         ].map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -412,43 +412,54 @@ const LOGO_SPECS = [
 ];
 
 function LogoSection() {
-  const [currentUrl, setCurrentUrl] = useState("");
+  const [squareUrl, setSquareUrl] = useState("");
+  const [horizUrl, setHorizUrl] = useState("");
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
     if (!supabase) return;
-    loadLogo();
+    supabase.from("app_settings").select("key, value").in("key", ["logo_square_url", "logo_horizontal_url"]).then(({ data }) => {
+      data?.forEach((d: any) => {
+        if (d.key === "logo_square_url") setSquareUrl(d.value);
+        if (d.key === "logo_horizontal_url") setHorizUrl(d.value);
+      });
+    });
   }, []);
 
-  async function loadLogo() {
-    const { data } = await supabase!.from("app_settings").select("value").eq("key", "logo_url").single();
-    if (data?.value) setCurrentUrl(data.value);
+  async function saveSquare(url: string) {
+    setSquareUrl(url);
+    const { error } = await supabase!.from("app_settings").upsert({ key: "logo_square_url", value: url, updated_at: new Date().toISOString() });
+    setMsg(error ? "Gagal menyimpan" : "Logo 1:1 tersimpan!");
+    if (!error) window.dispatchEvent(new CustomEvent("logo-updated", { detail: "square" }));
+    setTimeout(() => setMsg(""), 3000);
   }
 
-  async function handleUploadSuccess(url: string) {
-    setCurrentUrl(url);
-    const { error } = await supabase!.from("app_settings").upsert({ key: "logo_url", value: url, updated_at: new Date().toISOString() });
-    setMsg(error ? "Gagal menyimpan logo" : "Logo tersimpan!");
-    if (!error) window.dispatchEvent(new CustomEvent("logo-updated", { detail: url }));
+  async function saveHoriz(url: string) {
+    setHorizUrl(url);
+    const { error } = await supabase!.from("app_settings").upsert({ key: "logo_horizontal_url", value: url, updated_at: new Date().toISOString() });
+    setMsg(error ? "Gagal menyimpan" : "Logo horizontal tersimpan!");
+    if (!error) window.dispatchEvent(new CustomEvent("logo-updated", { detail: "horiz" }));
     setTimeout(() => setMsg(""), 3000);
   }
 
   return (
-    <div>
-      {msg && (
-        <p className={`mb-3 text-sm font-medium ${msg.includes("Gagal") ? "text-red-500" : "text-green-500"}`}>{msg}</p>
-      )}
-      <p className="text-sm text-gray-500 mb-4">Logo akan tampil di sidebar admin panel dan landing page.</p>
-      <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 space-y-0.5 mb-4">
-        {LOGO_SPECS.map((s, i) => <p key={i}>{s}</p>)}
+    <div className="space-y-6">
+      {msg && <p className={`text-sm font-medium ${msg.includes("Gagal") ? "text-red-500" : "text-green-500"}`}>{msg}</p>}
+      <p className="text-sm text-gray-500">Dua versi logo — square untuk top bar, horizontal untuk landing & admin.</p>
+
+      {/* Square Logo */}
+      <div className="p-4 rounded-xl border" style={{ borderColor: "#E2E8F0", background: "#FAFBFC" }}>
+        <h4 className="text-xs font-bold text-gray-900 mb-1">🔲 Logo 1:1 — Top Bar</h4>
+        <p className="text-[10px] text-gray-400 mb-3">Tampil di pojok kiri MainTopBar (semua halaman). Harus persegi, background transparan, warna terang.</p>
+        <UploadWithPreview label="Logo Square" currentUrl={squareUrl} maxSizeMb={1} hint="1:1 (PNG/SVG, warna terang)" onUploadSuccess={saveSquare} />
       </div>
-      <UploadWithPreview
-        label="Logo"
-        currentUrl={currentUrl}
-        maxSizeMb={2}
-        hint="Logo horizontal (PNG/SVG)"
-        onUploadSuccess={handleUploadSuccess}
-      />
+
+      {/* Horizontal Logo */}
+      <div className="p-4 rounded-xl border" style={{ borderColor: "#E2E8F0", background: "#FAFBFC" }}>
+        <h4 className="text-xs font-bold text-gray-900 mb-1">📏 Logo Horizontal — Landing & Admin</h4>
+        <p className="text-[10px] text-gray-400 mb-3">Tampil di landing page & sidebar admin. Background transparan, warna terang, format landscape.</p>
+        <UploadWithPreview label="Logo Horizontal" currentUrl={horizUrl} maxSizeMb={2} hint="Landscape (PNG/SVG, warna terang)" onUploadSuccess={saveHoriz} />
+      </div>
     </div>
   );
 }

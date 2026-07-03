@@ -14,7 +14,7 @@ export function MainTopBar() {
 
   useEffect(() => {
     if (!supabase) return
-    supabase.from("app_settings").select("value").eq("key", "logo_url").single().then(({ data }) => {
+    supabase.from("app_settings").select("value").eq("key", "logo_square_url").single().then(({ data }) => {
       if (data?.value) setLogoUrl(data.value)
     })
   }, [])

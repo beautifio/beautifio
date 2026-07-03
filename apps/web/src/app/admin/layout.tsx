@@ -104,7 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         setRole(profile?.role || "user");
         setUserName(profile?.full_name || "");
         setUserEmail(profile?.email || "");
-        const { data: logoData } = await supabase!.from("app_settings").select("value").eq("key", "logo_url").single();
+        const { data: logoData } = await supabase!.from("app_settings").select("value").eq("key", "logo_horizontal_url").single();
         if (logoData?.value) setLogoUrl(logoData.value);
 
         onLogoUpdate = (e: Event) => {
