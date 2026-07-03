@@ -13,11 +13,19 @@ async function checkRole(supabase: Supabase) {
 
 const CATEGORY_LABELS: Record<string, string> = {
   "mind-body": "Mind & Body",
-  "glow-glowup": "Glow & Glow Up",
-  "levelup-career": "Level Up & Career",
+  "beauty-skincare": "Beauty & Skincare",
+  "wellness": "Wellness",
+  "style-shopping": "Style & Shopping",
+  "entertainment": "Entertainment",
+  "lifetainment": "Lifetainment",
   "relationship": "Relationship",
+  "levelup-career": "Level Up & Career",
   "creative-space": "Creative Space",
   "tech-gaming": "Tech & Gaming",
+  "opinion": "Opini & Aksi",
+  "news": "Update & Berita",
+  // Legacy
+  "glow-glowup": "Beauty & Skincare",
 };
 
 export async function GET(request: NextRequest) {
@@ -99,6 +107,11 @@ export async function POST(request: NextRequest) {
       author_credentials: body.author_credentials || null,
       author_anon_name: body.author_anon_name || null,
       series_id: body.series_id || null,
+      tags: body.tags || [],
+      tag_format: body.tag_format || null,
+      tag_audiens: body.tag_audiens || null,
+      tag_penulis: body.tag_penulis || "dari-redaksi",
+      tag_sensitivitas: body.tag_sensitivitas || "aman",
     };
 
     const { data, error } = await supabase

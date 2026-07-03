@@ -28,9 +28,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.category_id !== undefined) {
       updateData.category_id = body.category_id;
       const labels: Record<string, string> = {
-        "mind-body": "Mind & Body", "glow-glowup": "Glow & Glow Up",
+        "mind-body": "Mind & Body", "beauty-skincare": "Beauty & Skincare",
+        "wellness": "Wellness", "style-shopping": "Style & Shopping",
+        "entertainment": "Entertainment", "lifetainment": "Lifetainment",
         "levelup-career": "Level Up & Career", "relationship": "Relationship",
         "creative-space": "Creative Space", "tech-gaming": "Tech & Gaming",
+        "opinion": "Opini & Aksi", "news": "Update & Berita",
+        "glow-glowup": "Beauty & Skincare",
       };
       updateData.category = labels[body.category_id] || body.category_id;
     }
@@ -52,6 +56,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.author_credentials !== undefined) updateData.author_credentials = body.author_credentials;
     if (body.author_anon_name !== undefined) updateData.author_anon_name = body.author_anon_name;
     if (body.series_id !== undefined) updateData.series_id = body.series_id;
+    if (body.tags !== undefined) updateData.tags = body.tags;
+    if (body.tag_format !== undefined) updateData.tag_format = body.tag_format;
+    if (body.tag_audiens !== undefined) updateData.tag_audiens = body.tag_audiens;
+    if (body.tag_penulis !== undefined) updateData.tag_penulis = body.tag_penulis;
+    if (body.tag_sensitivitas !== undefined) updateData.tag_sensitivitas = body.tag_sensitivitas;
     if (body.status !== undefined) {
       updateData.is_published = body.status === "published";
       if (body.status !== "published") updateData.scheduled_at = null;

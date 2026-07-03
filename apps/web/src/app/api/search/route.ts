@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
   const [articlesRes, circlesRes, oppsRes] = await Promise.allSettled([
     supabase.from("articles").select("id, slug, title, cover_image, category, author_type")
-      .eq("is_published", true).ilike("title", `%${q}%`).limit(5),
+      .eq("is_published", true).or(`title.ilike.%${q}%,tags.cs.{${q}}`).limit(5),
     supabase.from("circle_submissions").select("id, name, description")
       .eq("status", "approved").ilike("name", `%${q}%`).limit(5),
     supabase.from("opportunities").select("id, title, organization, category")

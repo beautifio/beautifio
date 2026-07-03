@@ -333,6 +333,15 @@ export default function InspirasiPostsPage() {
       author_anon_name: "", series_id: "",
     })
     setTagList(meta?.tag_topik || meta?.tags || []);
+    // Store tag dimensions for save
+    setForm((prev: any) => ({
+      ...prev,
+      tags: meta?.tag_topik || meta?.tags || [],
+      tag_format: meta?.tag_format || "panduan",
+      tag_audiens: meta?.tag_audiens || "mahasiswa",
+      tag_penulis: meta?.tag_penulis || "dari-redaksi",
+      tag_sensitivitas: meta?.tag_sensitivitas || "aman",
+    }))
     setShowAdd(true)
     setTimeout(() => {
       const editor = document.querySelector(".ProseMirror") as any
