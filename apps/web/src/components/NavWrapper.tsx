@@ -11,7 +11,7 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
   const hideNav = isLanding || isAdmin || isOnboarding;
 
   return (
-    <div className={`min-h-screen bg-bg ${hideNav ? "" : "pb-16"}`}>
+    <div className={`min-h-screen bg-bg`}>
       {children}
       {!hideNav && <BottomNav />}
     </div>

@@ -11,7 +11,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     pathname === "/" ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/tebak/") ||
-    pathname.startsWith("/tebak/") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/register")
 
