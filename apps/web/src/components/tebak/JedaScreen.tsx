@@ -81,11 +81,11 @@ export function JedaScreen({
             <div className="w-full max-w-xs space-y-3">
               <div className="px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-semibold text-center">
                 <span className="text-primary-foreground/70">Kamu pilih: </span>
-                <span className="text-accent">{myDiscAnswer ?? '—'}</span>
+                <span className="text-accent">{myDiscAnswer === '__timeout__' ? '⏰' : myDiscAnswer ?? '?'}</span>
               </div>
               <div className="px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-semibold text-center">
                 <span className="text-primary-foreground/70">{opponentName ?? 'Lawan'} pilih: </span>
-                <span className="text-accent">{theirDiscAnswer ?? '—'}</span>
+                <span className="text-accent">{theirDiscAnswer === '__timeout__' ? '⏰' : theirDiscAnswer ?? '?'}</span>
               </div>
               {myDiscAnswer && theirDiscAnswer && myDiscAnswer === theirDiscAnswer && (
                 <p className="text-sm text-accent text-center font-semibold">Kalian sama! ✨</p>
