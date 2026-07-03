@@ -98,8 +98,8 @@ export default function LandingPage() {
               alt="Beautifio"
               style={{
                 height: "auto",
-                maxWidth: 280,
-                maxHeight: 80,
+                maxWidth: 380,
+                maxHeight: 120,
                 objectFit: "contain",
               }}
             />
