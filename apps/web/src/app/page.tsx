@@ -97,8 +97,9 @@ export default function LandingPage() {
               src={logoUrl}
               alt="Beautifio"
               style={{
-                height: 56,
-                maxWidth: 220,
+                height: "auto",
+                maxWidth: 280,
+                maxHeight: 80,
                 objectFit: "contain",
               }}
             />
