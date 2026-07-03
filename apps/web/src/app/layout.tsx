@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   title: "Beautifio — Masa Depan Dimulai Hari Ini",
   description:
     "Beautifio membantu anak muda menemukan arah hidup, peluang, mentor, dan komunitas yang tepat untuk masa depan yang lebih baik.",
+  icons: {
+    icon: [{ url: "/api/site/favicon", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/api/site/favicon", sizes: "180x180" }],
+  },
 };
 
 export default function RootLayout({

@@ -1,14 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Search, User } from "lucide-react"
 import { NotificationBell } from "@/components/NotificationBell"
+import { supabase } from "@/lib/supabase/client"
 
 export function MainTopBar() {
   const router = useRouter()
   const [query, setQuery] = useState("")
+  const [logoUrl, setLogoUrl] = useState("")
+
+  useEffect(() => {
+    if (!supabase) return
+    supabase.from("app_settings").select("value").eq("key", "logo_url").single().then(({ data }) => {
+      if (data?.value) setLogoUrl(data.value)
+    })
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,6 +30,9 @@ export function MainTopBar() {
       className="flex items-center gap-3 px-4 py-2.5 sticky top-0 z-30"
     >
       <div className="max-w-content mx-auto w-full flex items-center gap-3">
+        {logoUrl && (
+          <img src={logoUrl} alt="Beautifio" className="h-6 w-auto brightness-0 invert flex-shrink-0" />
+        )}
         <form
           onSubmit={handleSearch}
           style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,198,79,0.3)', borderRadius: 20 }}

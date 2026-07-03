@@ -6,7 +6,7 @@ import { UploadWithPreview } from "@/features/media/UploadWithPreview";
 import ReactCrop, { type Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
-type Tab = "hero" | "banners" | "logo";
+type Tab = "hero" | "banners" | "logo" | "favicon";
 
 interface Banner {
   id: string;
@@ -34,6 +34,7 @@ export default function MediaManagerPage() {
           { id: "hero" as Tab, label: "Hero Landing" },
           { id: "banners" as Tab, label: "Banner Beranda" },
           { id: "logo" as Tab, label: "Logo Website" },
+          { id: "favicon" as Tab, label: "Favicon" },
         ].map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-all cursor-pointer ${tab === t.id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
@@ -45,6 +46,7 @@ export default function MediaManagerPage() {
       {tab === "hero" && <HeroSection />}
       {tab === "banners" && <BannersSection />}
       {tab === "logo" && <LogoSection />}
+      {tab === "favicon" && <FaviconSection />}
     </div>
   );
 }
@@ -403,10 +405,10 @@ function EditBannerModal({ banner, onClose, onDone }: {
 /* ─── SECTION C: LOGO ─── */
 
 const LOGO_SPECS = [
-  "📐 Ukuran: bebas, disarankan min 200px lebar",
-  "📁 Format: PNG dengan background transparan (terbaik) atau SVG, JPG",
+  "📐 Ukuran: horizontal, min 200px lebar",
+  "📁 Format: PNG transparan atau SVG (disarankan), JPG",
   "📦 Maks: 2MB",
-  "💡 Gunakan versi logo dengan warna putih atau terang karena akan tampil di atas background gelap di landing page",
+  "💡 Warna putih/terang — tampil di atas background gelap",
 ];
 
 function LogoSection() {
@@ -443,9 +445,42 @@ function LogoSection() {
       <UploadWithPreview
         label="Logo"
         currentUrl={currentUrl}
-        aspectRatio={1 / 1}
         maxSizeMb={2}
-        hint="1:1"
+        hint="Logo horizontal (PNG/SVG)"
+        onUploadSuccess={handleUploadSuccess}
+      />
+    </div>
+  );
+}
+
+function FaviconSection() {
+  const [currentUrl, setCurrentUrl] = useState("");
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from("app_settings").select("value").eq("key", "favicon_url").single().then(({ data }) => {
+      if (data?.value) setCurrentUrl(data.value);
+    });
+  }, []);
+
+  async function handleUploadSuccess(url: string) {
+    setCurrentUrl(url);
+    const { error } = await supabase!.from("app_settings").upsert({ key: "favicon_url", value: url, updated_at: new Date().toISOString() });
+    setMsg(error ? "Gagal menyimpan favicon" : "Favicon tersimpan!");
+    setTimeout(() => setMsg(""), 3000);
+  }
+
+  return (
+    <div>
+      {msg && <p className={`mb-3 text-sm font-medium ${msg.includes("Gagal") ? "text-red-500" : "text-green-500"}`}>{msg}</p>}
+      <p className="text-sm text-gray-500 mb-4">Ikon browser tab. Upload gambar PNG persegi (1:1), min 32×32px.</p>
+      <UploadWithPreview
+        label="Favicon"
+        currentUrl={currentUrl}
+        aspectRatio={1 / 1}
+        maxSizeMb={0.5}
+        hint="1:1 (32×32px)"
         onUploadSuccess={handleUploadSuccess}
       />
     </div>
