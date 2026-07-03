@@ -75,6 +75,19 @@ const DEFAULTS: Record<string, string> = {
   cerpen: DEFAULT_CERPEN,
 }
 
+const EX_CATEGORIES = [
+  { id: "mind-body", label: "Mind & Body", icon: "❤️" },
+  { id: "beauty-skincare", label: "Beauty", icon: "✨" },
+  { id: "wellness", label: "Wellness", icon: "🏃" },
+  { id: "style-shopping", label: "Style", icon: "🛍️" },
+  { id: "entertainment", label: "Entertainment", icon: "🎬" },
+  { id: "lifetainment", label: "Lifetainment", icon: "🍽️" },
+  { id: "relationship", label: "Relationship", icon: "👥" },
+  { id: "levelup-career", label: "Career", icon: "📈" },
+  { id: "creative-space", label: "Creative", icon: "✏️" },
+  { id: "tech-gaming", label: "Tech", icon: "🖥️" },
+]
+
 export default function BiblePage() {
   const [bibles, setBibles] = useState<Record<string, string>>({})
   const [storePin, setStorePin] = useState("")
@@ -89,6 +102,8 @@ export default function BiblePage() {
   const [showPinManager, setShowPinManager] = useState(false)
   const [newPin, setNewPin] = useState("")
   const [role, setRole] = useState("")
+  const [examples, setExamples] = useState<Record<string, any>>({})
+  const [activeExample, setActiveExample] = useState("mind-body")
 
   useEffect(() => {
     fetch("/api/admin/settings/bible")
@@ -99,6 +114,10 @@ export default function BiblePage() {
         setLoading(false)
       })
     fetch("/api/auth/me").then(r => r.json()).then(d => setRole(d?.data?.role || ""))
+    // Load example articles
+    fetch("/api/admin/settings/bible/examples")
+      .then(r => r.json())
+      .then(d => { if (d.examples) setExamples(d.examples) })
   }, [])
 
   const bible = bibles[activeStyle] || ""
@@ -217,6 +236,30 @@ export default function BiblePage() {
           </div>
         </div>
       )}
+
+      {/* Example Articles */}
+      <div className="mt-6 pt-6" style={{ borderTop: "1px solid #E2E8F0" }}>
+        <h3 className="text-sm font-bold text-gray-900 mb-3">📚 Contoh Artikel per Kategori</h3>
+        <div className="flex gap-1 overflow-x-auto pb-2 mb-3 scrollbar-none">
+          {EX_CATEGORIES.map(c => (
+            <button key={c.id} onClick={() => setActiveExample(c.id)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${activeExample === c.id ? "bg-primary text-white shadow-sm" : "bg-surface text-gray-500 border border-gray-200 hover:bg-gray-50"}`}
+              style={activeExample === c.id ? { background: "#084463" } : {}}>
+              {c.icon} {c.label}
+            </button>
+          ))}
+        </div>
+        {examples[activeExample] ? (
+          <div className="p-4 rounded-xl border bg-white space-y-3" style={{ borderColor: "#E2E8F0" }}>
+            <h4 className="text-sm font-bold" style={{ color: "#1E2938" }}>{examples[activeExample].title}</h4>
+            <div className="text-sm leading-relaxed prose prose-sm max-w-none" style={{ color: "#647488" }} dangerouslySetInnerHTML={{ __html: examples[activeExample].content }} />
+          </div>
+        ) : (
+          <div className="p-4 rounded-xl border bg-white text-center" style={{ borderColor: "#E2E8F0" }}>
+            <p className="text-xs text-gray-400">Belum ada contoh untuk kategori ini</p>
+          </div>
+        )}
+      </div>
     </div>
-  )
+  );
 }

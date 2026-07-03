@@ -99,6 +99,17 @@ export async function POST(request: NextRequest) {
   const { data: bibleSettings } = await supabase.from("app_settings").select("value").eq("key", bibleKey).maybeSingle()
   const userBible = bibleSettings?.value || ""
 
+  // Load example articles
+  const { data: examplesData } = await supabase.from("app_settings").select("value").eq("key", "content_examples").maybeSingle()
+  let exampleText = ""
+  if (examplesData?.value) {
+    try {
+      const ex = JSON.parse(examplesData.value)
+      const catEx = ex[category || "mind-body"]
+      if (catEx) exampleText = `\n\n## CONTOH ARTIKEL REFERENSI (${category}):\nJudul: ${catEx.title}\n\n${catEx.content}`
+    } catch { /* ignore */ }
+  }
+
   const archBriefs: Record<string, string> = {
     pilar: "Ini artikel PILAR: 4.000-5.000 kata. Long-form deep dive. Pembaca invest 20+ menit — kasih mereka transformasi. Struktur: Hook → Bridge/Data → 6-8 deep sections → Penutup jujur → CTA. Setiap 500 kata harus ada momen 'wah' (data, cerita, atau sudut pandang baru). Gunakan Table of Contents di awal. Sub-heading harus magnetik.",
     kluster: "Ini artikel KLUSTER: 1.000-2.000 kata. Actionable, spesifik, 3-4 section. Tone 'langsung coba'.",
@@ -116,6 +127,7 @@ ${tone ? `Nada: ${tone}` : ""}
 ${length ? `Target: ${length} kata` : ""}
 ${context ? `Konteks: ${context}` : ""}
 ${userBible ? `\n## PANDUAN TAMBAHAN DARI REDAKSI:\n${userBible}` : ""}
+${exampleText}
 
 Output HARUS JSON lengkap sesuai format. HANYA JSON.`
 
