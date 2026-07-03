@@ -382,7 +382,7 @@ export default function InspirasiDetailClient({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
+      <div className="min-h-screen bg-bg flex items-center justify-center pb-24">
         <div className="w-8 h-8 border-4 border-secondary/20 border-t-primary rounded-full animate-spin" />
       </div>
     );
@@ -390,7 +390,7 @@ export default function InspirasiDetailClient({
 
   if (!item) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 pb-20">
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-4 pb-24">
         <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
           <BookHeart className="w-10 h-10 text-primary/40" />
         </div>
@@ -431,7 +431,7 @@ export default function InspirasiDetailClient({
   };
 
   return (
-    <div className="min-h-screen bg-bg pb-20">
+    <div className="min-h-screen bg-bg pb-24">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

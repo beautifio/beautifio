@@ -176,7 +176,7 @@ export default function ProfileScreen() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-content mx-auto pb-24 space-y-5">
+      <div className="max-w-content mx-auto px-6 pb-24 space-y-5">
         {data ? (
           <>
             <IdentityHero {...data} />

@@ -44,7 +44,7 @@ export default function TebakPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg pb-20">
+    <div className="min-h-screen bg-bg pb-24">
       <div className="bg-surface border-b border-border">
         <div className="max-w-content mx-auto px-4 py-4">
           <h1 className="text-xl font-bold text-text-primary">Tebak Aku</h1>

@@ -227,7 +227,7 @@ export default function JourneyPage() {
   if (loading) {
     return (
       <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-        <div className="max-w-xl mx-auto px-5 pt-6 pb-28 space-y-4">
+        <div className="max-w-content mx-auto px-6 pt-6 pb-24 space-y-4">
           <Skeleton className="h-10 w-full rounded-xl" />
           <Skeleton className="h-44 w-full rounded-2xl" />
           <Skeleton className="h-10 w-40" />
@@ -243,7 +243,7 @@ export default function JourneyPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-      <div className="max-w-xl mx-auto px-5 pt-6 pb-28">
+      <div className="max-w-content mx-auto px-6 pt-6 pb-24">
         {/* ─── JALURMU ─── */}
         <section className="mb-8">
           {activeJourney ? (

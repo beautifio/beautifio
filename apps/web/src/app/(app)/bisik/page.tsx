@@ -355,7 +355,7 @@ export default function BisikHome() {
 
   const renderHeader = () => (
     <div className="bg-surface border-b border-border">
-      <div className="max-w-content mx-auto px-4 py-4">
+      <div className="max-w-content mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-text-primary">Bisik</h1>
           {bisikName && (
@@ -973,7 +973,7 @@ export default function BisikHome() {
                   <button
                     onClick={checkNameAvailability}
                     disabled={customName.length < 4}
-                    className="px-4 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-medium disabled:opacity-40 cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-medium disabled:opacity-40 cursor-pointer"
                   >
                     Cek
                   </button>

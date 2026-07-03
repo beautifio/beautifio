@@ -180,7 +180,7 @@ export default function InspirasiPage() {
   const activeTabInfo = SOURCE_TABS.find((t) => t.key === activeTab)!;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-bg pb-24">
       <div className="bg-white border-b border-gray-200">
          <div className="max-w-content mx-auto">
            <div className="flex items-center justify-between px-4 pt-4 pb-1">

@@ -168,16 +168,14 @@ export default function CarePage() {
         <div style={{ background: '#F8FAFC',
           minHeight: '100svh', paddingBottom: 80 }}>
 
-           <div className="max-w-content mx-auto px-5 pt-4">
+            <div className="max-w-content mx-auto px-6 pt-4">
              <button onClick={() => router.back()}
                className="flex items-center gap-1 text-sm cursor-pointer mb-2" style={{ color: "#647488" }}>← Kembali</button>
              <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Beautifio Care</h1>
              <p className="text-xs" style={{ color: "#647488" }}>Kami ada untukmu</p>
            </div>
 
-          <div style={{ padding: '20px 16px',
-            display: 'flex', flexDirection: 'column',
-            gap: 14, maxWidth: 480, margin: '0 auto' }}>
+          <div className="max-w-content mx-auto px-6 py-5 space-y-3.5">
 
             {activeSessions > 0 && (
               <div onClick={() => router.push('/care/chat')}
