@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
-import { AdBanner } from "./AdBanner"
+import { Zap } from "lucide-react"
 
 type Props = {
   myName?: string | null
@@ -13,133 +13,126 @@ type Props = {
   sessionId?: string
 }
 
-export function MatchIntro({ myName, opponentName, onBegin, deadline, onReady, opponentReady, sessionId }: Props) {
-  const [step, setStep] = useState(0)
-  const [remaining, setRemaining] = useState(20)
-  const [iClickedReady, setIClickedReady] = useState(false)
+export function MatchIntro({ myName, opponentName, onBegin, deadline }: Props) {
+  const [remaining, setRemaining] = useState(8)
+  const [show, setShow] = useState(false)
   const begunRef = useRef(false)
-
-  const handleReady = useCallback(() => {
-    if (iClickedReady) return
-    setIClickedReady(true)
-    onReady?.()
-  }, [iClickedReady, onReady])
 
   const handleBegin = useCallback(() => {
     if (begunRef.current) return
     begunRef.current = true
-    setTimeout(onBegin, 400)
+    onBegin()
   }, [onBegin])
 
-  // Auto-dismiss saat bothReady
   useEffect(() => {
-    if (iClickedReady && opponentReady) {
-      handleBegin()
-    }
-  }, [iClickedReady, opponentReady, handleBegin])
-
-  useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = []
-
-    timers.push(setTimeout(() => setStep(1), 0))
-    timers.push(setTimeout(() => setStep(2), 300))
-    timers.push(setTimeout(() => setStep(3), 700))
-
+    setShow(true)
     const tick = () => {
-      const dl = deadline ? new Date(deadline).getTime() : Date.now() + 20000
+      const dl = deadline ? new Date(deadline).getTime() : Date.now() + 8000
       const r = Math.max(0, Math.ceil((dl - Date.now()) / 1000))
       setRemaining(r)
-      if (r <= 0) {
-        handleBegin()
-        return
-      }
+      if (r <= 0) handleBegin()
     }
-
     tick()
-    const interval = setInterval(tick, 250)
-
-    return () => {
-      timers.forEach(clearTimeout)
-      clearInterval(interval)
-    }
+    const interval = setInterval(tick, 500)
+    return () => clearInterval(interval)
   }, [deadline, handleBegin])
 
-  const countColor =
-    remaining > 10 ? "text-white" :
-    remaining > 5 ? "text-yellow-200" :
-    remaining > 2 ? "text-orange-400" :
-    "text-red-400"
-
-  const countGlow =
-    remaining > 10 ? { textShadow: "0 0 20px rgba(255,255,255,0.2)" } :
-    remaining > 5 ? { textShadow: "0 0 30px rgba(253,224,71,0.3)" } :
-    remaining > 2 ? { textShadow: "0 0 50px rgba(251,146,60,0.6)" } :
-    { textShadow: "0 0 60px rgba(248,113,113,0.7), 0 0 120px rgba(248,113,113,0.3)" }
+  const myInit = myName?.[0]?.toUpperCase() || "?"
+  const oppInit = opponentName?.[0]?.toUpperCase() || "?"
+  const progressPct = ((8 - remaining) / 8) * 100
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-primary/95 via-[#0B1120] to-primary/80 px-4 overflow-hidden relative">
+    <div className="flex-1 flex flex-col items-center justify-center px-6 relative overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, #084463 0%, #042436 50%, #0B1A2E 100%)",
+      }}>
+      {/* Grid pattern */}
+      <div className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }} />
 
-      <div className={`transition-all duration-600 mb-6 ${
-        step >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-      }`}>
-        <h1 className="text-3xl font-bold text-white tracking-[0.15em] text-center">
-          PERTANDINGAN
-        </h1>
+      {/* Glow orbs */}
+      <div className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full opacity-10 blur-3xl" style={{ background: "#6BB9D4" }} />
+      <div className="absolute bottom-1/4 right-1/4 w-40 h-40 rounded-full opacity-10 blur-3xl" style={{ background: "#FFC64F" }} />
+
+      {/* Player Cards */}
+      <div className="flex items-center justify-center gap-4 w-full max-w-md mb-6 relative z-10">
+        {/* My Card */}
+        <div
+          className={`flex-1 p-4 rounded-2xl border text-center transition-all duration-700 ease-out`}
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            borderColor: "rgba(107,185,212,0.3)",
+            transform: show ? "translateX(0)" : "translateX(-60px)",
+            opacity: show ? 1 : 0,
+          }}>
+          <div className="w-14 h-14 rounded-xl mx-auto mb-2 flex items-center justify-center text-xl font-bold text-white"
+            style={{ background: "linear-gradient(135deg, #6BB9D4, #084463)" }}>
+            {myInit}
+          </div>
+          <p className="text-sm font-bold text-white truncate">{myName || "Kamu"}</p>
+          <p className="text-[10px] text-white/40 mt-0.5">Player</p>
+        </div>
+
+        {/* VS Badge */}
+        <div className="relative flex-shrink-0">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center animate-pulse"
+            style={{ background: "linear-gradient(135deg, rgba(255,198,79,0.2), rgba(255,198,79,0.05))", border: "1px solid rgba(255,198,79,0.3)" }}>
+            <Zap size={20} style={{ color: "#FFC64F", filter: "drop-shadow(0 0 8px rgba(255,198,79,0.5))" }} />
+          </div>
+          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-white/30 tracking-widest uppercase">VS</span>
+        </div>
+
+        {/* Opponent Card */}
+        <div
+          className={`flex-1 p-4 rounded-2xl border text-center transition-all duration-700 ease-out delay-150`}
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            borderColor: "rgba(255,198,79,0.3)",
+            transform: show ? "translateX(0)" : "translateX(60px)",
+            opacity: show ? 1 : 0,
+          }}>
+          <div className="w-14 h-14 rounded-xl mx-auto mb-2 flex items-center justify-center text-xl font-bold text-white"
+            style={{ background: "linear-gradient(135deg, #FFC64F, #E85D75)" }}>
+            {oppInit}
+          </div>
+          <p className="text-sm font-bold text-white truncate">{opponentName || "Lawan"}</p>
+          <p className="text-[10px] text-white/40 mt-0.5">Lawan</p>
+        </div>
       </div>
 
-      <div className="flex items-center justify-center gap-4 w-full max-w-sm mb-6">
-        <p className={`flex-1 text-right text-xl font-bold text-white transition-all duration-700 ${
-          step >= 2 ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"
-        }`}>
-          {myName || "Kamu"}
-        </p>
-
-        <span className={`text-2xl font-black text-accent transition-all duration-500 ${
-          step >= 2 ? "opacity-100 scale-100" : "opacity-0 scale-0"
-        }`}
-          style={{ textShadow: "0 0 30px rgba(255,198,79,0.5), 0 0 60px rgba(255,198,79,0.2)" }}>
-          VS
-        </span>
-
-        <p className={`flex-1 text-left text-xl font-bold text-white transition-all duration-700 ${
-          step >= 2 ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12"
-        }`}>
-          {opponentName || "Lawan"}
-        </p>
+      {/* Progress Bar */}
+      <div className="w-full max-w-md h-1.5 rounded-full mb-6 relative z-10"
+        style={{ background: "rgba(255,255,255,0.08)" }}>
+        <div className="h-full rounded-full transition-all duration-500 ease-linear"
+          style={{
+            width: `${progressPct}%`,
+            background: remaining > 3 ? "linear-gradient(90deg, #6BB9D4, #FFC64F)" : "linear-gradient(90deg, #FFC64F, #EF4444)",
+          }} />
       </div>
-
-      <p className={`text-sm text-white/50 tracking-wider mb-6 transition-all duration-500 ${
-        step >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-      }`}>
-        Game dimulai saat waktu habis • Round 1
-      </p>
 
       {/* Countdown */}
-      <div className="flex flex-col items-center gap-1 mb-4">
-        <span
-          key={remaining}
-          className={`block text-center font-bold font-mono transition-all duration-150 text-6xl ${countColor}`}
-          style={countGlow}
-        >
-          {remaining}
-        </span>
-        <span className="text-[10px] text-white/30 tracking-wider">detik</span>
+      <div className="relative z-10 flex flex-col items-center">
+        <div className={`transition-all duration-300 ${remaining <= 3 ? "scale-110" : "scale-100"}`}>
+          <span className={`text-6xl font-bold font-mono tabular-nums transition-colors duration-500`}
+            style={{
+              color: remaining > 5 ? "#FFFFFF" : remaining > 3 ? "#FFC64F" : remaining > 1 ? "#F97316" : "#EF4444",
+              textShadow: remaining <= 3
+                ? `0 0 ${remaining === 1 ? 60 : 30}px ${remaining === 1 ? "rgba(239,68,68,0.5)" : "rgba(249,115,22,0.4)"}`
+                : "0 0 20px rgba(255,255,255,0.15)",
+            }}>
+            {remaining}
+          </span>
+        </div>
+        <span className="text-[10px] text-white/20 tracking-widest uppercase mt-1">detik</span>
       </div>
 
-      {/* Mulai button or Waiting state */}
-      {!iClickedReady ? (
-        <button
-          onClick={handleReady}
-          className="px-8 py-3 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-colors cursor-pointer"
-        >
-          Mulai
-        </button>
-      ) : opponentReady ? (
-        <p className="text-sm text-accent font-semibold animate-pulse">Memulai...</p>
-      ) : (
-        <p className="text-sm text-white/40">Menunggu lawan...</p>
-      )}
-      {sessionId ? <AdBanner location="match_intro" sessionId={sessionId} /> : null}
+      {/* Round Info */}
+      <p className="absolute bottom-8 text-xs text-white/20 tracking-wider z-10">
+        🎮 Ronde 1 · DISC
+      </p>
     </div>
   )
 }
