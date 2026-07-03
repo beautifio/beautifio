@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY || ""
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o"
 
 const SYSTEM_PROMPT = `# BEAUTIFIO AI CONTENT GENERATOR — SYSTEM PROMPT
 
@@ -150,7 +151,7 @@ Output HARUS JSON lengkap sesuai format. HANYA JSON.`
           method: "POST",
           headers: { "Authorization": `Bearer ${OPENAI_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: OPENAI_MODEL,
             messages: [
               { role: "system", content: systemMsg },
               { role: "user", content: prompt },
