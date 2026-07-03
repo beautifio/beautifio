@@ -43,9 +43,10 @@ Aturan: sebut sumber tapi jangan kutip akademik. Angka harus divisualisasikan
 - LIFETAINMENT: Hook relatable → Koneksi tren/hiburan → Isi kuliner → Verdict fun
 
 ## ARSITEKTUR
-- PILAR: 2500-4000 kata, komprehensif, 5-8 section, 3+ referensi, tone otoritatif
-- KLUSTER: 1500-2500 kata, actionable, 3-4 section, tone "langsung coba"
-- TRENDING: 800-1200 kata, ringkas, 2-3 poin, tone cepat & energik
+- PILAR: 4.000-5.000 kata, long-form deep dive, 6-8 section, 3+ data/riset, 
+  Table of Contents wajib, sub-heading magnetik, setiap 500 kata ada momen "wah"
+- KLUSTER: 1.000-2.000 kata, actionable, 3-4 section, tone "langsung coba"
+- TRENDING: 500-1.000 kata, ringkas, 2-3 poin, tone cepat & energik
 
 ## SENSITIVITAS
 - MERAH (self-harm, bunuh diri, eating disorder detail): generate kerangka + placeholder 
@@ -99,9 +100,9 @@ export async function POST(request: NextRequest) {
   const userBible = bibleSettings?.value || ""
 
   const archBriefs: Record<string, string> = {
-    pilar: "Ini artikel PILAR: 2500-4000 kata, komprehensif, 5-8 section, 3+ referensi.",
-    kluster: "Ini artikel KLUSTER: 1500-2500 kata, actionable, 3-4 section.",
-    trending: "Ini artikel TRENDING: 800-1200 kata, ringkas, 2-3 poin, to-the-point.",
+    pilar: "Ini artikel PILAR: 4.000-5.000 kata. Long-form deep dive. Pembaca invest 20+ menit — kasih mereka transformasi. Struktur: Hook → Bridge/Data → 6-8 deep sections → Penutup jujur → CTA. Setiap 500 kata harus ada momen 'wah' (data, cerita, atau sudut pandang baru). Gunakan Table of Contents di awal. Sub-heading harus magnetik.",
+    kluster: "Ini artikel KLUSTER: 1.000-2.000 kata. Actionable, spesifik, 3-4 section. Tone 'langsung coba'.",
+    trending: "Ini artikel TRENDING: 500-1.000 kata. Ringkas, 2-3 poin, to-the-point, relevan sekarang.",
   }
   const archBrief = archBriefs[architecture] || archBriefs.trending
 

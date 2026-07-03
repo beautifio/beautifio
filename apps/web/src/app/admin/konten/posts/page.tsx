@@ -25,9 +25,9 @@ const AUTHOR_TYPES = [
 ];
 
 const ARCHITECTURES = [
-  { id: "pilar", label: "Pilar", desc: "Evergreen, 2.500–4.000 kata" },
-  { id: "kluster", label: "Kluster", desc: "Sub-topik, 1.500–2.500 kata" },
-  { id: "trending", label: "Trending", desc: "Real-time, 800–1.200 kata" },
+  { id: "pilar", label: "Pilar", desc: "Long-form, 4.000–5.000 kata" },
+  { id: "kluster", label: "Kluster", desc: "Sub-topik, 1.000–2.000 kata" },
+  { id: "trending", label: "Trending", desc: "Real-time, 500–1.000 kata" },
 ];
 
 const DISCLAIMER_TYPES = [
