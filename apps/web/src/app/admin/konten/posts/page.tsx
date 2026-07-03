@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle, Search, Sparkles, TrendingUp, Target, Users as UsersIcon, Lightbulb, Loader2 } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle, Search, Sparkles, TrendingUp, Target, Users as UsersIcon, Lightbulb, Loader2, Star } from "lucide-react";
 import { Button, Badge } from "@beautifio/ui";
 import { RichTextEditor } from "@/features/editor/RichTextEditor";
 
@@ -273,6 +273,13 @@ export default function InspirasiPostsPage() {
     } catch (e: any) { alert(e.message); }
   }
 
+  async function toggleFeatured(id: string, current: boolean) {
+    try {
+      await fetch(`/api/admin/konten/posts/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_featured: !current }) });
+      await fetchPosts();
+    } catch (e: any) { alert(e.message); }
+  }
+
   async function handleCoverUpload(file: File) {
     setUploadingCover(true);
     try {
@@ -538,7 +545,9 @@ export default function InspirasiPostsPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[st] || "bg-gray-100 text-gray-700"}`}>{STATUS_LABELS[st] || st}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[st] || "bg-gray-100 text-gray-700"}`}>{STATUS_LABELS[st] || st}</span>
+                        {p.is_featured && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-400" /> Featured</span>}
+                      {p.is_featured && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-400" /> Featured</span>}
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${authorBadge.color}`}>{authorBadge.label}</span>
                       <Badge variant="accent" className="text-[10px]">{p.category_label || p.category}</Badge>
                       {p.architecture && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-cyan-100 text-cyan-700">{ARCH_LABELS[p.architecture] || p.architecture}</span>}
@@ -562,6 +571,9 @@ export default function InspirasiPostsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => toggleFeatured(p.id, p.is_featured)} className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer ${p.is_featured ? "bg-amber-50 hover:bg-amber-100" : "hover:bg-gray-50"}`} title={p.is_featured ? "Hapus Featured" : "Featured"}>
+                      <Star className={`w-3.5 h-3.5 ${p.is_featured ? "fill-amber-400 text-amber-400" : "text-gray-300"}`} />
+                    </button>
                     <button onClick={() => startEdit(p)} className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center cursor-pointer" title="Edit"><FileText className="w-3.5 h-3.5 text-gray-400" /></button>
                     {st === "draft" && (
                       <>

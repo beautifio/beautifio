@@ -16,6 +16,7 @@ interface Article {
   author?: string;
   source?: string;
   author_type?: string;
+  is_featured?: boolean;
 }
 
 const AUTHOR_TYPE_LABEL: Record<string, string> = {
@@ -61,13 +62,29 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
           }
         }
 
-        const { data } = await supabase
+        // Fetch featured + latest articles
+        let featured: any[] = []
+        let latest: any[] = []
+
+        // 1. Get top 5 featured
+        const { data: feat } = await supabase
           .from("articles")
-          .select("id, slug, title, cover_image, category, author, source, author_type")
+          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured")
+          .eq("is_published", true).eq("is_featured", true)
+          .order("created_at", { ascending: false }).limit(5)
+        featured = feat || []
+
+        // 2. Get latest to fill remaining slots up to 10
+        const featuredIds = featured.map(f => f.id)
+        const { data: rest } = await supabase
+          .from("articles")
+          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured")
           .eq("is_published", true)
-          .order("created_at", { ascending: false })
-          .limit(10);
-        if (data) setArticles(data);
+          .order("created_at", { ascending: false }).limit(15)
+        latest = (rest || []).filter(a => !featuredIds.includes(a.id)).slice(0, 10 - featured.length)
+
+        const combined = [...featured, ...latest]
+        if (combined.length > 0) setArticles(combined)
       } catch {
         // silent fallback — show empty or cached state
       } finally {
@@ -113,7 +130,12 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
               href={`/inspirasi/${a.slug}`}
               className="flex gap-3 py-3 hover:bg-gray-50 transition-colors -mx-3 px-3 rounded-lg"
             >
-              <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100">
+              <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100 relative">
+                {(a as any).is_featured && (
+                  <span className="absolute top-1.5 right-1.5 flex items-center gap-0.5 text-[8px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold z-10">
+                    ⭐ Featured
+                  </span>
+                )}
                 {a.cover_image ? (
                   <img src={a.cover_image} alt={a.title} className="w-full h-full object-cover" loading="lazy" />
                 ) : (() => {

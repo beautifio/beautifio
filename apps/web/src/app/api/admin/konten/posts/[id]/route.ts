@@ -62,6 +62,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.tag_audiens !== undefined) updateData.tag_audiens = body.tag_audiens;
     if (body.tag_penulis !== undefined) updateData.tag_penulis = body.tag_penulis;
     if (body.tag_sensitivitas !== undefined) updateData.tag_sensitivitas = body.tag_sensitivitas;
+    if (body.is_featured !== undefined) updateData.is_featured = body.is_featured;
     if (body.status !== undefined) {
       updateData.is_published = body.status === "published";
       if (body.status !== "published") updateData.scheduled_at = null;

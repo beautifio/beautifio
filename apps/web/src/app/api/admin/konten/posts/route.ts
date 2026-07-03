@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
       initials: (body.author_name || user.email || "").charAt(0).toUpperCase(),
       source: body.author_type || "redaksi",
       is_published: body.status === "published" || false,
+      is_featured: body.is_featured || false,
       scheduled_at: isScheduled ? body.scheduled_at : null,
       read_time_minutes: body.read_time_minutes || 5,
       meta_title: body.meta_title || "",
