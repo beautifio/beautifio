@@ -467,7 +467,7 @@ export async function submitDiscAnswer(
   if (revealError) throw revealError
 
   if (revealed && revealed.length > 0) {
-    const delay = q.sequence_number === 10 ? 8 : 6
+    const delay = q.sequence_number === 5 ? 8 : 6
     const { error: advanceError } = await supabase.rpc('set_session_advance_at', {
       p_session_id: round.session_id,
       p_delay_seconds: delay,

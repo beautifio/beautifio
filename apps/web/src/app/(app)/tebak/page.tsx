@@ -111,7 +111,7 @@ export default function TebakPage() {
           className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-50 cursor-pointer"
         >
           {joining ? (
-            <><Loader2 size={16} className="animate-spin" /> Mencari lawan...</>
+            <><Loader2 size={16} className="animate-spin" /> Mencari lawan... (max 10 detik)</>
           ) : (
             <><Users size={16} /> Mulai Bermain</>
           )}

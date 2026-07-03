@@ -321,10 +321,10 @@ ${advice}`
     }
   }, [gameSession.current_round, doSyncNewRound])
 
-  // Panduan: tampilkan overlay info saat masuk ronde baru (R1-3)
+  // Panduan: hanya tampilkan di R1
   useEffect(() => {
     const r = gameSession.current_round
-    if (r < 1 || r > 3) return
+    if (r !== 1) return
     if (panduanShownRef.current.has(r)) return
     if (isLoading) return
     panduanShownRef.current.add(r)
@@ -655,7 +655,7 @@ ${advice}`
         <ScoreBoard scoreA={gameSession.score_a} scoreB={gameSession.score_b} round={gameSession.current_round} isPlayerA={isPlayerA} myName={myName} opponentName={opponentName} myDots={myDots} theirDots={theirDots} isDiscRound={scoreboardIsDisc} discProgress={discProgress} discTotal={discTotal} />
       </div>
 
-      {showIntro ? <MatchIntro myName={myName} opponentName={opponentName} onBegin={() => setShowIntro(false)} deadline={gameSession.created_at ? new Date(new Date(gameSession.created_at).getTime() + 8000).toISOString() : undefined} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={opponentReady} sessionId={sessionId} />
+      {showIntro ? <MatchIntro myName={myName} opponentName={opponentName} onBegin={() => setShowIntro(false)} deadline={new Date(Date.now() + 8000).toISOString()} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={opponentReady} sessionId={sessionId} />
       : showProfileReveal ? <DiscProfileReveal myProfile={myDiscProfile} theirProfile={theirDiscProfile} myName={myName} opponentName={opponentName} deadline={gameSession.advance_at ?? new Date(Date.now() + 20000).toISOString()} onAdvance={() => setShowProfileReveal(false)} />
       : showPanduan && !isFinished ? <PanduanOverlay round={gameSession.current_round} onMulai={() => setShowPanduan(false)} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={!!opponentReady} iAmReady={!!iAmReady} sessionId={sessionId} />
       : isFinished ? <WinnerScreen session={gameSession} isPlayerA={isPlayerA} userId={userId} opponentId={opponentId} opponentName={opponentName} myName={myName} compatibility={compatibility} compatibilityLabel={compatibilityLabel} compatibilityInsight={compatibilityInsight} onHome={() => router.push('/')} opponentIsBot={opponentIsBot} />
