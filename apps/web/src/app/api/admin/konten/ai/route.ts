@@ -60,7 +60,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const { action, topic, keyword, category, tone, length, style, context } = await request.json()
+  const { action, topic, keyword, category, tone, length, style, architecture, context } = await request.json()
+
+  // Architecture brief
+  const archBriefs: Record<string, string> = {
+    pilar: "Ini artikel PILAR (evergreen, 2.500-4.000 kata). Komprehensif, mendalam, rujukan utama. 5-8 section, 3+ referensi. Tone otoritatif tetap santai.",
+    kluster: "Ini artikel KLUSTER (sub-topik, 1.500-2.500 kata). Spesifik, actionable, praktis. 3-4 section. Tone 'kamu bisa langsung coba'.",
+    trending: "Ini artikel TRENDING (real-time, 800-1.200 kata). Ringkas, to-the-point, energik. 2-3 poin utama. Tone cepat dan relevan.",
+  }
+  const archBrief = archBriefs[architecture] || ""
 
   // Load bible from app_settings based on style
   const bibleKey = `content_bible_${style || "standard"}`
@@ -76,6 +84,7 @@ export async function POST(request: NextRequest) {
 
 Topik: ${topic || keyword || ""}
 Kategori: ${category || "Mind & Body"}
+Arsitektur: ${architecture || "trending"} — ${archBrief}
 ${tone ? `Nada: ${tone}` : ""}
 ${length ? `Target panjang: ${length} kata` : ""}
 ${context ? `Konteks tambahan: ${context}` : ""}

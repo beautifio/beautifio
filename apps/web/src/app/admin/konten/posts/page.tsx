@@ -104,6 +104,7 @@ export default function InspirasiPostsPage() {
   const [genKeyword, setGenKeyword] = useState("");
   const [genCategory, setGenCategory] = useState("mind-body");
   const [genStyle, setGenStyle] = useState("standard");
+  const [genArch, setGenArch] = useState("trending");
   const [genLoading, setGenLoading] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
@@ -288,7 +289,7 @@ export default function InspirasiPostsPage() {
     try {
       const res = await fetch("/api/admin/konten/ai", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate_full", topic: title, category: "mind-body", style: "standard" }),
+        body: JSON.stringify({ action: "generate_full", topic: title, category: "mind-body", style: "standard", architecture: "trending" }),
       })
       if (!res.ok) throw new Error("AI service unavailable")
       const data = await res.json()
@@ -305,7 +306,7 @@ export default function InspirasiPostsPage() {
     try {
       const res = await fetch("/api/admin/konten/ai", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate_full", topic: genKeyword, category: genCategory, style: genStyle }),
+        body: JSON.stringify({ action: "generate_full", topic: genKeyword, category: genCategory, style: genStyle, architecture: genArch }),
       })
       if (!res.ok) throw new Error("AI service unavailable")
       const data = await res.json()
@@ -322,7 +323,7 @@ export default function InspirasiPostsPage() {
       title: title, content: content, excerpt: meta?.excerpt || "", category_id: genCategory || "mind-body",
       cover_image: "", author_name: "", read_time_minutes: meta?.read_time_minutes || 5,
       slug: meta?.slug || "", meta_title: meta?.meta_title || "", meta_description: meta?.meta_description || "", og_image: "",
-      scheduled_at: "", author_type: "redaksi", architecture: "",
+      scheduled_at: "", author_type: "redaksi", architecture: genArch || meta?.architecture || "",
       disclaimer_type: "none", disclaimer_custom: "",
       author_credentials: { gelar: "", institusi: "", linkedin: "", foto_url: "" },
       author_anon_name: "", series_id: "",
@@ -787,6 +788,18 @@ export default function InspirasiPostsPage() {
             </div>
             <p className="text-xs text-gray-500 mb-4">AI akan menulis artikel sesuai standar konten Beautifio.</p>
             <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Arsitektur</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {ARCHITECTURES.map(a => (
+                    <button key={a.id} onClick={() => setGenArch(a.id)}
+                      className={`px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer text-center ${genArch === a.id ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+                      <span className="font-medium text-xs">{a.label}</span>
+                      <p className="text-[9px] text-gray-400 mt-0.5">{a.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-1">Keyword / Topik</label>
                 <input value={genKeyword} onChange={e => setGenKeyword(e.target.value)} placeholder="Contoh: overthinking pada remaja" className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none" autoFocus />
