@@ -303,31 +303,57 @@ export default function BiblePage() {
       {/* Panduan Kategori */}
       <div className="mt-6 pt-6" style={{ borderTop: "1px solid #E2E8F0" }}>
         <h3 className="text-sm font-bold text-gray-900 mb-1">📋 Panduan Kategori — "Masuk Mana?"</h3>
-        <p className="text-xs text-gray-500 mb-3">Bingung topik masuk kategori mana? Lihat mapping ini. Olahraga, tokoh, berita, semuanya ada panduannya.</p>
-        <div className="space-y-2">
+        <p className="text-xs text-gray-500 mb-3">Bingung topik masuk kategori mana? Lihat mapping ini.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {EX_CATEGORIES.map(c => (
-            <div key={c.id} className="p-4 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm">{c.icon}</span>
-                <span className="text-xs font-bold" style={{ color: "#1E2938" }}>{c.label}</span>
-              </div>
-              <p className="text-[11px] leading-relaxed mb-2" style={{ color: "#647488" }}>{c.desc}</p>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="p-2 rounded-lg" style={{ background: "#F8FAFC" }}>
-                  <p className="text-[9px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "#084463" }}>🏃 Olahraga</p>
-                  <p className="text-[10px] leading-relaxed" style={{ color: "#647488" }}>{c.olahraga}</p>
-                </div>
-                <div className="p-2 rounded-lg" style={{ background: "#F8FAFC" }}>
-                  <p className="text-[9px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "#084463" }}>👤 Tokoh</p>
-                  <p className="text-[10px] leading-relaxed" style={{ color: "#647488" }}>{c.tokoh}</p>
-                </div>
-                <div className="p-2 rounded-lg" style={{ background: "#F8FAFC" }}>
-                  <p className="text-[9px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "#084463" }}>📢 Berita</p>
-                  <p className="text-[10px] leading-relaxed" style={{ color: "#647488" }}>{c.berita}</p>
-                </div>
-              </div>
+            <div key={c.id} className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
+              <p className="text-xs font-bold mb-1" style={{ color: "#1E2938" }}>{c.icon} {c.label}</p>
+              <p className="text-[10px] leading-relaxed" style={{ color: "#647488" }}>{c.desc}</p>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Mapping Khusus */}
+      <div className="mt-6 pt-6" style={{ borderTop: "1px solid #E2E8F0" }}>
+        <h3 className="text-sm font-bold text-gray-900 mb-3">🗺️ Mapping Khusus: Olahraga, Tokoh, Berita</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Olahraga */}
+          <div className="p-4 rounded-xl border" style={{ borderColor: "#E2E8F0", background: "#FFFFFF" }}>
+            <h4 className="text-xs font-bold mb-2" style={{ color: "#1E2938" }}>🏃 Olahraga Masuk Mana?</h4>
+            <div className="space-y-1.5">
+              {EX_CATEGORIES.filter(c => c.olahraga !== "— (tidak relevan)").map(c => (
+                <div key={c.id} className="flex items-start gap-1.5">
+                  <span className="text-[10px] font-semibold flex-shrink-0" style={{ color: "#084463" }}>{c.icon}</span>
+                  <span className="text-[10px] leading-relaxed" style={{ color: "#647488" }}><strong style={{color:"#1E2938"}}>{c.label}:</strong> {c.olahraga}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Tokoh */}
+          <div className="p-4 rounded-xl border" style={{ borderColor: "#E2E8F0", background: "#FFFFFF" }}>
+            <h4 className="text-xs font-bold mb-2" style={{ color: "#1E2938" }}>👤 Tokoh Masuk Mana?</h4>
+            <div className="space-y-1.5">
+              {EX_CATEGORIES.filter(c => c.tokoh !== "— (tidak relevan)").map(c => (
+                <div key={c.id} className="flex items-start gap-1.5">
+                  <span className="text-[10px] font-semibold flex-shrink-0" style={{ color: "#084463" }}>{c.icon}</span>
+                  <span className="text-[10px] leading-relaxed" style={{ color: "#647488" }}><strong style={{color:"#1E2938"}}>{c.label}:</strong> {c.tokoh}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Berita */}
+          <div className="p-4 rounded-xl border" style={{ borderColor: "#E2E8F0", background: "#FFFFFF" }}>
+            <h4 className="text-xs font-bold mb-2" style={{ color: "#1E2938" }}>📢 Berita Masuk Mana?</h4>
+            <div className="space-y-1.5">
+              {EX_CATEGORIES.filter(c => c.berita !== "— (tidak relevan)").map(c => (
+                <div key={c.id} className="flex items-start gap-1.5">
+                  <span className="text-[10px] font-semibold flex-shrink-0" style={{ color: "#084463" }}>{c.icon}</span>
+                  <span className="text-[10px] leading-relaxed" style={{ color: "#647488" }}><strong style={{color:"#1E2938"}}>{c.label}:</strong> {c.berita}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
