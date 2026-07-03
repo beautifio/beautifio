@@ -80,6 +80,10 @@ Balas JSON dengan SEMUA field ini — jangan ada yang kosong:
   "content": "HTML konten artikel lengkap"
 }
 
+PENTING: internal_links adalah metadata — JANGAN tulis [INTERNAL LINK: ...] di dalam konten.
+Konten harus bersih, siap publish, tanpa placeholder apapun.
+JANGAN gunakan placeholder [INTERNAL LINK], [CTA], atau sejenisnya di body artikel.
+tag_audiens harus SATU nilai, bukan comma-separated (contoh: "mahasiswa", bukan "mahasiswa, fresh-graduate").
 HANYA balas JSON. Tidak ada teks lain.`
 
 export async function POST(request: NextRequest) {
