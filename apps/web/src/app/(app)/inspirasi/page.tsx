@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, BookOpen, PenLine, Quote, BookHeart, Heart, TrendingUp, Users, Feather, Monitor, Clapperboard, Newspaper, Megaphone } from "lucide-react";
+import { Sparkles, BookOpen, PenLine, Quote, BookHeart, Heart, TrendingUp, Users, Feather, Monitor, Clapperboard, Utensils, Activity, ShoppingBag } from "lucide-react";
 import { SOURCE_TABS, CATEGORY_LABELS } from "@/lib/inspirasi-data";
 import type { SourceType, InspirasiItem } from "@/lib/inspirasi-data";
 import { supabase } from "@/lib/supabase/client";
@@ -136,9 +136,11 @@ export default function InspirasiPage() {
   const allItems = useMemo(() => dbItems, [dbItems]);
 
   const CATEGORY_ICONS: Record<string, typeof Heart> = {
-    "lifetaintment": Clapperboard,
-    "opinion": Newspaper,
-    "news": Megaphone,
+    "beauty-skincare": Sparkles,
+    "wellness": Activity,
+    "style-shopping": ShoppingBag,
+    "entertainment": Clapperboard,
+    "lifetainment": Utensils,
     "mind-body": Heart,
     "glow-glowup": Sparkles,
     "levelup-career": TrendingUp,
