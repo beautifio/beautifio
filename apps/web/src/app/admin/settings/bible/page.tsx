@@ -76,16 +76,18 @@ const DEFAULTS: Record<string, string> = {
 }
 
 const EX_CATEGORIES = [
-  { id: "mind-body", label: "Mind & Body", icon: "❤️" },
-  { id: "beauty-skincare", label: "Beauty", icon: "✨" },
-  { id: "wellness", label: "Wellness", icon: "🏃" },
-  { id: "style-shopping", label: "Style", icon: "🛍️" },
-  { id: "entertainment", label: "Entertainment", icon: "🎬" },
-  { id: "lifetainment", label: "Lifetainment", icon: "🍽️" },
-  { id: "relationship", label: "Relationship", icon: "👥" },
-  { id: "levelup-career", label: "Career", icon: "📈" },
-  { id: "creative-space", label: "Creative", icon: "✏️" },
-  { id: "tech-gaming", label: "Tech", icon: "🖥️" },
+  { id: "mind-body", label: "Mind & Body", icon: "❤️", desc: "Mental health, self-care, overthinking, anxiety, burnout, body image, mindfulness, self-love, journaling untuk kesehatan mental, sleep hygiene. Target: pembaca yang lagi struggle dengan pikiran sendiri." },
+  { id: "beauty-skincare", label: "Beauty", icon: "✨", desc: "Skincare routine, makeup untuk pemula, review produk lokal, nail care, hair care, fragrance, beauty tools. Fokus: review jujur & budget pelajar." },
+  { id: "wellness", label: "Wellness", icon: "🏃", desc: "Nutrisi, fitness, siklus menstruasi, feminine health, PMDD, zat besi, hidrasi, gaya hidup sehat. Beda dengan Mind & Body: ini fisik & biologis, bukan psikologis." },
+  { id: "style-shopping", label: "Style", icon: "🛍️", desc: "Outfit ideas, fashion tips, haul review, thrift, Shopee/Tokopedia finds, OOTD, fashion budget. Angle: style bisa murah, yang penting percaya diri." },
+  { id: "entertainment", label: "Entertainment", icon: "🎬", desc: "Review drakor, film, musik, K-pop, webtoon, anime, podcast, konten kreator lokal. Angle: rekomendasi personal, bukan berita industri." },
+  { id: "lifetainment", label: "Lifetainment", icon: "🍽️", desc: "Kuliner + hiburan. Makanan yang relate ke drakor/film/artis, cafe aesthetic, food review fun, tempat nongkrong. Angle: tren + kuliner + opini personal." },
+  { id: "relationship", label: "Relationship", icon: "👥", desc: "Pertemanan, toxic friendship, keluarga, romance, boundaries, ghosting, rejection, komunikasi. Angle: jujur & relatable, bukan advice menggurui." },
+  { id: "levelup-career", label: "Career", icon: "📈", desc: "Karir, magang, bisnis, finance, side hustle, personal branding, investasi, CV, LinkedIn. Angle: actionable & realistis untuk anak muda." },
+  { id: "creative-space", label: "Creative", icon: "✏️", desc: "Menulis kreatif, journaling, puisi, esai personal, literasi, buku. Eksklusif: puisi & cerpen dari Cerita Pembaca." },
+  { id: "tech-gaming", label: "Tech", icon: "🖥️", desc: "AI untuk belajar, gaming, gadget budget, keamanan digital, perempuan di tech. Angle: tech itu buat semua orang, bukan cuma cowok." },
+  { id: "opinion", label: "Opini & Aksi", icon: "📰", desc: "Opini, isu sosial, lingkungan, pendidikan, kebijakan publik, kritik budaya. Angle: ambil stance, ajak gerak. Bukan straight news." },
+  { id: "news", label: "Berita", icon: "📢", desc: "Straight news, update kebijakan, event, beasiswa, pengumuman penting. Angle: faktual, cepat, to-the-point. Bukan opini." },
 ]
 
 export default function BiblePage() {
@@ -296,6 +298,20 @@ export default function BiblePage() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Panduan Kategori */}
+      <div className="mt-6 pt-6" style={{ borderTop: "1px solid #E2E8F0" }}>
+        <h3 className="text-sm font-bold text-gray-900 mb-3">📋 Panduan Kategori</h3>
+        <p className="text-xs text-gray-500 mb-3">Setiap kategori punya fokus & angle spesifik. Baca ini sebelum mulai nulis.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {EX_CATEGORIES.map(c => (
+            <div key={c.id} className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
+              <p className="text-xs font-bold mb-1" style={{ color: "#1E2938" }}>{c.icon} {c.label}</p>
+              <p className="text-[10px] leading-relaxed" style={{ color: "#647488" }}>{c.desc}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
