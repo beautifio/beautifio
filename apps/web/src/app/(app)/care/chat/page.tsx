@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { createCareSession } from '@/lib/care/ai-actions';
 
 interface CareSchedule {
   id: string; category: string; is_online: boolean;
@@ -15,7 +16,7 @@ interface CareSessionItem {
 }
 
 const categoryEmoji: Record<string,string> = {
-  psikologi: '🧠', agama: '🕌', umum: '📞',
+  psikologi: '🧠', agama: '🕌', umum: '📞', bisnis: '💼',
 };
 
 const statusLabel: Record<string,string> = {
@@ -53,6 +54,8 @@ export default function CareChatPage() {
       desc: 'Konseling kesehatan mental & emosional' },
     { key: 'agama', label: 'Konseling Agama', emoji: '🕌',
       desc: 'Bimbingan spiritual & keagamaan' },
+    { key: 'bisnis', label: 'Bisnis & Marketing', emoji: '💼',
+      desc: 'Konsultasi bisnis, karir, dan strategi marketing' },
     { key: 'umum', label: 'Konsultasi Umum', emoji: '📞',
       desc: 'Tidak tahu ke mana? Kami bantu arahkan' },
   ];
@@ -96,30 +99,17 @@ export default function CareChatPage() {
 
   async function handleStartChat() {
     if (!form.nama.trim()) { alert('Nama harus diisi'); return; }
+    if (!selectedType) { alert('Pilih kategori dulu'); return; }
     setStarting(true);
-    const supabase = createClient();
-    if (!supabase) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: session } = await supabase
-      .from('care_chat_sessions')
-      .insert({
-        user_id: user?.id,
-        category: selectedType,
-        user_name: form.nama,
-        user_phone: form.phone || null,
-        user_address: form.alamat || null,
-        status: 'waiting',
-      }).select().single();
-    if (!supabase) return;
-    await supabase.from('care_chat_messages').insert({
-      session_id: session.id,
-      sender_id: user?.id,
-      sender_role: 'system',
-      content: `Halo ${form.nama}! Kamu terhubung dengan ` +
-        `layanan ${selectedType} Beautifio Care. ` +
-        `Ceritakan apa yang ingin kamu konsultasikan.`,
-    });
-    router.push(`/care/chat/${session.id}`);
+    try {
+      const result = await createCareSession(selectedType, form.nama, form.phone || null, form.alamat || null)
+      router.push(`/care/chat/${result.sessionId}`);
+    } catch (e) {
+      console.error('[CARE] create failed', e)
+      alert('Gagal membuat sesi. Coba lagi.')
+    } finally {
+      setStarting(false);
+    }
   }
 
   return (

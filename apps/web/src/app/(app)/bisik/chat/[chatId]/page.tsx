@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { createClient } from "@/lib/supabase/client"
 import { getBisikChat, getBisikMessages } from "@/lib/bisik/queries"
 import type { BisikMessage, BisikChat } from "@/lib/bisik/queries"
+import { isBisikBot, botReplyToMessage } from "@/lib/bisik/bot-actions"
 
 interface PendingMessage {
   localId: string
@@ -55,6 +56,9 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
   const [showEndConfirm, setShowEndConfirm] = useState(false)
   const [otherName, setOtherName] = useState("Anonymous")
   const [otherId, setOtherId] = useState<string | null>(null)
+  const [receiverIsBot, setReceiverIsBot] = useState(false)
+  const [botFrozen, setBotFrozen] = useState(false)
+  const [botTyping, setBotTyping] = useState(false)
   const [lastOnline, setLastOnline] = useState<string | null>(null)
   const [showContext, setShowContext] = useState(true)
   const [contextCard, setContextCard] = useState<{ content: string; topic?: { name: string; emoji: string } | null } | null>(null)
@@ -99,13 +103,17 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       const isInitiator = c.initiator_id === user.id
       const oId = isInitiator ? c.receiver_id : c.initiator_id
       setOtherId(oId)
+      // Fetch opponent name (same flow for bot & human)
       const { data: otherUser } = await supabase!
         .from("users")
         .select("bisik_anonymous_name, bisik_custom_name, last_online_at")
         .eq("id", oId)
         .single()
-      setOtherName(otherUser?.bisik_custom_name || otherUser?.bisik_anonymous_name || "Anonymous")
+      const nameFromUser = otherUser?.bisik_custom_name || otherUser?.bisik_anonymous_name || "Anonymous"
+      setOtherName(nameFromUser)
       setLastOnline(otherUser?.last_online_at ?? null)
+      // Detect if bot (for reply logic only, not for display)
+      isBisikBot(oId).then(setReceiverIsBot)
 
       const msgs = await getBisikMessages(chatId)
       setMessages(msgs)
@@ -115,6 +123,21 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
     // Check ban status
     checkBan()
   }, [chatId, user, router])
+
+  // Auto-trigger bot opening message when chat first loads
+  useEffect(() => {
+    if (!receiverIsBot || botFrozen || messages.length > 0) return
+    const init = async () => {
+      // Quick read delay: 5s
+      const readMs = 5000
+      await new Promise(r => setTimeout(r, readMs))
+      setBotTyping(true)
+      const reply = await botReplyToMessage(chatId, '').catch(() => null)
+      setBotTyping(false)
+      if (reply?.frozen) setBotFrozen(true)
+    }
+    init()
+  }, [receiverIsBot, messages.length, botFrozen, chatId])
 
   // Heartbeat: update last_online_at periodically
   useEffect(() => {
@@ -281,13 +304,24 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
     const ok = await sendMessage(originalContent, localId)
     if (ok) {
       setPendingMsgs(prev => prev.filter(m => m.localId !== localId))
+      // Bot auto-reply
+      if (receiverIsBot && !botFrozen) {
+        setBotTyping(false)
+        // Human read delay: 30-90s
+        const readMs = 30000 + Math.floor(Math.random() * 60000)
+        await new Promise(r => setTimeout(r, readMs))
+        setBotTyping(true)
+        const reply = await botReplyToMessage(chatId, originalContent).catch(() => null)
+        setBotTyping(false)
+        if (reply?.frozen) setBotFrozen(true)
+      }
     } else {
       setPendingMsgs(prev => prev.map(m =>
         m.localId === localId ? { ...m, _status: 'failed' as const } : m
       ))
     }
     setSending(false)
-  }, [input, sending, supabase, user, chatId, isInitiator, chat, banInfo])
+  }, [input, sending, supabase, user, chatId, isInitiator, chat, banInfo, receiverIsBot, botFrozen])
 
   const retryMessage = async (pending: PendingMessage) => {
     setPendingMsgs(prev => prev.map(m =>
@@ -327,7 +361,8 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
   }
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col">
+    <div className="h-dvh bg-bg flex flex-col">
+      <div className="max-w-content mx-auto w-full flex flex-col flex-1 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface shrink-0">
         <div className="flex items-center gap-3">
@@ -343,7 +378,11 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
           <div>
             <p className="text-sm font-semibold text-text-primary">{otherName}</p>
             <p className="text-[10px] text-text-secondary">
-              {isOnline(lastOnline) ? (
+              {botFrozen ? (
+                <span className="text-text-secondary/50">Obrolan selesai</span>
+              ) : receiverIsBot ? (
+                <span className="text-green-600 font-medium">Online</span>
+              ) : isOnline(lastOnline) ? (
                 <span className="text-green-600 font-medium">Online</span>
               ) : lastOnline ? (
                 `Offline ${relativeTimeShort(lastOnline)}`
@@ -419,7 +458,15 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.length === 0 && pendingMsgs.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-text-secondary">
-            <p className="text-sm">Tidak ada pesan, mulailah percakapan!</p>
+            {receiverIsBot ? (
+              <>
+                <p className="text-lg mb-1">✨</p>
+                <p className="text-sm font-medium">{otherName} siap ngobrol</p>
+                <p className="text-xs mt-1">Teman curhat yang selalu ada buat kamu</p>
+              </>
+            ) : (
+              <p className="text-sm">Tidak ada pesan, mulailah percakapan!</p>
+            )}
           </div>
         )}
         {allMessages().map((msg, i) => {
@@ -471,20 +518,35 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-border bg-surface shrink-0">
+      <div className="px-4 py-3 border-t border-border bg-surface shrink-0" style={{ paddingBottom: 'max(16px, calc(4rem + env(safe-area-inset-bottom)))' }}>
+        {botTyping && (
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+            <span className="text-xs text-text-secondary">{otherName} mengetik...</span>
+          </div>
+        )}
+        {botFrozen && (
+          <p className="text-xs text-center text-text-secondary/50 mb-2">
+            Obrolan selesai — {otherName} udah offline. Kalian bisa ngobrol lagi minggu depan!
+          </p>
+        )}
         <div className="flex items-center gap-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-            placeholder={banInfo?.isBanned ? "Kamu sedang dibanned..." : "Tulis pesan..."}
+            placeholder={botFrozen ? "Obrolan sudah selesai..." : banInfo?.isBanned ? "Kamu sedang dibanned..." : "Tulis pesan..."}
             maxLength={1000}
-            disabled={banInfo?.isBanned}
+            disabled={banInfo?.isBanned || botFrozen}
             className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-bg text-sm text-text-primary placeholder:text-text-secondary/50 outline-none focus:border-primary transition-colors disabled:opacity-50"
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim() || sending || !!banInfo?.isBanned}
+            disabled={!input.trim() || sending || !!banInfo?.isBanned || botFrozen}
             className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
           >
             <Send size={18} />
@@ -521,6 +583,7 @@ export default function BisikChatPage({ params }: { params: Promise<{ chatId: st
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

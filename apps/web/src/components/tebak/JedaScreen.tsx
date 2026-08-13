@@ -71,7 +71,7 @@ export function JedaScreen({
           <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
           <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
 
-          <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
+          <div className="p-4 flex flex-col items-center gap-2 relative z-10 min-h-[320px]">
             <div className="w-20 h-20 rounded-full flex items-center justify-center bg-accent/20">
               <span className="text-3xl">💬</span>
             </div>
@@ -151,7 +151,7 @@ export function JedaScreen({
         <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
 
-        <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
+        <div className="p-4 flex flex-col items-center gap-2 relative z-10 min-h-[320px]">
           {/* Icon + Title */}
           <div className={`w-20 h-20 rounded-full flex items-center justify-center ${iconBg}`}>
             {icon}

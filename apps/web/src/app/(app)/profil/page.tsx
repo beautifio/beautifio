@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent, Button, Skeleton } from "@bea
 import { useAuth } from "@/hooks/use-auth"
 import { useIdentity } from "@/hooks/use-identity"
 import { IdentityHero } from "@/components/profile/IdentityHero"
+import { PwaInstallCard } from "@/components/PwaInstallCard"
 import { DiscCard, TesAHCard, JourneyCard, LifeEngineCard } from "@/components/profile/cards/DimensionCards"
 import { ActivityRow, TimelineCompact } from "@/components/profile/ActivityAndTimeline"
 
@@ -180,6 +181,8 @@ export default function ProfileScreen() {
         {data ? (
           <>
             <IdentityHero {...data} />
+
+            <PwaInstallCard />
 
             {isAnonymous && (
               <div className="px-6">

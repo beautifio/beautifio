@@ -11,7 +11,7 @@ export default function TebakPage() {
   const { user, isLoading } = useAuth()
 
   useEffect(() => {
-    if (!isLoading && !user) router.replace("/login");
+    if (!isLoading && !user) router.replace("/");
   }, [user, isLoading, router]);
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState("")

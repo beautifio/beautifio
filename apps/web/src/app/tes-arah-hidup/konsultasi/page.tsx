@@ -22,7 +22,7 @@ export default function KonsultasiPage() {
 
   useEffect(() => {
     if (!authLoading && !user) { router.replace("/login"); return }
-    if (!supabase) return
+    if (!supabase) { setLoading(false); return }
     Promise.all([
       supabase.from("psychologists").select("*").eq("is_verified", true).eq("is_active", true),
       supabase.from("consultation_pricing").select("*").eq("is_active", true),
@@ -32,7 +32,7 @@ export default function KonsultasiPage() {
       setPricing(r2.data || [])
       setVouchers(r3.data || [])
       setLoading(false)
-    })
+    }).catch(() => { setLoading(false) })
   }, [user, authLoading])
 
   const applyVoucher = () => {
@@ -41,7 +41,7 @@ export default function KonsultasiPage() {
     if (v) {
       const now = new Date()
       if (v.valid_until && new Date(v.valid_until) < now) { setVoucherData({ error: "Voucher kadaluarsa" }); return }
-      if (v.max_uses && v.used_count >= v.max_uses) { setVoucherData({ error: "Kuota habis" }); return }
+      if (v.max_uses && (v.used_count || 0) >= v.max_uses) { setVoucherData({ error: "Kuota habis" }); return }
       setVoucherData(v)
       setError("")
     } else {
@@ -52,8 +52,8 @@ export default function KonsultasiPage() {
   const selectedPrice = selectedDur ? pricing.find(p => p.id === selectedDur) : null
   const basePrice = selectedPrice?.net_price || 0
   const discountAmount = voucherData?.discount_type === "percentage"
-    ? Math.round(basePrice * (voucherData.discount_value / 100))
-    : voucherData?.discount_type === "nominal" ? voucherData.discount_value : 0
+    ? Math.round(basePrice * (Number(voucherData.discount_value) / 100))
+    : voucherData?.discount_type === "nominal" ? Number(voucherData.discount_value) : 0
   const finalPrice = Math.max(0, basePrice - discountAmount)
 
   const handlePay = async () => {
@@ -97,7 +97,9 @@ export default function KonsultasiPage() {
         {/* Step 1: Pick Psychologist */}
         <p className="text-xs font-semibold mb-2" style={{ color: "#647488" }}>1. Pilih Psikolog</p>
         <div className="space-y-2 mb-4">
-          {psychologists.map(p => (
+          {psychologists.length === 0 ? (
+            <p className="text-xs text-text-secondary py-4 text-center">Belum ada psikolog tersedia saat ini.</p>
+          ) : psychologists.map(p => (
             <button key={p.id} onClick={() => setSelectedPsy(p.id)}
               className={`w-full text-left p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedPsy === p.id ? "border-[#084463] bg-[#084463]/3" : "border-[#E2E8F0] bg-white"}`}>
               <div className="flex items-center gap-3">

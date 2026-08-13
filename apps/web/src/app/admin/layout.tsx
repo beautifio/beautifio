@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import {
-  Gift, ShoppingBag, Trophy, FileText,
-  Users, Quote, MessageCircle, HeartHandshake,
-  FileSpreadsheet, BookOpen, Briefcase, Menu, X, ChevronDown,
-  LayoutDashboard, Shield, Image, Radio, CreditCard, Bell, Megaphone, BarChart3, CalendarDays,
+  Gift, ShoppingBag, Trophy,
+  Users, MessageCircle, HeartHandshake,
+  FileSpreadsheet, Menu, X, ChevronDown,
+  LayoutDashboard, Shield, Image, CreditCard, Bell, BarChart3, CalendarDays, Sparkles, Radio, Briefcase,
 } from "lucide-react";
 
 type NavItem = {
@@ -27,25 +27,22 @@ type NavGroup = {
 const standaloneItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "superadmin"] },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["superadmin"] },
-  { href: "/admin/bisik", label: "Bisik", icon: Radio, roles: ["admin", "superadmin"] },
-  { href: "/admin/ads", label: "Ad Banners", icon: Megaphone, roles: ["admin", "superadmin"] },
-  { href: "/admin/subscriptions", label: "Subscription", icon: CreditCard, roles: ["admin", "superadmin"] },
-  { href: "/admin/keuangan", label: "Keuangan", icon: BarChart3, roles: ["admin", "superadmin"] },
-  { href: "/admin/mitra", label: "Mitra", icon: Users, roles: ["admin", "superadmin"] },
   { href: "/admin/notifications", label: "Notifikasi", icon: Bell, roles: ["admin", "superadmin", "redaksi"] },
+  { href: "/admin/mitra", label: "Mitra", icon: Users, roles: ["admin", "superadmin"] },
 ];
 
 const navGroups: NavGroup[] = [
   {
-    label: "Familia",
+    label: "Bisnis",
     icon: Gift,
     roles: ["admin", "superadmin"],
     items: [
+      { href: "/admin/subscriptions", label: "Subscription", icon: CreditCard, roles: ["admin", "superadmin"] },
+      { href: "/admin/keuangan", label: "Keuangan", icon: BarChart3, roles: ["admin", "superadmin"] },
       { href: "/admin/merchants", label: "Merchant", icon: Gift, roles: ["admin", "superadmin"] },
       { href: "/admin/deals", label: "Deals", icon: ShoppingBag, roles: ["admin", "superadmin"] },
       { href: "/admin/rewards", label: "Rewards", icon: Trophy, roles: ["admin", "superadmin"] },
-      { href: "/admin/redemption-log", label: "Redemption Log", icon: FileText, roles: ["admin", "superadmin"] },
-      { href: "/admin/familia/stats", label: "Laporan Voucher", icon: BarChart3, roles: ["admin", "superadmin"] },
+      { href: "/admin/voucher", label: "Voucher", icon: BarChart3, roles: ["admin", "superadmin"] },
     ],
   },
   {
@@ -53,12 +50,9 @@ const navGroups: NavGroup[] = [
     icon: FileSpreadsheet,
     roles: ["redaksi", "superadmin"],
     items: [
-      { href: "/admin/konten/posts", label: "Inspirasi", icon: FileSpreadsheet, roles: ["redaksi", "superadmin"] },
-      { href: "/admin/settings/bible", label: "Panduan Konten", icon: BookOpen, roles: ["redaksi", "superadmin"] },
-      { href: "/admin/konten/stories", label: "Stories", icon: BookOpen, roles: ["redaksi", "superadmin"] },
-      { href: "/admin/konten/quotes", label: "Quotes", icon: Quote, roles: ["redaksi", "superadmin"] },
-      { href: "/admin/konten/hero", label: "Media Manager", icon: Image, roles: ["redaksi", "superadmin"] },
-      { href: "/admin/forums", label: "Forums", icon: MessageCircle, roles: ["admin", "superadmin"] },
+      { href: "/admin/konten/posts", label: "CMS", icon: FileSpreadsheet, roles: ["redaksi", "superadmin"] },
+      { href: "/admin/konten/hero", label: "Media", icon: Image, roles: ["redaksi", "superadmin"] },
+      { href: "/admin/konten/pengaturan", label: "Pengaturan", icon: Sparkles, roles: ["redaksi", "superadmin"] },
     ],
   },
   {
@@ -66,10 +60,19 @@ const navGroups: NavGroup[] = [
     icon: Users,
     roles: ["admin", "superadmin", "redaksi"],
     items: [
-      { href: "/admin/curhat", label: "Curhat", icon: MessageCircle, roles: ["admin", "superadmin", "redaksi"] },
-      { href: "/admin/care", label: "Beautifio Care", icon: HeartHandshake, roles: ["admin", "superadmin"] },
-      { href: "/admin/opportunities", label: "Opportunities", icon: Briefcase, roles: ["superadmin"] },
       { href: "/admin/events", label: "Events", icon: CalendarDays, roles: ["admin", "superadmin", "redaksi"] },
+      { href: "/admin/opportunities", label: "Opportunities", icon: Briefcase, roles: ["superadmin"] },
+      { href: "/admin/forums", label: "Forums", icon: MessageCircle, roles: ["admin", "superadmin"] },
+    ],
+  },
+  {
+    label: "Moderasi",
+    icon: Shield,
+    roles: ["admin", "superadmin", "redaksi", "care_volunteer"],
+    items: [
+      { href: "/admin/bisik", label: "Bisik", icon: Radio, roles: ["admin", "superadmin"] },
+      { href: "/admin/curhat", label: "Curhat", icon: MessageCircle, roles: ["admin", "superadmin", "redaksi"] },
+      { href: "/admin/care", label: "Beautifio Care", icon: HeartHandshake, roles: ["admin", "superadmin", "care_volunteer"] },
     ],
   },
 ];
@@ -86,9 +89,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Track which groups are expanded (default: both expanded)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    Familia: true,
+    Bisnis: true,
     Konten: true,
     Komunitas: true,
+    Moderasi: true,
   });
 
   useEffect(() => {
@@ -159,7 +163,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex items-center justify-between p-4 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="flex items-center gap-2">
             {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="h-7 w-auto"  />
+              <a href="/">
+                <img src={logoUrl} alt="Logo" className="h-7 w-auto aspect-[4/1]"  />
+              </a>
             ) : (
               <>
                 <Shield className="w-5 h-5" style={{ color: '#FFC64F' }} />
@@ -265,7 +271,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Menu className="w-5 h-5" style={{ color: '#FFFFFF' }} />
           </button>
           {logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="h-6 w-auto" />
+            <a href="/">
+              <img src={logoUrl} alt="Logo" className="h-6 w-auto aspect-[4/1]" />
+            </a>
           ) : (
             <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Admin Panel</span>
           )}

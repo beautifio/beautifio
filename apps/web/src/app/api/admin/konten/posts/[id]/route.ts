@@ -7,7 +7,7 @@ async function checkRole(supabase: Supabase) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
-  if (!admin || !["redaksi", "superadmin"].includes(admin.role)) return null;
+  if (!admin || !["redaksi", "superadmin", "admin"].includes(admin.role)) return null;
   return user;
 }
 

@@ -2,10 +2,26 @@
   "framework": "nextjs",
   "buildCommand": "cd apps/web && npx next build",
   "outputDirectory": "apps/web/.next",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "beautifio-web.vercel.app" }],
+      "destination": "https://beautifio.com/:path*",
+      "permanent": true
+    }
+  ],
   "crons": [
     {
       "path": "/api/admin/konten/posts/publish-scheduled",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/bisik-weekly-reset",
+      "schedule": "0 17 * * 0"
+    },
+    {
+      "path": "/api/cron/care-ai-daily-reset",
+      "schedule": "0 0 * * *"
     }
   ]
 }

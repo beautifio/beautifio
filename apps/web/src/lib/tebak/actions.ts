@@ -79,6 +79,11 @@ export async function botPlayTurn(
 ): Promise<{ chatMessage?: string }> {
   const supabase = await createServerClient()
 
+  // Fast check: is opponent actually a bot?
+  const { data: botProfile } = await supabase.from('tebak_bot_profiles')
+    .select('id').eq('id', botUserId).maybeSingle()
+  if (!botProfile) return {} // Not a bot — skip silently
+
   const { data: q } = await supabase
     .from('tebak_questions')
     .select('status, correct_answer, options, option_disc, round_id')
@@ -89,7 +94,7 @@ export async function botPlayTurn(
 
   const { data: r } = await supabase
     .from('tebak_rounds')
-    .select('session_id, subject_player, round_type')
+    .select('session_id, subject_player, round_type, round_number')
     .eq('id', q.round_id)
     .single()
 
@@ -121,7 +126,7 @@ export async function botPlayTurn(
     isSubject: isBotSubject,
   })
 
-  // Wait the natural delay
+  // Natural delay to simulate human thinking time
   await new Promise(resolve => setTimeout(resolve, decision.delayMs))
 
   // Re-read question to avoid race with cron timeout
@@ -142,9 +147,11 @@ export async function botPlayTurn(
         .select('*', { count: 'exact', head: true })
         .eq('question_id', questionId)
       if (count && count >= 2) {
-        await supabase.from('tebak_questions').update({
-          status: 'revealed', advance_at: new Date(Date.now() + 6000).toISOString(),
-        }).eq('id', questionId)
+        await supabase.from('tebak_questions').update({ status: 'revealed' }).eq('id', questionId)
+        await supabase.rpc('set_session_advance_at', {
+          p_session_id: r.session_id,
+          p_delay_seconds: freshQ.sequence_number === 5 ? 8 : 6,
+        })
       }
     }
     return { chatMessage: decision.chatMessage }
@@ -182,9 +189,37 @@ export async function botPlayTurn(
     }
 
     await supabase.from('tebak_questions').update({ status: 'revealed' }).eq('id', questionId)
+    const isLastQ = freshQ.sequence_number === 5 && (r.round_number ?? 0) < 4
+    await supabase.rpc('set_session_advance_at', {
+      p_session_id: r.session_id,
+      p_delay_seconds: isLastQ ? 8 : 3,
+    })
     return { chatMessage: decision.chatMessage }
   }
 
+  // FALLBACK: bot belum jawab (freshQ null atau status mismatch) → force jawab random
+  const { data: fallbackQ } = await supabase.from('tebak_questions')
+    .select('id, status')
+    .eq('id', questionId)
+    .single()
+  if (fallbackQ && ['both_answering', 'subject_answering', 'guesser_guessing'].includes(fallbackQ.status)) {
+    if (isBotSubject && fallbackQ.status === 'subject_answering') {
+      await supabase.from('tebak_questions').update({
+        correct_answer: decision.answer,
+        subject_answered_at: new Date().toISOString(),
+        guesser_deadline: new Date(Date.now() + 15_000).toISOString(),
+        status: 'guesser_guessing',
+      }).eq('id', questionId).eq('status', 'subject_answering')
+    } else {
+      await supabase.from('tebak_answers').upsert({
+        question_id: questionId,
+        guesser_id: botUserId,
+        answer: decision.answer,
+        is_correct: fallbackQ.status === 'guesser_guessing' ? (decision.answer === q.correct_answer) : null,
+        time_ms: 3000,
+      }, { onConflict: 'question_id,guesser_id' })
+    }
+  }
   return { chatMessage: decision.chatMessage }
 }
 

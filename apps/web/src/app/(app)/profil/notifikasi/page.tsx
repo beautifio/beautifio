@@ -73,7 +73,7 @@ export default function NotifikasiPage() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    if (!authLoading && !user) { router.replace("/login"); return }
+    if (!authLoading && !user) { router.replace("/"); return }
     if (!supabase || !user) return
     loadNotifs()
   }, [user, authLoading])

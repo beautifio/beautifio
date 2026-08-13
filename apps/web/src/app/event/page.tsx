@@ -52,19 +52,18 @@ export default function EventPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/familia/events");
-        if (res.ok) { const { data } = await res.json(); setEvents(data || []); }
-        const achRes = await fetch("/api/familia/achievements/progress");
-        if (achRes.ok) { const { data } = await achRes.json(); setAchievementCount((data || []).filter((a: any) => a.is_completed).length); }
-        // Load my registration count
-        try {
-          const myRes = await fetch("/api/events/my-registrations");
-          if (myRes.ok) { const { data } = await myRes.json(); setMyEventsCount(data?.length || 0); }
-        } catch {}
+        const [res, achRes, myRes] = await Promise.all([
+          fetch("/api/familia/events"),
+          fetch("/api/familia/achievements/progress"),
+          fetch("/api/events/my-registrations"),
+        ])
+        if (res.ok) { const { data } = await res.json(); setEvents(data || []) }
+        if (achRes.ok) { const { data } = await achRes.json(); setAchievementCount((data || []).filter((a: any) => a.is_completed).length) }
+        if (myRes.ok) { const { data } = await myRes.json(); setMyEventsCount(data?.length || 0) }
       } catch {
-      } finally { setLoading(false); }
-    })();
-  }, []);
+      } finally { setLoading(false) }
+    })()
+  }, [])
 
   const categories = useMemo(() => {
     const cats = new Set(events.map(e => e.category));

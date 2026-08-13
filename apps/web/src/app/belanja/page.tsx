@@ -46,21 +46,16 @@ export default function BelanjaPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/familia/deals");
-        if (res.ok) {
-          const { data } = await res.json();
-          setDeals(data || []);
-        }
-
-        const achRes = await fetch("/api/familia/achievements/progress");
-        if (achRes.ok) {
-          const { data } = await achRes.json();
-          setAchievementCount((data || []).filter((a: any) => a.is_completed).length);
-        }
-      } catch (e) { // console.error("Failed to load deals", e);
-      } finally { setLoading(false); }
-    })();
-  }, []);
+        const [res, achRes] = await Promise.all([
+          fetch("/api/familia/deals"),
+          fetch("/api/familia/achievements/progress"),
+        ])
+        if (res.ok) { const { data } = await res.json(); setDeals(data || []) }
+        if (achRes.ok) { const { data } = await achRes.json(); setAchievementCount((data || []).filter((a: any) => a.is_completed).length) }
+      } catch (e) { }
+      finally { setLoading(false) }
+    })()
+  }, [])
 
   const featured = deals.filter((d) => d.hot_deal_order != null).sort((a, b) => (a.hot_deal_order ?? 99) - (b.hot_deal_order ?? 99));
   const categories = useMemo(() => {

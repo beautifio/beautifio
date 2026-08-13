@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from "@/lib/supabase/server"
+import { getMondayThisWeek } from "@/lib/date-utils"
 
 export interface BisikCard {
   id: string
@@ -110,7 +111,7 @@ export async function swipeLeft(
 
 export async function swipeRight(
   card: BisikCard,
-): Promise<{ error: string | null; maxAllowed?: number }> {
+): Promise<{ error: string | null; maxAllowed?: number; botChatId?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
@@ -134,6 +135,33 @@ export async function swipeRight(
     card_owner_id: card.user_id,
     direction: "right",
   })
+
+  // Check if card owner is a bot (via tebak_bot_profiles) → auto-create chat
+  const { data: botProfile } = await supabase.from("tebak_bot_profiles").select("id").eq("id", card.user_id).maybeSingle()
+  if (botProfile) {
+    const monday = getMondayThisWeek()
+
+    // Check existing bot chat this week
+    const { data: existing } = await supabase.from("bisik_bot_chats")
+      .select("id").eq("user_id", user.id).eq("week_start", monday).maybeSingle()
+    if (existing) return { error: "Sudah ngobrol sama bot minggu ini" }
+
+    // Create chat
+    const { data: chat } = await supabase.from("bisik_chats").insert({
+      initiator_id: user.id,
+      receiver_id: card.user_id,
+      card_id: card.id,
+      status: "active",
+    }).select("id").single()
+
+    if (chat) {
+      await supabase.from("bisik_bot_chats").insert({
+        user_id: user.id, bot_id: card.user_id, chat_id: chat.id,
+        week_start: monday, status: "active",
+      })
+      return { error: null, botChatId: chat.id }
+    }
+  }
 
   return { error: null }
 }

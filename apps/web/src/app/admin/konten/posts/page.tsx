@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Trash2, Eye, EyeOff, FileText, Save, X, Send, Archive, Upload, CalendarClock, Clock, RotateCcw, Trash, User, GraduationCap, MessageSquare, Layers, AlertTriangle, Search, Sparkles, TrendingUp, Target, Users as UsersIcon, Lightbulb, Loader2, Star } from "lucide-react";
 import { Button, Badge } from "@beautifio/ui";
-import { RichTextEditor } from "@/features/editor/RichTextEditor";
+import { RichTextEditor } from "@/features/editor/RichTextEditor"
+import { KeywordInsightPanel } from "@/components/admin/KeywordInsightPanel";
 
 const CATEGORIES = [
   { id: "mind-body", label: "Mind & Body", icon: "heart" },
@@ -83,8 +84,10 @@ const ARCH_LABELS: Record<string, string> = { pilar: "Pilar", kluster: "Kluster"
 
 export default function InspirasiPostsPage() {
   const [posts, setPosts] = useState<any[]>([]);
+  const [totalPosts, setTotalPosts] = useState(0);
   const [seriesList, setSeriesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
@@ -115,10 +118,12 @@ export default function InspirasiPostsPage() {
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
   const [tagList, setTagList] = useState<string[]>([]);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (p = page) => {
     try {
-      const res = await fetch("/api/admin/konten/posts");
-      if (res.ok) { const { data } = await res.json(); setPosts(data || []); }
+      let url = `/api/admin/konten/posts?page=${p}&limit=10`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      const res = await fetch(url);
+      if (res.ok) { const { data, total } = await res.json(); setPosts(data || []); setTotalPosts(total || 0); }
     } catch (e) { console.error("Failed to load posts", e); } finally { setLoading(false); }
   };
 
@@ -155,6 +160,24 @@ export default function InspirasiPostsPage() {
   const addTagsToForm = (tags: string[]) => { setTagList(tags); setForm((prev: any) => ({ ...prev, tags })); };
 
   useEffect(() => { fetchPosts(); fetchSeries(); fetchInsight(); fetchTags(); }, []);
+
+  // Search → re-fetch with debounce (server-side)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(true);
+      setPage(1);
+      // fetchPosts(1) called by goToPage pattern — direct call
+      const url = search
+        ? `/api/admin/konten/posts?page=1&limit=10&search=${encodeURIComponent(search)}`
+        : `/api/admin/konten/posts?page=1&limit=10`;
+      fetch(url).then(res => res.json()).then(({ data, total }) => {
+        setPosts(data || []);
+        setTotalPosts(total || 0);
+        setLoading(false);
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const [trashPosts, setTrashPosts] = useState<any[]>([]);
 
@@ -361,14 +384,10 @@ export default function InspirasiPostsPage() {
   // --- Filtered posts ---
   const filteredPosts = useMemo(() => {
     let list = posts;
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(p => p.title?.toLowerCase().includes(q) || p.excerpt?.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q));
-    }
     if (filterCat) list = list.filter(p => p.category_id === filterCat);
     if (filterStatus) list = list.filter(p => postStatus(p) === filterStatus);
     return list;
-  }, [posts, search, filterCat, filterStatus]);
+  }, [posts, filterCat, filterStatus]);
 
   // --- Resume stats ---
   const statsResume = useMemo(() => {
@@ -386,22 +405,94 @@ export default function InspirasiPostsPage() {
     return { byCat, total, published, draft, scheduled };
   }, [posts]);
 
+  const MONTHLY_TARGET = 10;
+  const totalPages = Math.max(1, Math.ceil(totalPosts / 10));
+
+  const goToPage = (p: number) => {
+    const pg = Math.max(1, Math.min(p, totalPages));
+    setPage(pg);
+    setLoading(true);
+    let url = `/api/admin/konten/posts?page=${pg}&limit=10`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    fetch(url).then(res => res.json()).then(({ data, total }) => {
+      setPosts(data || []);
+      setTotalPosts(total || 0);
+      setLoading(false);
+    });
+  };
+
   const CatIcon = ({ id }: { id: string }) => {
     const icons: Record<string, string> = { heart: "\u2764", sparkles: "\u2728", "trending-up": "\uD83D\uDCC8", users: "\uD83D\uDC65", feather: "\u270F\uFE0F", monitor: "\uD83D\uDDA5\uFE0F", clapperboard: "\uD83C\uDFAC", utensils: "\uD83C\uDF7D\uFE0F", activity: "\uD83C\uDFC3", "shopping-bag": "\uD83D\uDECD\uFE0F", newspaper: "\uD83D\uDCF0", megaphone: "\uD83D\uDCE3", trophy: "\uD83C\uDFC6", star: "\u2B50" };
     return <span>{icons[id] || "\u2764"}</span>;
   };
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-2xl mx-auto px-4 pb-24 space-y-3">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-gray-900">Inspirasi Posts</h1>
         <div className="flex items-center gap-2">
-          {showTrash && <Button variant="ghost" size="sm" onClick={() => setShowTrash(false)} className="cursor-pointer">Kembali</Button>}
-          <Button variant={showTrash ? "accent" : "ghost"} size="sm" onClick={() => { setShowTrash(!showTrash); if (!showTrash) fetchTrash(); }} className="cursor-pointer"><Trash className="w-4 h-4" /> Sampah</Button>
-          {!showTrash && <Button variant="accent" size="sm" onClick={startNew} className="cursor-pointer"><Plus className="w-4 h-4" /> Tambah Post</Button>}
-          {!showTrash && <Button size="sm" onClick={() => setShowGenerate(true)} className="cursor-pointer" style={{ background: "#FFC64F", color: "#1E2938" }}><Sparkles className="w-4 h-4" /> Generate</Button>}
+          {showTrash && <Button variant="ghost" size="sm" onClick={() => setShowTrash(false)} className="cursor-pointer rounded-xl">Kembali</Button>}
+          <Button variant="ghost" size="sm" onClick={() => { setShowTrash(!showTrash); if (!showTrash) fetchTrash(); }} className="cursor-pointer rounded-xl"><Trash className="w-4 h-4" /> Sampah</Button>
+          {!showTrash && <Button variant="ghost" size="sm" onClick={startNew} className="cursor-pointer rounded-xl"><Plus className="w-4 h-4" /> Tambah Post</Button>}
+          {!showTrash && <Button variant="ghost" size="sm" onClick={() => setShowGenerate(true)} className="cursor-pointer rounded-xl"><Sparkles className="w-4 h-4" /> Generate</Button>}
         </div>
       </div>
+
+      {/* Stats Bar */}
+      {!showTrash && (
+        <div className="grid grid-cols-4 gap-3">
+          {[{ label: "Total", value: statsResume.total, color: "#084463" }, { label: "Published", value: statsResume.published, color: "#22C55E" }, { label: "Draft", value: statsResume.draft, color: "#647488" }, { label: "Terjadwal", value: statsResume.scheduled, color: "#FFC64F" }].map(s => (
+            <div key={s.label} className="bg-surface rounded-xl border border-border p-3 text-center">
+              <p className="text-2xl font-bold font-display" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-[10px] font-semibold tracking-wider uppercase text-text-secondary mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Category Table */}
+      {!showTrash && (
+        <div className="bg-surface rounded-xl border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-2 py-2 text-[10px] font-semibold tracking-wider uppercase text-text-secondary">Kategori</th>
+                <th className="text-center px-1 py-2 text-[10px] font-semibold tracking-wider uppercase text-text-secondary w-10">Total</th>
+                <th className="text-center px-1 py-2 text-[10px] font-semibold tracking-wider uppercase text-text-secondary w-10">Target</th>
+                <th className="text-left px-2 py-2 text-[10px] font-semibold tracking-wider uppercase text-text-secondary w-32">Pencapaian</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {CATEGORIES.map(c => {
+                const count = statsResume.byCat[c.id] || 0
+                const pct = Math.round((count / MONTHLY_TARGET) * 100)
+                const done = pct >= 100
+                return (
+                  <tr key={c.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-2 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs">{c.icon ? ({ heart: "❤️", sparkles: "✨", "trending-up": "📈", users: "👥", feather: "✏️", monitor: "🖥️", clapperboard: "🎬", utensils: "🍽️", activity: "🏃", "shopping-bag": "🛍️", newspaper: "📰", megaphone: "📣", trophy: "🏆", star: "⭐" }[c.icon] || "❤️") : "❤️"}</span>
+                        <span className="text-[11px] font-medium text-text-primary">{c.label}</span>
+                      </div>
+                    </td>
+                    <td className="text-center px-1 py-1.5 text-[11px] font-bold text-text-primary">{count}</td>
+                    <td className="text-center px-1 py-1.5 text-[11px] text-text-secondary">{MONTHLY_TARGET}</td>
+                    <td className="px-2 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: done ? "#22C55E" : pct >= 50 ? "#FFC64F" : "#6BB9D4" }} />
+                        </div>
+                        <span className={`text-[10px] font-semibold ${done ? "text-success" : "text-text-secondary"}`}>{pct}%</span>
+                      </div>
+                      <p className="text-[9px] text-text-secondary/50 mt-0.5">{done ? "✅ Tercapai!" : pct >= 80 ? "🔥 Dikit lagi!" : pct >= 50 ? "📈 Setengah jalan" : "💪 Ayo mulai!"}</p>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 rounded-xl bg-gray-100 animate-pulse" />)}</div>
@@ -435,85 +526,9 @@ export default function InspirasiPostsPage() {
         )
       ) : (
       <>
-      {/* Resume Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-        <div className="p-3 rounded-xl border bg-white border-gray-200 text-center" title="Total">
-          <p className="text-[10px] text-gray-400">Total</p>
-          <p className="text-lg font-bold text-gray-900">{statsResume.total}</p>
-        </div>
-        <div className="p-3 rounded-xl border bg-white border-gray-200 text-center" title="Published">
-          <p className="text-[10px] text-gray-400">Published</p>
-          <p className="text-lg font-bold text-green-600">{statsResume.published}</p>
-        </div>
-        <div className="p-3 rounded-xl border bg-white border-gray-200 text-center" title="Draft">
-          <p className="text-[10px] text-gray-400">Draft</p>
-          <p className="text-lg font-bold text-gray-500">{statsResume.draft}</p>
-        </div>
-        <div className="p-3 rounded-xl border bg-white border-gray-200 text-center" title="Scheduled">
-          <p className="text-[10px] text-gray-400">Terjadwal</p>
-          <p className="text-lg font-bold text-blue-500">{statsResume.scheduled}</p>
-        </div>
-        {CATEGORIES.map(c => (
-          <div key={c.id} className="p-3 rounded-xl border bg-white border-gray-200 text-center" title={c.label}>
-            <p className="text-[10px] text-gray-400 truncate">{c.label}</p>
-            <p className="text-lg font-bold text-gray-900">{statsResume.byCat[c.id] || 0}</p>
-          </div>
-        ))}
-      </div>
 
       {/* Insight Panel */}
-      {!insightLoading && insight && (insight.curhat || insight.journey || insight.circle || insight.aiArticle) && (
-        <div className="p-5 rounded-2xl border-2 bg-gradient-to-r" style={{ borderColor: "rgba(255,198,79,0.3)", background: "linear-gradient(135deg, rgba(255,198,79,0.04), rgba(8,68,99,0.02))" }}>
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles size={16} style={{ color: "#FFC64F" }} />
-            <h3 className="text-sm font-bold" style={{ color: "#1E2938" }}>🔥 Insight Hari Ini</h3>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {insight.curhat && (
-              <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <TrendingUp size={13} style={{ color: "#EF4444" }} />
-                  <span className="text-[10px] font-semibold" style={{ color: "#647488" }}>Curhat sedang ramai</span>
-                </div>
-                <p className="text-xs font-bold" style={{ color: "#1E2938" }}>{insight.curhat.title}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: "#647488" }}>{insight.curhat.users} pengguna</p>
-              </div>
-            )}
-            {insight.journey && (
-              <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Target size={13} style={{ color: "#FFC64F" }} />
-                  <span className="text-[10px] font-semibold" style={{ color: "#647488" }}>Journey sering gagal</span>
-                </div>
-                <p className="text-xs font-bold" style={{ color: "#1E2938" }}>{insight.journey.title}</p>
-              </div>
-            )}
-            {insight.circle && (
-              <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <UsersIcon size={13} style={{ color: "#6BB9D4" }} />
-                  <span className="text-[10px] font-semibold" style={{ color: "#647488" }}>Circle paling aktif</span>
-                </div>
-                <p className="text-xs font-bold" style={{ color: "#1E2938" }}>{insight.circle.name}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: "#647488" }}>{insight.circle.members} member baru</p>
-              </div>
-            )}
-            {insight.aiArticle && (
-              <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "#E2E8F0" }}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Lightbulb size={13} style={{ color: "#22C55E" }} />
-                  <span className="text-[10px] font-semibold" style={{ color: "#647488" }}>Artikel AI</span>
-                </div>
-                <p className="text-xs font-bold" style={{ color: "#1E2938" }}>{insight.aiArticle}</p>
-                <div className="flex items-center gap-1 mt-1 text-[10px]" style={{ color: "#FFC64F" }}>{"★".repeat(5)}</div>
-              </div>
-            )}
-          </div>
-          <button onClick={() => generateFromInsight(insight.aiArticle || insight.curhat?.title || "")} className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-opacity hover:opacity-90" style={{ background: "#084463", color: "#FFFFFF" }}>
-            <Sparkles size={13} style={{ color: "#FFC64F" }} /> Generate Artikel
-          </button>
-        </div>
-      )}
+      <KeywordInsightPanel localInsight={insight} />
 
       {/* Search + Filter */}
       <div className="flex items-center gap-2">
@@ -541,13 +556,12 @@ export default function InspirasiPostsPage() {
             const st = postStatus(p);
             const authorBadge = AUTHOR_TYPE_BADGE[p.author_type || "redaksi"];
             return (
-              <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                <div className="flex items-start justify-between gap-3">
+              <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-3">
+                <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[st] || "bg-gray-100 text-gray-700"}`}>{STATUS_LABELS[st] || st}</span>
                         {p.is_featured && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-400" /> Featured</span>}
-                      {p.is_featured && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-amber-400" /> Featured</span>}
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${authorBadge.color}`}>{authorBadge.label}</span>
                       <Badge variant="accent" className="text-[10px]">{p.category_label || p.category}</Badge>
                       {p.architecture && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-cyan-100 text-cyan-700">{ARCH_LABELS[p.architecture] || p.architecture}</span>}
@@ -608,7 +622,7 @@ export default function InspirasiPostsPage() {
               <h3 className="text-sm font-bold text-gray-900">{editId ? "Edit Post" : "Tambah Post"}</h3>
               <button onClick={() => setShowAdd(false)} className="cursor-pointer"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
-            <div className="space-y-4">
+    <div className="max-w-content mx-auto px-6 pb-24 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Title</label><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" /></div>
                 <div><label className="text-xs font-medium text-gray-600 block mb-1">Slug</label><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" placeholder="Auto-generated" /></div>
@@ -800,6 +814,23 @@ export default function InspirasiPostsPage() {
               <Button variant="accent" size="sm" className="flex-1 cursor-pointer" onClick={save} disabled={saving || !form.title || !form.content}><Save className="w-4 h-4" /> {saving ? "Menyimpan..." : "Simpan"}</Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!showTrash && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1.5 pt-2">
+          <button onClick={() => goToPage(page - 1)} disabled={page <= 1} className="w-8 h-8 rounded-lg border border-border text-xs font-medium disabled:opacity-30 hover:bg-muted transition-colors cursor-pointer">‹</button>
+          {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+            let pg: number
+            if (totalPages <= 10) pg = i + 1
+            else if (page <= 6) pg = i + 1
+            else if (page >= totalPages - 4) pg = totalPages - 9 + i
+            else pg = page - 5 + i
+            return <button key={pg} onClick={() => goToPage(pg)} className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors cursor-pointer ${pg === page ? "bg-primary text-white" : "border border-border hover:bg-muted"}`}>{pg}</button>
+          })}
+          <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages} className="w-8 h-8 rounded-lg border border-border text-xs font-medium disabled:opacity-30 hover:bg-muted transition-colors cursor-pointer">›</button>
+          <span className="text-[10px] text-text-secondary/50 ml-2">Hal {page} dari {totalPages}</span>
         </div>
       )}
 

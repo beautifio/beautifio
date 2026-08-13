@@ -1,0 +1,14 @@
+{
+  "name": "Beautifio",
+  "short_name": "Beautifio",
+  "description": "Masa depan dimulai hari ini — Temukan arah, tumbuh tiap hari.",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#084463",
+  "theme_color": "#084463",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/api/site/favicon", "sizes": "192x192", "type": "image/png" },
+    { "src": "/api/site/favicon", "sizes": "512x512", "type": "image/png" }
+  ]
+}

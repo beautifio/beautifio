@@ -51,37 +51,62 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
   const [isDragging, setIsDragging] = useState(false)
   const [isDismissing, setIsDismissing] = useState(false)
   const dragStart = useRef({ x: 0, y: 0 })
+  const rafRef = useRef<number>(0)
+  const dragTarget = useRef({ x: 0, y: 0 })
 
   const dragAngle = dragX * 0.05
 
   const handleStart = useCallback((clientX: number, clientY: number) => {
-    if (!isTop) return
+    if (!isTop || isDismissing) return
     dragStart.current = { x: clientX, y: clientY }
+    dragTarget.current = { x: 0, y: 0 }
     setIsDragging(true)
-  }, [isTop])
+  }, [isTop, isDismissing])
 
   const handleMove = useCallback((clientX: number, clientY: number) => {
     if (!isDragging) return
-    setDragX(clientX - dragStart.current.x)
-    setDragY(clientY - dragStart.current.y)
+    dragTarget.current = {
+      x: clientX - dragStart.current.x,
+      y: clientY - dragStart.current.y,
+    }
+    if (!rafRef.current) {
+      rafRef.current = requestAnimationFrame(() => {
+        setDragX(dragTarget.current.x)
+        setDragY(dragTarget.current.y)
+        rafRef.current = 0
+      })
+    }
   }, [isDragging])
+
+  const handleSwipeComplete = useCallback(() => {
+    setDragX(0); setDragY(0); setIsDismissing(false)
+  }, [])
 
   const handleEnd = useCallback(() => {
     if (!isDragging) return
     setIsDragging(false)
-    if (dragX > 100) {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0 }
+
+    const dx = dragTarget.current.x
+    if (dx > 100) {
       setIsDismissing(true)
-      setDragX(500)
-      setTimeout(() => { onSwipeRight() }, 300)
-    } else if (dragX < -100) {
+      onSwipeRight()
+      requestAnimationFrame(() => {
+        setDragX(window.innerWidth)
+        setDragY(0)
+      })
+    } else if (dx < -100) {
       setIsDismissing(true)
-      setDragX(-500)
-      setTimeout(() => { onSwipeLeft() }, 300)
+      onSwipeLeft()
+      requestAnimationFrame(() => {
+        setDragX(-window.innerWidth)
+        setDragY(0)
+      })
     } else {
       setDragX(0)
       setDragY(0)
     }
-  }, [isDragging, dragX, onSwipeLeft, onSwipeRight])
+  }, [isDragging, onSwipeLeft, onSwipeRight])
 
   useEffect(() => {
     const el = cardRef.current
@@ -121,32 +146,32 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
   const gradient = topicGradients[card.topic?.name ?? ""] ?? defaultGradient
 
   const isVisible = isTop || (!isTop && stackOffset >= 0)
-
   if (!isVisible) return null
 
   return (
     <div
       ref={cardRef}
+      onTransitionEnd={isDismissing ? handleSwipeComplete : undefined}
       style={{
         width: "100%",
-        maxWidth: 380,
-        height: 480,
-        borderRadius: 24,
+        maxWidth: 266,
+        height: 336,
+        borderRadius: 17,
         background: gradient,
         boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-        position: isDismissing ? "absolute" : "relative",
+        position: isTop ? "absolute" : "relative",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
-        padding: 24,
+        justifyContent: "flex-start",
+        padding: 16,
         cursor: isTop ? "grab" : "default",
         userSelect: "none",
         transform: isTop
-          ? `rotate(${dragAngle}deg) translateX(${dragX}px)`
+          ? `rotate(${dragAngle}deg) translateX(${dragX}px) translateY(${dragY}px)`
           : `scale(${stackScale}) translateY(${stackOffset}px)`,
-        transition: (isDragging || isDismissing) ? "none" : "transform 0.3s ease",
-        opacity: isTop ? 1 : stackScale,
+        transition: isDragging ? "none" : isDismissing ? "transform 0.4s ease-out, opacity 0.4s ease-out" : "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+        opacity: isTop ? 1 : isDismissing ? 0 : stackScale,
         zIndex: isTop ? 3 : (stackOffset > 0 ? 2 : 1),
         touchAction: "none",
         flexShrink: 0,
@@ -154,31 +179,23 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
     >
       {/* Decorative circles */}
       <div style={{
-        position: "absolute", top: -60, right: -60,
-        width: 200, height: 200,
-        borderRadius: "50%",
-        background: "rgba(255,255,255,0.06)",
-        pointerEvents: "none",
+        position: "absolute", top: -40, right: -40,
+        width: 140, height: 140, borderRadius: "50%",
+        background: "rgba(255,255,255,0.06)", pointerEvents: "none",
       }} />
       <div style={{
-        position: "absolute", bottom: 60, left: -40,
-        width: 150, height: 150,
-        borderRadius: "50%",
-        background: "rgba(255,255,255,0.04)",
-        pointerEvents: "none",
+        position: "absolute", bottom: 40, left: -30,
+        width: 100, height: 100, borderRadius: "50%",
+        background: "rgba(255,255,255,0.04)", pointerEvents: "none",
       }} />
 
       {/* Topic chip */}
       <div>
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 6,
-          background: "rgba(255,255,255,0.2)",
-          backdropFilter: "blur(8px)",
-          color: "#FFFFFF",
-          padding: "6px 14px",
-          borderRadius: 20,
-          fontSize: 13, fontWeight: 600,
-          fontFamily: "Inter",
+          background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)",
+          color: "#FFFFFF", padding: "5px 12px", borderRadius: 18,
+          fontSize: 12, fontWeight: 600, fontFamily: "Inter",
           border: "1px solid rgba(255,255,255,0.25)",
         }}>
           {card.topic?.emoji} {card.topic?.name}
@@ -186,15 +203,12 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", padding: "24px 0" }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "44px 4px 0" }}>
         <p style={{
-          fontFamily: "Poppins",
-          fontSize: 22,
-          fontWeight: 700,
-          color: "#FFFFFF",
-          lineHeight: 1.4,
-          textShadow: "0 2px 8px rgba(0,0,0,0.2)",
-          margin: 0,
+          fontFamily: "Poppins", fontSize: 16, fontWeight: 700,
+          color: "#FFFFFF", lineHeight: 1.5,
+          textShadow: "0 2px 8px rgba(0,0,0,0.2)", margin: 0,
+          textAlign: "center",
         }}>
           &ldquo;{card.content}&rdquo;
         </p>
@@ -203,20 +217,12 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
       {/* Footer */}
       <div style={{
         display: "flex", justifyContent: "space-between",
-        alignItems: "center",
-        borderTop: "1px solid rgba(255,255,255,0.15)",
-        paddingTop: 16,
+        alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.15)",
+        paddingTop: 12,
       }}>
-        <span style={{
-          color: "rgba(255,255,255,0.8)",
-          fontSize: 13, fontFamily: "Inter",
-        }}>
-          {card.owner_name || "Anonymous"}
+        <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontFamily: "Inter" }}>
         </span>
-        <span style={{
-          color: "rgba(255,255,255,0.6)",
-          fontSize: 12, fontFamily: "Inter",
-        }}>
+        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontFamily: "Inter" }}>
           {getTimeAgo(card.created_at)}
         </span>
       </div>
@@ -225,10 +231,8 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
       {isTop && dragX > 30 && (
         <div style={{
           position: "absolute", top: 24, left: 24,
-          background: "#22C55E",
-          color: "#FFFFFF",
-          padding: "8px 16px",
-          borderRadius: 12,
+          background: "#22C55E", color: "#FFFFFF",
+          padding: "8px 16px", borderRadius: 12,
           fontSize: 18, fontWeight: 800,
           transform: "rotate(-15deg)",
           border: "3px solid #FFFFFF",
@@ -243,10 +247,8 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
       {isTop && dragX < -30 && (
         <div style={{
           position: "absolute", top: 24, right: 24,
-          background: "#EF4444",
-          color: "#FFFFFF",
-          padding: "8px 16px",
-          borderRadius: 12,
+          background: "#EF4444", color: "#FFFFFF",
+          padding: "8px 16px", borderRadius: 12,
           fontSize: 18, fontWeight: 800,
           transform: "rotate(15deg)",
           border: "3px solid #FFFFFF",

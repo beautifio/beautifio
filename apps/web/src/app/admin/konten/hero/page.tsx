@@ -457,8 +457,8 @@ function LogoSection() {
       {/* Horizontal Logo */}
       <div className="p-4 rounded-xl border" style={{ borderColor: "#E2E8F0", background: "#FAFBFC" }}>
         <h4 className="text-xs font-bold text-gray-900 mb-1">📏 Logo Horizontal — Landing & Admin</h4>
-        <p className="text-[10px] text-gray-400 mb-3">Tampil di landing page & sidebar admin. Background transparan, warna terang, format landscape.</p>
-        <UploadWithPreview label="Logo Horizontal" currentUrl={horizUrl} maxSizeMb={2} hint="Landscape (PNG/SVG, warna terang)" onUploadSuccess={saveHoriz} />
+        <p className="text-[10px] text-gray-400 mb-3">Tampil di landing page & sidebar admin. Background transparan, warna terang, rasio 4:1.</p>
+        <UploadWithPreview label="Logo Horizontal" currentUrl={horizUrl} maxSizeMb={2} hint="4:1 (PNG/SVG, warna terang, min 800×200px)" onUploadSuccess={saveHoriz} />
       </div>
     </div>
   );

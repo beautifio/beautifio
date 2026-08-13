@@ -7,7 +7,7 @@ async function checkRole(supabase: Supabase) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
-  if (!admin || !["redaksi", "superadmin"].includes(admin.role)) return null;
+  if (!admin || !["redaksi", "superadmin", "admin"].includes(admin.role)) return null;
   return user;
 }
 
@@ -37,12 +37,16 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const includeTrash = request.nextUrl.searchParams.get("trash") === "1";
+    const search = request.nextUrl.searchParams.get("search")?.trim() || null;
+    const page = parseInt(request.nextUrl.searchParams.get("page") || "1");
+    const limit = Math.min(parseInt(request.nextUrl.searchParams.get("limit") || "10"), 50);
+    const offset = (page - 1) * limit;
 
     let query = supabase
       .from("articles")
-      .select("*")
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
-      .limit(100);
+      .range(offset, offset + limit - 1);
 
     if (!includeTrash) {
       query = query.is("deleted_at", null);
@@ -50,7 +54,11 @@ export async function GET(request: NextRequest) {
       query = query.not("deleted_at", "is", null);
     }
 
-    const { data, error } = await query;
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,excerpt.ilike.%${search}%`);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) throw error;
 
@@ -59,7 +67,7 @@ export async function GET(request: NextRequest) {
       category_label: a.category_id ? (CATEGORY_LABELS[a.category_id] || a.category) : a.category,
     }));
 
-    return NextResponse.json({ data: enriched });
+    return NextResponse.json({ data: enriched, total: count ?? 0 });
   } catch (error: any) {
     console.error("GET /api/admin/konten/posts:", error);
     return NextResponse.json({ error: error.message || "Internal error" }, { status: 500 });

@@ -38,15 +38,12 @@ export function ActivityRow({ activity }: { activity: IdentityData["activity"] }
 
   return (
     <div className="px-6">
-      <h3 className="text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: "#647488" }}>Aktivitas</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <h3 className="text-[10px] font-semibold mb-2 uppercase tracking-widest text-text-secondary">Aktivitas</h3>
+      <div className="grid grid-cols-3 gap-2">
         {items.map((item, i) => (
-          <Link key={i} href={item.href} className="flex items-center gap-2 p-3 rounded-xl border cursor-pointer hover:shadow-sm transition-all bg-white" style={{ borderColor: "#E2E8F0" }}>
-            <span className="text-lg flex-shrink-0">{item.icon}</span>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold" style={{ color: "#1E2938" }}>{item.value}</p>
-              {item.sub && <p className="text-[10px]" style={{ color: "#647488" }}>{item.sub}</p>}
-            </div>
+          <Link key={i} href={item.href} className="flex flex-col items-center gap-1 p-2.5 rounded-xl border border-border bg-surface cursor-pointer hover:shadow-sm hover:-translate-y-0.5 transition-all">
+            <span className="text-lg">{item.icon}</span>
+            <p className="text-[10px] font-bold text-text-primary text-center">{item.value}</p>
           </Link>
         ))}
       </div>

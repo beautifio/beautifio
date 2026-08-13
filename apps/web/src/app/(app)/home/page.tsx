@@ -229,7 +229,7 @@ export default function HomeScreen({
           </div>
           <span className="text-lg" style={{ color: "#FFC64F" }}>→</span>
         </button>
-        <ArticlePick journey={journey} />
+        <ArticlePick />
 
         {growthZone && (() => {
           const dimInfo = DIMENSION_LABELS[growthZone]

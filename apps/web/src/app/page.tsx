@@ -91,32 +91,22 @@ export default function LandingPage() {
         width: "100%",
       }}>
         {/* 1. LOGO — center, atas */}
+        {logoUrl && (
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt="Beautifio"
-              style={{
-                height: "auto",
-                maxWidth: 380,
-                maxHeight: 120,
-                objectFit: "contain",
-                background: "transparent",
-              }}
-            />
-          ) : (
-            <span style={{
-              fontFamily: "'Poppins', sans-serif",
-              fontSize: 36,
-              fontWeight: 800,
-              color: "#FFFFFF",
-              letterSpacing: "-0.5px",
-              textShadow: "0 2px 12px rgba(0,0,0,0.6)",
-            }}>
-              beautifio
-            </span>
-          )}
+            <a href="/">
+              <img
+                src={logoUrl}
+                alt="Beautifio"
+                style={{
+                  maxWidth: 380,
+                  aspectRatio: "4/1",
+                  objectFit: "contain",
+                  background: "transparent",
+                }}
+              />
+            </a>
         </div>
+        )}
 
         {/* 2. TEKS HEADLINE — langsung di bawah logo */}
         <div style={{ marginBottom: 16 }}>

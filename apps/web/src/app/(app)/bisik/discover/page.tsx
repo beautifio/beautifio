@@ -43,7 +43,7 @@ function BisikDiscoverWrapper() {
   useEffect(() => {
     if (isLoading) return
     if (!user) {
-      router.replace("/login")
+      router.replace("/")
       return
     }
     if (topicIds.length === 0) {

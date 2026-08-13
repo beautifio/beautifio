@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server"
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY || ""
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o"
+const GEMINI_KEY = process.env.GEMINI_API_KEY || ""
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-pro"
+
+const DEFAULT_PROVIDER = "openai"
 
 const SYSTEM_PROMPT = `# BEAUTIFIO AI CONTENT GENERATOR — SYSTEM PROMPT
 
@@ -92,6 +96,71 @@ JANGAN gunakan placeholder [INTERNAL LINK], [CTA], atau sejenisnya di body artik
 tag_audiens harus SATU nilai, bukan comma-separated (contoh: "mahasiswa", bukan "mahasiswa, fresh-graduate").
 HANYA balas JSON. Tidak ada teks lain.`
 
+async function callGemini(systemPrompt: string, userPrompt: string, model: string): Promise<string> {
+  if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not set")
+
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`
+
+  const body = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+    generationConfig: { maxOutputTokens: 3000, temperature: 0.8 },
+  }
+
+  const res = await fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+
+  const json = await res.json()
+  if (!res.ok) {
+    console.error("Gemini error:", json?.error?.message || json)
+    throw new Error(json?.error?.message || "Gemini API error")
+  }
+
+  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || ""
+  return text
+}
+
+async function callOpenAI(systemPrompt: string, userPrompt: string, model: string): Promise<string> {
+  if (!OPENAI_KEY) throw new Error("OPENAI_API_KEY not set")
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${OPENAI_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 3000,
+    }),
+  })
+
+  const json = await res.json()
+  if (!res.ok || !json?.choices?.[0]?.message?.content) {
+    throw new Error("OpenAI API error")
+  }
+
+  return json.choices[0].message.content
+}
+
+async function getAiConfig(supabase: any) {
+  const keys = ["ai_provider", "ai_model"]
+  const { data: rows } = await supabase.from("app_settings").select("key, value").in("key", keys)
+
+  const config: Record<string, string> = { ai_provider: DEFAULT_PROVIDER, ai_model: "" }
+  rows?.forEach((r: any) => { config[r.key] = r.value })
+
+  if (!config.ai_model) {
+    config.ai_model = config.ai_provider === "gemini" ? GEMINI_MODEL : OPENAI_MODEL
+  }
+
+  return config as { ai_provider: string; ai_model: string }
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -141,28 +210,20 @@ ${exampleText}
 
 Output HARUS JSON lengkap sesuai format. HANYA JSON.`
 
-    let result = ""
-
     const systemMsg = userBible ? SYSTEM_PROMPT + "\n\n## PANDUAN REDAKSI:\n" + userBible : SYSTEM_PROMPT
 
-    if (OPENAI_KEY) {
+    const aiConfig = await getAiConfig(supabase)
+    let result = ""
+
+    if (aiConfig.ai_provider === "gemini" && GEMINI_KEY) {
       try {
-        const res = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${OPENAI_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: OPENAI_MODEL,
-            messages: [
-              { role: "system", content: systemMsg },
-              { role: "user", content: prompt },
-            ],
-            max_tokens: 3000,
-          }),
-        })
-        const json = await res.json()
-        if (res.ok && json?.choices?.[0]?.message?.content) {
-          result = json.choices[0].message.content
-        }
+        result = await callGemini(systemMsg, prompt, aiConfig.ai_model)
+      } catch { /* fallback to OpenAI if Gemini fails */ }
+    }
+
+    if (!result && OPENAI_KEY) {
+      try {
+        result = await callOpenAI(systemMsg, prompt, aiConfig.ai_model === GEMINI_MODEL ? OPENAI_MODEL : aiConfig.ai_model)
       } catch { /* fallback */ }
     }
 

@@ -61,8 +61,10 @@ export default function UpgradePage() {
     });
     const json = await res.json();
     if (!res.ok) { alert(json.error || "Gagal"); setPayLoading(false); return; }
+    // Clear tier cache
+    sessionStorage.removeItem("bt_tier");
     if (json.payment_url) window.location.href = json.payment_url;
-    else router.push("/bisik");
+    else { alert("Langganan berhasil! Akunmu sudah di-upgrade."); router.push("/bisik"); }
   };
 
   const features = tier === "ultimate"

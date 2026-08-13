@@ -16,6 +16,7 @@ const PUBLIC_ROUTES = [
   "/auth/callback",
   "/trial-expired",
   "/laporkan",
+  "/api/cron",
 ];
 
 const ANONYMOUS_BLOCKED = [

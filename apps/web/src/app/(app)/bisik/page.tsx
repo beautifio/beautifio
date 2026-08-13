@@ -20,8 +20,8 @@ const hashColor = (name: string): string => {
   return colors[Math.abs(hash) % colors.length]
 }
 
-type View = "menu" | "create-card" | "card-waiting" | "find-chat"
-type Tab = "cards" | "chats" | "pending"
+type View = "menu" | "cards"
+type SubTab = "temukan" | "obrolan" | "buat"
 
 interface Topic {
   id: string
@@ -37,8 +37,9 @@ interface BisikChat {
   status: string
   created_at: string
   expires_at: string | null
-  last_message?: { content: string; created_at: string } | null
+  last_message?: { content: string; created_at: string; sender_id?: string } | null
   card?: { content: string; topic?: { name: string; emoji: string } | null } | null
+  has_unread?: boolean
 }
 
 export default function BisikHome() {
@@ -51,7 +52,13 @@ export default function BisikHome() {
   useEffect(() => { setMounted(true) }, [])
 
   const [view, setView] = useState<View>("menu")
-  const [tab, setTab] = useState<Tab>("cards")
+  const [subTab, setSubTab] = useState<SubTab>("temukan")
+
+  // Auto-load cards when entering Cards view
+  useEffect(() => {
+    if (view === "cards" && subTab === "temukan") loadSwipeCards(true)
+    if (view === "cards" && subTab === "obrolan") loadChats()
+  }, [view, subTab])
   const [loading, setLoading] = useState(true)
   const [bisikName, setBisikName] = useState("")
   const bisikNameRef = useRef(bisikName);
@@ -73,6 +80,7 @@ export default function BisikHome() {
   const [isMatching, setIsMatching] = useState(false)
   const [showLimitModal, setShowLimitModal] = useState(false)
   const [maxAllowed, setMaxAllowed] = useState(5)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   // Chats list state
   const [chats, setChats] = useState<BisikChat[]>([])
@@ -199,7 +207,7 @@ export default function BisikHome() {
         ? supabase.from("bisik_cards").select("id, content").in("id", cardIds)
         : Promise.resolve({ data: [] }),
       supabase.from("bisik_messages")
-        .select("chat_id, content, created_at")
+        .select("chat_id, content, created_at, sender_id, is_read")
         .in("chat_id", chatIds)
         .order("created_at", { ascending: false })
     ])
@@ -207,23 +215,33 @@ export default function BisikHome() {
     const cardMap: Record<string, any> = {}
     ;((cardRes as any)?.data ?? []).forEach((c: any) => { cardMap[c.id] = c })
 
-    const msgMap: Record<string, { content: string; created_at: string }> = {}
+    const msgMap: Record<string, { content: string; created_at: string; sender_id?: string; is_read?: boolean }> = {}
     ;((msgRes as any)?.data ?? []).forEach((m: any) => {
       if (!msgMap[m.chat_id]) msgMap[m.chat_id] = m
     })
 
-    setChats(chats.map((c: any) => ({
-      ...c,
-      card: c.card_id ? cardMap[c.card_id] || null : null,
-      last_message: msgMap[c.id] || null,
-    })))
+    const mapped = chats.map((c: any) => {
+      const msg = msgMap[c.id]
+      const isInitiator = c.initiator_id === user.id
+      const otherId = isInitiator ? c.receiver_id : c.initiator_id
+      const hasUnread = msg && msg.sender_id !== user.id && !msg.is_read
+      return {
+        ...c,
+        card: c.card_id ? cardMap[c.card_id] || null : null,
+        last_message: msg ? { content: msg.content, created_at: msg.created_at, sender_id: msg.sender_id } : null,
+        has_unread: hasUnread,
+      }
+    })
+
+    setChats(mapped)
+    setUnreadCount(mapped.filter(c => c.has_unread).length)
   }
 
-  // Load chats on mount and when view/tab changes
+  // Load chats on mount and when view/subTab changes
   useEffect(() => {
     if (!user || authLoading || !supabase) return
     loadChats()
-  }, [user, authLoading, view, tab])
+  }, [user, authLoading, view, subTab])
 
   // ---- CREATE CARD ----
 
@@ -252,7 +270,8 @@ export default function BisikHome() {
         setNewCardId(data.id)
         setCardTopic("")
         setCardContent("")
-        setView("card-waiting")
+        setView("cards")
+        setSubTab("obrolan")
         setActiveCards(prev => [...prev, {
           id: data.id,
           content: cardContent.trim(),
@@ -297,22 +316,26 @@ export default function BisikHome() {
 
   const handleSwipeLeft = async (card: BisikCardType) => {
     if (!user) return
-    await swipeLeft(card.id, card.user_id)
     setSwipeCards(prev => prev.filter(c => c.id !== card.id))
+    swipeLeft(card.id, card.user_id)
   }
 
   const handleSwipeRight = async (card: BisikCardType) => {
     if (!user) return
+    // Remove card immediately for instant transition
+    setSwipeCards(prev => prev.filter(c => c.id !== card.id))
+    // Fire server action in background
     setIsMatching(true)
     try {
       const result = await swipeRight(card)
+      setIsMatching(false)
       if (result.error === "CHAT_LIMIT_REACHED") {
         setMaxAllowed(result.maxAllowed ?? 5)
         setShowLimitModal(true)
-        return
+      } else if (result.botChatId) {
+        router.push(`/bisik/chat/${result.botChatId}`)
       }
-      setSwipeCards(prev => prev.filter(c => c.id !== card.id))
-    } finally {
+    } catch {
       setIsMatching(false)
     }
   }
@@ -373,87 +396,57 @@ export default function BisikHome() {
     </div>
   )
 
+  const renderCardsView = () => (
+    <div className="max-w-content mx-auto px-4 py-6">
+      <button onClick={() => setView("menu")} className="flex items-center gap-1 text-sm text-text-secondary mb-4 cursor-pointer">
+        <ArrowLeft size={16} /> Kembali
+      </button>
+
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={() => { setSubTab("temukan"); loadSwipeCards(true) }}
+          className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer ${subTab === "temukan" ? "bg-primary text-white" : "bg-muted text-text-secondary"}`}>
+          Temukan
+        </button>
+        <button onClick={() => { setSubTab("obrolan"); loadChats() }}
+          className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer ${subTab === "obrolan" ? "bg-primary text-white" : "bg-muted text-text-secondary"}`}>
+          Obrolan{unreadCount > 0 ? ` ${unreadCount}` : ""}
+        </button>
+        <button onClick={() => setSubTab("buat")}
+          className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer ${subTab === "buat" ? "bg-primary text-white" : "bg-muted text-text-secondary"}`}>
+          Buat
+        </button>
+      </div>
+
+      {subTab === "temukan" && renderSwipeDeck()}
+      {subTab === "obrolan" && renderChatList()}
+      {subTab === "buat" && renderCreateCard()}
+    </div>
+  )
+
   const renderMenu = () => (
     <div className="max-w-content mx-auto px-4 py-6 space-y-4">
       <p className="text-base font-semibold text-text-primary">Mau ngapain hari ini?</p>
 
       <button
-        onClick={() => setView("create-card")}
+        onClick={() => setView("cards")}
         className="w-full p-5 rounded-2xl bg-surface border border-border hover:shadow-card-hover hover:-translate-y-0.5 transition-all text-left cursor-pointer"
         style={{ borderLeft: '4px solid #084463' }}
       >
         <div className="flex items-center gap-3">
-          <span className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl">
-            💭
-          </span>
+          <span className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl">🎴</span>
           <div className="flex-1">
-            <p className="text-sm font-bold text-text-primary">Buat Kartu Curhat</p>
+            <p className="text-sm font-bold text-text-primary">Kartu Curhat</p>
             <p className="text-xs text-text-secondary mt-0.5">
-              Ceritakan yang kamu rasakan, tunggu sampai ada yang mau dengerin
+              Buat kartu, temukan teman, dan lanjutkan obrolan
             </p>
           </div>
-          <ChevronRight size={20} className="text-text-secondary/40" />
-        </div>
-      </button>
-
-      <button
-        onClick={async () => {
-          setView("find-chat")
-          await loadSwipeCards(true)
-        }}
-        className="w-full p-5 rounded-2xl bg-surface border border-border hover:shadow-card-hover hover:-translate-y-0.5 transition-all text-left cursor-pointer"
-        style={{ borderLeft: '4px solid #6BB9D4' }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-2xl">
-            🔍
-          </span>
-          <div className="flex-1">
-            <p className="text-sm font-bold text-text-primary">Cari Obrolan</p>
-            <p className="text-xs text-text-secondary mt-0.5">
-              Swipe kartu curhat orang lain, temukan yang pas buat kamu dengerin
-            </p>
-          </div>
-          <ChevronRight size={20} className="text-text-secondary/40" />
-        </div>
-      </button>
-
-      {chats.length > 0 && (
-        <div className="space-y-2 mt-3">
-          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">💬 Obrolan Aktif</p>
-          {chats.slice(0, 3).map((chat) => (
-            <button
-              key={chat.id}
-              onClick={() => router.push(`/bisik/chat/${chat.id}`)}
-              className="w-full flex items-start gap-3 p-3 rounded-xl bg-surface border border-border hover:border-primary/30 transition-all text-left cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <MessageCircle size={16} className="text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-text-primary truncate">
-                  {chat.card?.content?.slice(0, 40) || "Percakapan"}
-                </p>
-                {chat.last_message ? (
-                  <p className="text-[11px] text-text-secondary truncate mt-0.5">
-                    {chat.last_message.content.slice(0, 60)}
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-text-secondary/50 mt-0.5">Menunggu balasan...</p>
-                )}
-              </div>
-              <ChevronRight size={12} className="text-text-secondary shrink-0 mt-1" />
-            </button>
-          ))}
-          {chats.length > 3 && (
-            <button onClick={() => router.push("/bisik/chats")} className="w-full text-center text-xs font-medium py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors" style={{ color: "#6BB9D4" }}>
-              Lihat semua ({chats.length}) →
-            </button>
+          {unreadCount > 0 && (
+            <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">{unreadCount}</span>
           )}
+          <ChevronRight size={20} className="text-text-secondary/40" />
         </div>
-      )}
+      </button>
 
-      {/* Permainan */}
       <div className="pt-4 border-t border-border">
         <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Permainan</p>
         <button
@@ -461,14 +454,10 @@ export default function BisikHome() {
           className="w-full p-5 rounded-2xl bg-surface border border-border hover:border-primary/30 transition-all text-left cursor-pointer"
         >
           <div className="flex items-center gap-3 mb-2">
-            <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">
-              🎭
-            </span>
+            <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">🎭</span>
             <div>
               <p className="text-sm font-semibold text-text-primary">Tebak Aku</p>
-              <p className="text-xs text-text-secondary">
-                Main tebak kepribadian lawan
-              </p>
+              <p className="text-xs text-text-secondary">Main tebak kepribadian lawan</p>
             </div>
           </div>
         </button>
@@ -478,83 +467,80 @@ export default function BisikHome() {
 
   const renderCreateCard = () => (
     <div className="max-w-content mx-auto px-4 py-6">
-      <button
-        onClick={() => { setView("menu"); setError(null) }}
-        className="flex items-center gap-1 text-sm text-text-secondary mb-4 cursor-pointer"
-      >
-        <ArrowLeft size={16} /> Kembali
-      </button>
-
-      <h2 className="text-lg font-bold text-text-primary mb-1">Buat Kartu Curhat</h2>
-      <p className="text-sm text-text-secondary mb-6">
-        Kartu aktif: {activeCards.length}/{maxCards}
-      </p>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-text-primary">Buat Kartu Curhat</h2>
+        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+          {activeCards.length}/{maxCards} aktif
+        </span>
+      </div>
 
       {activeCards.length >= maxCards ? (
         <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-center">
           <Crown size={28} className="text-amber-500 mx-auto mb-2" />
-          <p className="text-sm font-medium text-amber-800 mb-1">
-            Kamu sudah punya {maxCards} kartu curhat aktif
-          </p>
-          <p className="text-xs text-amber-600 mb-4">
-            Hapus kartu lama atau upgrade ke Pro
-          </p>
+          <p className="text-sm font-medium text-amber-800 mb-1">Kartu curhat penuh</p>
+          <p className="text-xs text-amber-600 mb-4">Hapus kartu lama atau upgrade ke Pro</p>
           <div className="flex gap-3">
-            <button
-              onClick={() => setView("menu")}
-              className="flex-1 py-2.5 rounded-xl border border-amber-300 text-amber-700 text-sm font-medium cursor-pointer"
-            >
-              Lihat Kartu Aktifku
-            </button>
-            <button
-              onClick={() => router.push("/bisik/upgrade")}
-              className="flex-1 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-medium cursor-pointer"
-            >
-              Upgrade ke Pro
-            </button>
+            <button onClick={() => setSubTab("obrolan")} className="flex-1 py-2.5 rounded-xl border border-amber-300 text-amber-700 text-sm font-medium cursor-pointer">Lihat Chat Aktif</button>
+            <button onClick={() => router.push("/bisik/upgrade")} className="flex-1 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-medium cursor-pointer">Upgrade ke Pro</button>
           </div>
         </div>
       ) : (
         <>
-          <div className="mb-4">
-            <p className="text-xs font-medium text-primary mb-2">TOPIK</p>
-            <select
-              value={cardTopic}
-              onChange={(e) => setCardTopic(e.target.value)}
-              className="w-full rounded-xl border border-border bg-bg px-4 py-3 text-sm text-text-primary outline-none"
-            >
-              <option value="">Pilih topik</option>
+          {/* Topic selector — chips */}
+          <div className="mb-5">
+            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Pilih Topik</p>
+            <div className="flex flex-wrap gap-2">
               {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.emoji} {t.name}
-                </option>
+                <button
+                  key={t.id}
+                  onClick={() => setCardTopic(cardTopic === t.id ? "" : t.id)}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium border-2 transition-all cursor-pointer ${
+                    cardTopic === t.id
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-surface text-text-secondary hover:border-primary/30"
+                  }`}
+                >
+                  <span className="text-base">{t.emoji}</span> {t.name}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
-          <div className="mb-4">
-            <p className="text-xs font-medium text-primary mb-2">CERITA</p>
-            <textarea
-              value={cardContent}
-              onChange={(e) => setCardContent(e.target.value)}
-              placeholder="Tulis singkat apa yang mau kamu obrolkan... (10-300 karakter)"
-              maxLength={300}
-              className="w-full rounded-xl border border-border bg-bg px-4 py-3 text-sm text-text-primary placeholder:text-text-secondary/50 outline-none resize-none h-24"
-            />
-            <p className="text-right text-xs text-text-secondary mt-1">{cardContent.length}/300</p>
+          {/* Textarea — card style */}
+          <div className="mb-5">
+            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Cerita Kamu</p>
+            <div className="relative rounded-2xl border-2 border-border bg-surface p-4 focus-within:border-primary transition-colors">
+              <textarea
+                value={cardContent}
+                onChange={(e) => setCardContent(e.target.value)}
+                placeholder="Tulis singkat apa yang mau kamu obrolkan... (10-300 karakter)"
+                maxLength={300}
+                rows={4}
+                className="w-full bg-transparent text-sm text-text-primary placeholder:text-text-secondary/40 outline-none resize-none font-sans leading-relaxed"
+              />
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+                <span className="text-[10px] text-text-secondary/50">
+                  {cardContent.length < 10 ? `Minimal 10 karakter (${cardContent.length}/10)` : ""}
+                </span>
+                <span className={`text-[10px] font-medium ${cardContent.length >= 290 ? "text-amber-500" : "text-text-secondary/50"}`}>
+                  {cardContent.length}/300
+                </span>
+              </div>
+            </div>
           </div>
 
+          {/* Buttons */}
           <div className="flex gap-3">
             <button
-              onClick={() => { setView("menu"); setError(null) }}
-              className="flex-1 py-3 rounded-xl border border-border text-text-primary text-sm font-medium cursor-pointer"
+              onClick={() => { setCardTopic(""); setCardContent(""); setError(null) }}
+              className="flex-1 py-3 rounded-xl border border-border text-text-primary text-sm font-medium cursor-pointer hover:bg-muted transition-colors"
             >
-              Batalkan
+              Reset
             </button>
             <button
               onClick={handleCreateCard}
               disabled={!cardTopic || cardContent.trim().length < 10 || cardSubmitting}
-              className="flex-[2] py-3 rounded-xl bg-primary text-white font-medium text-sm disabled:opacity-40 cursor-pointer"
+              className="flex-[2] py-3 rounded-xl bg-primary text-white font-semibold text-sm disabled:opacity-40 cursor-pointer hover:bg-primary/90 transition-colors"
             >
               {cardSubmitting ? "Memproses..." : "Posting Kartu"}
             </button>
@@ -590,7 +576,7 @@ export default function BisikHome() {
       <div className="space-y-3">
         <button
           onClick={async () => {
-            setView("find-chat")
+            setSubTab("temukan")
             await loadSwipeCards(true)
           }}
           className="w-full py-3 rounded-xl bg-primary text-white text-sm font-medium cursor-pointer"
@@ -625,38 +611,11 @@ export default function BisikHome() {
     }
 
     return (
-      <div className="max-w-content mx-auto px-4 py-6">
-        <button
-          onClick={() => setView("menu")}
-          className="flex items-center gap-1 text-sm text-text-secondary mb-4 cursor-pointer"
-        >
-          <ArrowLeft size={16} /> Kembali
-        </button>
+      <>
 
-        <div className="flex items-center gap-2 mb-4">
-          <button
-            onClick={() => setTab("cards")}
-            className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-              tab === "cards" ? "bg-primary text-white" : "bg-muted text-text-secondary"
-            }`}
-          >
-            Temukan
-          </button>
-          <button
-            onClick={() => setTab("chats")}
-            className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-              tab === "chats" ? "bg-primary text-white" : "bg-muted text-text-secondary"
-            }`}
-          >
-            Obrolan ({chats.length})
-          </button>
-        </div>
-
-        {tab === "cards" && (
-          <>
-            {swipeCards.length === 0 ? (
+        {swipeCards.length === 0 ? (
               <div style={{
-                height: 480, display: "flex",
+                height: 356, display: "flex",
                 flexDirection: "column",
                 alignItems: "center", justifyContent: "center",
                 textAlign: "center", padding: 24,
@@ -676,7 +635,7 @@ export default function BisikHome() {
                   Coba lagi nanti atau buat kartumu sendiri!
                 </p>
                 <button
-                  onClick={() => setView("create-card")}
+                  onClick={() => setSubTab("buat")}
                   style={{
                     background: "#084463", color: "#FFFFFF",
                     border: "none", borderRadius: 12,
@@ -696,12 +655,12 @@ export default function BisikHome() {
               </div>
             ) : (
               <>
-                <div className="flex flex-col items-center" style={{ minHeight: 520 }}>
+                <div className="flex flex-col items-center" style={{ minHeight: 400 }}>
                   {/* Deck container */}
                   <div style={{
                     position: "relative",
-                    width: "100%", maxWidth: 380,
-                    height: 480,
+                    width: "100%", maxWidth: 280,
+                    height: 356,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -725,9 +684,10 @@ export default function BisikHome() {
                       return (
                         <div key={card.id} style={{
                           position: "absolute",
-                          width: "100%", maxWidth: 380,
-                          height: 480,
+                          width: "100%", maxWidth: 280,
+                          height: 356,
                           transform: `scale(${stackScale}) translateY(${stackOffset}px)`,
+                          transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease",
                           zIndex: 3 - index,
                           opacity: stackScale,
                         }}>
@@ -744,24 +704,35 @@ export default function BisikHome() {
                     })}
                   </div>
 
-                  {/* Action buttons */}
+                  </div>
+
+                  {/* Action buttons — fixed above navbar */}
                   <div style={{
+                    position: "fixed",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
                     display: "flex",
+                    flexDirection: "column",
                     justifyContent: "center",
                     alignItems: "center",
-                    gap: 32,
-                    marginTop: 32,
+                    gap: 8,
+                    padding: "16px 0 max(80px, calc(64px + env(safe-area-inset-bottom)))",
+                    background: "linear-gradient(transparent 0%, #F8FAFC 40%)",
+                    zIndex: 40,
+                    pointerEvents: "none",
                   }}>
+                    <div style={{ display: "flex", gap: 32, pointerEvents: "auto" }}>
                     <button
                       onClick={() => swipeCards[0] && handleSwipeLeft(swipeCards[0])}
                       style={{
-                        width: 64, height: 64,
+                        width: 56, height: 56,
                         borderRadius: "50%",
                         background: "#FFFFFF",
                         border: "2px solid #E2E8F0",
                         boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        cursor: "pointer", fontSize: 24,
+                        cursor: "pointer", fontSize: 22,
                         transition: "all 0.2s ease",
                       }}
                       onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(239,68,68,0.3)"}
@@ -773,7 +744,7 @@ export default function BisikHome() {
                       onClick={() => swipeCards[0] && handleSwipeRight(swipeCards[0])}
                       disabled={isMatching}
                       style={{
-                        width: 80, height: 80,
+                        width: 68, height: 68,
                         borderRadius: "50%",
                         background: "linear-gradient(135deg, #084463, #0E7490)",
                         border: "none",
@@ -799,11 +770,8 @@ export default function BisikHome() {
                 </div>
               </>
             )}
-          </>
-        )}
+      </>
 
-        {tab === "chats" && renderChatList()}
-      </div>
     )
   }
 
@@ -826,8 +794,11 @@ export default function BisikHome() {
             onClick={() => { router.push(`/bisik/chat/${chat.id}`) }}
             className="w-full flex items-start gap-3 p-4 rounded-xl bg-surface border border-border hover:border-primary/30 transition-all text-left cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 relative">
               <MessageCircle size={18} className="text-primary" />
+              {chat.has_unread && (
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary border-2 border-surface" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text-primary truncate">
@@ -868,9 +839,7 @@ export default function BisikHome() {
       )}
 
       {view === "menu" && renderMenu()}
-      {view === "create-card" && renderCreateCard()}
-      {view === "card-waiting" && renderCardWaiting()}
-      {view === "find-chat" && renderSwipeDeck()}
+      {view === "cards" && renderCardsView()}
 
       {/* Limit modal */}
       {showLimitModal && (

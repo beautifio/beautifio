@@ -3,6 +3,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
+interface Volunteer {
+  id: string; name: string; is_online: boolean;
+  user_id: string; max_sessions: number;
+  active_chats?: number;
+}
+
 interface CareSchedule {
   id: string; category: string; is_online: boolean;
   next_available: string | null; message: string | null;
@@ -28,11 +34,13 @@ const categoryEmoji: Record<string,string> = {
 };
 
 export default function AdminCarePage() {
-  const [activeTab, setActiveTab] = useState<'status'|'sessions'|'categories'>('status');
+  const [activeTab, setActiveTab] = useState<'status'|'sessions'|'categories'|'volunteers'>('status');
   const [schedules, setSchedules] = useState<CareSchedule[]>([]);
   const [sessions, setSessions] = useState<CareSession[]>([]);
   const [categories, setCategories] = useState<CareCategory[]>([]);
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
+  const [volLoading, setVolLoading] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -48,7 +56,36 @@ export default function AdminCarePage() {
     supabase.from('care_categories')
       .select('*').order('display_order')
       .then(({ data }) => setCategories(data ?? []));
+    fetchVolunteers();
   }, []);
+
+  async function fetchVolunteers() {
+    setVolLoading(true);
+    const supabase = createClient();
+    if (!supabase) { setVolLoading(false); return }
+
+    const { data: vols } = await supabase.from('care_officers')
+      .select('id, name, is_online, user_id, max_sessions');
+    if (!vols) { setVolLoading(false); return }
+
+    // Get active chat count per volunteer
+    const enriched = await Promise.all(vols.map(async v => {
+      const { count } = await supabase.from('care_chat_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('officer_id', v.user_id).eq('status', 'active');
+      return { ...v, active_chats: count || 0 };
+    }));
+    setVolunteers(enriched);
+    setVolLoading(false);
+  }
+
+  async function toggleVolunteerOnline(vol: Volunteer) {
+    setSaving(vol.id);
+    const supabase = createClient();
+    await supabase?.from('care_officers').update({ is_online: !vol.is_online }).eq('id', vol.id);
+    setVolunteers(prev => prev.map(v => v.id === vol.id ? { ...v, is_online: !v.is_online } : v));
+    setSaving(null);
+  }
 
   async function toggleOnline(schedule: CareSchedule) {
     setSaving(schedule.id);
@@ -90,6 +127,7 @@ export default function AdminCarePage() {
 
   const tabs = [
     { key: 'status' as const, label: 'Status Petugas' },
+    { key: 'volunteers' as const, label: `Relawan (${volunteers.filter(v => v.is_online).length} online)` },
     { key: 'sessions' as const, label: `Sesi Chat (${sessions.length})` },
     { key: 'categories' as const, label: 'Kategori' },
   ];
@@ -336,6 +374,52 @@ export default function AdminCarePage() {
       )}
 
       {/* KATEGORI */}
+      {activeTab === 'volunteers' && (
+        <div>
+          {volLoading ? (
+            <p className="text-sm text-gray-500">Memuat...</p>
+          ) : volunteers.length === 0 ? (
+            <p className="text-sm text-gray-500">Belum ada volunteer. Volunteer didaftarkan melalui Mitra → Approve.</p>
+          ) : (
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 text-xs font-semibold text-gray-500">Nama</th>
+                  <th className="text-center py-2 text-xs font-semibold text-gray-500">Status</th>
+                  <th className="text-center py-2 text-xs font-semibold text-gray-500">Chat Aktif</th>
+                  <th className="text-center py-2 text-xs font-semibold text-gray-500">Maks</th>
+                  <th className="text-right py-2 text-xs font-semibold text-gray-500">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {volunteers.map(v => (
+                  <tr key={v.id}>
+                    <td className="py-2 font-medium text-gray-900">{v.name}</td>
+                    <td className="text-center py-2">
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${v.is_online ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${v.is_online ? 'bg-green-500' : 'bg-gray-400'}`} />
+                        {v.is_online ? 'Online' : 'Offline'}
+                      </span>
+                    </td>
+                    <td className="text-center py-2 text-gray-700">{v.active_chats}</td>
+                    <td className="text-center py-2 text-gray-400">{v.max_sessions}</td>
+                    <td className="text-right py-2">
+                      <button
+                        onClick={() => toggleVolunteerOnline(v)}
+                        disabled={saving === v.id}
+                        className={`text-xs font-medium px-3 py-1 rounded-lg cursor-pointer transition-colors ${v.is_online ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                      >
+                        {saving === v.id ? '...' : v.is_online ? 'Force Offline' : 'Force Online'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
       {activeTab === 'categories' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {categories.map(cat => (

@@ -18,7 +18,9 @@ import {
   botPlayTurn,
   replaceDisconnectedWithBot,
   updateUserHeartbeat,
+  checkOpponentDisconnected,
 } from "@/lib/tebak/actions"
+import { getOpponentInfo, getPlayerName } from "@/lib/tebak/bot"
 import { useSound } from "@/lib/tebak/use-sound"
 import { Timer } from "./Timer"
 import { DigitalClock } from "./DigitalClock"
@@ -150,6 +152,15 @@ export function GameRoom({ sessionId, session: initialSession, userId }: Props) 
     })
     const discDom = Object.entries(discCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '?'
     const commDom = Object.entries(commCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '?'
+    console.log('[DISC-PROFILE]', {
+      playerId,
+      totalAnswers: answers.length,
+      discQuestions: questions.filter(q => roundTypeRef.current[q.round_id] === 'disc').length,
+      discCounts: { ...discCounts },
+      commCounts: { ...commCounts },
+      discDominant: discDom,
+      answersForPlayer: answers.filter(a => a.guesser_id === playerId).length,
+    })
     return { discCounts, commCounts, discDominant: discDom, commDominant: commDom }
   }
   const myDiscProfile = computeProfile(userId)
@@ -233,8 +244,8 @@ ${advice}`
         const roundIds = roundsData.map(r => r.id)
         const { data: qData } = await supabase.from("tebak_questions").select("*").in("round_id", roundIds).order("sequence_number")
         if (qData) {
-          setQuestions(qData as TebakQuestion[])
           const { data: aData } = await supabase.from('tebak_answers').select('*').in('question_id', qData.map(q => q.id))
+          setQuestions(qData as TebakQuestion[])
           if (aData) setAnswers(aData as TebakAnswer[])
         }
       }
@@ -244,6 +255,13 @@ ${advice}`
   useEffect(() => {
     setHasMounted(true)
     syncFullState()
+
+    // Fetch player names + bot check
+    getPlayerName(userId).then(setMyName)
+    getOpponentInfo(opponentId).then(info => {
+      setOpponentIsBot(info.isBot)
+      setOpponentName(info.displayName)
+    })
   }, [syncFullState])
 
   // Sync roundOfRef saat current_round berubah (round baru dibuat RPC → roundOfRef basi)
@@ -285,15 +303,15 @@ ${advice}`
         if (qErr) throw qErr
 
         if (qData) {
-          setQuestions(prev => {
-            const existing = new Set(prev.map(p => p.id))
-            return [...prev, ...(qData as TebakQuestion[]).filter(q => !existing.has(q.id))]
-          })
           const { data: aData, error: aErr } = await sb
             .from('tebak_answers')
             .select('*')
             .in('question_id', qData.map(q => q.id))
           if (aErr) throw aErr
+          setQuestions(prev => {
+            const existing = new Set(prev.map(p => p.id))
+            return [...prev, ...(qData as TebakQuestion[]).filter(q => !existing.has(q.id))]
+          })
           if (aData) {
             setAnswers(prev => {
               const existing = new Set(prev.map(p => p.id))
@@ -345,10 +363,17 @@ ${advice}`
   // MatchIntro auto-dismiss: kedua siap ATAU countdown 20s habis
   useEffect(() => {
     if (showIntro && bothReady) {
-      resetReadyFlags(sessionId)
-      setShowIntro(false)
+      setTimeout(() => setShowIntro(false), 500)
+      setTimeout(resetReadyFlags, 500, sessionId)
     }
   }, [showIntro, bothReady, sessionId])
+
+  // Auto-ready when opponent is a bot
+  useEffect(() => {
+    if (showIntro && opponentIsBot) {
+      signalMatchIntroReady(sessionId)
+    }
+  }, [showIntro, opponentIsBot, sessionId])
 
   useEffect(() => {
     if (!showIntro) return
@@ -419,7 +444,7 @@ ${advice}`
   }, [currentQ, sessionId, showIntro, showPanduan])
   
   useEffect(() => {
-    if (!opponentIsBot || !currentQ || botThinking || !supabase) return
+    if (!currentQ || botThinking || !supabase) return
     const isBotTurn = isDiscRound
       ? currentQ.status === "both_answering"
       : (gameSession.current_subject === (isPlayerA ? "b" : "a") && currentQ.status === "subject_answering") || (gameSession.current_subject !== (isPlayerA ? "b" : "a") && currentQ.status === "guesser_guessing")
@@ -432,8 +457,18 @@ ${advice}`
         setTimeout(() => setBotChatMessage(null), 3000)
       }
     }).catch(() => {}).finally(() => setBotThinking(false))
-  }, [opponentIsBot, currentQ, botThinking, sessionId, opponentId, isPlayerA, gameSession.current_subject])
-  
+  }, [currentQ, botThinking, sessionId, opponentId, isPlayerA, gameSession.current_subject])
+
+  // Safety net: kalau botThinking > 12 detik → reset supaya bisa retry
+  useEffect(() => {
+    if (!botThinking || !currentQ) return
+    const safety = setTimeout(() => {
+      setBotThinking(false)
+      botPlayedRef.current.delete(currentQ.id)
+    }, 12000)
+    return () => clearTimeout(safety)
+  }, [botThinking, currentQ])
+
   // --- Handlers ---
   const handleSubjectAnswer = async (answer: string) => {
     if (!currentQ || submitting) return
@@ -503,11 +538,11 @@ ${advice}`
         const roundIds = roundsData.map(r => r.id)
         const { data: qData } = await supabase.from('tebak_questions').select('*').in('round_id', roundIds).order('sequence_number')
         if (qData) {
+          const { data: aData } = await supabase.from('tebak_answers').select('*').in('question_id', qData.map(q => q.id))
           setQuestions(prev => {
             const existing = new Set(prev.map(p => p.id))
             return [...prev, ...(qData as TebakQuestion[]).filter(q => !existing.has(q.id))]
           })
-          const { data: aData } = await supabase.from('tebak_answers').select('*').in('question_id', qData.map(q => q.id))
           if (aData) {
             setAnswers(prev => {
               const existing = new Set(prev.map(p => p.id))
@@ -617,6 +652,37 @@ ${advice}`
     return () => clearInterval(interval)
   }, [sessionId])
 
+  // Heartbeat — update last_active_at every 30s agar lawan tahu kita masih online
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updateUserHeartbeat(userId)
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [userId])
+
+  // Disconnect detection — ganti lawan manusia yang disconnect dengan bot
+  const opponentReplacedRef = useRef(false)
+  useEffect(() => {
+    if (opponentIsBot || opponentReplacedRef.current) return
+    const interval = setInterval(() => {
+      if (opponentReplacedRef.current) return
+      const gs = gameSessionRef.current
+      if (gs.status === 'finished' || gs.status === 'waiting') return
+      checkOpponentDisconnected(sessionId, opponentId).then(isDisconnected => {
+        if (isDisconnected && !opponentReplacedRef.current) {
+          opponentReplacedRef.current = true
+          replaceDisconnectedWithBot(sessionId, opponentId).then(() => {
+            reconcileGameState()
+            setOpponentIsBot(true)
+          }).catch(() => {
+            opponentReplacedRef.current = false
+          })
+        }
+      }).catch(() => {})
+    }, 15000)
+    return () => clearInterval(interval)
+  }, [opponentIsBot, sessionId, opponentId, reconcileGameState])
+
   // --- UI Computations ---
   const myDots = questions.map(q => {
     if (roundTypeRef.current[q.round_id] === 'disc') {
@@ -676,7 +742,7 @@ ${advice}`
                     {roleLabel && <div className="flex items-center justify-center gap-1.5 text-lg font-bold text-accent"><span>{roleLabel.icon}</span><span>{roleLabel.text}</span></div>}
                   </div>
                   <h2 className="text-2xl font-bold text-primary-foreground text-center mb-6 leading-relaxed">{questionText}</h2>
-                  <div className="text-center mb-3">
+                  <div className="text-center mb-2">
                     {isMyTurn ? (
                       <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-semibold">Pilih jawabanmu</span>
                     ) : opponentIsBot && botThinking ? (

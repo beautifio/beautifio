@@ -35,28 +35,19 @@ export default function VoucherPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [merchRes, sessionRes] = await Promise.all([
+        const [merchRes, sessionRes, achRes] = await Promise.all([
           fetch("/api/familia/merchants"),
           fetch("/api/familia/vouchers/active"),
+          fetch("/api/familia/achievements/progress"),
         ]);
         if (merchRes.ok) {
           const { data } = await merchRes.json();
           setMerchants(data || []);
-          // Track views: all merchants seen on first load
-          (data || []).forEach((m: any) => {
-            fetch("/api/familia/vouchers/track", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ merchant_id: m.id, event: "view" }),
-            }).catch(() => {});
-          });
         }
         if (sessionRes.ok) {
           const { data } = await sessionRes.json();
           setActiveSessions(data || []);
         }
-
-        const achRes = await fetch("/api/familia/achievements/progress");
         if (achRes.ok) {
           const { data } = await achRes.json();
           setAchievementCount((data || []).filter((a: any) => a.is_completed).length);

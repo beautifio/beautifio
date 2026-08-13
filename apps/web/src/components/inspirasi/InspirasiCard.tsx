@@ -21,6 +21,18 @@ const CATEGORY_ICONS: Record<string, typeof Heart> = {
   "tech-gaming": Monitor,
 }
 
+function formatRelativeTime(iso?: string): string {
+  if (!iso) return ""
+  const d = new Date(iso)
+  const diff = Date.now() - d.getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return "Baru saja"
+  if (mins < 60) return `${mins} menit yang lalu`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} jam yang lalu`
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+}
+
 export default function InspirasiCard({ item }: InspirasiCardProps) {
   const router = useRouter()
 
@@ -56,9 +68,9 @@ export default function InspirasiCard({ item }: InspirasiCardProps) {
             <BookOpen className="w-6 h-6 text-gray-300" />
           </div>
         )}
-        {item.architecture && (
-          <span className="absolute top-1 left-1 text-[8px] font-bold bg-black/60 text-white px-1 py-0.5 rounded">
-            {ARCH_LABELS[item.architecture]}
+        {(item as any).is_featured && (
+          <span className="absolute top-1.5 right-1.5 text-[10px] w-5 h-5 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
+            ⭐
           </span>
         )}
       </div>
@@ -91,7 +103,7 @@ export default function InspirasiCard({ item }: InspirasiCardProps) {
             {initials}
           </div>
           <span className="text-[11px] text-gray-500 truncate">{item.author}</span>
-          {item.published_at && <span className="text-[10px] text-gray-400">· {new Date(item.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>}
+          {item.published_at && <span className="text-[10px] text-gray-400">· {formatRelativeTime(item.published_at)}</span>}
         </div>
       </div>
     </div>

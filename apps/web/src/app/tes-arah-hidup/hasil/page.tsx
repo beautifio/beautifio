@@ -7,10 +7,28 @@ import { useAuth } from "@/hooks/use-auth"
 import { supabase } from "@/lib/supabase/client"
 
 const DIM_LABELS: Record<string, string> = {
-  O: "Keterbukaan", C: "Ketelitian", E: "Ekstraversi", A: "Altruisme", N: "Neurotisme",
+  O: "Keterbukaan", C: "Ketelitian", E: "Ekstraversi", A: "Keramahan", N: "Neurotisme",
   R: "Realistic", I: "Investigative", A2: "Artistic", S: "Social", E2: "Enterprising", C2: "Conventional",
   SD: "Kemandirian", PO: "Pengaruh", UN: "Universal", AC: "Prestasi", SE: "Keamanan",
   ST: "Stimulasi", CO: "Kesesuaian", TR: "Tradisi", BE: "Kepedulian", HE: "Kenikmatan",
+}
+
+// Runtime mapping for old data (A→A2, E→E2, C→C2 only for interest module)
+function mapDimKey(dim: string, module: string): string {
+  if (module === 'interest') {
+    const map: Record<string, string> = { A: 'A2', E: 'E2', C: 'C2' }
+    return map[dim] || dim
+  }
+  return dim
+}
+
+const HOLLAND_MEANING: Record<string, string> = {
+  R: 'Realistic — praktis, teknis, suka kerja fisik',
+  I: 'Investigative — analitis, ilmiah, suka riset',
+  A: 'Artistic — kreatif, ekspresif, suka seni',
+  S: 'Social — suka membantu, mengajar, peduli',
+  E: 'Enterprising — memimpin, meyakinkan, bisnis',
+  C: 'Conventional — terstruktur, teliti, administratif',
 }
 
 const DIM_EMOJI: Record<string, string> = {
@@ -37,6 +55,13 @@ const DIM_DESC: Record<string, Record<string, string>> = {
   TR: { high: "Kamu menghargai tradisi, budaya, dan agama. Kamu menghormati kebijaksanaan leluhur dan menjaga warisan yang sudah ada.", low: "Kamu lebih terbuka pada perubahan dan modernitas. Tradisi bukan faktor utama dalam keputusan hidupmu." },
   BE: { high: "Kamu sangat peduli pada orang terdekat dan selalu ingin membantu. Kesetiaan, empati, dan tanggung jawab sosial adalah inti dirimu.", low: "Kamu menghargai batasan personal dan tidak mudah terbawa oleh kebutuhan orang lain. Kamu menjaga keseimbangan antara peduli dan menjaga diri." },
   HE: { high: "Kamu menikmati kesenangan hidup, momen bahagia, dan kepuasan pribadi. Kamu tahu cara menikmati hidup.", low: "Kamu lebih fokus pada tujuan jangka panjang dan bersedia menunda kepuasan sesaat. Kesenangan bukan prioritas utamamu." },
+  // RIASEC Interest Types
+  R: { high: "Kamu menyukai pekerjaan hands-on, praktis, dan berbasis keterampilan fisik. Kamu cocok di bidang teknik, mekanik, atau outdoor.", low: "Pekerjaan fisik dan teknis bukan minat utamamu. Kamu lebih tertarik pada bidang yang melibatkan ide atau interaksi sosial." },
+  I: { high: "Kamu memiliki rasa ingin tahu ilmiah yang tinggi. Meneliti, menganalisis, dan memecahkan masalah adalah kekuatanmu.", low: "Kamu lebih praktis daripada teoritis. Pekerjaan berbasis riset dan data mungkin kurang cocok untukmu." },
+  A2: { high: "Kreativitas adalah inti dirimu. Kamu mengekspresikan diri melalui seni, desain, musik, atau tulisan.", low: "Kamu lebih menyukai struktur dan aturan daripada ekspresi bebas. Pekerjaan rutin terasa lebih nyaman." },
+  S: { high: "Kamu memiliki dorongan kuat untuk membantu, mengajar, dan mendampingi orang lain. Empatimu adalah kekuatan terbesarmu.", low: "Kamu lebih fokus pada tugas individu. Bekerja sendiri atau dengan data lebih sesuai untukmu." },
+  E2: { high: "Kamu memiliki jiwa kepemimpinan dan kemampuan persuasi yang kuat. Dunia bisnis dan organisasi adalah panggungmu.", low: "Kamu lebih nyaman sebagai kontributor tim daripada pemimpin. Mengelola orang bukan prioritasmu." },
+  C2: { high: "Kamu sangat terorganisir, menghargai prosedur, dan teliti dalam pekerjaan administratif. Akurasi adalah standarmu.", low: "Kamu lebih menyukai fleksibilitas dan variasi. Rutinitas administratif terasa membatasi." },
 }
 
 const HOLLAND_JOBS: Record<string, string[]> = {
@@ -77,9 +102,20 @@ function HasilContent() {
   useEffect(() => {
     if (!supabase || !user) return
     const query = supabase.from("user_test_results").select("*")
-      .eq("user_id", user.id).order("completed_at", { ascending: false })
+      .eq("user_id", user.id).order("completed_at", { ascending: false }).limit(10)
     if (modul) query.eq("module", modul)
-    query.then(({ data }) => { setResults(data || []); setLoading(false) })
+    query.then(({ data }) => {
+      // Deduplicate: keep latest per module, skip partial results with < 3 dimensions
+      const seen = new Set<string>()
+      const deduped = (data || []).filter((r: any) => {
+        const scores = typeof r.scores === "string" ? JSON.parse(r.scores) : r.scores
+        if (Object.keys(scores || {}).length < 3) return false // Skip partial results
+        if (seen.has(r.module)) return false
+        seen.add(r.module)
+        return true
+      })
+      setResults(deduped); setLoading(false)
+    })
     // Check Pro status
     supabase.from("user_subscriptions").select("id").eq("user_id", user.id).eq("status", "active")
       .gt("expires_at", new Date().toISOString()).maybeSingle()
@@ -87,16 +123,31 @@ function HasilContent() {
   }, [modul, user])
 
   const formatScores = (r: any) => {
-    const scores = typeof r.scores === "string" ? JSON.parse(r.scores) : r.scores
+    const raw = typeof r.scores === "string" ? JSON.parse(r.scores) : r.scores
     const isInterest = r.module === "interest"
-    const isPersonality = r.module === "personality"
-    const qtyPerDim = isPersonality ? 24 : isInterest ? 10 : 4 // items per dimension
-    const max = isPersonality ? 5 : isInterest ? qtyPerDim * 5 : 5
+
+    // Map old keys (A/E/C) to A2/E2/C2 for consistency
+    const scores: Record<string, number> = {}
+    Object.entries(raw).forEach(([k, v]) => {
+      const key = mapDimKey(k, r.module)
+      const val = Number(v)
+      // Check if data is raw sum (old) or average (new)
+      // Raw sum: interest score > 20 (30 questions × 5 pts max across 5+ dims = large)
+      // Average: interest score 1-5 like other modules
+      if (isInterest && val > 10) {
+        // Old data: raw sum with 3 items per dimension
+        scores[key] = Math.round((val / 3) * 10) / 10
+      } else {
+        scores[key] = typeof val === 'number' ? Math.round(val * 10) / 10 : val
+      }
+    })
 
     const entries: [string, number][] = Object.entries(scores)
     const sorted = entries.sort((a, b) => b[1] - a[1])
-    const top3 = sorted.slice(0, 3).map(([k]) => k).join("")
-    return { scores: Object.fromEntries(entries), top3, sorted, max, isInterest }
+    const top3Codes = sorted.slice(0, 3).map(([k]) => k.startsWith('A2') ? 'A' : k.startsWith('E2') ? 'E' : k.startsWith('C2') ? 'C' : k)
+    const top3 = top3Codes.join("")
+    const isOldData = isInterest && Object.values(raw).some((v: any) => Number(v) > 10)
+    return { scores: Object.fromEntries(entries), top3, sorted, max: r.module === 'values' ? 6 : 5, isInterest, isOldData }
   }
 
   return (
@@ -111,10 +162,14 @@ function HasilContent() {
             <Sparkles size={22} style={{ color: "#FFC64F" }} />
           </div>
           <div>
-            <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Hasil Tes</h1>
+            <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Hasil Eksplorasi Diri</h1>
             <p className="text-xs" style={{ color: "#647488" }}>{modul ? "Hasil per modul" : "Semua hasil"}</p>
           </div>
         </div>
+
+        {results.length > 0 && (
+          <p className="text-[10px] text-text-secondary/50 mb-4">Skala 1–5 · Semakin tinggi semakin dominan · ⬤ = tertinggi, ⬤ = lainnya</p>
+        )}
 
         {loading ? (
           <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-48 rounded-xl bg-white border border-[#E2E8F0] animate-pulse" />)}</div>
@@ -127,25 +182,64 @@ function HasilContent() {
         ) : (
           <div className="space-y-4">
             {results.map(r => {
-              const { scores, top3, sorted, max, isInterest } = formatScores(r)
-              const moduleTitle = r.module === "personality" ? "🧠 Kepribadian (OCEAN)"
-                : r.module === "interest" ? "💼 Minat Karir (RIASEC)" : "❤️ Nilai Hidup (Schwartz)"
+              const { scores, top3, sorted, max, isInterest, isOldData } = formatScores(r)
+              const isPro = (r as any).is_pro === true
+              const moduleTitle = r.module === "personality" ? "🧠 Kepribadian"
+                : r.module === "interest" ? "💼 Minat Karir" : "❤️ Nilai Hidup"
+              const cardGradient = r.module === "personality"
+                ? "linear-gradient(135deg, rgba(107,185,212,0.06), rgba(255,255,255,1))"
+                : r.module === "interest"
+                ? "linear-gradient(135deg, rgba(255,198,79,0.06), rgba(255,255,255,1))"
+                : "linear-gradient(135deg, rgba(8,68,99,0.04), rgba(255,255,255,1))"
+              const cardBorder = r.module === "personality" ? "#6BB9D4" : r.module === "interest" ? "#FFC64F" : "#084463"
               return (
-                <div key={r.id} className="p-5 rounded-xl border" style={{ background: "#FFFFFF", borderColor: "#E2E8F0" }}>
+                <div key={r.id} className="p-5 rounded-xl border" style={{ background: cardGradient, borderColor: `${cardBorder}30` }}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold" style={{ color: "#1E2938" }}>{moduleTitle}</h3>
-                    <span className="text-[10px]" style={{ color: "#647488" }}>
-                      {new Date(r.completed_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" })}
+                    <div className="flex items-center gap-2">
+                      {isPro && <span className="text-[9px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-semibold">Pro</span>}
+                      {isOldData && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">Versi lama</span>}
+                      <span className="text-[10px]" style={{ color: "#647488" }}>
+                        {new Date(r.completed_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" })}
                     </span>
+                  </div>
                   </div>
                   <div className="space-y-2.5">
                     {sorted.map(([dim, val]) => (
                       <ScoreBar key={dim} label={DIM_LABELS[dim] || dim} score={val} max={max} emoji={DIM_EMOJI[dim] || "•"} color={dim === sorted[0][0] ? "#084463" : "#6BB9D4"} />
                     ))}
                   </div>
+                  {isPro && (
+                    <div className="mt-3 flex justify-center">
+                      <svg width="140" height="140" viewBox="0 0 140 140">
+                        {[0.25, 0.5, 0.75, 1].map(r => {
+                          const pts = sorted.map((_, i) => {
+                            const a = (Math.PI * 2 * i) / sorted.length - Math.PI / 2
+                            return `${70 + 50 * r * Math.cos(a)},${70 + 50 * r * Math.sin(a)}`
+                          }).join(" ")
+                          return <polygon key={r} points={pts} fill="none" stroke="#E2E8F0" strokeWidth="0.5" />
+                        })}
+                        <polygon points={sorted.map(([, val], i) => {
+                          const a = (Math.PI * 2 * i) / sorted.length - Math.PI / 2
+                          const r = Math.min(val / max, 1) * 50
+                          return `${70 + r * Math.cos(a)},${70 + r * Math.sin(a)}`
+                        }).join(" ")} fill="rgba(8,68,99,0.15)" stroke="#084463" strokeWidth="1.5" />
+                        {sorted.map(([dim], i) => {
+                          const a = (Math.PI * 2 * i) / sorted.length - Math.PI / 2
+                          return <text key={dim} x={70 + 58 * Math.cos(a)} y={70 + 58 * Math.sin(a) + 3} textAnchor="middle" fontSize="7" fill="#647488">{DIM_LABELS[dim]?.slice(0, 3) || dim}</text>
+                        })}
+                      </svg>
+                    </div>
+                  )}
                   {isInterest && top3 && (
                     <div className="mt-4 p-3 rounded-lg" style={{ background: "#F8FAFC" }}>
                       <p className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: "#647488" }}>Holland Code: {top3}</p>
+                      <p className="text-[10px] mb-2" style={{ color: "#6BB9D4" }}>
+                        {top3.split("").map((c, i) => {
+                          const meaning = HOLLAND_MEANING[c] || c
+                          return <span key={c}>{i > 0 ? ' · ' : ''}{meaning.split(' — ')[0]}</span>
+                        })}
+                      </p>
                       <div className="flex flex-wrap gap-1">
                         {top3.split("").flatMap(c => (HOLLAND_JOBS[c] || []).slice(0, 2)).map((job, i) => (
                           <span key={i} className="text-[10px] px-2 py-1 rounded-full" style={{ background: "rgba(8,68,99,0.06)", color: "#084463" }}>{job}</span>
@@ -153,26 +247,45 @@ function HasilContent() {
                       </div>
                     </div>
                   )}
-                  {!isInterest && (
-                    <div className="mt-4 p-3 rounded-lg" style={{ background: "#F8FAFC" }}>
-                      <p className="text-[10px] uppercase tracking-wider font-semibold mb-2" style={{ color: "#647488" }}>📖 Analisis Singkat</p>
-                      {sorted.slice(0, 2).map(([dim, val]) => {
-                        const desc = DIM_DESC[dim]
-                        if (!desc) return null
-                        const level = val > 3.5 ? "high" : val < 2.5 ? "low" : null
-                        const emoji = DIM_EMOJI[dim] || "•"
-                        return level ? (
-                          <div key={dim} className="mb-2 last:mb-0">
-                            <p className="text-xs font-semibold mb-0.5" style={{ color: "#1E2938" }}>{emoji} {DIM_LABELS[dim] || dim} — {level === "high" ? "Tinggi" : "Rendah"}</p>
-                            <p className="text-[11px] leading-relaxed" style={{ color: "#647488" }}>{desc[level]}</p>
-                          </div>
-                        ) : null
-                      })}
-                      {sorted.slice(0, 2).every(([dim, val]) => val >= 2.5 && val <= 3.5) && (
-                        <p className="text-[11px] leading-relaxed" style={{ color: "#647488" }}>Profil nilai hidupmu cukup seimbang — tidak ada nilai yang terlalu ekstrem. Ini membuatmu fleksibel dalam berbagai situasi.</p>
-                      )}
-                    </div>
-                  )}
+
+                  {/* Strengths (top 2) + Weaknesses (bottom 1) analysis */}
+                  <div className="mt-4 p-3 rounded-lg" style={{ background: "#F8FAFC" }}>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold mb-2" style={{ color: "#647488" }}>📖 Analisis{isPro ? " Pro" : ""}</p>
+                    {isPro && (
+                      <p className="text-[9px] text-text-secondary/50 mb-2">Berdasarkan {r.module === 'personality' ? '120' : r.module === 'interest' ? '60' : '40'} soal — lebih banyak data, hasil lebih stabil.</p>
+                    )}
+                    {sorted.slice(0, 2).map(([dim, val]) => {
+                      const desc = DIM_DESC[dim]
+                      if (!desc) return null
+                      const highT = max * 0.65
+                      const lowT = max * 0.4
+                      const level = val > highT ? "high" : val < lowT ? "low" : null
+                      const emoji = DIM_EMOJI[dim] || "•"
+                      return level ? (
+                        <div key={dim} className="mb-2 last:mb-0">
+                          <p className="text-xs font-semibold mb-0.5" style={{ color: "#1E2938" }}>{emoji} {DIM_LABELS[dim] || dim} — {level === "high" ? "💪 Kekuatan" : "🌱 Area Tumbuh"}</p>
+                          <p className="text-[11px] leading-relaxed" style={{ color: "#647488" }}>{desc[level]}</p>
+                        </div>
+                      ) : null
+                    })}
+                    {sorted.length > 0 && (() => {
+                      const last = sorted[sorted.length - 1]
+                      const [dim, val] = last
+                      const desc = DIM_DESC[dim]
+                      const lowT = max * 0.4
+                      if (!desc || val > lowT) return null
+                      const emoji = DIM_EMOJI[dim] || "•"
+                      return (
+                        <div className="mt-2 pt-2 border-t border-gray-100">
+                          <p className="text-xs font-semibold mb-0.5" style={{ color: "#1E2938" }}>{emoji} {DIM_LABELS[dim] || dim} — 🌱 Bisa Dikembangkan</p>
+                          <p className="text-[11px] leading-relaxed" style={{ color: "#647488" }}>{desc.low}</p>
+                        </div>
+                      )
+                    })()}
+                    {sorted.every(([, val]) => val >= max * 0.4 && val <= max * 0.65) && (
+                      <p className="text-[11px] leading-relaxed" style={{ color: "#647488" }}>Profilmu cukup seimbang di semua dimensi. Ini membuatmu fleksibel dalam berbagai situasi.</p>
+                    )}
+                  </div>
                 </div>
               )
             })}

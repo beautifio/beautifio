@@ -78,7 +78,10 @@ export async function POST(request: NextRequest) {
     .in("status", ["active", "pending"]).order("created_at", { ascending: false }).limit(1).maybeSingle();
 
   if (existingSub?.status === "active") {
-    return NextResponse.json({ error: "Kamu sudah punya subscription aktif" }, { status: 409 });
+    // Allow upgrade/renew if using voucher — extend current subscription
+    if (!voucher_code?.trim()) {
+      return NextResponse.json({ error: "Kamu sudah punya subscription aktif" }, { status: 409 });
+    }
   }
 
   // If has pending, reuse it instead of creating duplicate
@@ -122,7 +125,7 @@ export async function POST(request: NextRequest) {
     // Apply discount
     let discountAmount = 0;
     if (voucher.discount_type === "percentage") {
-      discountAmount = Math.round(finalAmount * (Number(voucher.discount_value) / 100));
+      discountAmount = Math.round((plan.price_idr || 0) * (Number(voucher.discount_value) / 100));
     } else {
       discountAmount = Number(voucher.discount_value);
     }

@@ -15,7 +15,7 @@ export default function CarePage() {
       const supabase = createClient();
       if (!supabase) { setLoading(false); return; }
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
+      if (!user) { router.push('/'); return; }
       const { data: profile } = await supabase
         .from('users')
         .select('care_agreement_accepted')

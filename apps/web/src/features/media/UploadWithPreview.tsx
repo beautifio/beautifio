@@ -369,7 +369,7 @@ function CropStep({
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
     const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.92)
+      canvas.toBlob((b) => resolve(b!), "image/png")
     );
     if (blob) onCropDone(blob);
   }

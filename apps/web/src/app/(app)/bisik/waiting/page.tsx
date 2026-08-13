@@ -14,7 +14,7 @@ function WaitingContent() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (!user) { router.replace("/login"); return; }
+    if (!user) { router.replace("/"); return; }
   }, [user, isLoading, router]);
 
   useEffect(() => {

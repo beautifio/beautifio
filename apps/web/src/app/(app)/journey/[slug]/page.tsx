@@ -166,7 +166,7 @@ export default function JourneyDetailPage() {
 
   const loadData = useCallback(async () => {
     if (!user || !slug) {
-      if (!user) router.replace("/login");
+      if (!user) router.replace("/");
       setLoading(false);
       return;
     }

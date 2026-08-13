@@ -5,7 +5,6 @@ import Link from "next/link";
 import { BookOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/inspirasi-data";
-import type { DreamJourney } from "@beautifio/types";
 
 interface Article {
   id: string;
@@ -18,7 +17,6 @@ interface Article {
   author_type?: string;
   is_featured?: boolean;
   created_at?: string;
-  published_at?: string;
 }
 
 const AUTHOR_TYPE_LABEL: Record<string, string> = {
@@ -36,70 +34,46 @@ const AUTHOR_TYPE_COLORS: Record<string, string> = {
 function formatDate(iso?: string): string {
   if (!iso) return ""
   const d = new Date(iso)
-  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+  const diff = Date.now() - d.getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return "Baru saja"
+  if (mins < 60) return `${mins} menit yang lalu`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} jam yang lalu`
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
 }
 
-export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
+export function ArticlePick() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
+      if (!supabase) { setLoading(false); return }
+
       try {
-        if (!supabase) return;
-
-        if (journey) {
-          try {
-            const { data: matched } = await supabase
-              .rpc("get_pending_journey_article_ids", { p_journey_id: journey.id });
-
-            if (matched && matched.length > 0) {
-              const { data: personal } = await supabase
-                .from("articles")
-                .select("id, slug, title, cover_image, category, author, source, author_type, is_featured, created_at, published_at")
-                .in("id", matched.slice(0, 10))
-                .eq("is_published", true);
-              if (personal && personal.length > 0) {
-                setArticles(personal);
-                return;
-              }
-            }
-          } catch {
-            // RPC failed, fall through to general articles
-          }
-        }
-
-        // Fetch featured + latest articles
-        let featured: any[] = []
-        let latest: any[] = []
-
-        // 1. Get top 5 featured
-        const { data: feat } = await supabase
+        const { data: all, error } = await supabase
           .from("articles")
-          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured, created_at, published_at")
-          .eq("is_published", true).eq("is_featured", true)
-          .order("created_at", { ascending: false }).limit(5)
-        featured = feat || []
-
-        // 2. Get latest to fill remaining slots up to 10
-        const featuredIds = featured.map(f => f.id)
-        const { data: rest } = await supabase
-          .from("articles")
-          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured, created_at, published_at")
+          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured, created_at")
           .eq("is_published", true)
-          .order("created_at", { ascending: false }).limit(15)
-        latest = (rest || []).filter(a => !featuredIds.includes(a.id)).slice(0, 10 - featured.length)
+          .order("created_at", { ascending: false })
+          .limit(30);
 
-        const combined = [...featured, ...latest]
-        if (combined.length > 0) setArticles(combined)
-      } catch {
-        // silent fallback — show empty or cached state
+        if (all && all.length > 0) {
+          const featured = all.filter(a => a.is_featured).slice(0, 5);
+          const featuredIds = new Set(featured.map(f => f.id));
+          const latest = all.filter(a => !featuredIds.has(a.id)).slice(0, 5);
+          const combined = [...featured, ...latest];
+          if (combined.length > 0) setArticles(combined);
+        }
+      } catch (e) {
+        console.error("ArticlePick fetch error:", e)
       } finally {
         setLoading(false);
       }
     })();
-  }, [journey]);
+  }, []);
 
   if (loading) {
     return (
@@ -136,16 +110,17 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
             <Link
               key={a.id}
               href={`/inspirasi/${a.slug}`}
+              prefetch={false}
               className="flex gap-3 py-3 hover:bg-gray-50 transition-colors -mx-3 px-3 rounded-lg"
             >
               <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100 relative">
                 {(a as any).is_featured && (
-                  <span className="absolute top-1.5 right-1.5 flex items-center gap-0.5 text-[8px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold z-10">
-                    ⭐ Featured
+                  <span className="absolute top-1.5 right-1.5 text-[10px] w-5 h-5 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                    ⭐
                   </span>
                 )}
                 {a.cover_image ? (
-                  <img src={a.cover_image} alt={a.title} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={a.cover_image} alt={a.title || "Artikel"} className="w-full h-full object-cover" />
                 ) : (() => {
                   const cKey = Object.entries(CATEGORY_LABELS).find(([,v]) => v === (a as any).category)?.[0]
                   const color = cKey ? CATEGORY_COLORS[cKey] : null
@@ -173,7 +148,7 @@ export function ArticlePick({ journey }: { journey?: DreamJourney | null }) {
                     {initials}
                   </div>
                   <span className="text-[11px] text-gray-500 truncate">{a.author}</span>
-                  <span className="text-[10px] text-gray-400">· {formatDate(a.published_at || a.created_at)}</span>
+                  <span className="text-[10px] text-gray-400">· {formatDate(a.created_at)}</span>
                 </div>
               </div>
             </Link>

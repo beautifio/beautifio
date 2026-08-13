@@ -190,6 +190,7 @@ function ProfileSection({
   const commKeys = ["Langsung", "Empatik", "Ekspresif", "Tenang"]
   const maxDisc = Math.max(...discKeys.map(k => profile.discCounts[k] ?? 0), 1)
   const maxComm = Math.max(...commKeys.map(k => profile.commCounts[k] ?? 0), 1)
+  const hasCommData = commKeys.some(k => (profile.commCounts[k] ?? 0) > 0)
 
   return (
     <div className="space-y-4">
@@ -210,6 +211,7 @@ function ProfileSection({
       />
 
       {/* Communication bars */}
+      {hasCommData && (
       <div className="space-y-2 pt-2">
         <p className="text-xs font-semibold text-white/50 uppercase tracking-wider">Gaya Komunikasi</p>
         {commKeys.map((k, i) => (
@@ -223,6 +225,7 @@ function ProfileSection({
           />
         ))}
       </div>
+      )}
     </div>
   )
 }
@@ -294,7 +297,7 @@ export function DiscProfileReveal({ myProfile, theirProfile, myName, opponentNam
   }
 
   return (
-    <div className="flex-1 flex flex-col px-4 py-4" style={{ background: "linear-gradient(135deg, #0A1628 0%, #1A2A4A 100%)" }}>
+    <div className="flex-1 flex flex-col px-4 py-4 max-w-content mx-auto w-full" style={{ background: "linear-gradient(135deg, #0A1628 0%, #1A2A4A 100%)" }}>
       {/* Header */}
       <div className="text-center mb-3">
         <h2 className="text-xl font-bold text-white">Profil Kepribadian</h2>

@@ -83,8 +83,8 @@ export function BannerCarousel() {
         <div
           key={banner.id}
           className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${idx === current ? "opacity-100" : "opacity-0"}`}
-        >
-          <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          style={{ position: "relative" }}>
+          <img src={banner.image_url} alt={banner.title || ""} className="w-full h-full object-cover" />
           {banner.redirect_label && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12">
               <span className="inline-block bg-[#FFC64F] text-[#1E2938] text-xs font-bold px-3 py-1.5 rounded-lg">

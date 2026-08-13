@@ -23,7 +23,7 @@ export default function EditProfilePage() {
   const { user, isLoading: authLoading } = useAuth()
 
   useEffect(() => {
-    if (!authLoading && !user) router.replace("/login");
+    if (!authLoading && !user) router.replace("/");
   }, [user, authLoading, router]);
 
   const [loading, setLoading] = useState(true)
