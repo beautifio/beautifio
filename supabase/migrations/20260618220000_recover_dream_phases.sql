@@ -1870,7 +1870,7 @@ BEGIN
     industry_benchmark, over_achievement, behind_schedule_signal,
     sort_order
   ) VALUES (
-    'fashion-designer','football-player', 1, 'Belajar & Koleksi Pertama', '15', '19', 'Kuasai pola dasar dan selesaikan 5 desain', NULL, 'Kuasai pola dasar, teknik menjahit, dan selesaikan 5 desain', 'Portofolio 10 desain, tampil di 1 fashion show lokal', 'Belum punya 1 desain jadi di usia 18+', 1)
+    'fashion-designer', 1, 'Belajar & Koleksi Pertama', '15', '19', 'Kuasai pola dasar dan selesaikan 5 desain', NULL, 'Kuasai pola dasar, teknik menjahit, dan selesaikan 5 desain', 'Portofolio 10 desain, tampil di 1 fashion show lokal', 'Belum punya 1 desain jadi di usia 18+', 1)
   RETURNING id INTO v_phase_id;
 
   -- SW 1.1
@@ -1893,7 +1893,7 @@ BEGIN
     industry_benchmark, over_achievement, behind_schedule_signal,
     sort_order
   ) VALUES (
-    'fashion-designer','football-player', 2, 'Produk & Brand', '19', '25', 'Produk terjual dengan revenue >5 juta/bulan', NULL, 'Brand dikenal, revenue >5 juta/bulan, media coverage', '50+ pcs terjual, kolaborasi dengan 1 brand lain', 'Belum ada penjualan produk di usia 23+', 2)
+    'fashion-designer', 2, 'Produk & Brand', '19', '25', 'Produk terjual dengan revenue >5 juta/bulan', NULL, 'Brand dikenal, revenue >5 juta/bulan, media coverage', '50+ pcs terjual, kolaborasi dengan 1 brand lain', 'Belum ada penjualan produk di usia 23+', 2)
   RETURNING id INTO v_phase_id;
 
   -- SW 2.1
@@ -1912,7 +1912,7 @@ BEGIN
     industry_benchmark, over_achievement, behind_schedule_signal,
     sort_order
   ) VALUES (
-    'fashion-designer','football-player', 3, 'Brand Established', '24', '40', 'Revenue >50 juta/bulan dan ekspor', NULL, 'Brand established dengan revenue >50 juta/bulan', 'Hadir di Indonesia Fashion Week, punya tim 5+', 'Revenue masih <10 juta/bulan di usia 28+', 3)
+    'fashion-designer', 3, 'Brand Established', '24', '40', 'Revenue >50 juta/bulan dan ekspor', NULL, 'Brand established dengan revenue >50 juta/bulan', 'Hadir di Indonesia Fashion Week, punya tim 5+', 'Revenue masih <10 juta/bulan di usia 28+', 3)
   RETURNING id INTO v_phase_id;
 
   -- SW 3.1

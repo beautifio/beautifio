@@ -1,5 +1,5 @@
 -- Migration: 10 example articles for AI reference (v2 — fixed "gue" → "aku")
-INSERT INTO app_settings (key, value) VALUES ('content_examples', '{
+INSERT INTO app_settings (key, value) VALUES ('content_examples', $$ {
   "mind-body": {
     "title": "Kenapa Otak Kita Nggak Bisa Berhenti Mikir Pas Lagi Mau Tidur — dan Ini Bukan Salahmu",
     "content": "<p>Coba inget kapan terakhir kali kamu beneran tidur dengan kepala kosong. Bukan tidur karena capek banget sampai pingsan. Tapi tidur yang damai — di mana kamu merebahkan diri, memejamkan mata, dan hening. Susah diingat, kan?</p><p>Aku inget banget masa-masa itu. Semester 5, jam 11 malam, badan udah di kasur, lampu udah mati, tapi kepalaku malah kayak ruang rapat dadakan. Semua topik dibahas: kenapa tadi aku ngomong begitu ke temen? Deadline minggu depan udah siap belum? Dan yang paling favorit: kesalahanku tahun 2017 yang tiba-tiba muncul lagi tanpa diundang.</p><h2>Yang Sebenarnya Terjadi di Kepalamu Secara Biologis</h2><p>Otak kamu punya dua mode operasi utama. Mode pertama adalah task-positive network — ini yang aktif pas kamu lagi fokus ngerjain sesuatu. Mode kedua adalah default mode network (DMN) — ini yang aktif pas kamu nggak ngapa-ngapain. DMN ini kayak layanan kebersihan otak. Dia aktif pas kamu lagi kosong, termasuk berbaring di kasur menunggu tidur. Masalahnya: DMN tidak bisa membedakan antara masalah serius dan pikiran random. Jadi semua dilempar ke layar — kayak notifikasi HP yang numpuk.</p><blockquote>Kamu bukan anomali. Kamu mayoritas.</blockquote><p>Kalau malam ini masih susah, gak apa-apa. Besok kita coba lagi.</p>"
@@ -48,5 +48,5 @@ INSERT INTO app_settings (key, value) VALUES ('content_examples', '{
     "title": "Ribuan Kuota Beasiswa KIP Kuliah 2026 Resmi Dibuka — Ini Syarat dan Cara Daftarnya",
     "content": "<p>Kabar baik buat kamu yang lagi persiapan kuliah! Kementerian Pendidikan resmi membuka pendaftaran KIP Kuliah untuk tahun ajaran 2026 dengan kuota lebih dari 200.000 mahasiswa baru.</p><h2>Siapa yang Bisa Mendaftar?</h2><p>Siswa SMA/SMK/sederajat yang akan lulus tahun ini dan berasal dari keluarga kurang mampu secara ekonomi. Prioritas diberikan kepada pemegang Kartu Indonesia Pintar (KIP) dan yang terdaftar di Data Terpadu Kesejahteraan Sosial (DTKS).</p><h2>Cara Mendaftar</h2><p>Pendaftaran dilakukan secara online melalui portal resmi KIP Kuliah. Siapkan dokumen seperti kartu keluarga, rapor, dan surat keterangan tidak mampu. Deadline pendaftaran: 31 Agustus 2026.</p><blockquote>Pendidikan itu hak, bukan privilege. Jangan ragu buat daftar.</blockquote>"
   }
-}')
+} $$)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;

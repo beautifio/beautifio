@@ -8,7 +8,7 @@
 -- ────────────────────────────────────────────────────────────────────────────
 -- user_profiles: add birth_date for age-based journey generation
 -- ────────────────────────────────────────────────────────────────────────────
-ALTER TABLE user_profiles
+ALTER TABLE users
   ADD COLUMN IF NOT EXISTS birth_date DATE;
 
 -- ────────────────────────────────────────────────────────────────────────────

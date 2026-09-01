@@ -1,7 +1,13 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { lucia } from "@/lib/auth/lucia";
+import { db } from "@/lib/db";
+import { users } from "@/lib/auth/lucia";
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
+import { generateId } from "lucia";
+import argon2 from "argon2";
 
 export interface AuthResult {
   error?: string;
@@ -13,84 +19,72 @@ export async function signUpAction(
   password: string,
   fullName: string
 ): Promise<AuthResult> {
-  const supabase = await createClient();
+  try {
+    const passwordHash = await argon2.hash(password);
+    const userId = generateId(15);
 
-  const { error: signUpError, data } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name: fullName },
-    },
-  });
+    await db.insert(users).values({
+      id: userId,
+      email,
+      passwordHash: passwordHash,
+    });
 
-  if (signUpError) {
-    const message = translateAuthError(signUpError.message);
-    return { error: message };
+    const session = await lucia.createSession(userId, {});
+    const sessionCookie = lucia.createSessionCookie(session.id);
+    (await cookies()).set(
+      sessionCookie.name,
+      sessionCookie.value,
+      sessionCookie.attributes
+    );
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (e: any) {
+    return { error: "Email sudah terdaftar atau terjadi kesalahan." };
   }
-
-  revalidatePath("/");
-  return { success: true };
 }
 
 export async function signInAction(
   email: string,
   password: string
 ): Promise<AuthResult> {
-  const supabase = await createClient();
+  const results = await db.select().from(users).where(eq(users.email, email));
+  const user = results[0];
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    const message = translateAuthError(error.message);
-    return { error: message };
+  if (!user || !(await argon2.verify(user.passwordHash, password))) {
+    return { error: "Email atau password salah" };
   }
+
+  const session = await lucia.createSession(user.id, {});
+  const sessionCookie = lucia.createSessionCookie(session.id);
+  (await cookies()).set(
+    sessionCookie.name,
+    sessionCookie.value,
+    sessionCookie.attributes
+  );
 
   revalidatePath("/");
   return { success: true };
 }
 
 export async function signOutAction(): Promise<AuthResult> {
-  const supabase = await createClient();
+  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value;
+  if (!sessionId) return { success: true };
 
-  const { error } = await supabase.auth.signOut();
-
-  if (error) {
-    return { error: "Gagal keluar. Silakan coba lagi." };
-  }
+  await lucia.invalidateSession(sessionId);
+  const sessionCookie = lucia.createBlankSessionCookie();
+  (await cookies()).set(
+    sessionCookie.name,
+    sessionCookie.value,
+    sessionCookie.attributes
+  );
 
   revalidatePath("/");
   return { success: true };
 }
 
 export async function resetPasswordAction(email: string): Promise<AuthResult> {
-  const supabase = await createClient();
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/login`,
-  });
-
-  if (error) {
-    return { error: "Gagal mengirim email reset. Silakan coba lagi." };
-  }
-
-  return { success: true };
+  // Implementasi reset password mandiri akan menggunakan sistem email lokal
+  return { error: "Fitur reset password sedang dalam migrasi." };
 }
 
-function translateAuthError(message: string): string {
-  const map: Record<string, string> = {
-    "Invalid login credentials": "Email atau password salah",
-    "Email not confirmed": "Email belum dikonfirmasi. Cek inbox kamu.",
-    "User already registered": "Email sudah terdaftar",
-    "Password should be at least 6 characters":
-      "Password minimal 6 karakter",
-    "Unable to validate email address: invalid format":
-      "Format email tidak valid",
-    "Email rate limit exceeded": "Terlalu banyak percobaan. Coba lagi nanti.",
-    "Signup requires a valid password": "Password harus diisi",
-  };
-
-  return map[message] || message;
-}

@@ -1,0 +1,17 @@
+{
+  "remoteName": "origin",
+  "projects": [
+    {
+      "id": "prj_wcLiXOQZLPPALTNTNWqBldhnuHbv",
+      "name": "beautifio",
+      "directory": ".",
+      "orgId": "team_5SJD4I8Zi09w58uBvRDE2wDN"
+    },
+    {
+      "id": "prj_wlQFxFy7ogr2oaMqYlgMRsxyjzNZ",
+      "name": "beautifio-web",
+      "directory": "apps/web",
+      "orgId": "team_5SJD4I8Zi09w58uBvRDE2wDN"
+    }
+  ]
+}

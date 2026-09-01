@@ -41,6 +41,9 @@ CREATE POLICY "AI counter manageable" ON public.care_ai_daily_counter FOR ALL US
 
 -- 4. Seed 6 AI volunteers (using existing bot user UUIDs)
 -- Create bot users first if not exist
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE public.users ADD CONSTRAINT users_role_check CHECK (role IN ('user', 'mentor', 'admin', 'redaksi', 'superadmin', 'care_volunteer', 'psychologist'));
+
 DO $$
 DECLARE
   bot_ids UUID[] := ARRAY[
@@ -54,9 +57,22 @@ DECLARE
   b UUID;
 BEGIN
   FOREACH b IN ARRAY bot_ids LOOP
-    INSERT INTO public.users (id, full_name, is_bot, role, created_at)
-    VALUES (b, 'AI Volunteer', true, 'care_volunteer', NOW())
+    INSERT INTO auth.users (id, email, email_confirmed_at, raw_user_meta_data, created_at, updated_at, aud, role)
+    VALUES (
+      b,
+      'ai-volunteer-' || b::TEXT || '@beautifio-bot.local',
+      NOW(),
+      jsonb_build_object('full_name', 'AI Volunteer'),
+      NOW(),
+      NOW(),
+      'authenticated',
+      'authenticated'
+    )
     ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO public.users (id, email, full_name, is_bot, role, created_at)
+    VALUES (b, 'ai-volunteer-' || b::TEXT || '@beautifio-bot.local', 'AI Volunteer', true, 'care_volunteer', NOW())
+    ON CONFLICT (id) DO UPDATE SET role = 'care_volunteer', is_bot = true;
   END LOOP;
 END $$;
 

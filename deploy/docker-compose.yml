@@ -1,11 +1,14 @@
-# Runs the Next.js app container. Host Nginx (see deploy/nginx.conf) terminates
-# TLS and proxies to 127.0.0.1:3000 — the app is never exposed publicly itself.
+# Beautifio web app, wired into Coolify's existing Traefik proxy.
+# Traefik discovers this container on the external `coolify` network and routes
+# beautifio.com (+ www) to it on port 3000, terminating TLS via Let's Encrypt.
+# No public host port is published — Traefik reaches the app over the network.
 services:
   web:
     build:
       context: ..
       dockerfile: Dockerfile
       args:
+        # NEXT_PUBLIC_* are inlined at build time (see .env.production).
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
@@ -15,5 +18,35 @@ services:
     restart: always
     env_file:
       - .env.production
+    networks:
+      # coolify: Traefik reaches the app here (beautifio.com routing).
+      - coolify
+      # supabase net: direct Postgres (DATABASE_URL) for Lucia auth + drizzle.
+      - supabase
+    # Bind to localhost only for on-VPS debugging (curl 127.0.0.1:3000).
     ports:
       - "127.0.0.1:3000:3000"
+    labels:
+      - traefik.enable=true
+      # HTTP entrypoint -> redirect to HTTPS
+      - traefik.http.middlewares.beautifio-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.beautifio-https.redirectscheme.permanent=true
+      - traefik.http.routers.beautifio-http.entrypoints=http
+      - traefik.http.routers.beautifio-http.rule=Host(`beautifio.com`) || Host(`www.beautifio.com`)
+      - traefik.http.routers.beautifio-http.middlewares=beautifio-https
+      # HTTPS entrypoint with Let's Encrypt
+      - traefik.http.routers.beautifio.entrypoints=http,https
+      - traefik.http.routers.beautifio.rule=Host(`beautifio.com`) || Host(`www.beautifio.com`)
+      - traefik.http.routers.beautifio.tls=true
+      - traefik.http.routers.beautifio.tls.certresolver=letsencrypt
+      # Tell Traefik which container port to hit
+      - traefik.http.services.beautifio.loadbalancer.server.port=3000
+
+networks:
+  coolify:
+    external: true
+  # Self-hosted Supabase stack network (Coolify service zurmq2...), so the app
+  # can talk to supabase-db directly for DATABASE_URL. External name is fixed.
+  supabase:
+    external: true
+    name: zurmq2lrm9hj510fmnj1seqr
