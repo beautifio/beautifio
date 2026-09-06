@@ -1,30 +1,61 @@
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const { pathname } = req.nextUrl;
+// Same internal-first resolution as lib/supabase/server.ts — keeps the session
+// lookup inside the docker network instead of hairpinning back through Traefik.
+const SUPABASE_URL =
+  process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-    // Admin routes protection
-    if (pathname.startsWith("/admin") && token?.role !== "admin" && token?.role !== "superadmin" && token?.role !== "redaksi") {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+const ADMIN_ROLES = ["admin", "superadmin", "redaksi"];
 
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const { pathname } = req.nextUrl;
-        if (pathname.startsWith("/admin") || pathname.startsWith("/mitra")) {
-          return !!token;
-        }
-        return true;
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
       },
-    },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Both /admin and /mitra require a session.
+  if (!user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
   }
-);
+
+  // /admin additionally requires an editorial/admin role (see BEAUTIFIO_INSPIRASI_PLAYBOOK).
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile?.role || !ADMIN_ROLES.includes(profile.role)) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  }
+
+  return response;
+}
 
 export const config = {
   matcher: ["/admin/:path*", "/mitra/:path*"],

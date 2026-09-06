@@ -1,13 +1,7 @@
 "use server";
 
-import { lucia } from "@/lib/auth/lucia";
-import { db } from "@/lib/db";
-import { users } from "@/lib/auth/lucia";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
-import { generateId } from "lucia";
-import argon2 from "argon2";
 
 export interface AuthResult {
   error?: string;
@@ -19,72 +13,56 @@ export async function signUpAction(
   password: string,
   fullName: string
 ): Promise<AuthResult> {
-  try {
-    const passwordHash = await argon2.hash(password);
-    const userId = generateId(15);
+  const supabase = await createClient();
 
-    await db.insert(users).values({
-      id: userId,
-      email,
-      passwordHash: passwordHash,
-    });
+  // The `on_auth_user_created` trigger (handle_new_user) creates the public.users
+  // profile from this metadata — do not insert the row here.
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: fullName } },
+  });
 
-    const session = await lucia.createSession(userId, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
-    (await cookies()).set(
-      sessionCookie.name,
-      sessionCookie.value,
-      sessionCookie.attributes
-    );
-
-    revalidatePath("/");
-    return { success: true };
-  } catch (e: any) {
-    return { error: "Email sudah terdaftar atau terjadi kesalahan." };
+  if (error) {
+    if (error.message.toLowerCase().includes("already registered")) {
+      return { error: "Email sudah terdaftar." };
+    }
+    return { error: error.message };
   }
+
+  revalidatePath("/", "layout");
+  return { success: true };
 }
 
 export async function signInAction(
   email: string,
   password: string
 ): Promise<AuthResult> {
-  const results = await db.select().from(users).where(eq(users.email, email));
-  const user = results[0];
+  const supabase = await createClient();
 
-  if (!user || !(await argon2.verify(user.passwordHash, password))) {
-    return { error: "Email atau password salah" };
-  }
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { error: "Email atau password salah" };
 
-  const session = await lucia.createSession(user.id, {});
-  const sessionCookie = lucia.createSessionCookie(session.id);
-  (await cookies()).set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
-
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true };
 }
 
 export async function signOutAction(): Promise<AuthResult> {
-  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value;
-  if (!sessionId) return { success: true };
+  const supabase = await createClient();
+  await supabase.auth.signOut();
 
-  await lucia.invalidateSession(sessionId);
-  const sessionCookie = lucia.createBlankSessionCookie();
-  (await cookies()).set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
-
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true };
 }
 
 export async function resetPasswordAction(email: string): Promise<AuthResult> {
-  // Implementasi reset password mandiri akan menggunakan sistem email lokal
-  return { error: "Fitur reset password sedang dalam migrasi." };
-}
+  const supabase = await createClient();
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/reset-password`,
+  });
+
+  if (error) return { error: error.message };
+  return { success: true };
+}

@@ -1,5 +1,5 @@
 "use client";
-import { signIn } from "next-auth/react";
+import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
@@ -29,11 +29,13 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    try {
-      await signIn("google", { callbackUrl: "/home" });
-    } catch {
-      setError("Gagal login dengan Google.");
-    }
+    // Supabase OAuth: the provider redirects back to /auth/callback, which
+    // exchanges the code for a session and forwards to `next`.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/home` },
+    });
+    if (error) setError("Gagal login dengan Google.");
   };
 
   return (
