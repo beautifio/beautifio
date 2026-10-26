@@ -4,10 +4,18 @@ import path from "path";
 const nextConfig: NextConfig = {
   // Produce a self-contained server bundle for Docker / VPS deploys.
   output: "standalone",
+  // Keep Prisma out of the bundler; load it as a normal node module at runtime.
+  serverExternalPackages: ["@prisma/client", "prisma"],
   // Monorepo root so tracing picks up workspace packages + root node_modules.
   outputFileTracingRoot: path.join(__dirname, "../../"),
   outputFileTracingIncludes: {
     "/*": ["../node_modules/next/dist/compiled/source-map/**"],
+    // Ship the Prisma client + query engine binary into the standalone output.
+    "/**": [
+      "../node_modules/.prisma/client/**",
+      "../node_modules/@prisma/client/**",
+      "../node_modules/@prisma/engines/**",
+    ],
   },
   async redirects() {
     return [

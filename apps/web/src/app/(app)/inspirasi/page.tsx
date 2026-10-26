@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Sparkles, BookOpen, PenLine, Quote, BookHeart, Heart, TrendingUp, Users, Feather, Monitor, Clapperboard, Utensils, Activity, ShoppingBag, Newspaper, Megaphone, Trophy, Star } from "lucide-react";
 import { SOURCE_TABS, CATEGORY_LABELS } from "@/lib/inspirasi-data";
 import type { SourceType, InspirasiItem } from "@/lib/inspirasi-data";
-import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getPendingJourneyArticleIds } from "@/lib/article-queries";
 import InspirasiCard from "@/components/inspirasi/InspirasiCard";
@@ -68,16 +67,13 @@ function EmptyState({
 }
 
 async function fetchArticles(): Promise<InspirasiItem[]> {
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("is_published", true)
-    .order("created_at", { ascending: false });
+  // Prisma-backed API (migration off Supabase); see app/api/articles/route.ts
+  const res = await fetch("/api/articles");
+  if (!res.ok) return [];
+  const { articles: data } = await res.json();
+  if (!Array.isArray(data)) return [];
 
-  if (!data) return [];
-
-  return data.map((a) => ({
+  return data.map((a: any) => ({
     id: a.id,
     slug: a.slug,
     type: a.type,
