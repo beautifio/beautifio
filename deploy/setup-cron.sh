@@ -19,7 +19,9 @@ if [[ -z "$CRON_SECRET" ]]; then
   exit 1
 fi
 
-BASE="http://127.0.0.1:3000"
+# Public URL, not 127.0.0.1:3000 — the app container deliberately publishes no
+# host port (see deploy/docker-compose.yml), so cron goes in through Traefik.
+BASE="https://beautifio.com"
 CURL="curl -fsS -m 60 -H \"Authorization: Bearer $CRON_SECRET\""
 MARKER="# beautifio-cron"
 

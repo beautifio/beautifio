@@ -23,9 +23,12 @@ services:
       - coolify
       # supabase net: direct Postgres (DATABASE_URL) for Lucia auth + drizzle.
       - supabase
-    # Bind to localhost only for on-VPS debugging (curl 127.0.0.1:3000).
-    ports:
-      - "127.0.0.1:3000:3000"
+    # No host port is published on purpose. Traefik reaches the app over the
+    # `coolify` network, and publishing 127.0.0.1:3000 once lost a boot race for
+    # that port ("address already in use"), which failed container networking —
+    # a failure `restart: always` does not recover from. That kept the site down
+    # for 11 days. Debug from inside the network instead, e.g.
+    #   docker run --rm --network coolify curlimages/curl -s http://beautifio-web:3000/
     labels:
       - traefik.enable=true
       # HTTP entrypoint -> redirect to HTTPS
