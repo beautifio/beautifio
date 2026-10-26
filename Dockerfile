@@ -5,6 +5,9 @@
 FROM node:24-slim AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+# openssl is required by the Prisma query engine (both to generate and at runtime).
+RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+ && rm -rf /var/lib/apt/lists/*
 
 # ---------- Dependencies ----------
 FROM base AS deps
@@ -30,6 +33,8 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
     NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
     NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+# Generate the Prisma client before the Next build (migration off Supabase, in progress).
+RUN npx prisma generate --schema apps/web/prisma/schema.prisma
 # Build only the web app. Standalone output lands in apps/web/.next/standalone.
 RUN npm run build
 
