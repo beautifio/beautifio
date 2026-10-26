@@ -18,3 +18,6 @@ private.key
 public.pem
 outputs/
 graphify-out/
+
+# WIP introspection includes other tenants (shared DB); prune to beautifio-only before publishing.
+apps/web/prisma/schema.prisma
