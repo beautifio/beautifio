@@ -1,31 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
+// Public familia event benefits. Prisma-backed (migration off Supabase).
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const slug = request.nextUrl.searchParams.get("slug");
+    // This table has no slug column (the old slug lookup always 404'd); match by id.
+    const id = request.nextUrl.searchParams.get("slug");
 
-    if (slug) {
-      const { data, error } = await supabase
-        .from("familia_event_benefits")
-        .select("*")
-        .eq("slug", slug)
-        .eq("is_active", true)
-        .single();
-      if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (id) {
+      const data = await prisma.familia_event_benefits.findFirst({
+        where: { id, is_active: true },
+      });
+      if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
       return NextResponse.json({ data });
     }
 
-    const { data, error } = await supabase
-      .from("familia_event_benefits")
-      .select("*")
-      .eq("is_active", true)
-      .order("event_date", { ascending: true });
-
-    if (error) return NextResponse.json({ error: "Failed to fetch events" }, { status: 500 });
+    const data = await prisma.familia_event_benefits.findMany({
+      where: { is_active: true },
+      orderBy: { event_date: "asc" },
+    });
     return NextResponse.json({ data });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

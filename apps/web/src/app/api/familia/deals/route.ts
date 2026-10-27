@@ -1,35 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 
+// GET is public → Prisma. POST (admin) still uses supabase.auth for the session
+// until Stage 3 (own auth) lands; then it switches to getCurrentUser().
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
     const slug = request.nextUrl.searchParams.get("slug");
 
     if (slug) {
-      const { data, error } = await supabase
-        .from("familia_affiliate_deals")
-        .select("*")
-        .eq("slug", slug)
-        .eq("is_active", true)
-        .single();
-
-      if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      const data = await prisma.familia_affiliate_deals.findFirst({
+        where: { slug, is_active: true },
+      });
+      if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
       return NextResponse.json({ data });
     }
 
-    const { data, error } = await supabase
-      .from("familia_affiliate_deals")
-      .select("*")
-      .eq("is_active", true)
-      .order("is_featured", { ascending: false })
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("GET /api/familia/deals:", error);
-      return NextResponse.json({ error: "Failed to fetch deals" }, { status: 500 });
-    }
-
+    const data = await prisma.familia_affiliate_deals.findMany({
+      where: { is_active: true },
+      orderBy: [{ is_featured: "desc" }, { created_at: "desc" }],
+    });
     return NextResponse.json({ data });
   } catch (error) {
     console.error("GET /api/familia/deals:", error);

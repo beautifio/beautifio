@@ -5,9 +5,12 @@
 FROM node:24-slim AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
-# openssl is required by the Prisma query engine (both to generate and at runtime).
-RUN apt-get update && apt-get install -y --no-install-recommends openssl \
- && rm -rf /var/lib/apt/lists/*
+# openssl/libssl is required by the Prisma query engine. Retry apt — the VPS build
+# network is occasionally flaky reaching deb.debian.org.
+RUN for i in 1 2 3 4 5; do \
+      apt-get update && apt-get install -y --no-install-recommends openssl && break || \
+      { echo "apt retry $i"; sleep 10; }; \
+    done && rm -rf /var/lib/apt/lists/*
 
 # ---------- Dependencies ----------
 FROM base AS deps
