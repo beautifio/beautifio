@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/inspirasi-data";
 
 interface Article {
@@ -50,15 +49,10 @@ export function ArticlePick() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      if (!supabase) { setLoading(false); return }
-
       try {
-        const { data: all, error } = await supabase
-          .from("articles")
-          .select("id, slug, title, cover_image, category, author, source, author_type, is_featured, created_at")
-          .eq("is_published", true)
-          .order("created_at", { ascending: false })
-          .limit(30);
+        // Prisma-backed /api/articles (published, newest first); migration off Supabase.
+        const res = await fetch("/api/articles");
+        const all: any[] = res.ok ? ((await res.json()).articles ?? []).slice(0, 30) : [];
 
         if (all && all.length > 0) {
           const featured = all.filter(a => a.is_featured).slice(0, 5);
