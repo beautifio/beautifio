@@ -19,6 +19,13 @@ Composer. The `prisma@8.0.0-rc` that was in package.json resolves to `@prisma/co
 - `apps/web/src/lib/prisma.ts`: client singleton. `DATABASE_URL` documented in
   `deploy/.env.production.example`.
 
+## PROGRESS (live, site never went down)
+- Stage 1 ✅  Stage 2a ✅ (Prisma in Docker build, openssl, DATABASE_URL→live DB, engine bundled; `/api/prismahealth` → users:107)
+- Stage 2b 🔸 in progress. Converted & verified: inspirasi list (`/api/articles`), inspirasi/[slug], sitemap, home ArticlePick, subscription/plans (3 real plans), site/favicon, global search. **~160 files still import `@/lib/supabase`.**
+- Stage 3 🔸 foundation only: `lib/auth/session.ts` (jose JWT cookie) + `lib/auth/current-user.ts` (additive, unused). AUTH_SECRET set on VPS.
+- **Key blocker:** most remaining files call `supabase.auth.getUser()` → they can't fully drop Supabase until Stage 3 login cutover. Auth cutover must handle BOTH password (4 bcrypt users) AND Google OAuth (~30 users) and be TESTED before flipping — high risk (live login). Do NOT rush it.
+- Patterns: server → `prisma.*` direct; client component → Prisma API route + `fetch`. Watch Prisma strict `string|null` types vs Supabase `any` (needs narrowing).
+
 ## Stage 2 — Query layer: `supabase.from()` → Prisma  (167 files)
 Incremental. Start with read-only, low-risk pages (inspirasi, home), keep behavior.
 Prisma connects as a privileged role and **bypasses RLS**, so every query that returns
