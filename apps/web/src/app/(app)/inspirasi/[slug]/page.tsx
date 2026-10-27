@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CATEGORY_LABELS } from "@/lib/inspirasi-data";
@@ -8,22 +8,21 @@ import InspirasiDetailClient from "./InspirasiDetailClient";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("articles")
-      .select("meta_title, meta_description, og_image, title, excerpt, cover_image")
-      .eq("slug", slug)
-      .maybeSingle();
+    const data = await prisma.articles.findUnique({
+      where: { slug },
+      select: { meta_title: true, meta_description: true, og_image: true, title: true, excerpt: true, cover_image: true },
+    });
 
     if (!data) return { title: "Inspirasi — Beautifio" };
 
+    const ogImage = data.og_image || data.cover_image || "";
     return {
       title: data.meta_title || data.title,
       description: data.meta_description || data.excerpt || "",
       openGraph: {
         title: data.meta_title || data.title,
         description: data.meta_description || data.excerpt || "",
-        images: data.og_image || data.cover_image ? [{ url: data.og_image || data.cover_image }] : [],
+        images: ogImage ? [{ url: ogImage }] : [],
       },
     };
   } catch {
@@ -36,12 +35,7 @@ export default async function InspirasiDetailPage({ params }: { params: Promise<
   let initialItem: any = null;
 
   try {
-    const supabase = await createClient();
-    const { data: article } = await supabase
-      .from("articles")
-      .select("*")
-      .eq("slug", slug)
-      .maybeSingle();
+    const article: any = await prisma.articles.findUnique({ where: { slug } });
 
     if (article) {
       initialItem = {

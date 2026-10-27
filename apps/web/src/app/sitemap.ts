@@ -1,11 +1,9 @@
 import { MetadataRoute } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://beautifio.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient();
-
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${BASE_URL}`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 },
     { url: `${BASE_URL}/home`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
@@ -22,32 +20,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/event`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.5 },
   ];
 
-  const [articlesRes, storiesRes, opportunitiesRes] = await Promise.all([
-    supabase.from("articles").select("slug, updated_at").eq("is_published", true),
-    supabase.from("stories").select("slug, updated_at").eq("is_published", true).is("deleted_at", null),
-    supabase.from("opportunities").select("slug, updated_at").eq("is_active", true),
-  ]);
+  // Prisma-backed (migration off Supabase). Resilient: a DB hiccup still returns static pages.
+  try {
+    const [articles, stories, opportunities] = await Promise.all([
+      prisma.articles.findMany({ where: { is_published: true }, select: { slug: true, updated_at: true } }),
+      prisma.stories.findMany({ where: { is_published: true, deleted_at: null }, select: { slug: true, updated_at: true } }),
+      prisma.opportunities.findMany({ where: { is_active: true }, select: { slug: true } }),
+    ]);
 
-  const articleEntries: MetadataRoute.Sitemap = (articlesRes.data || []).map((a) => ({
-    url: `${BASE_URL}/inspirasi/${a.slug}`,
-    lastModified: new Date(a.updated_at || new Date()),
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  }));
+    const articleEntries: MetadataRoute.Sitemap = articles.map((a) => ({
+      url: `${BASE_URL}/inspirasi/${a.slug}`,
+      lastModified: a.updated_at ?? new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }));
 
-  const storyEntries: MetadataRoute.Sitemap = (storiesRes.data || []).map((s) => ({
-    url: `${BASE_URL}/cerita/${s.slug}`,
-    lastModified: new Date(s.updated_at || new Date()),
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  }));
+    const storyEntries: MetadataRoute.Sitemap = stories.map((s) => ({
+      url: `${BASE_URL}/cerita/${s.slug}`,
+      lastModified: s.updated_at ?? new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }));
 
-  const opportunityEntries: MetadataRoute.Sitemap = (opportunitiesRes.data || []).map((o) => ({
-    url: `${BASE_URL}/opportunity/${o.slug}`,
-    lastModified: new Date(o.updated_at || new Date()),
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
+    const opportunityEntries: MetadataRoute.Sitemap = opportunities.map((o) => ({
+      url: `${BASE_URL}/opportunity/${o.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
 
-  return [...staticPages, ...articleEntries, ...storyEntries, ...opportunityEntries];
+    return [...staticPages, ...articleEntries, ...storyEntries, ...opportunityEntries];
+  } catch {
+    return staticPages;
+  }
 }
