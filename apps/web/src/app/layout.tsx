@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/providers";
@@ -8,16 +8,25 @@ import { NavWrapper } from "@/components/NavWrapper";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+// Vendored locally (next/font/local) so builds don't fetch Google Fonts — the VPS
+// build network times out on fonts.gstatic.com, which made every build ~10min.
+const poppins = localFont({
   variable: "--font-poppins",
+  display: "swap",
+  src: [
+    { path: "./fonts/Poppins-300.woff2", weight: "300", style: "normal" },
+    { path: "./fonts/Poppins-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/Poppins-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/Poppins-600.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/Poppins-700.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/Poppins-800.woff2", weight: "800", style: "normal" },
+  ],
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+const inter = localFont({
   variable: "--font-inter",
+  display: "swap",
+  src: [{ path: "./fonts/Inter.woff2", weight: "100 900", style: "normal" }],
 });
 
 export const metadata: Metadata = {
