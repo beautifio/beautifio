@@ -15,6 +15,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
 
+  // An invalid UUID must not reach Postgres: PostgREST would raise
+  // `invalid input syntax for type uuid`, which surfaced as a 5xx.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return NextResponse.json({ error: "ID event tidak valid" }, { status: 400 });
+  }
+
   const { data: regs, error } = await supabase.from("event_registrations")
     .select("*, user:users(full_name, email)")
     .eq("event_id", id)
