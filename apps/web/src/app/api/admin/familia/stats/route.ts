@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
 
 export async function GET() {
   const supabase = await createClient();
 
-  // Check admin role
-  const { data: { user } } = await supabase.auth.getUser();
+  // Check admin role (custom JWT session)
+  const user = await getServerUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
   if (!profile?.role || !["admin","superadmin","redaksi"].includes(profile.role))

@@ -69,17 +69,22 @@ export default function CareChatPage() {
   }, []);
 
   useEffect(() => {
-    const supabase = createClient();
-    if (!supabase) return;
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    async function loadSessions() {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      const user = data?.data;
       if (!user) return;
+      const supabase = createClient();
+      if (!supabase) return;
       supabase.from('care_chat_sessions')
         .select('*, messages:care_chat_messages(content, created_at)')
         .eq('user_id', user.id)
         .neq('status', 'closed')
         .order('created_at', { ascending: false })
         .then(({ data }) => setMySessions(data ?? []));
-    });
+    }
+    loadSessions();
   }, []);
 
   function getSchedule(type: string) {

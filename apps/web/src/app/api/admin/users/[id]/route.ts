@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
 
 async function checkSuperadmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return false;
   const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
   return admin?.role === "superadmin";
@@ -59,7 +60,8 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const { error } = await supabase.auth.admin.deleteUser(id);
+    // Custom JWT auth: delete directly from users table (cascades via FK).
+    const { error } = await supabase.from("users").delete().eq("id", id);
     if (error) throw error;
 
     return NextResponse.json({ data: { id, deleted: true } });

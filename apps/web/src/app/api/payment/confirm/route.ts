@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return NextResponse.json({ confirmed: false, message: "Unauthorized" }, { status: 401 });
 
   const { invoice_id, sub_id, ref_id } = await request.json();
@@ -70,8 +71,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify payment via Doku callback status — Doku webhook is the source of truth
-    // This endpoint is a polling fallback ONLY if Doku webhook arrives late
-    const dokuRes = await fetch("https://api.doku.com/checkout/v1/payment/" + sub.payment_ref, {
+    // This endpoint is a polling fallback ONLY if Doku webhook arrives late.
+    // payment_ref may carry a "|voucher:<id>" suffix (see /api/payment/subscribe);
+    // Doku only knows the plain invoice number, so strip the suffix before lookup.
+    const invoiceRef = (sub.payment_ref || "").split("|")[0];
+    const dokuRes = await fetch("https://api.doku.com/checkout/v1/payment/" + invoiceRef, {
       headers: { "Client-Id": process.env.DOKU_CLIENT_ID || "", "Request-Id": crypto.randomUUID(), "Request-Timestamp": new Date().toISOString() },
     }).catch(() => null);
 
@@ -80,7 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     const j = await dokuRes.json();
-    const dokuOk = j?.transaction?.status === "SUCCESS" || j?.response?.order?.invoice_number === sub.payment_ref;
+    const dokuOk = j?.transaction?.status === "SUCCESS" || j?.response?.order?.invoice_number === invoiceRef;
 
     if (!dokuOk) return NextResponse.json({ confirmed: false, message: "Pembayaran belum selesai. Silakan selesaikan pembayaran terlebih dahulu." });
 

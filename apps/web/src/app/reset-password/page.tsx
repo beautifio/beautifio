@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react"
-import { supabase } from "@/lib/supabase/client"
+import { resetPasswordWithTokenAction } from "@/app/actions/auth"
 
 export default function ResetPasswordPage() {
-  const router = useRouter()
+  const [token, setToken] = useState<string | null>(null)
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [show, setShow] = useState(false)
@@ -16,19 +15,24 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    supabase?.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "PASSWORD_RECOVERY") return
-    })
+    // Read the one-time token from the email link without useSearchParams
+    // (avoids requiring a Suspense boundary at build time).
+    const params = new URLSearchParams(window.location.search)
+    setToken(params.get("token"))
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
     if (password.length < 8) { setError("Password minimal 8 karakter"); return }
     if (password !== confirm) { setError("Password tidak cocok"); return }
+    if (!token) { setError("Tautan reset tidak valid. Buka tautan dari email kamu."); return }
+
     setLoading(true)
-    const { error: err } = await supabase!.auth.updateUser({ password })
-    if (err) { setError("Gagal: " + (err.message || "coba lagi")); setLoading(false); return }
+    const result = await resetPasswordWithTokenAction(token, password)
+    if (result.error) { setError(result.error); setLoading(false); return }
     setSuccess(true)
+    setLoading(false)
   }
 
   if (success) return (
@@ -48,15 +52,21 @@ export default function ResetPasswordPage() {
         <Link href="/login" className="flex items-center gap-1 text-sm mb-6" style={{ color: "#647488" }}><ArrowLeft size={16} /> Kembali</Link>
         <h1 className="text-xl font-bold mb-1" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Atur Password Baru</h1>
         <p className="text-xs mb-6" style={{ color: "#647488" }}>Masukkan password baru untuk akunmu</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <input type={show ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Password baru" className="w-full px-4 py-3 rounded-xl border text-sm outline-none" style={{ borderColor: "#E2E8F0", color: "#1E2938" }} />
-            <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#647488" }}>{show ? <EyeOff size={16} /> : <Eye size={16} />}</button>
-          </div>
-          <input type={show ? "text" : "password"} value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Konfirmasi password" className="w-full px-4 py-3 rounded-xl border text-sm outline-none" style={{ borderColor: "#E2E8F0", color: "#1E2938" }} />
-          {error && <p className="text-xs" style={{ color: "#EF4444" }}>{error}</p>}
-          <button type="submit" disabled={loading} className="w-full py-3 rounded-xl text-sm font-bold text-white disabled:opacity-50 cursor-pointer" style={{ background: "#084463" }}>{loading ? "Menyimpan..." : "Simpan Password Baru"}</button>
-        </form>
+        {token === null ? (
+          <p className="text-sm" style={{ color: "#647488" }}>Memuat tautan reset…</p>
+        ) : !token ? (
+          <p className="text-sm" style={{ color: "#EF4444" }}>Tautan reset tidak valid. Silakan minta tautan baru dari halaman Lupa Password.</p>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
+              <input type={show ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Password baru" className="w-full px-4 py-3 rounded-xl border text-sm outline-none" style={{ borderColor: "#E2E8F0", color: "#1E2938" }} />
+              <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#647488" }}>{show ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+            </div>
+            <input type={show ? "text" : "password"} value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Konfirmasi password" className="w-full px-4 py-3 rounded-xl border text-sm outline-none" style={{ borderColor: "#E2E8F0", color: "#1E2938" }} />
+            {error && <p className="text-xs" style={{ color: "#EF4444" }}>{error}</p>}
+            <button type="submit" disabled={loading} className="w-full py-3 rounded-xl text-sm font-bold text-white disabled:opacity-50 cursor-pointer" style={{ background: "#084463" }}>{loading ? "Menyimpan..." : "Simpan Password Baru"}</button>
+          </form>
+        )}
       </div>
     </div>
   )

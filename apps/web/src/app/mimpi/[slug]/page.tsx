@@ -10,7 +10,6 @@ import {
 import { Button, Card } from "@beautifio/ui";
 import { getDreamTemplate, getBenchmarkForTemplate } from "@beautifio/utils";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/lib/supabase/client";
 import type { DreamTemplate, DreamPhase, DreamPhaseSmallWin } from "@beautifio/types";
 
 export default function MimpiPreviewPage() {
@@ -43,23 +42,16 @@ export default function MimpiPreviewPage() {
   const careerOptions = template.career_options || [];
 
   async function handleStart() {
-    if (!supabase) {
-      setError("Koneksi database tidak tersedia.");
-      return;
-    }
     setStarting(true);
     setError("");
 
     try {
+      localStorage.setItem("pending_template", slug);
       if (!user) {
-        // Not authenticated → sign in anonymously first
-        localStorage.setItem("pending_template", slug);
-        const { data, error: signInErr } = await supabase.auth.signInAnonymously();
-        if (signInErr) throw signInErr;
-        window.location.href = "/journey";
+        // Custom JWT auth: no anonymous sign-in — require login, then resume journey.
+        router.push(`/login?next=/mimpi/${slug}`);
       } else {
         // Already authenticated → just go to journey
-        localStorage.setItem("pending_template", slug);
         router.push("/journey");
       }
     } catch (err: any) {

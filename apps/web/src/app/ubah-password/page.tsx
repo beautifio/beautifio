@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react"
-import { supabase } from "@/lib/supabase/client"
+import { changePasswordAction } from "@/app/actions/auth"
 
 export default function UbahPasswordPage() {
   const router = useRouter()
@@ -23,17 +23,12 @@ export default function UbahPasswordPage() {
     if (newPw !== confirm) { setError("Password baru tidak cocok"); return }
 
     setLoading(true)
-    const { data: session } = await supabase!.auth.getSession()
-    const email = session?.session?.user?.email
-    if (!email) { setError("Sesi tidak valid. Silakan login ulang."); setLoading(false); return }
-
-    const { error: signInErr } = await supabase!.auth.signInWithPassword({ email, password: currentPw })
-    if (signInErr) { setError("Password saat ini salah"); setLoading(false); return }
-
-    const { error: updateErr } = await supabase!.auth.updateUser({ password: newPw })
-    if (updateErr) { setError("Gagal: " + (updateErr.message || "coba lagi")); setLoading(false); return }
+    // Custom JWT auth: verify current password and store a new bcrypt hash.
+    const result = await changePasswordAction(currentPw, newPw)
+    if (result.error) { setError(result.error); setLoading(false); return }
 
     setSuccess(true)
+    setLoading(false)
   }
 
   if (success) return (

@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { MessageCircle, LogIn, LogOut, Clock } from 'lucide-react'
 
+async function fetchCurrentUser() {
+  const res = await fetch("/api/auth/me", { credentials: "include" });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data?.data || null;
+}
+
 export default function VolunteerDashboard() {
   const router = useRouter()
   const [isOnline, setIsOnline] = useState(false)
@@ -17,7 +24,7 @@ export default function VolunteerDashboard() {
     if (!supabase) return
 
     ;(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await fetchCurrentUser()
       if (!user) { router.push('/login'); return }
 
       // Get volunteer status
@@ -46,7 +53,7 @@ export default function VolunteerDashboard() {
   const toggleOnline = async () => {
     const supabase = createClient()
     if (!supabase) return
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await fetchCurrentUser()
     if (!user) return
 
     const newStatus = !isOnline

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createCheckoutPayment } from "@/lib/doku/checkout";
+import { getServerUser } from "@/lib/auth/server-auth";
 import crypto from "crypto";
 
 const CLIENT_ID = process.env.DOKU_CLIENT_ID || "";
@@ -8,7 +9,7 @@ const SECRET_KEY = process.env.DOKU_SECRET_KEY || "";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { plan_id, voucher_code, amount: customAmount, sub_type, ref_id } = await request.json();
@@ -135,7 +136,13 @@ export async function POST(request: NextRequest) {
   const invoiceId = `SUB-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 
   // Create subscription as pending first
-  const durationDays = plan.duration_type === "yearly" ? 365 : plan.duration_type === "monthly" ? 30 : plan.duration_type === "quarterly" ? 90 : 30;
+  const durationDays =
+    plan.duration_type === "yearly" ? 365
+    : plan.duration_type === "quarterly" ? 90
+    : plan.duration_type === "weekly" ? 7
+    : plan.duration_type === "daily" ? 1
+    : plan.duration_type === "lifetime" ? 36500
+    : 30; // monthly / fallback
   const now = new Date();
   const expiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
 

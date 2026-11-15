@@ -10,12 +10,19 @@ export default function CarePage() {
   const [accepting, setAccepting] = useState(false);
   const [activeSessions, setActiveSessions] = useState(0);
 
+  async function fetchCurrentUser() {
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.data || null;
+  }
+
   useEffect(() => {
     async function init() {
+      const user = await fetchCurrentUser();
+      if (!user) { setLoading(false); router.push('/'); return; }
       const supabase = createClient();
       if (!supabase) { setLoading(false); return; }
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/'); return; }
       const { data: profile } = await supabase
         .from('users')
         .select('care_agreement_accepted')
@@ -37,13 +44,13 @@ export default function CarePage() {
 
   async function handleAccept() {
     setAccepting(true);
+    const user = await fetchCurrentUser();
     const supabase = createClient();
-    if (!supabase) { setAccepting(false); return; }
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!supabase || !user) { setAccepting(false); return; }
     const { error } = await supabase.from('users').update({
       care_agreement_accepted: true,
       care_agreement_accepted_at: new Date().toISOString(),
-    }).eq('id', user?.id);
+    }).eq('id', user.id);
     if (error) { setAccepting(false); return; }
     setShowAgreement(false);
     setAccepting(false);

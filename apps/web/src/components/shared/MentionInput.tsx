@@ -156,7 +156,10 @@ export async function notifyMentions(
 ) {
   if (!supabase) return
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return;
+    const data = await res.json();
+    const user = data?.data;
     if (!user) return
     await supabase.rpc("notify_mentions", {
       p_text: text,

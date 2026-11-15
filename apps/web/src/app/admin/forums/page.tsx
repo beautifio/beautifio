@@ -36,11 +36,19 @@ export default function AdminForumsPage() {
 
   useEffect(() => { load() }, [])
 
+  const currentAdminId = async (): Promise<string | undefined> => {
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return undefined;
+    const data = await res.json();
+    return data?.data?.id;
+  }
+
   const handleApprove = async (id: string) => {
     setProcessing(id)
+    const adminId = await currentAdminId()
     const { data: me } = await supabase!.rpc("approve_circle_submission", {
       submission_id: id,
-      admin_id: (await supabase!.auth.getUser()).data.user?.id,
+      admin_id: adminId,
     })
     if (me) {
       setSubmissions((prev) => prev.map((s) => s.id === id ? { ...s, status: "approved" } : s))
@@ -50,9 +58,10 @@ export default function AdminForumsPage() {
 
   const handleReject = async (id: string) => {
     setProcessing(id)
+    const adminId = await currentAdminId()
     await supabase!.rpc("reject_circle_submission", {
       submission_id: id,
-      admin_id: (await supabase!.auth.getUser()).data.user?.id,
+      admin_id: adminId,
     })
     setSubmissions((prev) => prev.map((s) => s.id === id ? { ...s, status: "rejected" } : s))
     setProcessing(null)

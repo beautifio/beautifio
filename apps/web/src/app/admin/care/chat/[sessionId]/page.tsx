@@ -82,7 +82,10 @@ export default function AdminCareReply() {
     setSending(true);
     const supabase = createClient();
     if (!supabase) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return;
+    const authData = await res.json();
+    const user = authData?.data;
     const userMsg = input.trim();
 
     // Optimistic: add immediately
@@ -116,7 +119,8 @@ export default function AdminCareReply() {
     setMeetingSaving(true)
     const supabase = createClient()
     if (!supabase) { setMeetingSaving(false); return }
-    const { data: { user } } = await supabase.auth.getUser()
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    const user = res.ok ? (await res.json())?.data : null;
 
     await supabase.from('care_meeting_invites').insert({
       session_id: sessionId, platform: meetingPlatform, link: meetingLink.trim(), created_by: user?.id,
@@ -159,7 +163,8 @@ export default function AdminCareReply() {
   async function handleTransfer(toUserId: string, toName: string) {
     const supabase = createClient()
     if (!supabase) return
-    const { data: { user } } = await supabase.auth.getUser()
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    const user = res.ok ? (await res.json())?.data : null;
 
     // Update session
     await supabase.from('care_chat_sessions').update({

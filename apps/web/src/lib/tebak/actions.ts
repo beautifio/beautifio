@@ -4,10 +4,11 @@ import { getRandomBotId } from "./bot"
 import type { TebakQuestion } from "./queries"
 
 import { getDailyTebakCount, getUserTier, getTierLimits } from "@/lib/tier"
+import { getServerUser } from "@/lib/auth/server-auth"
 
 export async function joinTebakQueue(): Promise<{ sessionId: string; playerRole: 'a' | 'b'; isNew: boolean; limitReached?: boolean; maxPerDay?: number }> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error('Unauthorized')
 
   const tier = await getUserTier(user.id)
@@ -249,7 +250,7 @@ export async function getSessionWithPlayers(sessionId: string) {
 
 export async function retryMatchmaking(sessionId: string): Promise<string | null> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return null
 
   const { data: ourSession } = await supabase
@@ -300,7 +301,7 @@ export async function advanceGame(
   sessionId: string, expectedSeq: number
 ): Promise<{ status: string; new_question: TebakQuestion | null } | null> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error("Unauthorized")
   const { data, error } = await supabase.rpc('advance_tebak_game_v2', {
     p_session_id: sessionId,
@@ -315,7 +316,7 @@ export async function advanceGame(
 
 export async function startQuestionTimer(sessionId: string, seq: number): Promise<string | null> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error("Unauthorized")
   const { data, error } = await supabase.rpc('start_question_timer', {
     p_session_id: sessionId,
@@ -327,7 +328,7 @@ export async function startQuestionTimer(sessionId: string, seq: number): Promis
 
 export async function startDiscQuestionTimer(sessionId: string, seq: number): Promise<string | null> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error("Unauthorized")
   const { data, error } = await supabase.rpc('start_disc_question_timer', {
     p_session_id: sessionId,
@@ -339,7 +340,7 @@ export async function startDiscQuestionTimer(sessionId: string, seq: number): Pr
 
 export async function submitSubjectAnswer(questionId: string, answer: string): Promise<void> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error("Unauthorized")
   const now = new Date()
   // +15.5s = 15s for the guesser + 500ms network latency buffer
@@ -357,7 +358,7 @@ export async function submitGuesserAnswer(
   questionId: string, guesserId: string, answer: string, startedAt: number
 ): Promise<{ isCorrect: boolean; points: number }> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error("Unauthorized")
 
   const { data: q } = await supabase
@@ -440,8 +441,8 @@ export async function submitDiscAnswer(
   questionId: string, answer: string, startedAt: number
 ): Promise<{ status: 'answered' | 'revealed' | 'already_answered' }> {
   const supabase = await createServerClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) throw new Error('Unauthorized')
+  const user = await getServerUser()
+  if (!user) throw new Error('Unauthorized')
 
   const { data: q, error: qError } = await supabase
     .from('tebak_questions')
@@ -538,7 +539,7 @@ export async function handleDiscTimeout(questionId: string): Promise<void> {
 
 export async function signalMatchIntroReady(sessionId: string): Promise<void> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error('Unauthorized')
 
   const { data: session, error } = await supabase
@@ -567,7 +568,7 @@ export async function resetReadyFlags(sessionId: string): Promise<void> {
 
 export async function handleSubjectTimeout(questionId: string, _sessionId: string): Promise<void> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error("Unauthorized")
   await supabase.rpc('handle_question_timeout', {
     p_question_id: questionId,
@@ -576,7 +577,7 @@ export async function handleSubjectTimeout(questionId: string, _sessionId: strin
 
 export async function offerRematch(originalSessionId: string, opponentId: string): Promise<string> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error('Unauthorized')
 
   // Pastikan tidak ada offer yang sudah ada
@@ -642,7 +643,7 @@ export async function offerRematch(originalSessionId: string, opponentId: string
 
 export async function respondToRematch(offerId: string, accept: boolean): Promise<string | null> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error('Unauthorized')
   
   const status = accept ? 'accepted' : 'declined'

@@ -1,9 +1,10 @@
 'use server'
 
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { getServerUser } from "@/lib/auth/server-auth"
 
 async function checkAdmin(supabase: Awaited<ReturnType<typeof createServerClient>>): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return false
   const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
   return profile?.role === 'admin' || profile?.role === 'superadmin' || profile?.role === 'redaksi'
@@ -28,7 +29,7 @@ export async function getActiveBanner(location: string): Promise<{
 
 export async function recordAdImpression(bannerId: string, sessionId: string): Promise<void> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return
   await supabase.from('ad_impressions').insert({
     banner_id: bannerId, session_id: sessionId, user_id: user.id
@@ -37,7 +38,7 @@ export async function recordAdImpression(bannerId: string, sessionId: string): P
 
 export async function recordAdClick(bannerId: string, sessionId: string): Promise<void> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return
   await supabase.from('ad_clicks').insert({
     banner_id: bannerId, session_id: sessionId, user_id: user.id

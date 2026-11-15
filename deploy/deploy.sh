@@ -35,7 +35,7 @@ fi
 docker compose --env-file .env.production up -d --build
 docker image prune -f >/dev/null 2>&1 || true
 echo "==> Running containers:"
-docker compose ps
+docker compose --env-file .env.production ps
 EOF
 
 echo "==> Done."

@@ -210,10 +210,8 @@ export default function EditProfilePage() {
         .eq("id", user.id)
       if (updateError) throw updateError
 
-      // Update auth metadata
-      await supabase!.auth.updateUser({
-        data: { full_name: fullName },
-      })
+      // Custom JWT auth: full_name lives in the users table (already updated
+      // above), so there is no separate auth metadata to sync.
 
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { getServerUser } from "@/lib/auth/server-auth"
 
 export const dynamic = "force-dynamic"
 
@@ -50,7 +51,7 @@ async function aiComplete(
 
 export async function GET() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const { data: role } = await supabase.from("users").select("role").eq("id", user.id).single()
   if (!["superadmin", "admin", "redaksi"].includes(role?.role || "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })

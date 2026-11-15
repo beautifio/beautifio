@@ -1,13 +1,19 @@
 import { create } from "zustand";
-import type { User, Session } from "@supabase/supabase-js";
+import { resetAccessTokenCache } from "@/lib/supabase/client";
+
+interface AppUser {
+  id: string;
+  email: string;
+  full_name: string;
+  avatar_url?: string | null;
+  role: string;
+}
 
 interface AuthState {
-  user: User | null;
-  session: Session | null;
+  user: AppUser | null;
   isLoading: boolean;
   bisikMatchCount: number;
-  setUser: (user: User | null) => void;
-  setSession: (session: Session | null) => void;
+  setUser: (user: AppUser | null) => void;
   setLoading: (loading: boolean) => void;
   setBisikMatchCount: (count: number) => void;
   incrementBisikMatch: () => void;
@@ -18,14 +24,10 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  session: null,
   isLoading: true,
   bisikMatchCount: 0,
   setUser: (user) => {
     set({ user });
-  },
-  setSession: (session) => {
-    set({ session });
   },
   setLoading: (isLoading) => {
     set((state) => {
@@ -38,16 +40,24 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearBisikMatch: () => set({ bisikMatchCount: 0 }),
   signOut: async () => {
     try {
-      const { supabase } = await import("@/lib/supabase/client");
-      if (supabase) {
-        await supabase.auth.signOut();
+      const res = await fetch("/api/auth/signout", { method: "POST" });
+      if (!res.ok) {
+        // Ignore server errors, proceed with local cleanup
       }
     } catch {
-      // Proceed with local cleanup even if Supabase call fails
+      // Ignore network errors
     }
-    set({ user: null, session: null, isLoading: false, bisikMatchCount: 0 });
+    // Drop the in-memory PostgREST JWT so a stale token cannot read user data.
+    resetAccessTokenCache();
+    // Notify other tabs to sign out
+    try {
+      localStorage.setItem("bf_signout", Date.now().toString());
+    } catch {
+      // Ignore
+    }
+    set({ user: null, isLoading: false, bisikMatchCount: 0 });
   },
   reset: () => {
-    set({ user: null, session: null, isLoading: false, bisikMatchCount: 0 });
+    set({ user: null, isLoading: false, bisikMatchCount: 0 });
   },
 }));

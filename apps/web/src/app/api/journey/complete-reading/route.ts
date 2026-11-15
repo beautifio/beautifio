@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteClient } from "@/lib/supabase/server";
 import { completeActivity } from "@/lib/journey-queries";
+import { verifyServerUser } from "@/lib/auth/server-auth";
+import { SESSION_COOKIE } from "@/lib/auth/session";
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = createRouteClient(request);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
+    const user = await verifyServerUser(token);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

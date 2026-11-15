@@ -27,7 +27,8 @@ const COLORS = {
 };
 
 const DURATION_MAP: Record<string, string> = {
-  monthly: "Bulanan", quarterly: "3 Bulan", yearly: "Tahunan", lifetime: "Seumur Hidup",
+  daily: "Harian", weekly: "Mingguan", monthly: "Bulanan",
+  quarterly: "3 Bulan", yearly: "Tahunan", lifetime: "Seumur Hidup",
 };
 
 export default function AdminSubscriptions() {
@@ -327,7 +328,9 @@ export default function AdminSubscriptions() {
                     <td className="py-3 px-3">
                       <span className="font-medium" style={{ color: COLORS.peacock }}>Rp {p.price_idr.toLocaleString("id-ID")}</span>
                       {p.original_price_idr && <span className="text-[10px] line-through ml-1" style={{ color: COLORS.slate }}>Rp {p.original_price_idr.toLocaleString("id-ID")}</span>}
-                      <span className="text-[10px] ml-1" style={{ color: COLORS.slate }}>/ {p.duration_type === "yearly" ? "thn" : "bln"}</span>
+                      <span className="text-[10px] ml-1" style={{ color: COLORS.slate }}>
+                        / {{ daily: "hr", weekly: "mgg", monthly: "bln", quarterly: "3bln", yearly: "thn", lifetime: "selamanya" }[p.duration_type] || "bln"}
+                      </span>
                     </td>
                     <td className="py-3 px-3" style={{ color: COLORS.deepSlate }}>{p.max_active_chats}</td>
                     <td className="py-3 px-3">

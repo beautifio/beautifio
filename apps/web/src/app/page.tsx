@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { ensureGuestSession } from "@/app/actions/auth";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -37,7 +38,8 @@ export default function LandingPage() {
 
   async function handleStart() {
     setLoading(true);
-    await supabase?.auth.signInAnonymously();
+    const result = await ensureGuestSession();
+    if (result.error) { setLoading(false); return; }
     router.replace("/home");
   }
 

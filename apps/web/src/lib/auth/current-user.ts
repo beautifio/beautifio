@@ -1,19 +1,10 @@
-import { prisma } from "@/lib/prisma";
-import { readSession } from "./session";
+import { getServerUser } from "./server-auth";
 
-// Server-side current user from our own session (migration off Supabase Auth).
-// Replaces supabase.auth.getUser() in server components, actions, and route handlers.
+// Server-side current user from our own bf_session JWT.
+// Kept as a thin alias so any future caller stays on the single source of truth
+// (the Supabase REST users table, same as every other query in the app).
 export async function getCurrentUser() {
-  const session = await readSession();
-  if (!session?.sub) return null;
-  try {
-    return await prisma.users.findUnique({
-      where: { id: session.sub },
-      select: { id: true, email: true, full_name: true, role: true, avatar_url: true, is_bot: true },
-    });
-  } catch {
-    return null;
-  }
+  return getServerUser();
 }
 
 export async function requireUser() {

@@ -1,60 +1,22 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { verifyToken, SESSION_COOKIE } from "@/lib/auth/jwt";
 
-// Same internal-first resolution as lib/supabase/server.ts — keeps the session
-// lookup inside the docker network instead of hairpinning back through Traefik.
-const SUPABASE_URL =
-  process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
-
-const ADMIN_ROLES = ["admin", "superadmin", "redaksi"];
-
+// Middleware runs in the Edge runtime: Prisma and the Supabase server client
+// cannot run here. It therefore only gates on the presence of a VALID session.
+// Role/authorization is checked against the DB in app/admin/layout.tsx (server
+// component) and in the /api/admin route handlers themselves — reading the
+// role from the JWT here would go stale for up to 30 days after a role change.
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const session = await verifyToken(token);
 
-  const supabase = createServerClient(
-    SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Both /admin and /mitra require a session.
-  if (!user) {
+  if (!session?.sub) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // /admin additionally requires an editorial/admin role (see BEAUTIFIO_INSPIRASI_PLAYBOOK).
-  if (request.nextUrl.pathname.startsWith("/admin")) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.role || !ADMIN_ROLES.includes(profile.role)) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-  }
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

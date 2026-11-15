@@ -1,57 +1,71 @@
 "use client";
 
-import { useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 
+export interface AppUser {
+  id: string;
+  email: string;
+  full_name: string;
+  avatar_url?: string | null;
+  role: string;
+  status: string;
+  is_verified: boolean;
+  onboarding_completed: boolean;
+  // Compatibility fields: previously supplied by Supabase Auth. Our guest
+  // sessions are flagged via `is_anonymous`; metadata mirrors the users row.
+  is_anonymous?: boolean;
+  app_metadata?: { provider?: string } | null;
+  user_metadata?: { full_name?: string } | null;
+}
+
 export function useAuth() {
-  const user = useAuthStore((s) => s.user);
-  const session = useAuthStore((s) => s.session);
+  const user = useAuthStore((s) => s.user as AppUser | null);
   const isLoading = useAuthStore((s) => s.isLoading);
-  const setUser = useAuthStore((s) => s.setUser);
-  const setSession = useAuthStore((s) => s.setSession);
+  const setUser = useAuthStore((s) => s.setUser as (u: AppUser | null) => void);
   const setLoading = useAuthStore((s) => s.setLoading);
   const signOut = useAuthStore((s) => s.signOut);
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-
     let cancelled = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    async function loadSession() {
       if (cancelled) return;
-      if (event === "SIGNED_OUT") {
-        setUser(null);
-        setSession(null);
-      } else {
-        setSession(session);
-        setUser(session?.user ?? null);
+      try {
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && data?.data) {
+            setUser(data.data as AppUser);
+          }
+        } else if (!cancelled) {
+          setUser(null);
+        }
+      } catch {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      if (event === "INITIAL_SESSION") {
-        setLoading(false);
-      }
-    });
+    }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (cancelled) return;
-      if (session?.access_token !== useAuthStore.getState().session?.access_token) {
-        setSession(session);
-        setUser(session?.user ?? null);
+    loadSession();
+
+    // Listen for sign-out events from other tabs/windows
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "bf_signout") {
+        setUser(null);
       }
-      setLoading(false);
-    }).catch(() => {
-      if (cancelled) return;
-      setLoading(false);
-    });
+    };
+    window.addEventListener("storage", onStorage);
 
     return () => {
       cancelled = true;
-      subscription.unsubscribe();
+      window.removeEventListener("storage", onStorage);
     };
-  }, [setUser, setSession, setLoading]);
+  }, [setUser, setLoading]);
 
-  return { user, session, isLoading, signOut };
+  return { user, isLoading, signOut };
 }

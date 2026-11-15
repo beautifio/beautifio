@@ -39,18 +39,21 @@ export default function AdminNotificationsPage() {
     setSending(true)
     setResult(null)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Not logged in")
-      const { data, error } = await supabase.rpc("send_broadcast_notification", {
+      const meRes = await fetch("/api/auth/me", { credentials: "include" });
+      if (!meRes.ok) throw new Error("Not logged in");
+      const meData = await meRes.json();
+      const me = meData?.data;
+      if (!me) throw new Error("Not logged in");
+      const { data: rpcData, error } = await supabase.rpc("send_broadcast_notification", {
         p_type: type,
         p_title: title.trim(),
         p_body: body.trim(),
         p_link_url: linkUrl.trim() || null,
-        p_admin_id: user.id,
+        p_admin_id: me.id,
       })
       if (error) throw error
-      const res = data as any
-      setResult({ ok: true, msg: `Berhasil! Notifikasi terkirim ke ${res.recipient_count} user.` })
+      const broadcast = rpcData as any
+      setResult({ ok: true, msg: `Berhasil! Notifikasi terkirim ke ${broadcast.recipient_count} user.` })
       setTitle("")
       setBody("")
       setLinkUrl("")

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createCheckoutPayment } from "@/lib/doku/checkout";
+import { getServerUser } from "@/lib/auth/server-auth";
 import crypto from "crypto";
 
 const CLIENT_ID = process.env.DOKU_CLIENT_ID || "";
@@ -22,7 +23,7 @@ async function getUserTierDiscount(userId: string): Promise<number> {
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { event_id, whatsapp, name, email, promo_code, validate_promo } = await request.json();

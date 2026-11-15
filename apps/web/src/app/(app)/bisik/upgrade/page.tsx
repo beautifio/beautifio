@@ -15,6 +15,15 @@ const P = "#084463"; const SF = "#FFC64F"; const IC = "#6BB9D4";
 const GR = "#22C55E"; const DS = "#1E2938"; const SL = "#647488";
 const BD = "#E2E8F0"; const CL = "#F8FAFC"; const WH = "#FFFFFF";
 
+type Duration = "weekly" | "monthly" | "yearly";
+const DURATIONS: Duration[] = ["weekly", "monthly", "yearly"];
+const DURATION_LABEL: Record<Duration, string> = {
+  weekly: "Mingguan", monthly: "Bulanan", yearly: "Tahunan",
+};
+const DURATION_UNIT: Record<Duration, string> = {
+  weekly: "/ minggu", monthly: "/ bulan", yearly: "/ tahun",
+};
+
 export default function UpgradePage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -22,7 +31,7 @@ export default function UpgradePage() {
   const [loading, setLoading] = useState(true);
   const [payLoading, setPayLoading] = useState(false);
   const [tier, setTier] = useState<"pro" | "ultimate">("pro");
-  const [duration, setDuration] = useState<"monthly" | "yearly">("monthly");
+  const [duration, setDuration] = useState<Duration>("monthly");
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherData, setVoucherData] = useState<any>(null);
   const [voucherLoading, setVoucherLoading] = useState(false);
@@ -92,7 +101,7 @@ export default function UpgradePage() {
       <div className="px-4 max-w-sm mx-auto -mt-8 relative z-10 mb-3">
         <div className="flex rounded-2xl p-1" style={{ background: WH, boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
           {(["pro","ultimate"] as const).map(t => (
-            <button key={t} onClick={() => setTier(t)}
+            <button key={t} onClick={() => { setTier(t); setVoucherData(null); setVoucherCode(""); }}
               className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer"
               style={{ background: tier === t ? P : "transparent", color: tier === t ? WH : SL }}>
               {t === "ultimate" ? <Star size={12} /> : <Crown size={12} />}
@@ -104,15 +113,15 @@ export default function UpgradePage() {
 
       {/* Duration pills */}
       <div className="flex justify-center gap-2 mb-4">
-        {(["monthly","yearly"] as const).map(d => (
-          <button key={d} onClick={() => setDuration(d)}
+        {DURATIONS.map(d => (
+          <button key={d} onClick={() => { setDuration(d); setVoucherData(null); setVoucherCode(""); }}
             className="px-4 py-1.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer border"
             style={{
               background: duration === d ? P : WH,
               color: duration === d ? WH : SL,
               borderColor: duration === d ? "transparent" : IC,
             }}>
-            {d === "monthly" ? "Bulanan" : "Tahunan"}
+            {DURATION_LABEL[d]}
           </button>
         ))}
       </div>
@@ -122,13 +131,13 @@ export default function UpgradePage() {
         <div className="px-4 max-w-sm mx-auto text-center mb-4">
           <div className="py-6 px-4 rounded-2xl" style={{ background: WH, border: `1px solid ${IC}`, boxShadow: `0 1px 8px rgba(8,68,99,0.06)` }}>
             <p className="text-[10px] uppercase tracking-widest font-semibold mb-3" style={{ color: P }}>
-              {tier === "ultimate" ? "💎 Ultimate" : "👑 Pro"} {duration === "monthly" ? "Bulanan" : "Tahunan"}
+              {tier === "ultimate" ? "💎 Ultimate" : "👑 Pro"} {DURATION_LABEL[duration]}
             </p>
             {plan.original_price_idr && (
               <p className="text-sm line-through mb-1" style={{ color: SL }}>{fp(plan.original_price_idr)}</p>
             )}
             <p className="text-4xl font-extrabold" style={{ color: DS, fontFamily: "Poppins, sans-serif" }}>{fp(plan.price_idr)}</p>
-            <p className="text-xs mt-0.5" style={{ color: SL }}>/ {duration === "yearly" ? "tahun" : "bulan"}</p>
+            <p className="text-xs mt-0.5" style={{ color: SL }}>{DURATION_UNIT[duration]}</p>
             {saving > 0 && (
               <p className="text-xs mt-2 font-semibold" style={{ color: GR }}>
                 Hemat {saving}% · +PPN 11%
@@ -137,6 +146,11 @@ export default function UpgradePage() {
             {duration === "yearly" && (
               <p className="text-[10px] mt-0.5" style={{ color: SL }}>
                 Setara {fp(Math.round(plan.price_idr / 12))}/bln
+              </p>
+            )}
+            {duration === "weekly" && (
+              <p className="text-[10px] mt-0.5" style={{ color: SL }}>
+                Cocok buat coba-coba, tanpa komitmen bulanan
               </p>
             )}
 
@@ -166,6 +180,19 @@ export default function UpgradePage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {!plan && (
+        <div className="px-4 max-w-sm mx-auto text-center mb-4">
+          <div className="py-6 px-4 rounded-2xl" style={{ background: WH, border: `1px solid ${BD}` }}>
+            <p className="text-sm font-semibold" style={{ color: DS }}>
+              Paket {tier === "ultimate" ? "Ultimate" : "Pro"} {DURATION_LABEL[duration]} belum tersedia
+            </p>
+            <p className="text-xs mt-1 leading-relaxed" style={{ color: SL }}>
+              Pilih kombinasi paket lain, atau hubungi administrator untuk menambahkan paket ini.
+            </p>
           </div>
         </div>
       )}

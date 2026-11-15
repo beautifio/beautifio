@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, X } from "lucide-react";
 import { Button, Input } from "@beautifio/ui";
 import { useAuthStore } from "@/stores/auth-store";
+import { signInAction, signUpAction } from "@/app/actions/auth";
 
 interface AuthModalProps {
   open: boolean;
@@ -100,8 +101,6 @@ function AuthForm({
   onSuccess: () => void;
 }) {
   const router = useRouter();
-  const setUser = useAuthStore((s) => s.setUser);
-  const setSession = useAuthStore((s) => s.setSession);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -116,56 +115,26 @@ function AuthForm({
     setSubmitting(true);
 
     try {
-      const { supabase } = await import("@/lib/supabase/client");
-      if (!supabase) {
-        setError("Supabase belum dikonfigurasi.");
-        setSubmitting(false);
-        return;
-      }
-
       if (mode === "login") {
-        const { signIn } = await import("@/lib/supabase/queries");
-        const { data, error: err } = await signIn(email, password);
-        if (err) {
-          setError(
-            err.message === "Invalid login credentials"
-              ? "Email atau password salah"
-              : err.message
-          );
+        const result = await signInAction(email, password);
+        if (result.error) {
+          setError(result.error);
           setSubmitting(false);
           return;
         }
-        if (data?.session) {
-          setSession(data.session);
-          setUser(data.session.user);
-          await new Promise((r) => setTimeout(r, 300));
-          router.refresh();
-          onSuccess();
-        }
+        await new Promise((r) => setTimeout(r, 300));
+        router.refresh();
+        onSuccess();
       } else {
-        const { data, error: err } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: name } },
-        });
-        if (err) {
-          setError(
-            err.message === "User already registered"
-              ? "Email sudah terdaftar"
-              : err.message
-          );
+        const result = await signUpAction(email, password, name);
+        if (result.error) {
+          setError(result.error);
           setSubmitting(false);
           return;
         }
-        if (data?.session) {
-          setSession(data.session);
-          setUser(data.session.user);
-          await new Promise((r) => setTimeout(r, 300));
-          router.refresh();
-          onSuccess();
-          return;
-        }
-        setError("cek-email");
+        await new Promise((r) => setTimeout(r, 300));
+        router.refresh();
+        onSuccess();
       }
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
@@ -216,12 +185,7 @@ function AuthForm({
         </button>
       </div>
 
-      {error === "cek-email" ? (
-        <div className="p-3 rounded-xl bg-success/10 border border-success/20">
-          <p className="text-xs font-semibold text-success">Akun berhasil dibuat!</p>
-          <p className="text-[11px] text-text-secondary mt-1">Cek email untuk konfirmasi.</p>
-        </div>
-      ) : error ? (
+      {error ? (
         <p className="text-xs text-destructive font-medium">{error}</p>
       ) : null}
 
@@ -247,8 +211,22 @@ function GoogleButton() {
     setLoading(true);
     setError("");
     try {
-      const { signInWithGoogle } = await import("@/lib/supabase/queries");
-      await signInWithGoogle();
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        setError("Login dengan Google belum dikonfigurasi.");
+        setLoading(false);
+        return;
+      }
+      const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/auth/callback`;
+      const scope = "openid email profile";
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+      window.location.href = googleAuthUrl;
     } catch {
       setError("Gagal login dengan Google");
     }

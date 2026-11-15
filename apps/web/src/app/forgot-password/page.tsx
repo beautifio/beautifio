@@ -4,12 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { Mail, ArrowLeft } from "lucide-react";
 import { Button, Input } from "@beautifio/ui";
+import { resetPasswordAction } from "@/app/actions/auth";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [deliveryUrl, setDeliveryUrl] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState<boolean | null>(null);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,25 +20,15 @@ export default function ForgotPasswordPage() {
     setSubmitting(true);
 
     try {
-      const { supabase } = await import("@/lib/supabase/client");
-      if (!supabase) {
-        setError("Supabase belum dikonfigurasi. Hubungi administrator.");
+      // Custom JWT auth: reset flow handled server-side via resetPasswordAction.
+      const result = await resetPasswordAction(email);
+      if (result.error) {
+        setError(result.error);
         setSubmitting(false);
         return;
       }
-      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
-        email,
-        { redirectTo: `${window.location.origin}/reset-password` }
-      );
-      if (resetErr) {
-        const msg = resetErr.message?.toLowerCase() || "";
-        if (msg.includes("rate limit")) setError("Terlalu banyak percobaan. Coba lagi nanti.");
-        else if (msg.includes("not found")) setError("Email tidak terdaftar.");
-        else if (msg.includes("invalid")) setError("Format email tidak valid.");
-        else setError("Gagal mengirim. Coba lagi.");
-        setSubmitting(false);
-        return;
-      }
+      if (result.deliveryUrl) setDeliveryUrl(result.deliveryUrl);
+      setEmailSent(result.emailSent ?? null);
       setSent(true);
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
@@ -59,12 +52,28 @@ export default function ForgotPasswordPage() {
               <Mail size={28} className="text-success" />
             </div>
             <h1 className="text-xl font-bold text-text-primary">
-              Cek Email Kamu
+              {emailSent === false ? "Permintaan Dicatat" : "Cek Email Kamu"}
             </h1>
-            <p className="text-sm text-text-secondary mt-2 leading-relaxed">
-              Kami telah mengirim tautan reset password ke{" "}
-              <strong className="text-text-primary">{email}</strong>
-            </p>
+            {emailSent === false ? (
+              <p className="text-sm text-text-secondary mt-2 leading-relaxed">
+                Permintaan reset untuk{" "}
+                <strong className="text-text-primary">{email}</strong> sudah dicatat,
+                namun layanan email sedang tidak aktif. Hubungi administrator untuk
+                mendapatkan tautan reset.
+              </p>
+            ) : (
+              <p className="text-sm text-text-secondary mt-2 leading-relaxed">
+                Kami telah mengirim tautan reset password ke{" "}
+                <strong className="text-text-primary">{email}</strong>
+              </p>
+            )}
+            {deliveryUrl && (
+              <p className="text-xs mt-3">
+                <a href={deliveryUrl} className="text-primary font-medium hover:underline">
+                  Buka tautan reset (mode development)
+                </a>
+              </p>
+            )}
             <p className="text-xs text-text-secondary mt-4">
               Tidak menerima email?{" "}
               <button

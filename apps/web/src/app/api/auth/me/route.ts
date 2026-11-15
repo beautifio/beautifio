@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getServerUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: profile } = await supabase
-      .from("users")
-      .select("id, email, full_name, role")
-      .eq("id", user.id)
-      .single();
-
-    return NextResponse.json({ data: profile });
+    // Shape-compatible with the old Supabase Auth user object so existing UI
+    // (home / profil / journey) keeps working without changes.
+    const isAnonymous = user.email?.startsWith("guest-") ?? false;
+    return NextResponse.json({
+      data: {
+        ...user,
+        is_anonymous: isAnonymous,
+        app_metadata: { provider: isAnonymous ? "anonymous" : "email" },
+        user_metadata: { full_name: user.full_name },
+      },
+    });
   } catch (error) {
     console.error("GET /api/auth/me:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

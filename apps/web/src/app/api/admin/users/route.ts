@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
+import { hashPassword } from "@/lib/auth/password";
 
 async function checkSuperadmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return false;
   const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
   return admin?.role === "superadmin";
@@ -60,21 +62,22 @@ export async function POST(request: NextRequest) {
     const validRoles = ["user", "mentor", "admin", "redaksi", "superadmin"];
     const userRole = validRoles.includes(role) ? role : "user";
 
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name },
-    });
-    if (authError) throw authError;
-
-    const { error: updateError } = await supabase
+    // Custom JWT auth: create user directly in users table with hashed password.
+    const passwordHash = await hashPassword(password);
+    const { data: created, error: createError } = await supabase
       .from("users")
-      .update({ role: userRole, is_verified: true, is_anonymous: false })
-      .eq("id", authData.user.id);
-    if (updateError) throw updateError;
+      .insert({
+        email: email.toLowerCase(),
+        full_name,
+        password_hash: passwordHash,
+        role: userRole,
+        is_verified: true,
+      })
+      .select("id")
+      .single();
+    if (createError) throw createError;
 
-    return NextResponse.json({ data: { id: authData.user.id, email, full_name, role: userRole } });
+    return NextResponse.json({ data: { id: created.id, email, full_name, role: userRole } });
   } catch (error: any) {
     console.error("POST /api/admin/users:", error);
     return NextResponse.json({ error: error.message || "Internal error" }, { status: 500 });

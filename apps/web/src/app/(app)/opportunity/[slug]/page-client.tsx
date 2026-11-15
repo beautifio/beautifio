@@ -54,16 +54,19 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
     if (!supabase) { setLoading(false); return; }
 
     supabase.from("opportunities").select("*").eq("slug", slug).eq("is_active", true).single()
-      .then(({ data, error: err }) => {
+      .then(async ({ data, error: err }) => {
         if (err) { setError("Gagal memuat peluang"); setLoading(false); return }
         setOpp(data);
         setLoading(false);
         // Check if saved
-        supabase.auth.getUser().then(({ data: auth }) => {
-          if (!auth?.user) return
-          supabase.from("saved_opportunities").select("id").eq("user_id", auth.user.id).eq("opportunity_id", data?.id).maybeSingle()
-            .then(({ data: saved }) => { setIsSaved(!!saved) })
-        })
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.ok) {
+          const auth = await res.json();
+          if (auth?.data) {
+            supabase.from("saved_opportunities").select("id").eq("user_id", auth.data.id).eq("opportunity_id", data?.id).maybeSingle()
+              .then(({ data: saved }) => { setIsSaved(!!saved) })
+          }
+        }
       })
   }, [slug]);
 
@@ -71,7 +74,10 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ sl
     if (saving) return
     const supabase = createClient()
     if (!supabase) return
-    const { data: { user } } = await supabase.auth.getUser()
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return;
+    const auth = await res.json();
+    const user = auth?.data;
     if (!user) return
 
     setSaving(true)

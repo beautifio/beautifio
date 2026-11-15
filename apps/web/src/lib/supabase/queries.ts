@@ -7,29 +7,9 @@ function requireClient() {
   return supabase;
 }
 
-export async function signUp(email: string, password: string, name: string) {
-  const client = requireClient();
-  return client.auth.signUp({ email, password, options: { data: { full_name: name } } });
-}
-
-export async function signIn(email: string, password: string) {
-  const client = requireClient();
-  return client.auth.signInWithPassword({ email, password });
-}
-
-export async function signInWithGoogle(redirectTo?: string) {
-  const client = requireClient();
-  const url = redirectTo || (typeof window !== "undefined" ? window.location.href : undefined);
-  return client.auth.signInWithOAuth({
-    provider: "google",
-    options: url ? { redirectTo: url } : undefined,
-  });
-}
-
-export async function signOut() {
-  const client = requireClient();
-  return client.auth.signOut();
-}
+// NOTE: authentication (signUp / signIn / signInWithGoogle / signOut) is now
+// handled by our own bf_session JWT in app/actions/auth.ts + app/auth/callback.
+// Supabase is used here strictly as the data/REST layer.
 
 export async function saveOnboardingData(userId: string, data: { status: string; interests: string[]; goals: string[] }) {
   const client = requireClient();

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { getMondayThisWeek } from "@/lib/date-utils"
+import { getServerUser } from "@/lib/auth/server-auth"
 
 export interface BisikCard {
   id: string
@@ -22,7 +23,7 @@ export async function enterBisikQueue(
   content: string,
 ): Promise<{ cardId: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error("Unauthorized")
 
   const { data: card } = await supabase
@@ -98,7 +99,7 @@ export async function swipeLeft(
   cardOwnerId: string,
 ): Promise<void> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error("Unauthorized")
 
   await supabase.from("bisik_swipes").insert({
@@ -113,7 +114,7 @@ export async function swipeRight(
   card: BisikCard,
 ): Promise<{ error: string | null; maxAllowed?: number; botChatId?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error("Unauthorized")
 
   const { data: maxChats } = await supabase

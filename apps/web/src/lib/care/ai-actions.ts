@@ -8,6 +8,7 @@ import {
   generateFirstMessage,
 } from "./ai-volunteers"
 import { detectUrgency } from "./ai-urgency"
+import { getServerUser } from "@/lib/auth/server-auth"
 
 // ── Check if human officers are online ──
 export async function isHumanOfficerOnline(category: string): Promise<boolean> {
@@ -60,7 +61,7 @@ export async function createCareSession(
   userAddress: string | null,
 ): Promise<{ sessionId: string; success: boolean; aiAssigned: boolean; aiName?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error('Unauthorized')
 
   const { data: session } = await supabase.from('care_chat_sessions')
@@ -92,7 +93,7 @@ export async function careSendMessage(
   content: string,
 ): Promise<{ success: boolean; ended?: boolean }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error('Unauthorized')
 
   const { data: session } = await supabase.from('care_chat_sessions')

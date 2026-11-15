@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
 
 export async function GET() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
   if (!profile || !["admin", "superadmin"].includes(profile.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -14,7 +15,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
   if (!profile || !["admin", "superadmin"].includes(profile.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

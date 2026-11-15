@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getUserTier } from "@/lib/tier"
 import { getLifeEngineData, ALL_DIMENSIONS } from "@/lib/life-engine"
 import { getUserArticleStats } from "@/lib/article-queries"
+import { getServerUser } from "@/lib/auth/server-auth"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -11,10 +12,10 @@ const COMPLETENESS_FIELDS = ["full_name", "bio", "city", "phone", "province", "a
 
 export async function GET() {
   const supabase = await createClient()
-  const { data: auth, error: authErr } = await supabase.auth.getUser()
-  if (authErr || !auth.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+  const auth = await getServerUser()
+  if (!auth) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const userId = auth.user.id
+  const userId = auth.id
 
   // Fire ALL independent queries in parallel
   const [
@@ -56,7 +57,7 @@ export async function GET() {
   // Build response
   const identity: any = {
     user: {
-      name: auth.user.email?.split("@")[0] || "Pengguna",
+      name: auth.email?.split("@")[0] || "Pengguna",
       bio: "", avatar: null, completeness: 0, missingFields: [],
       tier, mitraRole: null,
     },
@@ -69,7 +70,7 @@ export async function GET() {
   if (profile) {
     const filledCount = COMPLETENESS_FIELDS.filter(f => !!(profile as any)[f]).length
     identity.user = {
-      name: (profile as any).full_name || auth.user.email?.split("@")[0] || "Pengguna",
+      name: (profile as any).full_name || auth.email?.split("@")[0] || "Pengguna",
       bio: (profile as any).bio || "",
       avatar: (profile as any).avatar_url || null,
       completeness: Math.round((filledCount / COMPLETENESS_FIELDS.length) * 100) / 100,
@@ -79,7 +80,7 @@ export async function GET() {
     }
   }
 
-  const role = (auth.user.user_metadata?.role || auth.user.app_metadata?.role) || null
+  const role = auth.role || null
   identity.user.mitraRole = ["psychologist", "care_volunteer"].includes(role as string) ? role : null
 
   if (discRaw?.scores && Object.keys(discRaw.scores).length > 0) {

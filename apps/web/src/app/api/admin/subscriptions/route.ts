@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
 
 async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return false;
   const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
   return admin?.role === "admin" || admin?.role === "superadmin" || admin?.role === "redaksi";
@@ -45,8 +46,18 @@ export async function GET(request: NextRequest) {
       if (!plan) return;
       const tier = plan.tier || "pro";
       byTier[tier] = (byTier[tier] || 0) + 1;
-      if (plan.duration_type === "yearly") mrr += (plan.price_idr || 0) / 12;
-      else mrr += plan.price_idr || 0;
+      // Normalise every duration to a monthly-equivalent amount so MRR stays
+      // meaningful for weekly / quarterly / daily plans too.
+      const price = plan.price_idr || 0;
+      const monthlyEquivalent: Record<string, number> = {
+        daily: price * 30,
+        weekly: price * 52 / 12,
+        monthly: price,
+        quarterly: price / 3,
+        yearly: price / 12,
+        lifetime: 0,
+      };
+      mrr += monthlyEquivalent[plan.duration_type] ?? price;
     });
 
     const all = allRes.data || [];

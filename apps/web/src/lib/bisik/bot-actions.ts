@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { generateSystemPrompt, generateCardContent, DISC_STYLES, SHARED_GUARDRAILS } from "./bot-personas"
 import { getMondayThisWeek } from "@/lib/date-utils"
+import { getServerUser } from "@/lib/auth/server-auth"
 
 // ── Anti-AI Text Stripper ──
 function stripAIArtifacts(text: string): string {
@@ -60,7 +61,7 @@ export async function canUserInviteBotThisWeek(): Promise<{
   existingBotChatId?: string
 }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { allowed: false, reason: 'Login dulu' }
 
   const weekStart = getMondayThisWeek()
@@ -119,7 +120,7 @@ export async function inviteBotToChat(botId: string): Promise<{
   error?: string
 }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { success: false, error: 'Login dulu' }
 
   // 1. Check weekly limit

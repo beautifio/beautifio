@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRouteClient } from "@/lib/supabase/server";
+import { verifyServerUser } from "@/lib/auth/server-auth";
+import { SESSION_COOKIE } from "@/lib/auth/session";
 
 type Supabase = ReturnType<typeof createRouteClient>;
 
-async function checkRole(supabase: Supabase) {
-  const { data: { user } } = await supabase.auth.getUser();
+async function checkRole(supabase: Supabase, request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const user = await verifyServerUser(token);
   if (!user) return null;
   const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
   if (!admin || !["redaksi", "superadmin", "admin"].includes(admin.role)) return null;
@@ -14,7 +17,7 @@ async function checkRole(supabase: Supabase) {
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = createRouteClient(request);
-    const user = await checkRole(supabase);
+    const user = await checkRole(supabase, request);
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { id } = await params;
@@ -86,7 +89,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = createRouteClient(request);
-    const user = await checkRole(supabase);
+    const user = await checkRole(supabase, request);
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const { id } = await params;

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
 
 async function checkRole(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return null;
   const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
   if (!admin || !["admin", "superadmin"].includes(admin.role)) return null;

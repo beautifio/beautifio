@@ -2,13 +2,14 @@
 
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { getUserTier } from "@/lib/tier"
+import { getServerUser } from "@/lib/auth/server-auth"
 
 // =============================================================================
 // Reguler: Kirim undangan kenalan (butuh persetujuan)
 // =============================================================================
 export async function createBisikInvite(sessionId: string): Promise<{ success: boolean; message: string; inviteId?: string; chatId?: string }> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { success: false, message: "Unauthorized" }
 
   const { data: session } = await supabase.from('tebak_sessions')
@@ -56,7 +57,7 @@ export async function createBisikInvite(sessionId: string): Promise<{ success: b
 // =============================================================================
 export async function createProChatFromTebak(sessionId: string): Promise<{ success: boolean; message: string; chatId?: string }> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { success: false, message: "Unauthorized" }
 
   const tier = await getUserTier(user.id)
@@ -102,7 +103,7 @@ export async function createProChatFromTebak(sessionId: string): Promise<{ succe
 // =============================================================================
 export async function respondToBisikInvite(inviteId: string, accept: boolean): Promise<{ success: boolean; chatId?: string }> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { success: false }
 
   const { data: invite } = await supabase.from('bisik_invites')
@@ -149,7 +150,7 @@ export async function respondToBisikInvite(inviteId: string, accept: boolean): P
 // =============================================================================
 export async function getPendingInvites(): Promise<{ invited: any[]; inviting: any[] }> {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { invited: [], inviting: [] }
 
   const { data: invited } = await supabase.from('bisik_invites')

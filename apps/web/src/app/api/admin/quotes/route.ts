@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
 
 async function checkRedaksiOrSuperadmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return false;
   const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
   return admin?.role === "redaksi" || admin?.role === "superadmin";
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getServerUser();
     const body = await request.json();
     const { content, author, category } = body;
 

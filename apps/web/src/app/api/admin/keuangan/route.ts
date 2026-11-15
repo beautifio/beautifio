@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerUser } from "@/lib/auth/server-auth";
 
 const DOKU_RATE = 0.029; const DOKU_FIXED = 2000;
 const PPN_RATE = 0.11; const PPH_UMKM = 0.005; const PPH_JASA = 0.02;
@@ -17,7 +18,7 @@ function calc(nett: number): { ppn: number; bruto: number; doku: number; pph: nu
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getServerUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
   if (!profile || !["admin", "superadmin", "redaksi"].includes(profile.role))

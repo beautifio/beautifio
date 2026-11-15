@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { getServerUser } from "@/lib/auth/server-auth";
 
-// GET is public → Prisma. POST (admin) still uses supabase.auth for the session
-// until Stage 3 (own auth) lands; then it switches to getCurrentUser().
+// GET is public → Prisma. POST (admin) uses our own bf_session JWT
+// (custom auth, Stage 3 landed).
 export async function GET(request: NextRequest) {
   try {
     const slug = request.nextUrl.searchParams.get("slug");
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getServerUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { data: admin } = await supabase.from("users").select("role").eq("id", user.id).single();
     if (!admin || (admin.role !== "admin" && admin.role !== "superadmin" && admin.role !== "redaksi")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
