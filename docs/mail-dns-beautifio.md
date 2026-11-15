@@ -4,20 +4,41 @@
 > `beautifio.com`, OpenDKIM sudah menandatangani `d=beautifio.com` (terbukti
 > lewat uji kirim lokal: header `DKIM-Signature: ... d=beautifio.com`).
 >
-> Yang tersisa: **3 record DNS** di Hostinger hPanel (NS domain ini =
-> `hyperion.dns-parking.com` / `atlas.dns-parking.com`). Saya tidak punya
-> kredensial hPanel/API, jadi record ini harus ditambahkan oleh pemilik domain.
-> Aplikasi **sudah otomatis** beralih begitu record aktif — lihat bagian bawah.
+> Yang tersisa: **2 record DNS wajib** (edit SPF, tambah DKIM) + 1 opsional
+> (DMARC) di Hostinger hPanel. Saya tidak punya kredensial hPanel/API, jadi
+> record ini harus ditambahkan oleh pemilik domain. Aplikasi **sudah otomatis**
+> beralih begitu SPF + DKIM aktif — lihat bagian bawah.
 
-## Kenapa perlu
-
-Saat ini `beautifio.com` punya:
+## Zone yang sudah ada (dari hPanel, diverifikasi)
 
 ```
-TXT  beautifio.com           = "v=spf1 include:_spf.mail.hostinger.com ~all"
-TXT  _dmarc.beautifio.com    = "v=DMARC1; p=none"
-MX   beautifio.com           -> mx1/mx2.hostinger.com
+CNAME  hostingermail-a/b/c._domainkey -> *.dkim.mail.hostinger.com
+CNAME  www            -> beautifio.com
+CNAME  autodiscover   -> autodiscover.mail.hostinger.com
+CNAME  autoconfig     -> autoconfig.mail.hostinger.com
+A      @ / admin / api -> 31.97.49.146
+TXT    _dmarc         -> "v=DMARC1; p=none"
+TXT    @              -> "v=spf1 include:_spf.mail.hostinger.com ~all"
+MX     @              -> mx1/mx2.hostinger.com (5 / 10)
 ```
+
+**Kesimpulan penting:** domain ini **juga dipakai Hostinger Mail** (MX +
+3 CNAME DKIM + SPF include). Artinya ada **dua pengirim sah** yang harus
+hidup berdampingan: Hostinger Mail dan Postfix VPS kita.
+
+- ✅ **Tidak ada konflik selector.** Hostinger pakai `hostingermail-a/b/c`,
+  kita pakai selector `mail`. `mail._domainkey.beautifio.com` saat ini
+  NXDOMAIN → aman ditambahkan sebagai TXT baru.
+- ✅ `_spf.mail.hostinger.com` isinya
+  `v=spf1 include:relay.mail.hostinger.com include:relay.mailchannels.net ~all`
+  — **tidak** memuat IP VPS, jadi `ip4:31.97.49.146` wajib ditambahkan.
+- ⚠️ **JANGAN pakai DMARC strict alignment** (`adkim=s; aspf=s`) dan jangan
+  langsung `p=quarantine`/`p=reject`. Itu berisiko membuat email yang dikirim
+  lewat Hostinger Mail masuk spam kalau `d=`/envelope-nya tidak persis sama.
+  Pakai alignment **relaxed** (default) dan naikkan `p` bertahap.
+- ✅ Bounce untuk `noreply@beautifio.com` tidak jadi masalah: `beautifio.com`
+  sudah ada di Postfix `mydestination`, jadi NDR ditangani lokal di VPS,
+  tidak dilempar ke MX Hostinger.
 
 Mail keluar dari VPS `31.97.49.146` lewat Postfix, bukan lewat Hostinger.
 Tanpa perubahan, SPF **softfail** dan DKIM **tak terverifikasi** → email
@@ -27,7 +48,7 @@ Domain lama `noreply@tukangjajan.com` aman karena SPF-nya sudah
 `v=spf1 ip4:31.97.49.146 ~all` — itulah sebabnya aplikasi memakainya sebagai
 fallback sampai record di bawah aktif.
 
-## 3 record yang harus ditambahkan di hPanel → DNS Zone Editor
+## Record yang harus diset di hPanel → DNS Zone Editor (2 wajib + 1 opsional)
 
 ### 1. SPF (EDIT record TXT yang sudah ada, jangan buat duplikat)
 
@@ -38,7 +59,12 @@ fallback sampai record di bawah aktif.
 | Value | `v=spf1 ip4:31.97.49.146 include:_spf.mail.hostinger.com ~all` |
 | TTL | 3600 |
 
-> Menambahkan `ip4:31.97.49.146` **tidak** mengganggu email Hostinger yang lama.
+> **EDIT, jangan ADD.** Kalau Anda membuat record TXT `@` baru, akan ada dua
+> record `v=spf1` → SPF `permerror` dan **semua** email (termasuk Hostinger)
+> gagal. Cukup timpa nilai lama.
+>
+> Menambahkan `ip4:31.97.49.146` **tidak** mengganggu email Hostinger yang lama
+> karena `include:_spf.mail.hostinger.com` tetap dipertahankan.
 
 ### 2. DKIM (record baru)
 
@@ -52,17 +78,31 @@ fallback sampai record di bawah aktif.
 Kunci privatnya ada di VPS: `/etc/opendkim/keys/beautifio.com/mail.private`
 (sudah terdaftar di `/etc/opendkim/KeyTable` + `SigningTable`).
 
-### 3. DMARC (EDIT, opsional tapi disarankan setelah 1 & 2 terverifikasi)
+### 3. DMARC (EDIT — **boleh dibiarkan apa adanya dulu**)
 
 | Field | Nilai |
 |-------|-------|
 | Type | TXT |
 | Name | `_dmarc` |
-| Value | `v=DMARC1; p=quarantine; pct=100; adkim=s; aspf=s; rua=mailto:postmaster@beautifio.com` |
+| Value (aman, default) | `v=DMARC1; p=none` |
 | TTL | 3600 |
 
-Mulai dengan `p=none` dulu seminggu untuk memantau laporan, baru naikkan ke
-`p=quarantine`. **Jangan** lompat ke `p=reject` sebelum SPF+DKIM terbukti pass.
+**Record DMARC yang sudah ada (`p=none`) sudah benar untuk tahap ini** —
+tidak wajib diubah. Karena domain ini juga menerima/kirim email Hostinger,
+jangan pakai `adkim=s; aspf=s` (strict alignment) dan jangan langsung
+`p=quarantine`/`p=reject`: itu bisa bikin email Hostinger masuk spam.
+
+Naikkan bertahap **setelah** SPF + DKIM terbukti PASS dan Anda memantau
+laporan beberapa hari:
+
+```
+v=DMARC1; p=quarantine; pct=25
+v=DMARC1; p=quarantine; pct=100
+```
+
+`rua=mailto:...` hanya berguna kalau mailbox/forward itu benar-benar ada di
+Hostinger; kalau tidak, abaikan saja (laporan DMARC cuma hilang, tidak merusak
+pengiriman). `p=reject` jangan dipakai sebelum semua pengirim sah ter-audit.
 
 ## Cara cek (dari mana saja)
 
