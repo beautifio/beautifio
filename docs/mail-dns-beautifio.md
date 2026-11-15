@@ -1,13 +1,12 @@
 # DNS records agar email bisa kirim dari `@beautifio.com`
 
-> Status **server-side: SELESAI**. Postfix `mydestination` sudah memuat
+> Status **SELESAI (server + DNS + aplikasi), 2026-11-15**. Postfix `mydestination` sudah memuat
 > `beautifio.com`, OpenDKIM sudah menandatangani `d=beautifio.com` (terbukti
 > lewat uji kirim lokal: header `DKIM-Signature: ... d=beautifio.com`).
 >
-> Yang tersisa: **2 record DNS wajib** (edit SPF, tambah DKIM) + 1 opsional
-> (DMARC) di Hostinger hPanel. Saya tidak punya kredensial hPanel/API, jadi
-> record ini harus ditambahkan oleh pemilik domain. Aplikasi **sudah otomatis**
-> beralih begitu SPF + DKIM aktif — lihat bagian bawah.
+> SPF + DKIM sudah dipublish pemilik domain, `scripts/verify-mail-dns.sh`
+> **PASS semua**, dan email sungguhan sudah terkirim dengan
+> `from=<noreply@beautifio.com>` (auto-switch aktif, tanpa restart/rebuild).
 
 ## Zone yang sudah ada (dari hPanel, diverifikasi)
 
