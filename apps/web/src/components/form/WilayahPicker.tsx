@@ -23,6 +23,8 @@ export interface WilayahValue {
   kelurahan: string;
   villageId: string | null;
   kodepos: string;
+  /** asal kode pos; 'fallback_kecamatan' = estimasi, perlu dicek user */
+  kodeposSource?: string | null;
 }
 
 export const EMPTY_WILAYAH: WilayahValue = {
@@ -31,9 +33,16 @@ export const EMPTY_WILAYAH: WilayahValue = {
   kecamatan: "", districtId: null,
   kelurahan: "", villageId: null,
   kodepos: "",
+  kodeposSource: null,
 };
 
-type Option = { id: string | number; label: string; kodepos?: string | null; raw?: any };
+type Option = {
+  id: string | number;
+  label: string;
+  kodepos?: string | null;
+  kodeposSource?: string | null;
+  raw?: any;
+};
 
 interface Props {
   value?: WilayahValue;
@@ -88,7 +97,7 @@ export function WilayahPicker({ value, onChange, showKodepos = true, compact = f
           }));
         }}
         onPick={(o) => emit({ ...v, regency: o.label, regencyId: Number(o.id),
-          kecamatan: "", districtId: null, kelurahan: "", villageId: null, kodepos: "" })}
+          kecamatan: "", districtId: null, kelurahan: "", villageId: null, kodepos: "", kodeposSource: null })}
         deps={[v.provinceId]}
       />
 
@@ -105,7 +114,7 @@ export function WilayahPicker({ value, onChange, showKodepos = true, compact = f
           return (data ?? []).map((r: any) => ({ id: r.id, label: r.name, raw: r }));
         }}
         onPick={(o) => emit({ ...v, kecamatan: o.label, districtId: String(o.id),
-          kelurahan: "", villageId: null, kodepos: "" })}
+          kelurahan: "", villageId: null, kodepos: "", kodeposSource: null })}
         deps={[v.regencyId]}
       />
 
@@ -117,14 +126,15 @@ export function WilayahPicker({ value, onChange, showKodepos = true, compact = f
         compact={compact}
         load={async () => {
           const { data } = await supabase
-            .from("indonesia_villages").select("id,name,kodepos")
+            .from("indonesia_villages").select("id,name,kodepos,kodepos_source")
             .eq("district_id", v.districtId!).order("name").limit(1000);
           return (data ?? []).map((r: any) => ({
-            id: r.id, label: r.name, kodepos: r.kodepos, raw: r,
+            id: r.id, label: r.name, kodepos: r.kodepos,
+            kodeposSource: r.kodepos_source, raw: r,
           }));
         }}
         onPick={(o) => emit({ ...v, kelurahan: o.label, villageId: String(o.id),
-          kodepos: o.kodepos ?? "" })}
+          kodepos: o.kodepos ?? "", kodeposSource: o.kodeposSource ?? null })}
         deps={[v.districtId]}
       />
 
@@ -141,9 +151,11 @@ export function WilayahPicker({ value, onChange, showKodepos = true, compact = f
             className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-bg text-text-primary outline-none focus:border-primary transition-colors"
           />
           <p className="text-[10px] text-text-secondary mt-1">
-            {v.kodepos
-              ? "Terisi otomatis dari data wilayah. Ubah bila tidak sesuai."
-              : "Pilih desa/kelurahan di atas — kode pos terisi otomatis."}
+            {v.kodeposSource === "fallback_kecamatan"
+              ? "Perkiraan dari kecamatan yang sama — mohon dicek & diperbaiki bila beda."
+              : v.kodepos
+                ? "Terisi otomatis dari data wilayah. Ubah bila tidak sesuai."
+                : "Pilih desa/kelurahan di atas — kode pos terisi otomatis."}
           </p>
         </div>
       )}
@@ -244,9 +256,11 @@ function LevelSelect({
                   value === o.label ? "bg-primary/5 text-primary font-medium" : "text-text-primary"
                 }`}
               >
-                <span>{o.label}</span>
-                {o.kodepos ? <span className="text-[10px] text-text-secondary">{o.kodepos}</span> : null}
-                {value === o.label && <Check size={13} />}
+                <span className="pointer-events-none">{o.label}</span>
+                {o.kodepos ? (
+                  <span className="text-[10px] text-text-secondary pointer-events-none">{o.kodepos}</span>
+                ) : null}
+                {value === o.label && <Check size={13} className="pointer-events-none" />}
               </button>
             ))
           )}

@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Create our own custom JWT session (sets the bf_session cookie).
-    await createSession(userId, role);
+    await createSession(userId);
 
     return NextResponse.redirect(`${APP_URL}${next}`);
   } catch {

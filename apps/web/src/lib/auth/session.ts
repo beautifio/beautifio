@@ -8,9 +8,12 @@ import type { SessionPayload } from "./jwt";
 export { SESSION_COOKIE, verifyToken };
 export type { SessionPayload };
 
-/** Create the signed JWT and set it as the httpOnly bf_session cookie. */
-export async function createSession(userId: string, role?: string | null): Promise<string> {
-  const token = await signSessionToken({ sub: userId, role });
+/**
+ * Create the signed JWT and set it as the httpOnly bf_session cookie.
+ * Only the user id is stored — role is always read fresh from the DB.
+ */
+export async function createSession(userId: string): Promise<string> {
+  const token = await signSessionToken({ sub: userId });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

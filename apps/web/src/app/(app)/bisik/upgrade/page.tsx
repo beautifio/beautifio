@@ -15,13 +15,13 @@ const P = "#084463"; const SF = "#FFC64F"; const IC = "#6BB9D4";
 const GR = "#22C55E"; const DS = "#1E2938"; const SL = "#647488";
 const BD = "#E2E8F0"; const CL = "#F8FAFC"; const WH = "#FFFFFF";
 
-type Duration = "weekly" | "monthly" | "yearly";
-const DURATIONS: Duration[] = ["weekly", "monthly", "yearly"];
+type Duration = "daily" | "weekly" | "monthly" | "yearly";
+const DURATIONS: Duration[] = ["daily", "weekly", "monthly", "yearly"];
 const DURATION_LABEL: Record<Duration, string> = {
-  weekly: "Mingguan", monthly: "Bulanan", yearly: "Tahunan",
+  daily: "Harian", weekly: "Mingguan", monthly: "Bulanan", yearly: "Tahunan",
 };
 const DURATION_UNIT: Record<Duration, string> = {
-  weekly: "/ minggu", monthly: "/ bulan", yearly: "/ tahun",
+  daily: "/ hari", weekly: "/ minggu", monthly: "/ bulan", yearly: "/ tahun",
 };
 
 export default function UpgradePage() {
@@ -151,6 +151,11 @@ export default function UpgradePage() {
             {duration === "weekly" && (
               <p className="text-[10px] mt-0.5" style={{ color: SL }}>
                 Cocok buat coba-coba, tanpa komitmen bulanan
+              </p>
+            )}
+            {duration === "daily" && (
+              <p className="text-[10px] mt-0.5" style={{ color: SL }}>
+                Coba satu hari dulu sebelum pilih paket lebih panjang
               </p>
             )}
 

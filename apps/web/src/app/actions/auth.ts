@@ -62,7 +62,7 @@ export async function signUpAction(
   }
 
   // createSession sets the httpOnly bf_session cookie (jose JWT).
-  await createSession(user.id, user.role);
+  await createSession(user.id);
 
   revalidatePath("/", "layout");
   return { success: true, user: { id: user.id, email: user.email, full_name: user.full_name, role: user.role } };
@@ -101,7 +101,7 @@ export async function signInAction(
     return { error: "Email atau password salah" };
   }
 
-  await createSession(user.id, user.role);
+  await createSession(user.id);
 
   revalidatePath("/", "layout");
   return { success: true, user: { id: user.id, email: user.email, full_name: user.full_name, role: user.role } };
@@ -270,7 +270,7 @@ export async function ensureGuestSession(): Promise<AuthResult> {
 
   if (error || !guest) return { error: "Gagal memulai sesi tamu." };
 
-  await createSession(guest.id, guest.role);
+  await createSession(guest.id);
   revalidatePath("/", "layout");
   return { success: true };
 }

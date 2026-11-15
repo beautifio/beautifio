@@ -36,7 +36,7 @@ Catatan:
 
 | Paket | Tier | Durasi | Harga | Status |
 |-------|------|--------|-------|--------|
-| Pro Harian | pro | daily | Rp 5.000 | ✅ ada, tidak tampil di UI |
+| Pro Harian | pro | daily | Rp 5.000 | ✅ tampil di UI (toggle Harian) |
 | Pro Mingguan | pro | weekly | Rp 12.000 | ✅ UI + DOKU (expiry 7 hari) |
 | Pro Bulanan | pro | monthly | Rp 49.000 | ✅ end-to-end (DOKU) |
 | Pro Tahunan | pro | yearly | Rp 399.000 | ✅ end-to-end (DOKU) |
@@ -46,7 +46,7 @@ Catatan:
 
 Alur `/api/subscription/plans` → `/api/payment/subscribe` → DOKU →
 `/api/payment/confirm` / callback → `getUserTier()` sudah terverifikasi.
-Toggle UI: **Mingguan / Bulanan / Tahunan** × **Pro / Ultimate**.
+Toggle UI: **Harian / Mingguan / Bulanan / Tahunan** × **Pro / Ultimate**.
 MRR admin dinormalisasi per duration (`weekly × 52/12`, `yearly / 12`, dll).
 
 ## Simulasi revenue: 1.000 user ambil paket Weekly Rp 12.000
@@ -71,8 +71,6 @@ upsell ke monthly/tahunan setelah user terbiasa.
 
 ## Yang masih opsional
 
-1. **Fase 3**: tampilkan `Pro Harian` (Rp 5.000) di UI upgrade bila diinginkan —
-   sudah ada di DB, belum terekspos.
-2. Pantau konversi weekly → monthly; bila drop-off tinggi sebelum bulan ke-2,
+1. Pantau konversi weekly → monthly; bila drop-off tinggi sebelum bulan ke-2,
    naikkan weekly ke Rp 15.000.
-3. Sesuaikan `original_price_idr` bila ingin menampilkan badge diskon di paket lain.
+2. Sesuaikan `original_price_idr` bila ingin menampilkan badge diskon di paket lain.
