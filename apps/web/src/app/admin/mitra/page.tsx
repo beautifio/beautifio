@@ -53,6 +53,16 @@ export default function AdminMitraPage() {
                 {a.category && <span>📂 {a.category}</span>}
                 {a.motivation && <p className="mt-1 italic">"{a.motivation}"</p>}
               </div>
+              {/* Lokasi berjenjang dari WilayahPicker (disimpan di apply) */}
+              {(a.province || a.regency || a.kecamatan || a.kelurahan || a.kodepos) ? (
+                <div className="mb-2 px-2.5 py-2 rounded-lg" style={{ background: "#F1F7FA", border: "1px solid #DCE9F0" }}>
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color: "#647488" }}>📍 Domisili</p>
+                  <p className="text-xs" style={{ color: "#1E2938" }}>
+                    {[a.kelurahan, a.kecamatan, a.regency, a.province].filter(Boolean).join(", ") || "—"}
+                    {a.kodepos ? ` · Kode pos ${a.kodepos}` : ""}
+                  </p>
+                </div>
+              ) : null}
               {a.status === "pending_review" && (
                 <div className="flex gap-2">
                   <button onClick={() => handleAction(a.id, "approve")} disabled={saving} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer text-white" style={{ background: "#22C55E" }}><Check size={12} /> Setujui</button>

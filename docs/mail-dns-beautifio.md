@@ -111,6 +111,12 @@ bash scripts/verify-mail-dns.sh
 
 Script memakai DNS-over-HTTPS (Google) dan mencetak PASS/FAIL untuk SPF, DKIM,
 DMARC. Selama ada FAIL, aplikasi tetap kirim dari `noreply@tukangjajan.com`.
+**Status saat ini: semua PASS.**
+
+Bukti deliverability sungguhan (Gmail menerima `250 2.0.0 OK`, DKIM
+terverifikasi `dkimpy verify: True`) dan rencana kenaikan DMARC bertahap ada di
+`docs/monitoring.md`. Monitor harian berjalan otomatis lewat
+`scripts/monitor-beautifio.sh`.
 
 ## Auto-switch (sudah aktif di kode)
 

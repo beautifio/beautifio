@@ -26,11 +26,15 @@ CURL="curl -fsS -m 60 -H \"Authorization: Bearer $CRON_SECRET\""
 MARKER="# beautifio-cron"
 
 # Build the desired crontab block.
+# The daily monitor is a local script (no HTTP): it reads Postfix logs and the
+# database directly, and prints the DMARC-ramp readiness signal.
+MONITOR="/opt/beautifio/scripts/monitor-beautifio.sh"
 BLOCK="$(cat <<EOF
 $MARKER (managed by deploy/setup-cron.sh — do not edit by hand)
 0 6 * * *  $CURL $BASE/api/admin/konten/posts/publish-scheduled >/dev/null 2>&1 $MARKER
 0 0 * * *  $CURL $BASE/api/cron/care-ai-daily-reset >/dev/null 2>&1 $MARKER
 0 17 * * 0 $CURL $BASE/api/cron/bisik-weekly-reset >/dev/null 2>&1 $MARKER
+5 0 * * *  $MONITOR >> /var/log/beautifio-monitor.log 2>&1 $MARKER
 EOF
 )"
 

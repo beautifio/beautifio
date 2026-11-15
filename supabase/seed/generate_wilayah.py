@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Regenerate supabase/seed/wilayah_indonesia.sql from the three source datasets.
+Regenerate supabase/seed/wilayah_indonesia.sql from the source datasets.
 
 Sources
 -------
@@ -8,28 +8,34 @@ Sources
                    Center/data/processed/wilayah_bps_dagri.csv). Columns:
                    level,parent_code_bps,kode_bps,nama_bps,kode_dagri,nama_dagri
                    Levels: provinsi, kabupaten, kecamatan, desa_kelurahan.
-2. --kodepos-code  cahyadsn/wilayah_kodepos json: {kode_dagri_desa: "kodepos"}
+2. --kodepos-official  supabase/seed/data/kodepos_posindonesia_resolved.json
+                   PRIMARY. Built by scripts/build_posindonesia.py from the
+                   official POS Indonesia harvest (edigius/kodepos-wilayah,
+                   kodepos.posindonesia.co.id, Kepmendagri 2025). Per-village
+                   {kode_dagri: [kodepos, source]}. Strongly recommended: the
+                   legacy datasets below disagree with POS Indonesia on 44.4%
+                   of villages (they are the same stale 2019-derived source).
+3. --kodepos-code  cahyadsn/wilayah_kodepos json (LEGACY fallback)
                    https://raw.githubusercontent.com/cahyadsn/wilayah_kodepos/master/json/wilayah_kodepos.json
-3. --kodepos-named sooluh/kodepos json: [{code, village, district, regency, province}]
+4. --kodepos-named sooluh/kodepos json (LEGACY fallback)
                    https://raw.githubusercontent.com/sooluh/kodepos/master/data/kodepos.json
-                   Includes the 6 post-2022 Papua provinces, which (2) lacks.
 
 Resolution order for kodepos (most trustworthy first)
 -----------------------------------------------------
-  code              exact kode_dagri join against (2)
-  name_kec_desa     (kecamatan, desa) name join against (3), unambiguous
-                    or a >=80% dominant mode
-  name_desa_unik    village name alone against (3), only when it maps to a
-                    single postal code
-  name_kecamatan    district/regency name join against (3) — real data at
-                    district level for villages renamed between datasets
-  fallback_kecamatan mode of already-resolved sibling villages in the same
-                    kecamatan (ESTIMATE — flagged as such, editable in UI)
+  posindonesia_exact / posindonesia_name / posindonesia_kecamatan
+                    official POS Indonesia, exact / name / district level
+  code              legacy cahyadsn exact kode_dagri join
+  name_kec_desa     legacy (kecamatan, desa) name join, unambiguous or >=80%
+  name_desa_unik    legacy village name alone, only when it maps to one code
+  name_kecamatan    legacy district/regency name join
+  fallback_kecamatan mode of already-resolved siblings in the same kecamatan
+                     (ESTIMATE — currently 0 rows)
 
 Usage
 -----
   python3 generate_wilayah.py \
     --wilayah-csv wilayah_bps_dagri.csv \
+    --kodepos-official supabase/seed/data/kodepos_posindonesia_resolved.json \
     --kodepos-code wilayah_kodepos.json \
     --kodepos-named kodepos.json \
     --out wilayah_indonesia.sql
@@ -75,11 +81,16 @@ def copy_block(table, cols, records):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--wilayah-csv", required=True)
+    ap.add_argument("--kodepos-official", default=None,
+                    help="PRIMARY: resolved POS Indonesia json from scripts/build_posindonesia.py")
     ap.add_argument("--kodepos-code", required=True)
     ap.add_argument("--kodepos-named", required=True)
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
+    official = {}
+    if a.kodepos_official:
+        official = json.load(open(a.kodepos_official, encoding="utf-8"))["villages"]
     code_pos = json.load(open(a.kodepos_code, encoding="utf-8"))
     named = json.load(open(a.kodepos_named, encoding="utf-8"))
     rows = list(csv.DictReader(open(a.wilayah_csv, encoding="utf-8")))
@@ -122,6 +133,13 @@ def main():
 
     def resolve(r):
         kd = r["kode_dagri"]
+        # PRIMARY: official POS Indonesia resolution (built offline from the
+        # authoritative harvest). Covers 100% of villages with 0 estimates.
+        if kd in official:
+            pos, src = official[kd]
+            return str(pos), src
+
+        # LEGACY fallback — only used when the official file is absent/stale.
         if kd in code_pos:
             return str(code_pos[kd]), "code"
 
@@ -169,9 +187,9 @@ def main():
     out = io.StringIO()
     out.write("-- Seed data wilayah administrasi Indonesia (BPS/Dagri) + kode pos.\n")
     out.write("-- Dibuat oleh supabase/seed/generate_wilayah.py — JANGAN edit manual.\n")
-    out.write("-- Lihat header script untuk 3 sumber data & urutan resolusi kode pos.\n")
+    out.write("-- Kode pos PRIMER: POS Indonesia resmi (lihat docs/wilayah-data.md).\n")
     out.write("-- 34 provinsi | 514 kab/kota | 7.219 kecamatan | 82.852 desa/kelurahan.\n")
-    out.write("-- `kodepos_source` mencatat asal kode pos; 'fallback_kecamatan' = ESTIMASI.\n")
+    out.write("-- `kodepos_source`: posindonesia_* = resmi; fallback_kecamatan = ESTIMASI.\n")
     out.write("-- Idempotent: TRUNCATE + re-COPY. Jalankan sebagai postgres.\n\nBEGIN;\n")
     out.write(
         "TRUNCATE public.indonesia_villages, public.indonesia_districts, "

@@ -1,7 +1,7 @@
 # Data Wilayah Indonesia + Kode Pos
 
 Dipakai oleh `components/form/WilayahPicker.tsx` (dropdown berjenjang di
-`/daftar-mitra`) dan oleh region picker lama di `/profil/edit`.
+`/daftar-mitra` **dan** `/profil/edit`) dan ditampilkan di `/admin/mitra`.
 
 ## Isi
 
@@ -12,64 +12,117 @@ Dipakai oleh `components/form/WilayahPicker.tsx` (dropdown berjenjang di
 | Kecamatan | `indonesia_districts` | 7.219 |
 | Desa/Kelurahan | `indonesia_villages` | 82.852 |
 | Kode pos terisi | | **82.852 (100%)** |
+| Kode pos estimasi | | **0** |
 
-## Sumber
+## Sumber kode pos (sejak 2026-11-15)
 
-1. **Hierarki**: `Master Data Command Center/data/processed/wilayah_bps_dagri.csv`
-   (SIG BPS / Kemendagri, 90.630 baris). Kolom `kode_bps`, `kode_dagri`,
-   `parent_code_bps`. Hierarki 100% konsisten, tanpa kode duplikat.
-2. **Kode pos by kode**: `cahyadsn/wilayah_kodepos` — map `kode_dagri_desa → kodepos`.
-3. **Kode pos by nama**: `sooluh/kodepos` — 83.761 entri dengan
-   `code, village, district, regency, province`, **38 provinsi** (termasuk 6
-   provinsi Papua pemekaran 2022 yang tidak ada di sumber #2).
+**Primer: POS Indonesia resmi.** Data panen dari
+`kodepos.posindonesia.co.id` yang diterbitkan lewat repo terbuka
+[edigius/kodepos-wilayah](https://github.com/edigius/kodepos-wilayah)
+(struktur wilayah mengikuti Kepmendagri No. 300.2.2-2430 Tahun 2025,
+panen 2026-11-13):
+
+1. `official_overlay.json` — 80.576 entri `kode_dagri_desa → kodepos`.
+2. `harvest/*.json` — 516 file, satu per kabupaten/kota, baris mentah
+   `{kodepos, desa, kecamatan, kab, prov}` (96.006 baris). Dipakai untuk
+   join nama bila kode_dagri tidak cocok (desa pecah/berganti nama).
+
+Turunan ringkas yang **disimpan di repo**:
+`supabase/seed/data/kodepos_posindonesia_resolved.json`
+(`{kode_dagri: [kodepos, sumber]}` untuk seluruh 82.852 desa, 3,7 MB).
+Dibangun ulang oleh `scripts/build_posindonesia.py`.
+
+**Fallback lama (hanya 1.386 desa / 1,7%)**:
+`cahyadsn/wilayah_kodepos` dan `sooluh/kodepos`. Keduanya adalah dataset
+turunan 2019 yang sama persis (cocok 100% satu sama lain).
+
+### Kenapa sumber lama diganti
+
+| Perbandingan | Hasil |
+|---|---|
+| cahyadsn vs sooluh | 100% cocok (sumber kembar) |
+| cahyadsn vs POS Indonesia resmi | **44,4% berbeda** (32.936 desa) |
+| POS Indonesia vs sooluh | 55,7% cocok |
+
+Contoh terverifikasi independen: Kec. **Manggeng**, Aceh Barat Daya —
+sumber lama `23760`, POS Indonesia `23762`. `kodepos.id`,
+`sejarah-negara.com`, dan 3 sumber lain mengonfirmasi **23762**. Nilai lama
+ternyata usang, jadi seluruh seed dialihkan ke sumber resmi.
 
 ## `kodepos_source` (audit trail)
 
 | Nilai | Jumlah | Arti |
 |-------|--------|------|
-| `code` | 77.121 | Join eksak `kode_dagri` (paling akurat) |
-| `name_kec_desa` | 5.275 | Join nama (kecamatan + desa), unambiguous / modus ≥80% |
-| `name_desa_unik` | 256 | Join nama desa saja, hanya bila 1 kode pos |
-| `name_kecamatan` | 165 | Data nyata level kecamatan/regency dari sooluh |
-| `fallback_kecamatan` | **35 (0,04%)** | **ESTIMASI** — modus desa tetangga sekecamatan |
+| `posindonesia_exact` | 74.228 | Join eksak `kode_dagri` ke overlay resmi |
+| `posindonesia_name` | 6.545 | Join nama (kab + kecamatan + desa) ke harvest resmi |
+| `posindonesia_kecamatan` | 693 | Modus resmi tingkat kecamatan (desa baru/pecah) |
+| `code` | 154 | Fallback cahyadsn eksak |
+| `name_kec_desa` | 1.220 | Fallback sooluh (kecamatan + desa) |
+| `name_kecamatan` | 12 | Fallback sooluh tingkat kecamatan |
+| `fallback_kecamatan` | **0** | ESTIMASI modus tetangga — tidak ada lagi |
 
-**99,96% berbasis data nyata.** Hanya 35 desa yang estimasi; di UI kode posnya
-tetap terisi tapi muncul hint *"Perkiraan dari kecamatan yang sama — mohon
-dicek & diperbaiki bila beda"*, dan field selalu bisa diedit user.
+**98,3% bersumber resmi POS Indonesia, 0% estimasi.** Untuk 693 desa
+`posindonesia_kecamatan`, UI menampilkan hint *"Kode pos tingkat kecamatan
+dari POS Indonesia — cek bila desamu punya kode berbeda"* dan field tetap
+bisa diedit.
 
-Cross-validasi dua sumber kode pos: **99,7% setuju** pada desa yang cocok di
-keduanya.
+### Kasus khusus Papua
 
-## Kenapa dua sumber
+6 provinsi Papua pemekaran 2022 memakai `kode_dagri` lama (`91.x`) tetapi
+`kode_bps` sudah baru (`94.x/95.x/96.x`). Harvest resmi memakai kode baru,
+jadi `scripts/build_posindonesia.py` mencoba `kode_dagri` → `parent_code_bps`
+→ alias nama kabupaten. Tanpa ini 11 desa Papua (Paniai, Yahukimo,
+Mamberamo Tengah) tak akan pernah cocok.
 
-Sumber #2 (2019) memakai kode Dagri lama. 5.455 dari 5.731 desa yang awalnya
-tak berkode pos ternyata berada di provinsi kode `91`/`92` (Papua pemekaran).
-Join by kode tidak akan pernah menutupnya — karena itu dipakai join **nama**
-dari sumber #3. Pelajaran: jangan bergantung pada satu join key untuk data
-administrasi yang sering berubah kode.
+## Hierarki wilayah
+
+`Master Data Command Center/data/processed/wilayah_bps_dagri.csv`
+(SIG BPS / Kemendagri, 90.630 baris). Kolom `kode_bps`, `kode_dagri`,
+`parent_code_bps`. Hierarki 100% konsisten, tanpa kode duplikat.
 
 ## Regenerasi
 
 ```bash
-python3 supabase/seed/generate_wilayah.py \
-  --wilayah-csv  /path/wilayah_bps_dagri.csv \
-  --kodepos-code /path/wilayah_kodepos.json \
-  --kodepos-named /path/kodepos.json \
-  --out supabase/seed/wilayah_indonesia.sql
+# 1. Unduh sumber resmi (sekali, atau saat ada panen baru)
+curl -sL https://raw.githubusercontent.com/edigius/kodepos-wilayah/main/official_overlay.json \
+  -o /tmp/official_overlay.json
+# harvest/*.json: 516 file dari folder `harvest/` repo tersebut
 
-# Terapkan (idempotent: TRUNCATE + COPY)
+# 2. Bangun resolved json
+python3 scripts/build_posindonesia.py \
+  --wilayah-csv  /path/wilayah_bps_dagri.csv \
+  --overlay      /tmp/official_overlay.json \
+  --harvest-dir  /tmp/harvest_all \
+  --cahyadsn     /path/wilayah_kodepos.json \
+  --sooluh       /path/kodepos.json \
+  --out          supabase/seed/data/kodepos_posindonesia_resolved.json
+
+# 3. Bangun SQL seed
+python3 supabase/seed/generate_wilayah.py \
+  --wilayah-csv      /path/wilayah_bps_dagri.csv \
+  --kodepos-official supabase/seed/data/kodepos_posindonesia_resolved.json \
+  --kodepos-code     /path/wilayah_kodepos.json \
+  --kodepos-named    /path/kodepos.json \
+  --out              supabase/seed/wilayah_indonesia.sql
+
+# 4. Terapkan (idempotent: TRUNCATE + COPY)
 ssh root@31.97.49.146 \
   'docker exec -i supabase-db-... psql -U postgres -d postgres' \
   < supabase/seed/wilayah_indonesia.sql
 ```
 
 Skema: `00014_wilayah_reference.sql` (tabel + RLS read-only),
-`00016_kodepos_source.sql` (kolom provenance). RLS diaktifkan dengan policy
-`USING (true)` untuk SELECT; write tetap diblokir mengikuti
+`00016_kodepos_source.sql` (kolom provenance),
+`00017_kodepos_source_values.sql` (dokumentasi nilai). RLS diaktifkan dengan
+policy `USING (true)` untuk SELECT; write tetap diblokir mengikuti
 `20261026020000_lock_down_anon_writes.sql`.
 
-## Tindak lanjut opsional
+## Penyimpanan di aplikasi
 
-Untuk 35 desa estimasi, sumber paling otoritatif adalah data resmi
-**POS Indonesia**. Bila tersedia, timpa baris tersebut dan set
-`kodepos_source='posindonesia'`.
+`public.users` dan `public.mitra_applications` menyimpan **nama** (bukan id):
+`province`, `regency`, `kecamatan`, `kelurahan`, `kodepos`. Karena itu
+`WilayahPicker` menyediakan `resolveWilayahFromNames()` yang menerjemahkan
+nama tersimpan kembali menjadi id saat halaman dibuka, supaya dropdown
+berjenjang tetap bisa dipakai (bukan cuma menampilkan teks mati).
+`/profil/edit` tetap menyinkronkan kolom legacy `city` untuk pembaca lama
+(`/onboarding`, voucher).

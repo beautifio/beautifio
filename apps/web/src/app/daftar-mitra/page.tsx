@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Heart, Star, Send, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/client";
-import { WilayahPicker, EMPTY_WILAYAH, type WilayahValue } from "@/components/form/WilayahPicker";
+import { WilayahPicker, EMPTY_WILAYAH, resolveWilayahFromNames, type WilayahValue } from "@/components/form/WilayahPicker";
 
 const VOLUNTEER_CATS = ["psikologi", "agama", "umum"];
 
@@ -51,19 +51,19 @@ export default function DaftarMitraPage() {
       .select("phone, province, regency, kecamatan, kelurahan, kodepos")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (!alive || !data) return;
         if (data.phone) setPhone(data.phone);
-        if (data.province || data.regency || data.kecamatan || data.kelurahan || data.kodepos) {
-          setWilayah((w) => ({
-            ...w,
-            province: data.province || w.province,
-            regency: data.regency || w.regency,
-            kecamatan: data.kecamatan || w.kecamatan,
-            kelurahan: data.kelurahan || w.kelurahan,
-            kodepos: data.kodepos || w.kodepos,
-          }));
-        }
+        // Resolve stored labels back into ids so the cascading dropdowns stay
+        // navigable after a reload (same helper as /profil/edit).
+        const w = await resolveWilayahFromNames({
+          province: data.province,
+          regency: data.regency,
+          kecamatan: data.kecamatan,
+          kelurahan: data.kelurahan,
+          kodepos: data.kodepos,
+        });
+        if (alive) setWilayah(w);
       });
     return () => { alive = false; };
   }, [user, authLoading]);

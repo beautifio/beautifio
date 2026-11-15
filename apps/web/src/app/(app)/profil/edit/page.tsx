@@ -2,21 +2,13 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Camera, Loader2, Save, Check, ChevronDown } from "lucide-react"
+import { ArrowLeft, Camera, Loader2, Save, Check } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { supabase } from "@/lib/supabase/client"
-
-interface Province {
-  id: number
-  name: string
-}
-
-interface Regency {
-  id: number
-  province_id: number
-  type: string
-  name: string
-}
+import {
+  WilayahPicker, EMPTY_WILAYAH, resolveWilayahFromNames,
+  type WilayahValue,
+} from "@/components/form/WilayahPicker"
 
 export default function EditProfilePage() {
   const router = useRouter()
@@ -42,15 +34,9 @@ export default function EditProfilePage() {
   const [phone, setPhone] = useState("")
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
-  // Province & City
-  const [provinces, setProvinces] = useState<Province[]>([])
-  const [regencies, setRegencies] = useState<Regency[]>([])
-  const [selectedProvince, setSelectedProvince] = useState("")
-  const [selectedRegency, setSelectedRegency] = useState("")
-  const [showProvinceDropdown, setShowProvinceDropdown] = useState(false)
-  const [showRegencyDropdown, setShowRegencyDropdown] = useState(false)
-  const [provinceSearch, setProvinceSearch] = useState("")
-  const [regencySearch, setRegencySearch] = useState("")
+  // Wilayah (4 level + kode pos). Uses the same reusable picker as
+  // /daftar-mitra so both forms stay consistent.
+  const [wilayah, setWilayah] = useState<WilayahValue>(EMPTY_WILAYAH)
 
   // Avatar
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -61,12 +47,14 @@ export default function EditProfilePage() {
   // Fetch profile data
   useEffect(() => {
     if (!supabase || !user) return
+    let alive = true
     ;(async () => {
       const { data } = await supabase
         .from("users")
-        .select("full_name, bisik_anonymous_name, bisik_custom_name, date_of_birth, city, province, address, bio, avatar_url, phone")
+        .select("full_name, bisik_anonymous_name, bisik_custom_name, date_of_birth, city, province, regency, kecamatan, kelurahan, kodepos, address, bio, avatar_url, phone")
         .eq("id", user.id)
         .single()
+      if (!alive) return
       if (data) {
         setProfile(data)
         setFullName(data.full_name || "")
@@ -75,15 +63,19 @@ export default function EditProfilePage() {
         setAddress(data.address || "")
         setBio(data.bio || "")
         setAvatarUrl(data.avatar_url)
-        if (data.city) {
-          setSelectedRegency(data.city)
-        }
-        if (data.province) {
-        if (data.phone) { setPhone(data.phone) }
-          setSelectedProvince(data.province)
-        }
+        setPhone(data.phone || "")
+        // `city` is the legacy regency column (still read by /onboarding).
+        // Prefer the dedicated `regency` column when present.
+        const w = await resolveWilayahFromNames({
+          province: data.province,
+          regency: data.regency || data.city,
+          kecamatan: data.kecamatan,
+          kelurahan: data.kelurahan,
+          kodepos: data.kodepos,
+        })
+        if (alive) setWilayah(w)
       }
-      setLoading(false)
+      if (alive) setLoading(false)
     })()
 
     // Check Pro status (must check expires_at)
@@ -92,42 +84,8 @@ export default function EditProfilePage() {
       setIsPro(!!data)
     })
 
-    // Fetch provinces
-    supabase.from("indonesia_provinces").select("*").order("name").then(({ data }) => {
-      setProvinces(data ?? [])
-    })
+    return () => { alive = false }
   }, [user])
-
-  // Fetch regencies when province changes
-  const loadRegencies = async (provinceId: number) => {
-    const { data } = await supabase!
-      .from("indonesia_regencies")
-      .select("*")
-      .eq("province_id", provinceId)
-      .order("name")
-    setRegencies(data ?? [])
-  }
-
-  const handleProvinceChange = (prov: Province) => {
-    setSelectedProvince(prov.name)
-    setSelectedRegency("")
-    setRegencySearch("")
-    setShowProvinceDropdown(false)
-    loadRegencies(prov.id)
-  }
-
-  const handleRegencyChange = (reg: Regency) => {
-    setSelectedRegency(`${reg.type} ${reg.name}`)
-    setShowRegencyDropdown(false)
-  }
-
-  // Filter provinces/regencies by search
-  const filteredProvinces = provinces.filter(p =>
-    p.name.toLowerCase().includes(provinceSearch.toLowerCase())
-  )
-  const filteredRegencies = regencies.filter(r =>
-    `${r.type} ${r.name}`.toLowerCase().includes(regencySearch.toLowerCase())
-  )
 
   const initials = fullName
     ? fullName.split(" ").filter(Boolean).map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
@@ -194,8 +152,13 @@ export default function EditProfilePage() {
       const updateData: any = {
         full_name: fullName,
         date_of_birth: dateOfBirth || null,
-        city: selectedRegency || "",
-        province: selectedProvince || "",
+        // Keep `city` in sync for legacy readers (/onboarding, vouchers).
+        city: wilayah.regency || "",
+        province: wilayah.province || "",
+        regency: wilayah.regency || "",
+        kecamatan: wilayah.kecamatan || "",
+        kelurahan: wilayah.kelurahan || "",
+        kodepos: wilayah.kodepos || "",
         phone: phone || null,
         address,
         bio,
@@ -333,77 +296,12 @@ export default function EditProfilePage() {
           <p className="text-[10px] text-text-secondary mt-1">Untuk verifikasi usia (fitur Pro)</p>
         </div>
 
-        {/* Provinsi */}
-        <div className="relative">
-          <label className="text-xs font-semibold text-text-primary mb-1.5 block">Provinsi</label>
-          <button
-            onClick={() => { setShowProvinceDropdown(!showProvinceDropdown); setShowRegencyDropdown(false) }}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-bg text-sm text-left flex items-center justify-between text-text-primary hover:border-primary transition-colors cursor-pointer"
-          >
-            <span className={selectedProvince ? "" : "text-text-secondary/50"}>{selectedProvince || "Pilih provinsi"}</span>
-            <ChevronDown size={16} className="text-text-secondary" />
-          </button>
-          {showProvinceDropdown && (
-            <div className="absolute z-50 top-full mt-1 w-full bg-surface border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
-              <div className="sticky top-0 bg-surface p-2 border-b border-border">
-                <input
-                  value={provinceSearch}
-                  onChange={(e) => setProvinceSearch(e.target.value)}
-                  placeholder="Cari provinsi..."
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-xs outline-none"
-                  autoFocus
-                />
-              </div>
-              {filteredProvinces.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => handleProvinceChange(p)}
-                  className={`w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors cursor-pointer ${
-                    selectedProvince === p.name ? "bg-primary/5 text-primary font-medium" : "text-text-primary"
-                  }`}
-                >
-                  {p.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Kota/Kabupaten */}
-        <div className="relative">
-          <label className="text-xs font-semibold text-text-primary mb-1.5 block">Kota / Kabupaten</label>
-          <button
-            onClick={() => { setShowRegencyDropdown(!showRegencyDropdown); setShowProvinceDropdown(false) }}
-            disabled={!selectedProvince}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-bg text-sm text-left flex items-center justify-between disabled:opacity-40 text-text-primary hover:border-primary transition-colors cursor-pointer"
-          >
-            <span className={selectedRegency ? "" : "text-text-secondary/50"}>
-              {selectedRegency || (selectedProvince ? "Pilih kota/kabupaten" : "Pilih provinsi dulu")}
-            </span>
-            <ChevronDown size={16} className="text-text-secondary" />
-          </button>
-          {showRegencyDropdown && (
-            <div className="absolute z-50 top-full mt-1 w-full bg-surface border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
-              <div className="sticky top-0 bg-surface p-2 border-b border-border">
-                <input
-                  value={regencySearch}
-                  onChange={(e) => setRegencySearch(e.target.value)}
-                  placeholder="Cari kota/kabupaten..."
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-xs outline-none"
-                  autoFocus
-                />
-              </div>
-              {filteredRegencies.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => handleRegencyChange(r)}
-                  className="w-full px-4 py-2.5 text-sm text-left text-text-primary hover:bg-muted transition-colors cursor-pointer"
-                >
-                  {r.type} {r.name}
-                </button>
-              ))}
-            </div>
-          )}
+        {/* Wilayah — 4 level + kode pos (komponen sama dengan /daftar-mitra) */}
+        <div>
+          <label className="text-xs font-semibold text-text-primary mb-2 block">
+            Domisili (Provinsi → Kota/Kabupaten → Kecamatan → Desa/Kelurahan)
+          </label>
+          <WilayahPicker value={wilayah} onChange={setWilayah} compact />
         </div>
 
         {/* Alamat */}
