@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Poppins, Inter, Fredoka } from "next/font/google";
+import { Poppins, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "@/providers";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -18,10 +19,10 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const fredoka = Fredoka({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+const fredoka = localFont({
   variable: "--font-fredoka",
+  display: "swap",
+  src: [{ path: "./fonts/Fredoka-Variable.woff2", weight: "500 700", style: "normal" }],
 });
 
 export const metadata: Metadata = {
