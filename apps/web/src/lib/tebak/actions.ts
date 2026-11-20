@@ -77,7 +77,7 @@ export async function botPlayTurn(
   sessionId: string,
   questionId: string,
   botUserId: string,
-): Promise<{ chatMessage?: string }> {
+): Promise<{ chatMessage?: string; error?: string }> {
   const supabase = await createServerClient()
 
   // Fast check: is opponent actually a bot?
@@ -143,17 +143,18 @@ export async function botPlayTurn(
       is_correct: false,
       time_ms: decision.delayMs,
     })
-    if (!insertError) {
-      const { count } = await supabase.from('tebak_answers')
-        .select('*', { count: 'exact', head: true })
-        .eq('question_id', questionId)
-      if (count && count >= 2) {
-        await supabase.from('tebak_questions').update({ status: 'revealed' }).eq('id', questionId)
-        await supabase.rpc('set_session_advance_at', {
-          p_session_id: r.session_id,
-          p_delay_seconds: freshQ.sequence_number === 5 ? 8 : 6,
-        })
-      }
+    if (insertError) {
+      return { chatMessage: decision.chatMessage, error: insertError.message }
+    }
+    const { count } = await supabase.from('tebak_answers')
+      .select('*', { count: 'exact', head: true })
+      .eq('question_id', questionId)
+    if (count && count >= 2) {
+      await supabase.from('tebak_questions').update({ status: 'revealed' }).eq('id', questionId)
+      await supabase.rpc('set_session_advance_at', {
+        p_session_id: r.session_id,
+        p_delay_seconds: freshQ.sequence_number === 5 ? 8 : 6,
+      })
     }
     return { chatMessage: decision.chatMessage }
   }

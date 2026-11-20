@@ -148,7 +148,7 @@ export async function swipeRight(
     if (existing) return { error: "Sudah ngobrol sama bot minggu ini" }
 
     // Create chat
-    const { data: chat } = await supabase.from("bisik_chats").insert({
+    const { data: chat, error: chatErr } = await supabase.from("bisik_chats").insert({
       initiator_id: user.id,
       receiver_id: card.user_id,
       card_id: card.id,
@@ -162,6 +162,7 @@ export async function swipeRight(
       })
       return { error: null, botChatId: chat.id }
     }
+    return { error: chatErr?.message ?? null }
   }
 
   return { error: null }
