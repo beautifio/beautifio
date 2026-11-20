@@ -1,0 +1,140 @@
+/* ─── Journey page motion ───
+   One orchestrated moment on load (the trail draws itself),
+   plus motion that answers taps/filters. Everything is CSS-only
+   (transform/opacity/stroke) so it stays light on low-end phones. */
+
+/* Trail draw-in: the mask path reveals the dotted trail once */
+.trailReveal {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: trailDraw 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.15s forwards;
+}
+
+@keyframes trailDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Flag / goal pops in after the trail arrives */
+.popIn {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transform: scale(0);
+  animation: popIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 1.35s forwards;
+}
+
+@keyframes popIn {
+  to { transform: scale(1); }
+}
+
+/* Gentle flag wave */
+.flagWave {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  animation: flagWave 2.4s ease-in-out 1.8s infinite;
+}
+
+@keyframes flagWave {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  50% { transform: skewY(-6deg) scaleX(0.92); }
+}
+
+/* The walker (emoji avatar) hops softly in place */
+.hop {
+  animation: hop 2.2s ease-in-out infinite;
+}
+
+@keyframes hop {
+  0%, 70%, 100% { transform: translateY(0); }
+  80% { transform: translateY(-5px); }
+  90% { transform: translateY(0); }
+}
+
+/* Current milestone pulse ring */
+.pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse 2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* Slow drifting cloud */
+.drift {
+  animation: drift 14s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(18px); }
+}
+
+/* Progress bar fill */
+.fill {
+  transform-origin: left center;
+  animation: fill 1s cubic-bezier(0.65, 0, 0.35, 1) 0.3s both;
+}
+
+@keyframes fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* List rows: staggered in when the list (re)appears after a filter */
+.row {
+  opacity: 0;
+  animation: rowIn 0.4s ease-out forwards;
+}
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Emoji tile: tiny wobble on hover / focus, press feedback */
+.tile {
+  transition: transform 0.2s ease;
+}
+
+.rowButton:hover .tile,
+.rowButton:focus-visible .tile {
+  animation: wobble 0.5s ease-in-out;
+}
+
+.rowButton:active {
+  transform: scale(0.985);
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  30% { transform: rotate(-8deg) scale(1.08); }
+  60% { transform: rotate(6deg) scale(1.08); }
+}
+
+.chip {
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+.toast {
+  animation: rowIn 0.25s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trailReveal { animation: none; stroke-dashoffset: 0; }
+  .popIn { animation: none; transform: none; }
+  .flagWave,
+  .hop,
+  .pulse,
+  .drift { animation: none; }
+  .fill { animation: none; }
+  .row { animation: none; opacity: 1; }
+  .rowButton:hover .tile,
+  .rowButton:focus-visible .tile { animation: none; }
+  .toast { animation: none; }
+}
