@@ -84,8 +84,23 @@ export function BannerCarousel() {
           key={banner.id}
           className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${idx === current ? "opacity-100" : "opacity-0"}`}
           style={{ position: "relative" }}>
-          <img src={banner.image_url} alt={banner.title || ""} className="w-full h-full object-cover" />
-          {banner.redirect_label && (
+          {banner.image_url ? (
+            <img src={banner.image_url} alt={banner.title || ""} className="w-full h-full object-cover" />
+          ) : (
+            /* Graceful fallback: home_banners reseed dari app_settings.hero_image_url
+               yang kosong → banner sebelumnya tampil kotak abu-abu. Tampilkan
+               title + label pada gradien agar slot tetap informatif; tap tetap
+               jalan ke redirect_url. */
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 py-12 text-center bg-gradient-to-br from-[#084463] via-[#1D5A8B] to-[#0B3550]">
+              <span className="text-xl font-bold leading-tight text-white">{banner.title || "Banner"}</span>
+              {banner.redirect_label && (
+                <span className="bg-[#FFC64F] text-[#1E2938] text-xs font-bold px-3 py-1.5 rounded-lg">
+                  {banner.redirect_label}
+                </span>
+              )}
+            </div>
+          )}
+          {banner.image_url && banner.redirect_label && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12">
               <span className="inline-block bg-[#FFC64F] text-[#1E2938] text-xs font-bold px-3 py-1.5 rounded-lg">
                 {banner.redirect_label}
