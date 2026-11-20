@@ -1,0 +1,131 @@
+/* ── Horizon ─────────────────────────────────────────────── */
+.horizon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.layerFar  { transform: translate3d(calc(var(--px, 0) * -5px),  calc(var(--sy, 0) * -0.04px), 0); }
+.layerMid  { transform: translate3d(calc(var(--px, 0) * -11px), calc(var(--sy, 0) * -0.10px), 0); }
+.layerNear { transform: translate3d(calc(var(--px, 0) * -20px), calc(var(--sy, 0) * -0.18px), 0); }
+.trail     { transform: translate3d(calc(var(--px, 0) * -14px), calc(var(--sy, 0) * -0.13px), 0); }
+.stars     { transform: translate3d(calc(var(--px, 0) * -2px),  calc(var(--sy, 0) * 0.05px), 0); }
+
+.lamp { transform-box: fill-box; transform-origin: center; }
+.twinkle { animation: twinkle 3.6s ease-in-out infinite alternate; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animated .dawn  { animation: dawnRise 2.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .animated .sun   { transform-box: fill-box; transform-origin: center; animation: sunRise 2.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .animated .stars > circle { animation: starsDim 2.4s ease-out both; }
+  .animated .stars > .twinkle { animation: starsDim 2.4s ease-out both, twinkle 3.6s 2.4s ease-in-out infinite alternate; }
+  .animated .lamp  { animation: lampOn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .twinkle { animation: none; }
+  .layerFar, .layerMid, .layerNear, .trail, .stars { transform: none; }
+}
+
+@keyframes dawnRise {
+  from { opacity: 0; transform: translateY(60px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes sunRise {
+  from { transform: translateY(46px) scale(0.85); }
+  to   { transform: translateY(0) scale(1); }
+}
+@keyframes starsDim {
+  from { opacity: 1; }
+}
+@keyframes lampOn {
+  0%   { opacity: 0; transform: scale(0.2); }
+  60%  { opacity: 1; transform: scale(1.25); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes twinkle {
+  to { opacity: 0.15; }
+}
+
+/* ── Hero copy: one orchestrated entrance ───────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .enter1, .enter2, .enter3, .enter4 {
+    animation: enter 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .enter1 { animation-delay: 0.35s; }
+  .enter2 { animation-delay: 0.6s; }
+  .enter3 { animation-delay: 1.3s; }
+  .enter4 { animation-delay: 1.6s; }
+  .photoEnter { animation: photo 1.4s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+}
+@keyframes enter {
+  from { opacity: 0; transform: translateY(14px); filter: blur(8px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes photo {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+}
+
+/* Desktop photo frame: tilts toward the pointer */
+.photoFrame {
+  transform: perspective(1200px)
+    rotateY(calc(var(--px, 0) * -4deg))
+    rotateX(calc(var(--py, 0) * 3deg))
+    translate3d(0, calc(var(--sy, 0) * -0.06px), 0);
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .photoFrame { transform: none; }
+}
+
+/* ── Journey path (chapter 2) ───────────────────────────── */
+.stepNode {
+  transition: background-color 500ms ease, box-shadow 500ms ease, color 500ms ease, transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stepLit .stepNode {
+  background: var(--color-fajar);
+  color: var(--color-laut-950);
+  border-color: transparent;
+  box-shadow: 0 0 0 6px rgba(255, 190, 77, 0.2), 0 6px 18px -4px rgba(242, 163, 27, 0.7);
+  transform: scale(1.04);
+}
+.stepCard {
+  transition: opacity 600ms ease, transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .stepDim .stepCard { opacity: 0.5; transform: translateX(6px); }
+}
+.rail {
+  transform-origin: top;
+  transform: scaleY(var(--rail, 0));
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail { transform: none; }
+}
+
+/* ── Bisik chat preview (chapter 3) ─────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .chat .bubble { opacity: 0; }
+  .chatOn .bubble {
+    animation: bubble 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .chatOn .bubble:nth-child(1) { animation-delay: 0.1s; }
+  .chatOn .bubble:nth-child(2) { animation-delay: 0.9s; }
+  .chatOn .bubble:nth-child(3) { animation-delay: 1.8s; }
+  .chatOn .bubble:nth-child(4) { animation-delay: 2.6s; }
+}
+@keyframes bubble {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Sunrise seam between night and day ─────────────────── */
+.seamSun {
+  transform: translate3d(0, calc((1 - var(--seam, 1)) * 90px), 0) scale(calc(0.85 + var(--seam, 1) * 0.15));
+  transform-origin: 50% 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .seamSun { transform: none; }
+}
