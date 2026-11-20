@@ -6,7 +6,7 @@ import {
   ArrowLeft, ArrowRight, Check, Sparkles, Target, Clock,
   MapPin, GraduationCap, Heart, Brain, Users,
 } from "lucide-react";
-import { Button, Badge } from "@beautifio/ui";
+import { Button, Badge, IconTile } from "@beautifio/ui";
 import { supabase } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -45,8 +45,8 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
       {Array.from({ length: total }).map((_, i) => (
         <div
           key={i}
-          className={`h-1 flex-1 rounded-full transition-all duration-500 ${
-            i <= current ? "bg-primary" : "bg-border"
+          className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+            i < current ? "bg-laut-700" : i === current ? "bg-fajar shadow-[0_0_10px_rgba(255,190,77,0.7)]" : "bg-laut-100"
           }`}
         />
       ))}
@@ -88,14 +88,16 @@ function SelectGrid({
           <button
             key={opt}
             onClick={() => toggle(opt)}
-            className={`flex items-center justify-center p-4 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
+            type="button"
+            aria-pressed={active}
+            className={`flex min-h-14 items-center justify-center rounded-lg border p-4 text-center text-sm font-medium transition-[border-color,background-color,box-shadow,transform] duration-150 active:scale-[0.98] cursor-pointer ${
               active
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-border text-text-secondary hover:border-primary/30 hover:text-text-primary hover:bg-muted/30"
-            } ${multi && active && max && selected.length >= max ? "ring-2 ring-accent/30" : ""}`}
+                ? "border-laut-700 bg-laut-50 text-laut-700 shadow-[0_0_0_3px_rgba(31,111,151,0.12)]"
+                : "border-garis bg-white text-tinta shadow-xs hover:border-laut-700/30"
+            }`}
           >
             {opt}
-            {active && <Check size={16} className="ml-2 flex-shrink-0 text-primary" />}
+            {active && <Check size={16} className="ml-2 flex-shrink-0 text-laut-700" />}
           </button>
         );
       })}
@@ -304,7 +306,7 @@ export default function OnboardingPage() {
 
   if (showMatching) {
     return (
-      <div className="min-h-screen bg-bg">
+      <div className="min-h-screen bg-mist">
         <div className="max-w-content mx-auto px-6 pt-12 pb-8">
           <MatchingScreen onComplete={handleComplete} />
         </div>
@@ -322,21 +324,19 @@ export default function OnboardingPage() {
   })();
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-mist">
       <div className="max-w-content mx-auto px-6 pt-8 pb-8 min-h-screen flex flex-col">
         <div className="flex-1 flex flex-col">
           <StepIndicator current={step} total={steps.length} />
 
           <div className="flex-1">
             <div className="mb-8">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Icon size={22} className="text-primary" />
-              </div>
-              <h1 className="text-2xl font-bold text-text-primary">
+              <IconTile tone="laut" size="lg" className="mb-5"><Icon /></IconTile>
+              <h1 className="font-display text-[26px] font-bold leading-tight tracking-[-0.02em] text-tinta">
                 {s.subtitle}
               </h1>
               {step === 0 && (
-                <p className="text-sm text-text-secondary mt-2">
+                <p className="text-[15px] text-kabut mt-2">
                   Ini membantu kami merekomendasikan yang terbaik untukmu.
                 </p>
               )}
@@ -364,7 +364,7 @@ export default function OnboardingPage() {
                       }
                     }}
                     onKeyDown={(e) => e.key === "Enter" && canProceed && handleNext()}
-                    className="w-full h-13 px-4 rounded-xl border border-border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20 text-center text-2xl font-bold"
+                    className="w-full h-13 px-4 rounded-md border border-garis bg-white text-[15px] text-tinta shadow-xs outline-none transition-all placeholder:text-kabut/60 focus:border-laut-500 focus:ring-4 focus:ring-laut-500/15 text-center text-2xl font-bold"
                   />
                   <p className="text-xs text-text-secondary text-center">
                     Masukkan usia dalam angka (10–40 tahun)
@@ -377,7 +377,7 @@ export default function OnboardingPage() {
                   value={(data.city as string) || ""}
                   onChange={(e) => update("city", [e.target.value])}
                   onKeyDown={(e) => e.key === "Enter" && canProceed && handleNext()}
-                  className="w-full h-13 px-4 rounded-xl border border-border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20"
+                  className="w-full h-13 px-4 rounded-md border border-garis bg-white text-[15px] text-tinta shadow-xs outline-none transition-all placeholder:text-kabut/60 focus:border-laut-500 focus:ring-4 focus:ring-laut-500/15"
                 />
               )
             ) : (
@@ -402,7 +402,7 @@ export default function OnboardingPage() {
         <div className="h-24" /> {/* spacer untuk fixed bottom */}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-bg/95 backdrop-blur-sm">
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/60 bg-white/75 shadow-[0_-8px_24px_-12px_rgba(3,24,42,0.18)] backdrop-blur-xl">
         <div className="max-w-content mx-auto px-6 py-3">
           <div className="flex items-center gap-3">
             {step > 0 && (
@@ -429,7 +429,7 @@ export default function OnboardingPage() {
               {!saving && <ArrowRight size={16} />}
             </Button>
           </div>
-          <p className="text-xs text-text-secondary text-center mt-2">
+          <p className="text-xs text-kabut text-center mt-2">
             Langkah {step + 1} dari {steps.length}
           </p>
         </div>

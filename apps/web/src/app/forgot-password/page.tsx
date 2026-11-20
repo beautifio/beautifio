@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { AuthShell } from "@/components/layout/AuthShell";
 import { Mail, ArrowLeft } from "lucide-react";
 import { Button, Input } from "@beautifio/ui";
 
@@ -44,91 +45,60 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col">
-      <div className="max-w-content mx-auto w-full px-6 pt-12 pb-8 flex-1 flex flex-col">
-        <Link
-          href="/login"
-          className="w-9 h-9 rounded-xl bg-surface border border-border flex items-center justify-center cursor-pointer hover:bg-muted transition-all active:scale-90 mb-8"
-        >
-          <ArrowLeft size={18} className="text-text-secondary" />
+    <AuthShell
+      title={sent ? "Cek email kamu" : "Lupa password"}
+      subtitle={sent ? undefined : "Masukkan email terdaftar, kami kirim tautan untuk membuat password baru."}
+      footer={
+        <Link href="/login" className="inline-flex items-center gap-1.5 font-semibold text-laut-500 hover:underline">
+          <ArrowLeft size={15} aria-hidden /> Kembali ke Masuk
         </Link>
-
-        {sent ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-              <Mail size={28} className="text-success" />
-            </div>
-            <h1 className="text-xl font-bold text-text-primary">
-              Cek Email Kamu
-            </h1>
-            <p className="text-sm text-text-secondary mt-2 leading-relaxed">
-              Kami telah mengirim tautan reset password ke{" "}
-              <strong className="text-text-primary">{email}</strong>
-            </p>
-            <p className="text-xs text-text-secondary mt-4">
-              Tidak menerima email?{" "}
-              <button
-                onClick={() => {
-                  setSent(false);
-                  setSubmitting(false);
-                }}
-                className="text-primary font-medium hover:underline cursor-pointer"
-              >
-                Kirim ulang
-              </button>
-            </p>
-            <Link
-              href="/login"
-              className="mt-8 text-sm font-medium text-secondary hover:underline"
+      }
+    >
+      {sent ? (
+        <div className="flex flex-col items-center text-center">
+          <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-success-soft text-success ring-1 ring-inset ring-success/20">
+            <Mail size={26} aria-hidden />
+          </span>
+          <p className="text-[15px] leading-relaxed text-kabut">
+            Tautan reset password sudah dikirim ke <strong className="text-tinta">{email}</strong>.
+          </p>
+          <p className="mt-4 text-[13px] text-kabut">
+            Tidak menerima email?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setSent(false);
+                setSubmitting(false);
+              }}
+              className="font-semibold text-laut-500 hover:underline cursor-pointer"
             >
-              Kembali ke Login
-            </Link>
-          </div>
-        ) : (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-text-primary">
-                Lupa Password
-              </h1>
-              <p className="text-sm text-text-secondary mt-2">
-                Masukkan email terdaftar, kami akan kirim tautan reset password
-              </p>
-            </div>
+              Kirim ulang
+            </button>
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={handleReset} className="space-y-4">
+          <Input
+            label="Email"
+            type="email"
+            placeholder="nama@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
 
-            <form
-              onSubmit={handleReset}
-              className="space-y-4 flex-1 flex flex-col"
-            >
-              <Input
-                label="Email"
-                type="email"
-                placeholder="nama@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
+          {error && (
+            <p className="rounded-md bg-danger-soft px-3 py-2.5 text-sm text-danger" role="alert">
+              {error}
+            </p>
+          )}
 
-              {error && (
-                <p className="text-xs text-destructive font-medium" role="alert">
-                  {error}
-                </p>
-              )}
-
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full mt-auto"
-                loading={submitting}
-                disabled={!email}
-              >
-                Kirim Tautan Reset
-              </Button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
+          <Button type="submit" variant="primary" size="lg" className="w-full" loading={submitting} disabled={!email}>
+            Kirim tautan reset
+          </Button>
+        </form>
+      )}
+    </AuthShell>
   );
 }

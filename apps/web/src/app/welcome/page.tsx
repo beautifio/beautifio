@@ -1,130 +1,81 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Compass, Search } from "lucide-react";
+import { ChevronRight, Compass, Search } from "lucide-react";
+import { Horizon } from "@/components/landing/Horizon";
+import { BrandLogo } from "@/components/landing/BrandLogo";
+
+const CHOICES = [
+  {
+    href: "/discover",
+    icon: Compass,
+    title: "Saya sudah punya tujuan",
+    text: "Saya sudah tahu apa yang ingin saya capai.",
+    action: "Lanjut ke Discovery",
+  },
+  {
+    href: "/onboarding",
+    icon: Search,
+    title: "Saya masih bingung",
+    text: "Saya ingin menemukan minat dan tujuan yang cocok.",
+    action: "Temukan arah saya",
+  },
+];
 
 export default function WelcomeScreen() {
-  const router = useRouter();
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 200);
-    return () => clearTimeout(t);
-  }, []);
-
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
-      <div className="max-w-content mx-auto w-full px-6 pt-12 pb-8 flex-1 flex flex-col">
-        {/* Header */}
-        <div
-          className={`flex flex-col items-center text-center transition-all duration-800 ease-out ${
-            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-        >
-          <div className="w-14 h-14 rounded-2xl bg-[#084463] flex items-center justify-center shadow-lg mb-4">
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-              <path d="M16 2L20 12L30 14L22 22L24 32L16 26L8 32L10 22L2 14L12 12L16 2Z" fill="white" />
-            </svg>
-          </div>
+    <div className="on-dark relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-night grain text-white">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%]">
+        <Horizon mode="still" />
+      </div>
 
-          <h1 className="text-3xl font-bold text-[#1e293b] leading-tight">
-            Selamat Datang
-          </h1>
-          <p className="text-sm text-[#64748b] mt-3 max-w-[320px] leading-relaxed">
-            Temukan arah hidup, lingkungan yang tepat, dan peluang terbaik untuk
-            masa depanmu.
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-[max(28px,env(safe-area-inset-top))]">
+        <div className="flex justify-center">
+          <BrandLogo className="h-10 max-w-[220px]" />
+        </div>
+
+        <div className="mt-10">
+          <h1 className="font-display text-[34px] font-bold leading-[1.1] tracking-[-0.025em]">Selamat datang</h1>
+          <p className="mt-3 max-w-[34ch] text-[15px] leading-relaxed text-white/70">
+            Temukan arah hidup, lingkungan yang tepat, dan peluang terbaik untuk masa depanmu.
           </p>
         </div>
 
-        {/* Cards */}
-        <div className="flex-1 flex flex-col justify-center gap-4 mt-10">
-          {/* Card 1: Sudah Punya Tujuan */}
-          <div
-            className={`group bg-white rounded-[24px] p-6 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_32px_rgba(8,68,99,0.16)] transition-all duration-500 cursor-pointer border border-[#e2e8f0] hover:border-[#084463]/20 ${
-              visible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-6"
-            }`}
-            style={{ transitionDelay: "300ms" }}
-            onClick={() => router.push("/discover")}
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#084463]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#084463]/15 transition-colors">
-                <Compass size={24} className="text-[#084463]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-[#1e293b]">
-                  Saya Sudah Punya Tujuan
-                </h3>
-                <p className="text-sm text-[#64748b] mt-1 leading-relaxed">
-                  Saya sudah tahu apa yang ingin saya capai.
-                </p>
-                <div className="flex items-center gap-1.5 mt-3 text-sm font-semibold text-[#084463] group-hover:gap-2.5 transition-all">
-                  Lanjut Discovery
-                  <ArrowRight size={16} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Masih Bingung */}
-          <div
-            className={`group bg-white rounded-[24px] p-6 shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_32px_rgba(8,68,99,0.16)] transition-all duration-500 cursor-pointer border border-[#e2e8f0] hover:border-[#084463]/20 ${
-              visible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-6"
-            }`}
-            style={{ transitionDelay: "500ms" }}
-            onClick={() => router.push("/onboarding")}
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#FFC64F]/15 flex items-center justify-center flex-shrink-0 group-hover:bg-[#FFC64F]/25 transition-colors">
-                <Search size={24} className="text-[#FFC64F]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-[#1e293b]">
-                  Saya Masih Bingung
-                </h3>
-                <p className="text-sm text-[#64748b] mt-1 leading-relaxed">
-                  Saya ingin menemukan minat dan tujuan yang cocok.
-                </p>
-                <div className="flex items-center gap-1.5 mt-3 text-sm font-semibold text-[#FFC64F] group-hover:gap-2.5 transition-all">
-                  Temukan Arah Saya
-                  <ArrowRight size={16} />
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="mt-8 flex flex-col gap-3">
+          {CHOICES.map(({ href, icon: Icon, title, text, action }) => (
+            <Link
+              key={href}
+              href={href}
+              className="surface-glass-dark group flex items-start gap-4 rounded-xl p-5 transition-[transform,border-color] duration-200 ease-out-expo hover:border-white/20 active:scale-[0.99]"
+            >
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/10 text-fajar ring-1 ring-inset ring-white/10">
+                <Icon className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[17px] font-semibold">{title}</span>
+                <span className="mt-1 block text-sm leading-relaxed text-white/65">{text}</span>
+                <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-fajar-glow">
+                  {action}
+                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </span>
+              </span>
+            </Link>
+          ))}
         </div>
 
-        {/* Bottom Actions */}
-        <div
-          className={`mt-auto pt-8 space-y-3 transition-all duration-800 ease-out ${
-            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-          }`}
-          style={{ transitionDelay: "700ms" }}
-        >
+        <div className="mt-auto flex flex-col gap-2.5 pt-10">
           <Link
             href="/login"
-            className="flex items-center justify-center w-full h-13 rounded-full bg-[#084463] text-white font-semibold text-sm shadow-sm hover:bg-[#084463]/90 active:scale-[0.98] transition-all cursor-pointer"
+            className="inline-flex h-13 items-center justify-center rounded-lg bg-fajar font-display text-[15px] font-semibold text-laut-950 shadow-glow-fajar transition-transform active:scale-[0.98]"
           >
             Masuk
           </Link>
-
           <Link
             href="/register"
-            className="flex items-center justify-center w-full h-13 rounded-full border-2 border-[#084463] text-[#084463] font-semibold text-sm hover:bg-[#084463]/5 active:scale-[0.98] transition-all cursor-pointer"
+            className="inline-flex h-13 items-center justify-center rounded-lg border border-white/15 bg-white/[0.06] font-display text-[15px] font-semibold text-white backdrop-blur transition-colors hover:bg-white/[0.12]"
           >
             Daftar
           </Link>
-
-          <Link
-            href="/home"
-            className="block w-full text-center text-[#64748b] text-sm py-2 hover:text-[#1e293b] transition-colors cursor-pointer"
-          >
-            Lewati Dulu
+          <Link href="/home" className="py-2 text-center text-sm font-medium text-white/60 hover:text-white">
+            Lewati dulu
           </Link>
         </div>
       </div>

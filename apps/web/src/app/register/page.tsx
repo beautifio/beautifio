@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { use, useState, useEffect } from "react";
-import { Eye, EyeOff, UserPlus, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Button, Input, Skeleton } from "@beautifio/ui";
+import { AuthShell } from "@/components/layout/AuthShell";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { supabase } from "@/lib/supabase/client";
@@ -169,7 +170,7 @@ export default function RegisterPage({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-embun flex flex-col items-center justify-center px-6">
         <div className="max-w-content mx-auto w-full space-y-4">
           <div className="flex flex-col items-center mb-8">
             <Skeleton className="w-16 h-16 rounded-full mb-4" />
@@ -187,26 +188,17 @@ export default function RegisterPage({
   }
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col">
-      <div className="max-w-content mx-auto w-full px-6 pt-12 pb-8 flex-1 flex flex-col">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <UserPlus size={28} className="text-primary" />
-          </div>
-          <h1 className="text-xl font-bold text-text-primary">
-            {isUpgrade ? "Simpan Perjalananmu" : "Daftar Gratis"}
-          </h1>
-          <p className="text-sm text-text-secondary mt-1.5">
-            {isUpgrade
+    <AuthShell
+      title={isUpgrade ? "Simpan Perjalananmu" : "Daftar Gratis"}
+      subtitle={isUpgrade
               ? "Data perjalananmu akan tetap tersimpan"
               : "Mulai wujudkan mimpimu sekarang"}
-          </p>
-        </div>
+    >
 
-        <form onSubmit={handleRegister} className="flex-1 flex flex-col">
+        <form onSubmit={handleRegister} className="flex flex-col">
           <div className="space-y-4 flex-1">
             <div>
-              <label className="text-xs font-medium text-text-secondary mb-1.5 block">
+              <label className="text-[13px] font-medium text-tinta mb-1.5 block">
                 Nama Lengkap
               </label>
               <Input
@@ -219,67 +211,35 @@ export default function RegisterPage({
             </div>
 
             {/* Info platform */}
-            <div style={{
-              background: '#F0F9FF',
-              border: '1px solid #6BB9D4',
-              borderRadius: 12, padding: '12px 14px',
-            }}>
-              <p style={{
-                fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
-                color: '#0E7490', margin: 0, lineHeight: 1.6,
-              }}>
-                💜 Beautifio adalah platform yang dirancang untuk
-                perempuan — ruang aman untuk tumbuh, berbagi, dan
-                saling mendukung.
-              </p>
-            </div>
+            <p className="rounded-lg border border-langit/50 bg-langit-soft px-3.5 py-3 text-[13px] leading-relaxed text-laut-700">
+              Beautifio adalah platform yang dirancang untuk perempuan, ruang aman untuk tumbuh, berbagi, dan saling
+              mendukung.
+            </p>
 
-            <div>
-              <label style={{
-                fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12, fontWeight: 600,
-                color: '#647488', display: 'block', marginBottom: 8,
-              }}>
-                Gender *
-              </label>
-              <div style={{ display: 'flex', flexDirection: 'column',
-                gap: 8, marginBottom: 4 }}>
+            <fieldset>
+              <legend className="text-[13px] font-medium text-tinta mb-2">Gender</legend>
+              <div className="flex flex-col gap-2">
                 {[
-                  { value: 'perempuan', label: '♀️ Perempuan' },
-                  { value: 'prefer_not_to_say',
-                    label: '🔒 Tidak ingin menyebutkan' },
-                ].map(opt => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setGender(opt.value)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px',
-                      background: gender === opt.value
-                        ? '#F0F9FF' : '#F8FAFC',
-                      border: gender === opt.value
-                        ? '2px solid #084463' : '1.5px solid #E2E8F0',
-                      borderRadius: 12, cursor: 'pointer',
-                      textAlign: 'left', width: '100%',
-                      transition: 'all 0.15s ease',
-                    }}>
-                    <div style={{
-                      width: 18, height: 18, borderRadius: '50%',
-                      border: gender === opt.value
-                        ? '5px solid #084463' : '2px solid #D1D5DB',
-                      flexShrink: 0, transition: 'all 0.15s ease',
-                    }} />
-                    <span style={{
-                      fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14,
-                      color: '#1E2938', fontWeight: 500,
-                    }}>
+                  { value: 'perempuan', label: 'Perempuan' },
+                  { value: 'prefer_not_to_say', label: 'Tidak ingin menyebutkan' },
+                ].map(opt => {
+                  const on = gender === opt.value
+                  return (
+                    <button key={opt.value} type="button" aria-pressed={on}
+                      onClick={() => setGender(opt.value)}
+                      className={`flex w-full items-center gap-3 rounded-md border px-4 py-3 text-left text-sm font-medium text-tinta transition-[border-color,background-color,box-shadow] duration-150 cursor-pointer ${
+                        on ? "border-laut-700 bg-laut-50 shadow-[0_0_0_3px_rgba(31,111,151,0.12)]" : "border-garis bg-white hover:border-laut-700/30"
+                      }`}>
+                      <span aria-hidden className={`h-[18px] w-[18px] shrink-0 rounded-full transition-all ${on ? "border-[5px] border-laut-700" : "border-2 border-kabut/40"}`} />
                       {opt.label}
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  )
+                })}
               </div>
-            </div>
+            </fieldset>
 
             <div>
-              <label className="text-xs font-medium text-text-secondary mb-1.5 block">
+              <label className="text-[13px] font-medium text-tinta mb-1.5 block">
                 Email
               </label>
               <Input
@@ -292,7 +252,7 @@ export default function RegisterPage({
             </div>
 
             <div>
-              <label className="text-xs font-medium text-text-secondary mb-1.5 block">
+              <label className="text-[13px] font-medium text-tinta mb-1.5 block">
                 Password
               </label>
               <div className="relative">
@@ -308,7 +268,7 @@ export default function RegisterPage({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kabut hover:text-tinta cursor-pointer p-1"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -318,7 +278,7 @@ export default function RegisterPage({
                   <p
                     key={check.label}
                     className={`text-[11px] flex items-center gap-1 ${
-                      check.passed ? "text-green-600" : "text-text-secondary/50"
+                      check.passed ? "text-success" : "text-kabut/60"
                     }`}
                   >
                     <span>{check.passed ? "✓" : "○"}</span> {check.label}
@@ -328,7 +288,7 @@ export default function RegisterPage({
             </div>
 
             <div>
-              <label className="text-xs font-medium text-text-secondary mb-1.5 block">
+              <label className="text-[13px] font-medium text-tinta mb-1.5 block">
                 Konfirmasi Password
               </label>
               <div className="relative">
@@ -344,16 +304,20 @@ export default function RegisterPage({
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kabut hover:text-tinta cursor-pointer p-1"
                 >
                   {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            {error && (
-              <p className="text-sm text-red-500 text-center">{error}</p>
-            )}
+            {error === "cek-email" ? (
+              <p role="status" className="rounded-md bg-success-soft px-3 py-2.5 text-sm text-success text-center">
+                Hampir selesai. Cek email kamu untuk mengonfirmasi akun.
+              </p>
+            ) : error ? (
+              <p role="alert" className="rounded-md bg-danger-soft px-3 py-2.5 text-sm text-danger text-center">{error}</p>
+            ) : null}
           </div>
 
           <div className="mt-6 space-y-3">
@@ -361,7 +325,7 @@ export default function RegisterPage({
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full shadow-lg"
+              className="w-full"
               disabled={submitting || !isPasswordValid}
             >
               {submitting
@@ -372,18 +336,17 @@ export default function RegisterPage({
               <ArrowRight size={16} />
             </Button>
 
-            <p className="text-center text-xs text-text-secondary">
+            <p className="text-center text-[13px] text-kabut">
               Sudah punya akun?{" "}
               <Link
                 href={isUpgrade ? "/login?upgrade=true" : "/login"}
-                className="text-primary font-medium hover:underline"
+                className="text-laut-500 font-semibold hover:underline"
               >
                 Masuk
               </Link>
             </p>
           </div>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

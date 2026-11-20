@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { use, useState, useEffect } from "react";
-import { Eye, EyeOff, LogIn, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Button, Input, Skeleton } from "@beautifio/ui";
+import { AuthShell } from "@/components/layout/AuthShell";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { supabase } from "@/lib/supabase/client";
@@ -152,7 +153,7 @@ export default function LoginPage({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-embun flex flex-col items-center justify-center px-6">
         <div className="max-w-content mx-auto w-full space-y-4">
           <div className="flex flex-col items-center mb-8">
             <Skeleton className="w-16 h-16 rounded-full mb-4" />
@@ -170,26 +171,17 @@ export default function LoginPage({
   }
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col">
-      <div className="max-w-content mx-auto w-full px-6 pt-12 pb-8 flex-1 flex flex-col">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <LogIn size={28} className="text-primary" />
-          </div>
-          <h1 className="text-xl font-bold text-text-primary">
-            {isUpgrade ? "Hubungkan Akun" : "Masuk"}
-          </h1>
-          <p className="text-sm text-text-secondary mt-1.5">
-            {isUpgrade
+    <AuthShell
+      title={isUpgrade ? "Hubungkan Akun" : "Masuk"}
+      subtitle={isUpgrade
               ? "Masuk dengan akun yang sudah ada untuk menyimpan data"
               : "Selamat datang kembali"}
-          </p>
-        </div>
+    >
 
-        <form onSubmit={handleEmailLogin} className="flex-1 flex flex-col">
+        <form onSubmit={handleEmailLogin} className="flex flex-col">
           <div className="space-y-4 flex-1">
             <div>
-              <label className="text-xs font-medium text-text-secondary mb-1.5 block">
+              <label className="text-[13px] font-medium text-tinta mb-1.5 block">
                 Email
               </label>
               <Input
@@ -202,7 +194,7 @@ export default function LoginPage({
             </div>
 
             <div>
-              <label className="text-xs font-medium text-text-secondary mb-1.5 block">
+              <label className="text-[13px] font-medium text-tinta mb-1.5 block">
                 Password
               </label>
               <div className="relative">
@@ -217,7 +209,7 @@ export default function LoginPage({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-kabut hover:text-tinta cursor-pointer p-1"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -230,15 +222,15 @@ export default function LoginPage({
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                  className="w-4 h-4 rounded accent-laut-700"
                 />
-                <span className="text-xs text-text-secondary">Ingat saya</span>
-              <Link href="/forgot-password" className="text-xs font-medium cursor-pointer" style={{ color: "#6BB9D4" }}>Lupa Password?</Link>
+                <span className="text-[13px] text-kabut">Ingat saya</span>
               </label>
+              <Link href="/forgot-password" className="text-[13px] font-semibold text-laut-500 hover:underline">Lupa password?</Link>
             </div>
 
             {error && (
-              <p className="text-sm text-red-500 text-center">{error}</p>
+              <p role="alert" className="rounded-md bg-danger-soft px-3 py-2.5 text-sm text-danger text-center">{error}</p>
             )}
           </div>
 
@@ -247,7 +239,7 @@ export default function LoginPage({
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full shadow-lg"
+              className="w-full"
               disabled={submitting}
             >
               {submitting ? "Memproses..." : isUpgrade ? "Hubungkan & Simpan" : "Masuk"}{" "}
@@ -256,10 +248,10 @@ export default function LoginPage({
 
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
+                <div className="w-full border-t border-garis" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-bg px-3 text-xs text-text-secondary">atau</span>
+                <span className="bg-white px-3 text-xs text-kabut">atau</span>
               </div>
             </div>
 
@@ -279,18 +271,17 @@ export default function LoginPage({
               Lanjutkan dengan Google
             </Button>
 
-            <p className="text-center text-xs text-text-secondary">
+            <p className="text-center text-[13px] text-kabut">
               Belum punya akun?{" "}
               <Link
                 href={isUpgrade ? "/register?upgrade=true" : "/register"}
-                className="text-primary font-medium hover:underline"
+                className="text-laut-500 font-semibold hover:underline"
               >
                 Daftar Gratis
               </Link>
             </p>
           </div>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }
