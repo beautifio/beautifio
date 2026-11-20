@@ -25,34 +25,32 @@ export function MainTopBar() {
   }
 
   return (
-    <header
-      style={{ background: '#084463', boxShadow: '0 2px 12px rgba(8,68,99,0.2)' }}
-      className="flex items-center gap-3 px-4 py-2.5 sticky top-0 z-30"
-    >
-      <div className="max-w-content mx-auto w-full flex items-center gap-3">
+    <header className="on-dark sticky top-0 z-30 bg-laut-950/90 shadow-topbar backdrop-blur-xl backdrop-saturate-150">
+      <div className="max-w-content mx-auto flex w-full items-center gap-3 px-4 py-2.5">
         {logoUrl && (
-          <img src={logoUrl} alt="Beautifio" className="h-6 w-auto flex-shrink-0"  />
+          <img src={logoUrl} alt="Beautifio" className="h-7 w-auto flex-shrink-0" />
         )}
         <form
           onSubmit={handleSearch}
-          style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,198,79,0.3)', borderRadius: 20 }}
-          className="flex items-center gap-2 w-48 px-3 py-2"
+          role="search"
+          className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-colors focus-within:border-fajar/50 focus-within:bg-white/[0.12]"
         >
-          <Search className="w-4 h-4 shrink-0" style={{ color: 'rgba(255,255,255,0.6)' }} />
+          <Search className="h-4 w-4 shrink-0 text-white/55" aria-hidden />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Cari di Beautifio..."
-            className="flex-1 bg-transparent text-xs outline-none border-none"
-            style={{ color: '#FFFFFF' }}
+            placeholder="Cari di Beautifio"
+            aria-label="Cari di Beautifio"
+            className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-white outline-none placeholder:text-white/45 focus-visible:outline-none"
           />
         </form>
-        <div className="flex-1" />
         <NotificationBell />
-        <Link href="/profil" aria-label="Profil">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center transition-colors" style={{ background: 'rgba(255,255,255,0.15)' }}>
-            <User size={16} style={{ color: '#FFFFFF' }} />
-          </div>
+        <Link
+          href="/profil"
+          aria-label="Profil"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/15"
+        >
+          <User size={17} className="text-white" />
         </Link>
       </div>
     </header>

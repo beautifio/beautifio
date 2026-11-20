@@ -8,7 +8,8 @@ export function NavWrapper({ children }: { children: React.ReactNode }) {
   const isLanding = pathname === "/";
   const isAdmin = pathname.startsWith("/admin");
   const isOnboarding = pathname === "/onboarding" || pathname === "/welcome";
-  const hideNav = isLanding || isAdmin || isOnboarding;
+  const isAuth = ["/login", "/register", "/forgot-password", "/reset-password"].some((p) => pathname.startsWith(p));
+  const hideNav = isLanding || isAdmin || isOnboarding || isAuth;
 
   return (
     <div className={`min-h-screen bg-bg`}>

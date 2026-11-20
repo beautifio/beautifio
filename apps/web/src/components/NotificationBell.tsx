@@ -123,10 +123,10 @@ export function NotificationBell() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors relative cursor-pointer"
-        style={{ background: 'rgba(255,255,255,0.15)' }}
+        aria-label="Notifikasi"
+        className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/10 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/15"
       >
-        <Bell size={16} style={{ color: '#FFFFFF' }} />
+        <Bell size={17} className="text-white" />
         {unread > 0 && (
           <span
             style={{
