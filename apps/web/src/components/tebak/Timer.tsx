@@ -12,7 +12,7 @@ export function Timer({ deadline, onTimeout }: Props) {
     <DigitalClock
       deadline={deadline}
       onTimeout={onTimeout}
-      label="Sisa Waktu"
+      label="Tebak sebelum waktu habis"
       isUrgent
     />
   )

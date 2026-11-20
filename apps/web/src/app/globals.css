@@ -243,3 +243,133 @@
 @utility animate-slideUpReveal {
   animation: slideUpReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Tebak Aku — game visual system
+   Kuning = kamu, biru langit = lawan. Semua warna game lewat token ini.
+   ═══════════════════════════════════════════════════════════ */
+@theme {
+  --color-tb-stage: #062F45;
+  --color-tb-deep: #04263A;
+  --color-tb-board: #084463;
+  --color-tb-line: #1B5C7E;
+  --color-tb-me: #FFC64F;
+  --color-tb-me-dark: #C98F12;
+  --color-tb-them: #6BB9D4;
+  --color-tb-them-dark: #3B87A3;
+  --color-tb-yes: #3DDC97;
+  --color-tb-yes-dark: #1E9E68;
+  --color-tb-no: #FF7A6B;
+  --color-tb-no-dark: #C9473A;
+  --color-tb-ink: #EAF6FB;
+  --color-tb-soft: #9CC3D6;
+}
+
+@theme inline {
+  --font-tebak: var(--font-fredoka), "Poppins", sans-serif;
+}
+
+/* Panggung: navy penuh layar dengan pola titik halus */
+.tb-stage {
+  background-color: var(--color-tb-stage);
+  background-image:
+    radial-gradient(circle at 50% -10%, rgba(107, 185, 212, 0.18), transparent 55%),
+    radial-gradient(rgba(234, 246, 251, 0.07) 1.2px, transparent 1.2px);
+  background-size: 100% 100%, 22px 22px;
+  color: var(--color-tb-ink);
+}
+
+/* Papan (kartu utama) */
+.tb-board {
+  background: var(--color-tb-board);
+  border: 2px solid var(--color-tb-line);
+  border-radius: 28px;
+  box-shadow: 0 6px 0 var(--color-tb-deep);
+}
+
+/* Tombol chunky yang bisa ditekan */
+.tb-chunky {
+  --tb-edge: var(--color-tb-deep);
+  border-radius: 20px;
+  border-width: 2px;
+  box-shadow: 0 4px 0 var(--tb-edge);
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+.tb-chunky:not(:disabled):active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--tb-edge);
+}
+.tb-chunky:focus-visible {
+  outline: 3px solid var(--color-tb-me);
+  outline-offset: 3px;
+}
+
+@keyframes tb-pop {
+  0% { transform: scale(0.96); }
+  55% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+@keyframes tb-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+@keyframes tb-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+@keyframes tb-float-up {
+  0% { opacity: 0; transform: translateY(6px) scale(0.8); }
+  20% { opacity: 1; transform: translateY(0) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-28px) scale(1); }
+}
+@keyframes tb-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+}
+@keyframes tb-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes tb-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+@keyframes tb-confetti {
+  0% { opacity: 1; transform: translate3d(0, -20px, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate3d(var(--tb-dx, 0), 360px, 0) rotate(var(--tb-rot, 540deg)); }
+}
+@keyframes tb-slide-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes tb-pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@utility animate-tb-pop { animation: tb-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@utility animate-tb-shake { animation: tb-shake 360ms ease-in-out; }
+@utility animate-tb-bump { animation: tb-bump 420ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@utility animate-tb-float-up { animation: tb-float-up 1100ms ease-out forwards; }
+@utility animate-tb-wiggle { animation: tb-wiggle 1.6s ease-in-out infinite; }
+@utility animate-tb-bob { animation: tb-bob 2.4s ease-in-out infinite; }
+@utility animate-tb-slide-in { animation: tb-slide-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility animate-tb-pulse-soft { animation: tb-pulse-soft 0.9s ease-in-out infinite; }
+
+.tb-blink { transform-box: fill-box; transform-origin: center; animation: tb-blink 4s infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-stage *,
+  .tb-stage *::before,
+  .tb-stage *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  .tb-confetti-piece { display: none; }
+}

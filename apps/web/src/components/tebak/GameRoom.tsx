@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, WifiOff, Volume2, VolumeX, Sparkles, Heart, Leaf, Star, Check, X } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import {
@@ -28,6 +27,9 @@ import { JedaScreen } from "./JedaScreen"
 import { RoundResultScreen } from "./RoundResultScreen"
 import { WinnerScreen } from "./WinnerScreen"
 import { PanduanOverlay } from "./PanduanOverlay"
+import { TebakStage, TebakTopBar } from "./TebakStage"
+import { Tebi, type TebiMood } from "./art/Tebi"
+import { IconChat, IconCheck, IconSearch, IconStar, IconX } from "./art/icons"
 import { DiscProfileReveal } from "./DiscProfileReveal"
 import type { TebakSession, TebakQuestion, TebakAnswer, TebakRound } from "@/lib/tebak/queries"
 
@@ -644,21 +646,39 @@ ${advice}`
     (isSubject ? displayQ.question_text : (displayQ.question_for_guesser ?? displayQ.question_text).replace(/\{NamaSubject\}/g, subjectName ?? 'Lawan'))
   ) : '';
   const roleLabel = displayQ ? (
-    isDiscRound ? { icon: '💬', text: 'Jawab tentang dirimu' } :
-    (isSubject ? { icon: '🎯', text: 'Pertanyaan untukmu' } : { icon: '🔍', text: `Tebaklah pikiran ${subjectName ?? 'Lawan'}` })
+    isDiscRound ? { icon: '', text: 'Tentang dirimu' } :
+    (isSubject ? { icon: '', text: 'Giliranmu menjawab' } : { icon: '', text: `Tebak jawaban ${subjectName ?? 'lawan'}` })
   ) : null;
   const isMyTurn = displayQ ? (
     isDiscRound ? displayQ.status === "both_answering" :
     (isSubject ? displayQ.status === "subject_answering" : displayQ.status === "guesser_guessing")
   ) : false;
 
+  // Ekspresi Tebi di top bar mengikuti momen permainan
+  const tebiMood: TebiMood = isFinished ? 'party'
+    : revealedQ ? (isDiscRound ? 'happy' : resultType === 'correct' ? 'happy' : resultType === 'wrong' ? 'sad' : 'sleepy')
+    : displayQ && !isMyTurn ? 'think'
+    : 'idle'
+  const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F']
+  const roundQuestionTotal = questions.filter(q => roundOfRef.current[q.round_id] === gameSession.current_round).length || 5
+
   // --- Main Render ---
   return (
-    <div className="min-h-screen bg-bg flex flex-col">
-      <div className="bg-surface border-b border-border">
-        <ScoreBoard scoreA={gameSession.score_a} scoreB={gameSession.score_b} round={gameSession.current_round} isPlayerA={isPlayerA} myName={myName} opponentName={opponentName} myDots={myDots} theirDots={theirDots} isDiscRound={scoreboardIsDisc} discProgress={discProgress} discTotal={discTotal} />
-      </div>
+    <TebakStage>
+      <TebakTopBar
+        round={showIntro ? undefined : gameSession.current_round}
+        mood={tebiMood}
+        onBack={() => router.push('/tebak')}
+        muted={isMuted}
+        onToggleMute={toggleMute}
+      />
+      {!showIntro && (
+        <div className="mb-4">
+          <ScoreBoard scoreA={gameSession.score_a} scoreB={gameSession.score_b} round={gameSession.current_round} isPlayerA={isPlayerA} myName={myName} opponentName={opponentName} myDots={myDots} theirDots={theirDots} isDiscRound={scoreboardIsDisc} discProgress={discProgress} discTotal={discTotal} />
+        </div>
+      )}
 
+      <div className="flex-1 flex flex-col pb-6">
       {showIntro ? <MatchIntro myName={myName} opponentName={opponentName} onBegin={() => setShowIntro(false)} deadline={introDeadline} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={opponentReady} sessionId={sessionId} />
       : showProfileReveal ? <DiscProfileReveal myProfile={myDiscProfile} theirProfile={theirDiscProfile} myName={myName} opponentName={opponentName} deadline={gameSession.advance_at ?? new Date(Date.now() + 20000).toISOString()} onAdvance={() => setShowProfileReveal(false)} />
       : showPanduan && !isFinished ? <PanduanOverlay round={gameSession.current_round} onMulai={() => setShowPanduan(false)} onReady={() => signalMatchIntroReady(sessionId)} opponentReady={!!opponentReady} iAmReady={!!iAmReady} sessionId={sessionId} />
@@ -666,103 +686,130 @@ ${advice}`
       : isShowingRoundResult && gameSession.advance_at ? <RoundResultScreen session={gameSession} round={gameSession.current_round} answers={answers} questions={questions} isPlayerA={isPlayerA} myName={myName} opponentName={opponentIsBot ? null : opponentName} deadline={gameSession.advance_at} onAdvance={handleAdvance} isDiscRound={isDiscRound} />
       : isShowingJeda && gameSession.advance_at && revealedQ ? <JedaScreen deadline={gameSession.advance_at} resultType={resultType} subjectName={isSubject ? myName : (opponentIsBot ? null : opponentName)} guesserName={isSubject ? (opponentIsBot ? null : opponentName) : myName} correctAnswer={revealedQ.correct_answer ?? ''} myScore={isPlayerA ? gameSession.score_a : gameSession.score_b} theirScore={isPlayerA ? gameSession.score_b : gameSession.score_a} isLastQuestion={scoreboardIsDisc ? revealedQ.sequence_number === 5 : revealedQ.sequence_number === 5} isLastRound={gameSession.current_round === 4} onAdvance={handleAdvance} isDiscRound={isDiscRound} opponentName={opponentIsBot ? null : opponentName} myDiscAnswer={answers.find(a => a.question_id === revealedQ!.id && a.guesser_id === userId)?.answer ?? null} theirDiscAnswer={answers.find(a => a.question_id === revealedQ!.id && a.guesser_id === opponentId)?.answer ?? null} sessionId={sessionId} />
       : displayQ ? (
-          <div className="flex-1 flex flex-col px-4 py-4 bg-primary text-primary-foreground max-w-content mx-auto w-full">
-            <div className="bg-primary/20 rounded-2xl border border-primary/50 shadow-xl overflow-hidden relative">
-              <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
-              <div className="p-6 relative z-10 min-h-[420px] flex flex-col">
-                <div className="flex-1">
-                  <div className="text-center mb-4 space-y-2">
-                    <span className="inline-block px-3 py-1 rounded-full bg-accent/20 text-accent text-base font-medium">Pertanyaan {displayQ.sequence_number}/{scoreboardIsDisc ? 10 : 5}</span>
-                    {roleLabel && <div className="flex items-center justify-center gap-1.5 text-lg font-bold text-accent"><span>{roleLabel.icon}</span><span>{roleLabel.text}</span></div>}
-                  </div>
-                  <h2 className="text-2xl font-bold text-primary-foreground text-center mb-6 leading-relaxed">{questionText}</h2>
-                  <div className="text-center mb-3">
-                    {isMyTurn ? (
-                      <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-semibold">Pilih jawabanmu</span>
-                    ) : opponentIsBot && botThinking ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-sm text-white/60">🦁 {opponentName || 'Lawan'}</span>
-                        <span className="inline-flex gap-0.5">
-                          {[0,1,2].map(i => (
-                            <span key={i} className="w-1.5 h-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                          ))}
-                        </span>
-                        <span className="text-xs text-white/40">mengetik...</span>
-                      </div>
-                    ) : (
-                      <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/80 text-sm font-semibold">⏳ Menunggu lawan menjawab...</span>
-                    )}
-                  </div>
-                  {botChatMessage && (
-                    <div className="flex justify-center mb-3">
-                      <span className="inline-block px-3 py-1.5 rounded-2xl text-xs animate-fade-in" style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }}>💬 {botChatMessage}</span>
-                    </div>
-                  )}
-                  <div className="space-y-3 mb-5">
-                    {(displayQ.options as string[]).map((opt, index) => {
-                      const isSelected = selectedAnswer === opt
-                      const myTurn = isMyTurn
-                      const isSubmitted = isDiscRound
-                        ? !!answers.find(a => a.question_id === displayQ.id && a.guesser_id === userId)
-                        : (isSubject ? submitting : locked || submittedRef.current)
-                      const isClickable = myTurn && !isSubmitted
-
-                      const optionIcons = [Sparkles, Heart, Leaf, Star]
-                      const OptionIcon = optionIcons[index % optionIcons.length]
-                      
-                      let buttonClasses = "bg-[#0d5478] text-white border-white/10"
-                      let iconClasses = "bg-white/20 text-white"
-
-                      // Selected state
-                      if (isSelected) {
-                        buttonClasses = "!bg-accent border-accent !text-accent-foreground scale-[1.02] shadow-[0_0_20px_rgba(255,198,79,0.45)]"
-                        iconClasses = "!bg-accent-foreground !text-accent"
-                      }
-
-                      // Revealed state (after answer/timeout)
-                      if (revealedQ) {
-                        const isCorrectAnswer = revealedQ.correct_answer === opt
-                        const isMyGuesserAnswer = currentAnswer?.answer === opt
-                        
-                        if (isCorrectAnswer) {
-                          buttonClasses = "bg-success border-success text-success-foreground"
-                          iconClasses = "bg-success-foreground text-success"
-                        } else if (isMyGuesserAnswer && !isCorrectAnswer) { // My wrong guess
-                          buttonClasses = "bg-destructive border-destructive text-destructive-foreground"
-                          iconClasses = "bg-destructive-foreground text-destructive"
-                        } else if (!isCorrectAnswer) { // Other wrong options
-                          buttonClasses = "opacity-60 bg-[#0d5478] text-white/50 border-white/10"
-                          iconClasses = "bg-white/10 text-white/50"
-                        }
-                      }
-
-                      return (
-                        <button key={opt} onClick={() => { if (!isClickable) return; if (isDiscRound) handleDiscAnswer(opt); else if (isSubject) handleSubjectAnswer(opt); else handleGuesserGuess(opt); }} disabled={!isClickable} className={`w-full text-left min-h-[68px] py-5 px-5 rounded-2xl border-2 transition-all duration-200 ${isClickable ? "cursor-pointer hover:border-accent/60" : "cursor-default"} ${buttonClasses}`}>
-                          <div className="flex items-center gap-4">
-                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${iconClasses}`}>
-                              <OptionIcon size={20} />
-                            </div>
-                            <span className="text-base font-semibold leading-tight">{opt}</span>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {displayQ.status === "subject_answering" && displayQ.subject_deadline && <div className="mb-4"><DigitalClock deadline={displayQ.subject_deadline} onTimeout={handleSubjectTimeout} label={isSubject ? "Jawab sebelum waktu habis" : "Menunggu lawan menjawab"} isUrgent={!!isSubject} /></div>}
-                  {displayQ.status === "guesser_guessing" && displayQ.guesser_deadline && <div className="mb-4">{isSubject ? <DigitalClock deadline={displayQ.guesser_deadline} onTimeout={() => {}} label="Menunggu lawan menebak" /> : <Timer deadline={displayQ.guesser_deadline} onTimeout={handleGuesserTimeout} />}</div>}
-                  {displayQ.status === "both_answering" && displayQ.subject_deadline && <div className="mb-4"><DigitalClock deadline={displayQ.subject_deadline} onTimeout={() => reconcileGameState()} label="Jawab sebelum waktu habis" isUrgent={true} /></div>}
-                  {tension && !revealedQ && (
-                    <div className="flex items-center justify-center gap-2 py-2">
-                      <Loader2 className="w-4 h-4 text-accent animate-spin" />
-                      <span className="text-xs text-accent font-semibold">Menunggu hasil...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+          <div key={displayQ.id} className="tb-board p-5 flex flex-col animate-tb-slide-in">
+            {/* Timer di atas: hal pertama yang dilihat */}
+            <div className="mb-5">
+              {displayQ.status === "subject_answering" && displayQ.subject_deadline && <DigitalClock deadline={displayQ.subject_deadline} onTimeout={handleSubjectTimeout} label={isSubject ? "Jawab sebelum waktu habis" : "Lawan sedang menjawab"} isUrgent={!!isSubject} />}
+              {displayQ.status === "guesser_guessing" && displayQ.guesser_deadline && (isSubject ? <DigitalClock deadline={displayQ.guesser_deadline} onTimeout={() => {}} label="Lawan sedang menebak" /> : <Timer deadline={displayQ.guesser_deadline} onTimeout={handleGuesserTimeout} />)}
+              {displayQ.status === "both_answering" && displayQ.subject_deadline && <DigitalClock deadline={displayQ.subject_deadline} onTimeout={() => reconcileGameState()} label="Jawab sebelum waktu habis" isUrgent={true} />}
             </div>
+
+            <div className="flex items-center justify-between gap-2 mb-3">
+              {roleLabel && (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${isDiscRound ? 'bg-tb-me/15 text-tb-me' : isSubject ? 'bg-tb-me/15 text-tb-me' : 'bg-tb-them/15 text-tb-them'}`}>
+                  {isDiscRound ? <IconChat size={14} /> : isSubject ? <IconStar size={14} /> : <IconSearch size={14} />}
+                  {roleLabel.text}
+                </span>
+              )}
+              <span className="text-xs text-tb-soft tabular-nums shrink-0">Soal {displayQ.sequence_number} dari {roundQuestionTotal}</span>
+            </div>
+
+            <h2 className="font-tebak text-[1.6rem] leading-snug font-semibold text-tb-ink mb-5 text-balance">{questionText}</h2>
+
+            <div className="space-y-3">
+              {(displayQ.options as string[]).map((opt, index) => {
+                const isSelected = selectedAnswer === opt
+                const isSubmitted = isDiscRound
+                  ? !!answers.find(a => a.question_id === displayQ.id && a.guesser_id === userId)
+                  : (isSubject ? submitting : locked || submittedRef.current)
+                const isClickable = isMyTurn && !isSubmitted
+
+                let tone = "bg-tb-stage/60 border-tb-line text-tb-ink [--tb-edge:var(--color-tb-deep)]"
+                let badge = "bg-tb-board text-tb-soft border-tb-line"
+                let motion = ""
+
+                if (isSelected) {
+                  tone = "bg-tb-me border-tb-me text-tb-stage [--tb-edge:var(--color-tb-me-dark)]"
+                  badge = "bg-tb-stage text-tb-me border-tb-stage"
+                  motion = "animate-tb-pop"
+                }
+
+                if (revealedQ) {
+                  const isCorrectAnswer = revealedQ.correct_answer === opt
+                  const isMyGuesserAnswer = currentAnswer?.answer === opt
+                  if (isCorrectAnswer) {
+                    tone = "bg-tb-yes border-tb-yes text-tb-stage [--tb-edge:var(--color-tb-yes-dark)]"
+                    badge = "bg-tb-stage text-tb-yes border-tb-stage"
+                    motion = "animate-tb-pop"
+                  } else if (isMyGuesserAnswer) {
+                    tone = "bg-tb-no border-tb-no text-tb-stage [--tb-edge:var(--color-tb-no-dark)]"
+                    badge = "bg-tb-stage text-tb-no border-tb-stage"
+                    motion = "animate-tb-shake"
+                  } else {
+                    tone = "bg-tb-stage/40 border-tb-line/60 text-tb-ink/45 [--tb-edge:transparent]"
+                  }
+                } else if (!isClickable && !isSelected) {
+                  tone += " opacity-70"
+                }
+
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => { if (!isClickable) return; if (isDiscRound) handleDiscAnswer(opt); else if (isSubject) handleSubjectAnswer(opt); else handleGuesserGuess(opt); }}
+                    disabled={!isClickable}
+                    className={`tb-chunky w-full text-left min-h-[60px] py-3.5 px-4 flex items-center gap-3 ${tone} ${motion} ${isClickable ? "cursor-pointer hover:border-tb-me/70" : "cursor-default"}`}
+                  >
+                    <span className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 font-tebak text-sm font-semibold ${badge}`}>
+                      {revealedQ && revealedQ.correct_answer === opt ? <IconCheck size={16} /> : revealedQ && currentAnswer?.answer === opt ? <IconX size={16} /> : optionLetters[index]}
+                    </span>
+                    <span className="text-[15px] font-semibold leading-snug">{opt}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Status di bawah pilihan */}
+            <div className="mt-5 min-h-[40px] flex items-center justify-center text-center">
+              {tension && !revealedQ ? (
+                <span className="flex items-center gap-2 text-sm font-semibold text-tb-me">
+                  <Tebi mood="shock" size={32} className="animate-tb-bob" />
+                  Membuka jawaban…
+                </span>
+              ) : isMyTurn ? (
+                selectedAnswer ? (
+                  <span className="text-sm text-tb-soft">Terkunci. Tunggu sebentar ya.</span>
+                ) : (
+                  <span className="text-sm text-tb-soft">Ketuk satu jawaban</span>
+                )
+              ) : (
+                <span className="flex items-center gap-2 text-sm text-tb-soft">
+                  <Tebi mood="think" size={32} className="animate-tb-bob" />
+                  <span>
+                    <span className="text-tb-them font-semibold">{opponentName || 'Lawan'}</span>
+                    {opponentIsBot && botThinking ? ' sedang memilih' : ' belum memilih'}
+                    <span className="inline-flex gap-0.5 ml-1 align-middle">
+                      {[0, 1, 2].map(i => <span key={i} className="w-1 h-1 rounded-full bg-tb-soft animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+                    </span>
+                  </span>
+                </span>
+              )}
+            </div>
+            {botChatMessage && (
+              <div className="flex justify-center mt-1">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl rounded-bl-sm text-xs bg-tb-them/15 text-tb-ink animate-tb-pop">
+                  <IconChat size={14} className="text-tb-them" /> {botChatMessage}
+                </span>
+              </div>
+            )}
           </div>
         )
-      : <div className="flex-1 flex flex-col items-center justify-center px-4 text-center"><div className="p-6 bg-surface rounded-2xl border border-border shadow-lg max-w-xs">{syncFailed ? <><Loader2 className="w-7 h-7 text-primary animate-spin mx-auto mb-4" /><p className="text-sm font-medium text-text-secondary mb-4">Sinkronisasi gagal</p><button onClick={retrySync} className="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition-colors cursor-pointer">Coba lagi</button></> : <><Loader2 className="w-7 h-7 text-primary animate-spin mx-auto mb-4" /><p className="text-sm font-medium text-text-secondary">Sinkronisasi dengan server...</p></>}</div></div>}
-    </div>
+      : (
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <div className="tb-board p-6 w-full flex flex-col items-center">
+            <Tebi mood={syncFailed ? 'sad' : 'think'} size={72} className="animate-tb-bob mb-3" />
+            {syncFailed ? (
+              <>
+                <p className="font-tebak text-lg font-semibold text-tb-ink mb-1">Koneksi terputus</p>
+                <p className="text-sm text-tb-soft mb-4">Permainan belum sinkron dengan server.</p>
+                <button onClick={retrySync} className="tb-chunky px-6 py-3 bg-tb-me border-tb-me text-tb-stage font-semibold text-sm cursor-pointer [--tb-edge:var(--color-tb-me-dark)]">Sambungkan lagi</button>
+              </>
+            ) : (
+              <p className="text-sm text-tb-soft">Menyiapkan soal…</p>
+            )}
+          </div>
+        </div>
+      )}
+      </div>
+    </TebakStage>
   )
 }

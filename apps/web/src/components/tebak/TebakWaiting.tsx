@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Users } from "lucide-react"
+import { Tebi } from "./art/Tebi"
 import { supabase } from "@/lib/supabase/client"
 import { subscribeToTebakGame } from "@/lib/tebak/realtime"
 import { matchWithBot, retryMatchmaking } from "@/lib/tebak/actions"
@@ -102,34 +102,28 @@ export function TebakWaiting({ sessionId, isPlayerA, onMatched, onCancel, onReMa
   }, [sessionId, onMatched])
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="relative mb-8">
-        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-          <Users size={36} className="text-primary animate-pulse" />
+    <div className="flex-1 flex flex-col justify-center py-8">
+      <div className="tb-board p-6 flex flex-col items-center text-center">
+        <div className="relative">
+          <span className="absolute inset-0 m-auto w-28 h-28 rounded-full border-2 border-tb-them/30 animate-ping" aria-hidden />
+          <Tebi mood={error ? "sad" : matchingBot ? "happy" : "think"} size={104} className="relative animate-tb-bob" />
         </div>
-        <Loader2 size={20} className="absolute -top-1 -right-1 text-primary animate-spin" />
+        <h3 className="font-tebak text-2xl font-semibold text-tb-ink mt-4" aria-live="polite">
+          {matchingBot ? "Lawan ditemukan!" : retrying ? "Mencocokkan pemain" : `Mencari teman main${dots}`}
+        </h3>
+        <p className="text-sm text-tb-soft mt-1 max-w-[30ch]">
+          {matchingBot ? "Menyiapkan permainan…" : "Biasanya tidak sampai 10 detik"}
+        </p>
+        {error && <p className="text-sm text-tb-no mt-4">{error}</p>}
+        {!matchingBot && (
+          <button
+            onClick={onCancel}
+            className="tb-chunky mt-6 px-6 py-3 bg-transparent border-tb-line text-tb-soft text-sm font-semibold hover:text-tb-ink cursor-pointer"
+          >
+            Batalkan
+          </button>
+        )}
       </div>
-      <h3 className="text-lg font-bold text-text-primary mb-2">
-        {matchingBot ? "Menyiapkan pertandingan..." : retrying ? "Mencocokkan pemain..." : `Mencari lawan${dots}`}
-      </h3>
-      <p className="text-sm text-text-secondary text-center mb-8">
-        {matchingBot
-          ? "Kamu akan segera bermain"
-          : retrying
-          ? "Memeriksa ulang antrian..."
-          : "Kami mencari pemain lain untuk bermain Tebak Aku"}
-      </p>
-      {error && (
-        <p className="text-sm text-red-500 text-center mb-4">{error}</p>
-      )}
-      {!matchingBot && (
-        <button
-          onClick={onCancel}
-          className="px-6 py-2.5 rounded-xl border border-border text-text-primary text-sm font-medium hover:bg-muted transition-colors cursor-pointer"
-        >
-          Batalkan
-        </button>
-      )}
     </div>
   )
 }

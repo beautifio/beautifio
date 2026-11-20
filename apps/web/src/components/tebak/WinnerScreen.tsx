@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Trophy, Home, RotateCcw, Loader2, X, Check, MessageCircle, Send } from "lucide-react"
+import { Home, Loader2, MessageCircle, Send } from "lucide-react"
+import { Tebi } from "./art/Tebi"
+import { Confetti } from "./art/Confetti"
+import { IconCheck, IconCrown, IconHeart, IconRepeat, IconX } from "./art/icons"
 import { supabase } from "@/lib/supabase/client"
 import { offerRematch, respondToRematch } from "@/lib/tebak/actions"
 import { createBisikInvite, createProChatFromTebak } from "@/lib/tebak/bisik-bridge"
@@ -136,86 +139,104 @@ export function WinnerScreen({ session, isPlayerA, userId, opponentId, opponentN
     }
   }
 
-  // Confetti logic from previous fix
-  const [particles, setParticles] = useState<{ left: string; color: string; anim: string }[]>([])
-  useEffect(() => {
-    setParticles(
-      Array.from({ length: 20 }, (_, i) => ({
-        left: `${Math.random() * 100}%`,
-        color: ['#FFC64F', '#6BB9D4', '#084463', '#EF4444', '#22C55E'][i % 5],
-        anim: `confetti-fall ${2 + Math.random() * 3}s linear ${Math.random() * 2}s infinite`,
-      }))
-    )
-  }, [])
-  
   const margin = Math.abs(myScore - theirScore)
   let marginText: string;
-  if (isDraw) marginText = "SERI! Tidak ada yang menang hari ini 😅"
-  else if (margin < 10) marginText = "Sengit sekali!"
-  else if (margin <= 30) marginText = "Kemenangan solid!"
-  else marginText = "Dominasi total!"
+  if (isDraw) marginText = "Skor kalian sama persis"
+  else if (margin < 10) marginText = isWin ? "Menang tipis, sengit banget!" : "Kalah tipis, hampir saja!"
+  else if (margin <= 30) marginText = isWin ? "Kemenangan yang mantap" : "Lawanmu jago menebak"
+  else marginText = isWin ? "Kamu kenal dia luar dalam!" : "Masih ada ronde berikutnya"
+
+  const compatTone = compatibility <= 30 ? "bg-tb-no" : compatibility <= 60 ? "bg-tb-me" : "bg-tb-yes"
+  const btnBase = "tb-chunky w-full py-3.5 font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
 
   return (
-    <div className="flex-1 flex flex-col px-4 py-4 relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {particles.map((p, i) => <div key={i} className="absolute w-2 h-2 rounded-full opacity-70" style={{ left: p.left, top: `-10px`, backgroundColor: p.color, animation: p.anim }}/>)}
-      </div>
-      <style>{`@keyframes confetti-fall { 0% { transform: translateY(-10px); } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`}</style>
+    <div className="relative flex flex-col gap-4 animate-tb-slide-in">
+      {isWin && <Confetti pieces={22} seed={myScore + 7} />}
 
-      <div className="bg-surface rounded-2xl border border-border shadow-xl overflow-hidden relative">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
-        <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
-          <div className={`w-20 h-20 rounded-full flex items-center justify-center ${isWin ? "bg-yellow-100" : isDraw ? "bg-blue-100" : "bg-gray-100"}`}>
-            <Trophy size={40} className={isWin ? "text-yellow-500 animate-pulse" : isDraw ? "text-blue-500" : "text-gray-400"} />
-          </div>
-          <h2 className="text-xl font-bold text-text-primary">{isDraw ? "SERI!" : isWin ? "Kamu Menang!" : "Kamu Kalah"}</h2>
-          <p className="text-sm text-text-secondary">{marginText}</p>
-          <p className="text-lg font-bold text-text-primary">{myScore} - {theirScore}</p>
-          
-          <div className="w-full max-w-xs space-y-2">
-            <div className="flex justify-between px-4 py-3 rounded-xl bg-muted/50 border border-border"><span className="text-sm text-text-secondary">{myName || "Kamu"}</span><span className="text-sm font-bold text-text-primary">{myScore} poin</span></div>
-            <div className="flex justify-between px-4 py-3 rounded-xl bg-muted/50 border border-border"><span className="text-sm text-text-secondary">{opponentName || "Lawan"}</span><span className="text-sm font-bold text-text-primary">{theirScore} poin</span></div>
-          </div>
-          
-          <div className="w-full max-w-xs mt-2"><div className="p-4 rounded-xl bg-muted/50 border border-border text-center">
-            <p className="text-[11px] font-semibold tracking-widest uppercase text-text-secondary mb-2">Kompatibilitas</p>
-            <p className="text-2xl font-bold mb-1">{compatibilityLabel || '🔄 Saling Melengkapi'}</p>
-            <div className="h-2 rounded-full bg-muted overflow-hidden mb-2"><div className={`h-full rounded-full transition-all duration-1000 ${compatibility <= 30 ? "bg-red-400" : compatibility <= 60 ? "bg-orange-400" : compatibility <= 85 ? "bg-green-400" : "bg-accent"}`} style={{ width: `${compatibility}%` }}/></div>
-            <p className={`text-sm font-bold mb-1 ${compatibility <= 30 ? "text-red-500" : compatibility <= 60 ? "text-orange-500" : compatibility <= 85 ? "text-green-600" : "text-accent"}`}>{compatibility}% cocok</p>
-            {compatibilityInsight ? <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">{compatibilityInsight}</p> : null}
-          </div></div>
+      {/* Hasil */}
+      <div className="tb-board p-6 flex flex-col items-center text-center relative overflow-hidden">
+        <div className="relative mb-2">
+          {isWin && <IconCrown size={34} className="absolute -top-6 left-1/2 -translate-x-1/2 text-tb-me animate-tb-bob" />}
+          <Tebi mood={isWin ? "party" : isDraw ? "happy" : "sad"} size={96} className="animate-tb-pop" />
+        </div>
+        <h2 className="font-tebak text-3xl font-semibold text-tb-ink leading-tight">
+          {isDraw ? "Seri!" : isWin ? "Kamu menang!" : "Kamu kalah"}
+        </h2>
+        <p className="text-sm text-tb-soft mt-1">{marginText}</p>
 
-          <div className="mt-auto pt-4 w-full flex flex-col items-center gap-3 text-sm">
-            {rematchState === 'offering' ? (
-              <div className="flex flex-col items-center gap-2"><Loader2 className="animate-spin" /><span>Menunggu {opponentName || 'lawan'}...</span></div>
-            ) : rematchState === 'receiving' ? (
-              <div className="w-full max-w-xs flex flex-col items-center gap-3">
-                <span className="text-sm font-semibold">{opponentName || 'Lawan'} ingin main lagi!</span>
-                <div className="w-full flex gap-3">
-                  <button onClick={() => handleRespond(false)} className="flex-1 py-3 rounded-xl border border-border text-text-secondary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-muted transition-colors"><X size={16} /> Tolak</button>
-                  <button onClick={() => handleRespond(true)} className="flex-1 py-3 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"><Check size={16} /> Terima</button>
-                </div>
-              </div>
-            ) : rematchState === 'accepted' ? (
-              <div className="flex flex-col items-center gap-2 text-green-600"><Check /><span>Tantangan diterima! Memulai game baru...</span></div>
-            ) : rematchState === 'declined' ? (
-              <div className="flex flex-col items-center gap-2 text-red-500"><X /><span>{rematchOffer?.offered_by_id === userId ? `${opponentName || 'Lawan'} menolak` : 'Tantangan ditolak'}.</span></div>
-            ) : (
-              <>
-                <button onClick={handleOfferRematch} className="w-full max-w-xs py-3 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors cursor-pointer"><RotateCcw size={16} /> Main Lagi</button>
-                {!opponentIsBot && bisikState === 'sent' ? (
-                  <div className="w-full max-w-xs py-3 rounded-xl bg-accent/10 border border-accent/20 text-accent font-semibold text-sm text-center">✅ Undangan terkirim! Menunggu respon...</div>
-                ) : !opponentIsBot && (
-                  <button onClick={handleBisik} disabled={bisikLoading} className="w-full max-w-xs py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer" style={{ background: isPro ? "rgba(107,185,212,0.2)" : "rgba(255,198,79,0.15)", border: `1px solid ${isPro ? "rgba(107,185,212,0.3)" : "rgba(255,198,79,0.3)"}`, color: isPro ? "#6BB9D4" : "#B8860B" }}>
-                    {bisikLoading ? <Loader2 className="animate-spin" size={16} /> : isPro ? <Send size={16} /> : <MessageCircle size={16} />}
-                    {isPro ? "Chat Langsung di Bisik" : "Kenalan di Bisik"}
-                  </button>
-                )}
-                <button onClick={onHome} className="w-full max-w-xs py-3 rounded-xl border border-border text-text-secondary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-surface transition-colors cursor-pointer"><Home size={16} /> Kembali ke Home</button>
-              </>
-            )}
+        <div className="mt-5 w-full grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div className={`rounded-2xl border-2 py-3 ${isWin || isDraw ? "border-tb-me bg-tb-me/10" : "border-tb-line"}`}>
+            <p className="text-xs text-tb-me font-semibold truncate px-2">{myName || "Kamu"}</p>
+            <p className="font-tebak text-4xl font-semibold text-tb-me tabular-nums leading-none mt-1">{myScore}</p>
+          </div>
+          <span className="font-tebak text-tb-soft">vs</span>
+          <div className={`rounded-2xl border-2 py-3 ${!isWin && !isDraw ? "border-tb-them bg-tb-them/10" : "border-tb-line"}`}>
+            <p className="text-xs text-tb-them font-semibold truncate px-2">{opponentName || "Lawan"}</p>
+            <p className="font-tebak text-4xl font-semibold text-tb-them tabular-nums leading-none mt-1">{theirScore}</p>
           </div>
         </div>
+      </div>
+
+      {/* Kecocokan */}
+      <div className="tb-board p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="w-10 h-10 rounded-full bg-tb-no/15 text-tb-no flex items-center justify-center shrink-0">
+            <IconHeart size={20} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-tb-soft">Kecocokan kalian</p>
+            <p className="font-tebak text-lg font-semibold text-tb-ink leading-tight">{compatibilityLabel || "Saling melengkapi"}</p>
+          </div>
+          <span className="font-tebak text-2xl font-semibold text-tb-ink tabular-nums">{compatibility}%</span>
+        </div>
+        <div className="h-3 rounded-full bg-tb-deep border border-tb-line overflow-hidden">
+          <div className={`h-full rounded-full ${compatTone} transition-[width] duration-1000 ease-out`} style={{ width: `${compatibility}%` }} />
+        </div>
+        {compatibilityInsight ? <p className="text-sm text-tb-soft leading-relaxed whitespace-pre-line mt-3">{compatibilityInsight}</p> : null}
+      </div>
+
+      {/* Aksi */}
+      <div className="flex flex-col gap-3">
+        {rematchState === 'offering' ? (
+          <div className="tb-board p-4 flex items-center justify-center gap-3 text-sm text-tb-soft">
+            <Tebi mood="think" size={36} className="animate-tb-bob" />
+            Menunggu jawaban {opponentName || "lawan"}…
+          </div>
+        ) : rematchState === 'receiving' ? (
+          <div className="tb-board p-4 flex flex-col items-center gap-3">
+            <span className="text-sm font-semibold text-tb-ink">{opponentName || "Lawan"} mengajak main lagi</span>
+            <div className="w-full flex gap-3">
+              <button onClick={() => handleRespond(false)} className={`${btnBase} bg-transparent border-tb-line text-tb-soft`}><IconX size={16} /> Tolak</button>
+              <button onClick={() => handleRespond(true)} className={`${btnBase} bg-tb-me border-tb-me text-tb-stage [--tb-edge:var(--color-tb-me-dark)]`}><IconCheck size={16} /> Main lagi</button>
+            </div>
+          </div>
+        ) : rematchState === 'accepted' ? (
+          <div className="tb-board p-4 flex items-center justify-center gap-3 text-sm text-tb-yes font-semibold">
+            <Tebi mood="happy" size={36} /> Diterima! Menyiapkan permainan baru…
+          </div>
+        ) : rematchState === 'declined' ? (
+          <div className="tb-board p-4 flex items-center justify-center gap-3 text-sm text-tb-soft">
+            <Tebi mood="sad" size={36} />
+            {rematchOffer?.offered_by_id === userId ? `${opponentName || "Lawan"} belum mau main lagi` : "Ajakan ditolak"}
+          </div>
+        ) : (
+          <>
+            <button onClick={handleOfferRematch} className={`${btnBase} bg-tb-me border-tb-me text-tb-stage [--tb-edge:var(--color-tb-me-dark)]`}>
+              <IconRepeat size={18} /> Main lagi
+            </button>
+            {!opponentIsBot && bisikState === 'sent' ? (
+              <div className="rounded-2xl border-2 border-tb-yes/40 bg-tb-yes/10 py-3 text-tb-yes font-semibold text-sm text-center">Undangan terkirim. Tunggu balasannya ya.</div>
+            ) : !opponentIsBot && (
+              <button onClick={handleBisik} disabled={bisikLoading} className={`${btnBase} bg-tb-them border-tb-them text-tb-stage [--tb-edge:var(--color-tb-them-dark)]`}>
+                {bisikLoading ? <Loader2 className="animate-spin" size={16} /> : isPro ? <Send size={16} /> : <MessageCircle size={16} />}
+                {isPro ? "Chat langsung di Bisik" : "Kenalan di Bisik"}
+              </button>
+            )}
+            <button onClick={onHome} className={`${btnBase} bg-transparent border-tb-line text-tb-soft`}>
+              <Home size={16} /> Kembali ke beranda
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

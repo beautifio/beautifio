@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Clock, Check, RefreshCw } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import type { TebakSession, TebakQuestion, TebakAnswer } from "@/lib/tebak/queries"
 import { DigitalClock } from "./DigitalClock"
+import { Tebi } from "./art/Tebi"
+import { IconRepeat } from "./art/icons"
 
 type Props = {
   session: TebakSession
@@ -48,158 +49,84 @@ export function RoundResultScreen({
       })
   }, [])
 
-  // ═══ VARIAN DISC — return lebih awal, tanpa sentuh logika tebak ═══
+  const banner = bannerUrl ? <img src={bannerUrl} alt="" className="w-full object-cover rounded-2xl" /> : null
+  const nextRoundLabel = round === 1 ? 'Ronde 2: kenalan lagi' : round === 2 ? 'Ronde 3: saatnya menebak' : `Ronde ${round + 1} dimulai`
+
+  const ScoreRow = () => (
+    <div className="w-full mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+      <div className="rounded-2xl border-2 border-tb-me/50 bg-tb-me/10 py-2.5">
+        <p className="text-xs text-tb-me font-semibold truncate px-2">{myName || 'Kamu'}</p>
+        <p className="font-tebak text-3xl font-semibold text-tb-me tabular-nums leading-none mt-1">{myScore}</p>
+      </div>
+      <span className="font-tebak text-tb-soft">vs</span>
+      <div className="rounded-2xl border-2 border-tb-them/50 bg-tb-them/10 py-2.5">
+        <p className="text-xs text-tb-them font-semibold truncate px-2">{opponentName || 'Lawan'}</p>
+        <p className="font-tebak text-3xl font-semibold text-tb-them tabular-nums leading-none mt-1">{theirScore}</p>
+      </div>
+    </div>
+  )
+
+  // ═══ VARIAN DISC ═══
   if (isDiscRound) {
     return (
-      <div className="flex-1 flex flex-col px-4 py-4 bg-primary text-primary-foreground">
-        <div className="bg-primary/20 rounded-2xl border border-primary/50 shadow-xl overflow-hidden relative">
-          <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
-          <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
-          <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
-
-          <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
-            <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
-              <RefreshCw size={32} className="text-accent" />
-            </div>
-            <h2 className="text-xl font-bold text-primary-foreground text-center">Babak {round} selesai</h2>
-            <p className="text-sm text-primary-foreground/70 text-center max-w-xs">
-              Kalian berdua sudah berbagi tentang diri masing-masing
-            </p>
-
-            {/* Scores (netral, tanpa frame benar/salah) */}
-            <div className="w-full max-w-xs flex items-center justify-between px-5 py-4 rounded-xl bg-white/10 border border-white/20">
-              <div className="text-center">
-                <p className="text-xs text-primary-foreground/70 mb-1">{myName || 'Kamu'}</p>
-                <p className="text-xl font-bold text-primary-foreground">{myScore}</p>
-              </div>
-              <p className="text-lg font-bold text-primary-foreground/50">-</p>
-              <div className="text-center">
-                <p className="text-xs text-primary-foreground/70 mb-1">{opponentName || 'Lawan'}</p>
-                <p className="text-xl font-bold text-primary-foreground">{theirScore}</p>
-              </div>
-            </div>
-
-            {/* Banner */}
-            {bannerUrl && (
-              <div className="w-full max-w-xs">
-                <img src={bannerUrl} alt="" className="w-full object-cover rounded-lg" />
-              </div>
-            )}
-
-            {/* Countdown */}
-            <div className="mt-auto pt-4">
-              <DigitalClock deadline={deadline} onTimeout={onAdvance} label={`Babak ${round + 1} dimulai`} />
-            </div>
+      <div className="flex flex-col gap-4 animate-tb-slide-in">
+        <div className="tb-board p-5 flex flex-col items-center text-center">
+          <Tebi mood="party" size={88} className="animate-tb-pop" />
+          <h2 className="font-tebak text-3xl font-semibold text-tb-ink mt-2">Ronde {round} beres!</h2>
+          <p className="text-sm text-tb-soft mt-1 max-w-[30ch]">
+            {round === 1 ? 'Satu ronde lagi untuk kenal lebih dalam.' : 'Sekarang kalian bergantian menebak jawaban satu sama lain.'}
+          </p>
+          <div className="w-full mt-5">
+            <DigitalClock deadline={deadline} onTimeout={onAdvance} label={nextRoundLabel} />
           </div>
         </div>
+        {banner}
       </div>
     )
   }
 
-  // ═══ VARIAN TEBAK — TIDAK BERUBAH ═══
+  // ═══ VARIAN TEBAK ═══
   const playerAId = session.player_a_id
   const playerBId = session.player_b_id
   const myId = isPlayerA ? playerAId : playerBId
   const theirId = isPlayerA ? playerBId : playerAId
 
-  const myRoundAnswers = answers.filter(a => {
-    const q = questions.find(q => q.id === a.question_id)
-    return q && a.guesser_id === myId
-  })
-  const theirRoundAnswers = answers.filter(a => {
-    const q = questions.find(q => q.id === a.question_id)
-    return q && a.guesser_id === theirId
-  })
+  const myRoundAnswers = answers.filter(a => questions.some(q => q.id === a.question_id) && a.guesser_id === myId)
+  const theirRoundAnswers = answers.filter(a => questions.some(q => q.id === a.question_id) && a.guesser_id === theirId)
 
   const myCorrect = myRoundAnswers.filter(a => a.is_correct).length
   const myTotal = myRoundAnswers.length
-  const myTimeouts = myRoundAnswers.filter(a => a.answer === '__timeout__').length
   const theirCorrect = theirRoundAnswers.filter(a => a.is_correct).length
   const theirTotal = theirRoundAnswers.length
-  const theirTimeouts = theirRoundAnswers.filter(a => a.answer === '__timeout__').length
 
   return (
-    <div className="flex-1 flex flex-col px-4 py-4 bg-primary text-primary-foreground">
-      <div className="bg-primary/20 rounded-2xl border border-primary/50 shadow-xl overflow-hidden relative">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
-        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
+    <div className="flex flex-col gap-4 animate-tb-slide-in">
+      <div className="tb-board p-5 flex flex-col items-center text-center">
+        <Tebi mood={myScore >= theirScore ? 'happy' : 'think'} size={84} className="animate-tb-pop" />
+        <h2 className="font-tebak text-3xl font-semibold text-tb-ink mt-2">Ronde {round} beres!</h2>
+        <ScoreRow />
 
-        <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
-          <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
-            <RefreshCw size={32} className="text-accent" />
+        <div className="w-full mt-4 grid grid-cols-2 gap-3 text-left">
+          <div className="rounded-2xl bg-tb-deep/60 border border-tb-line px-3 py-2.5">
+            <p className="text-xs text-tb-soft">Tebakan benar</p>
+            <p className="font-tebak text-xl font-semibold text-tb-me tabular-nums">{myCorrect}<span className="text-tb-soft text-sm">/{myTotal}</span></p>
           </div>
-          <h2 className="text-xl font-bold text-primary-foreground text-center">Babak {round} Selesai</h2>
-
-          {/* Scores */}
-          <div className="w-full max-w-xs flex items-center justify-between px-5 py-4 rounded-xl bg-white/10 border border-white/20">
-            <div className="text-center">
-              <p className="text-xs text-primary-foreground/70 mb-1">{myName || 'Kamu'}</p>
-              <p className="text-xl font-bold text-primary-foreground">{myScore}</p>
-            </div>
-            <p className="text-lg font-bold text-primary-foreground/50">-</p>
-            <div className="text-center">
-              <p className="text-xs text-primary-foreground/70 mb-1">{opponentName || 'Lawan'}</p>
-              <p className="text-xl font-bold text-primary-foreground">{theirScore}</p>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="w-full max-w-xs space-y-2">
-            <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/30 text-sm">
-              <span className="text-green-400 flex items-center gap-1.5">
-                <Check size={14} /> {myName || 'Kamu'}
-              </span>
-              <span className="font-bold text-green-400">{myCorrect}/{myTotal}</span>
-            </div>
-            {myTimeouts > 0 && (
-              <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-sm">
-                <span className="text-orange-400 flex items-center gap-1.5">
-                  <Clock size={14} /> {myName || 'Kamu'} timeout
-                </span>
-                <span className="font-bold text-orange-400">{myTimeouts}x</span>
-              </div>
-            )}
-            <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/30 text-sm">
-              <span className="text-green-400 flex items-center gap-1.5">
-                <Check size={14} /> {opponentName || 'Lawan'}
-              </span>
-              <span className="font-bold text-green-400">{theirCorrect}/{theirTotal}</span>
-            </div>
-            {theirTimeouts > 0 && (
-              <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-sm">
-                <span className="text-orange-400 flex items-center gap-1.5">
-                  <Clock size={14} /> {opponentName || 'Lawan'} timeout
-                </span>
-                <span className="font-bold text-orange-400">{theirTimeouts}x</span>
-              </div>
-            )}
-          </div>
-
-          {/* Role swap info */}
-          <div className="w-full max-w-xs p-4 rounded-xl bg-white/10 border border-white/20 text-center">
-            <p className="text-sm font-semibold text-accent">
-              Babak {round + 1}: Giliran Bertukar
-            </p>
-            <p className="text-xs text-primary-foreground/70 mt-1">
-              {opponentName || 'Lawan'} sekarang jadi Subjek<br />
-              {myName || 'Kamu'} sekarang jadi Penebak
-            </p>
-          </div>
-
-          {/* Banner */}
-          {bannerUrl && (
-            <div className="w-full max-w-xs">
-              <img src={bannerUrl} alt="" className="w-full object-cover rounded-lg" />
-            </div>
-          )}
-
-          {/* Countdown */}
-          <div className="mt-auto pt-4">
-            <DigitalClock deadline={deadline} onTimeout={onAdvance} label={`Babak ${round + 1} dimulai`} />
+          <div className="rounded-2xl bg-tb-deep/60 border border-tb-line px-3 py-2.5">
+            <p className="text-xs text-tb-soft">Tebakan benar lawan</p>
+            <p className="font-tebak text-xl font-semibold text-tb-them tabular-nums">{theirCorrect}<span className="text-tb-soft text-sm">/{theirTotal}</span></p>
           </div>
         </div>
+
+        <div className="w-full mt-4 rounded-2xl border-2 border-dashed border-tb-me/40 px-4 py-3 flex items-center gap-3 text-left">
+          <IconRepeat size={22} className="text-tb-me shrink-0" />
+          <p className="text-sm text-tb-ink leading-snug">Giliran bertukar: yang tadi menebak, sekarang menjawab.</p>
+        </div>
+
+        <div className="w-full mt-5">
+          <DigitalClock deadline={deadline} onTimeout={onAdvance} label={nextRoundLabel} />
+        </div>
       </div>
+      {banner}
     </div>
   )
 }

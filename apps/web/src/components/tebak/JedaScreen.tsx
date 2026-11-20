@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { Check, X, Clock } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { DigitalClock } from "./DigitalClock"
 import { AdBanner } from "./AdBanner"
+import { Tebi } from "./art/Tebi"
+import { Confetti } from "./art/Confetti"
 
 type Props = {
   resultType: 'correct' | 'wrong' | 'subject_timeout' | 'guesser_timeout'
@@ -56,146 +57,103 @@ export function JedaScreen({
       })
   }, [])
 
-  // ═══ VARIAN DISC — render lebih awal, tanpa sentuh logika tebak ═══
+  const countdownLabel = isLastRound && isLastQuestion
+    ? 'Menuju hasil akhir'
+    : !isLastRound && isLastQuestion
+    ? 'Ronde berikutnya'
+    : 'Soal berikutnya'
+
+  const banner = bannerUrl ? <img src={bannerUrl} alt="" className="w-full object-cover rounded-2xl" /> : null
+  const ad = sessionId ? <AdBanner location="jeda" sessionId={sessionId} /> : null
+
+  // ═══ VARIAN DISC ═══
   if (isDiscRound) {
-    const countdownLabel = isLastRound && isLastQuestion
-      ? 'Menuju hasil akhir'
-      : !isLastRound && isLastQuestion
-      ? 'Bersiap tukar peran'
-      : 'Pertanyaan berikutnya'
-
+    const fmt = (a?: string | null) => a === '__timeout__' ? 'Tidak sempat menjawab' : a ?? '…'
+    const same = !!myDiscAnswer && myDiscAnswer === theirDiscAnswer && myDiscAnswer !== '__timeout__'
     return (
-      <div className="flex-1 flex flex-col px-4 py-4 bg-primary text-primary-foreground">
-        <div className="bg-primary/20 rounded-2xl border border-primary/50 shadow-xl overflow-hidden relative">
-          <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
-          <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
-          <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
+      <div className="relative flex flex-col gap-4 animate-tb-slide-in">
+        {same && <Confetti pieces={14} seed={myDiscAnswer!.length} />}
+        <div className="tb-board p-5 flex flex-col items-center text-center">
+          <Tebi mood={same ? "party" : "happy"} size={80} className="animate-tb-pop" />
+          <h2 className="font-tebak text-2xl font-semibold text-tb-ink mt-2">
+            {same ? "Kalian sehati!" : "Jawaban tersimpan"}
+          </h2>
+          <p className="text-sm text-tb-soft mt-1">
+            {same ? "Pilihan kalian sama persis" : "Begini pilihan kalian berdua"}
+          </p>
 
-          <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center bg-accent/20">
-              <span className="text-3xl">💬</span>
+          <div className="w-full mt-4 space-y-2.5 text-left">
+            <div className="rounded-2xl border-2 border-tb-me/50 bg-tb-me/10 px-4 py-3">
+              <p className="text-xs font-semibold text-tb-me">Kamu</p>
+              <p className="text-[15px] font-semibold text-tb-ink leading-snug">{fmt(myDiscAnswer)}</p>
             </div>
-            <h2 className="text-xl font-bold text-primary-foreground text-center">Jawaban tersimpan!</h2>
-
-            {/* Reveal perbandingan */}
-            <div className="w-full max-w-xs space-y-3">
-              <div className="px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-semibold text-center">
-                <span className="text-primary-foreground/70">Kamu pilih: </span>
-                <span className="text-accent">{myDiscAnswer === '__timeout__' ? '⏰' : myDiscAnswer ?? '?'}</span>
-              </div>
-              <div className="px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-semibold text-center">
-                <span className="text-primary-foreground/70">{opponentName ?? 'Lawan'} pilih: </span>
-                <span className="text-accent">{theirDiscAnswer === '__timeout__' ? '⏰' : theirDiscAnswer ?? '?'}</span>
-              </div>
-              {myDiscAnswer && theirDiscAnswer && myDiscAnswer === theirDiscAnswer && (
-                <p className="text-sm text-accent text-center font-semibold">Kalian sama! ✨</p>
-              )}
-            </div>
-
-            {/* Countdown */}
-            <div className="mt-auto pt-4">
-              <DigitalClock deadline={deadline} onTimeout={onAdvance} label={countdownLabel} />
+            <div className="rounded-2xl border-2 border-tb-them/50 bg-tb-them/10 px-4 py-3">
+              <p className="text-xs font-semibold text-tb-them">{opponentName ?? 'Lawan'}</p>
+              <p className="text-[15px] font-semibold text-tb-ink leading-snug">{fmt(theirDiscAnswer)}</p>
             </div>
           </div>
-          {sessionId ? <div className="mt-2"><AdBanner location="jeda" sessionId={sessionId} /></div> : null}
+
+          <div className="w-full mt-5">
+            <DigitalClock deadline={deadline} onTimeout={onAdvance} label={countdownLabel} />
+          </div>
         </div>
+        {ad}
       </div>
     )
   }
 
-  // ═══ VARIAN TEBAK — TIDAK BERUBAH ═══
-  const icon = resultType === 'correct'
-    ? <Check size={40} className="text-green-500" />
-    : resultType === 'wrong'
-    ? <X size={40} className="text-red-500" />
-    : <Clock size={40} className="text-orange-500" />
-
-  const iconBg = resultType === 'correct'
-    ? 'bg-green-500/20'
-    : resultType === 'wrong'
-    ? 'bg-red-500/20'
-    : 'bg-orange-500/20'
+  // ═══ VARIAN TEBAK ═══
+  const mood = resultType === 'correct' ? 'happy' : resultType === 'wrong' ? 'sad' : 'sleepy'
+  const accent = resultType === 'correct' ? 'text-tb-yes' : resultType === 'wrong' ? 'text-tb-no' : 'text-tb-me'
 
   let title: string
   let subtitle: string
-
   switch (resultType) {
     case 'correct':
       title = 'Tebakan tepat!'
-      subtitle = `${guesserName ?? 'Penebak'} berhasil menebak jawaban ${subjectName ?? 'Subjek'}`
+      subtitle = `${guesserName ?? 'Penebak'} berhasil menebak jawaban ${subjectName ?? 'lawan'}`
       break
     case 'wrong':
       title = 'Meleset!'
-      subtitle = `Jawaban ${subjectName ?? 'Subjek'}: ${correctAnswer || '(tidak ada)'}`
+      subtitle = `Jawaban ${subjectName ?? 'lawan'} ternyata:`
       break
     case 'subject_timeout':
-      title = 'Waktu habis!'
-      subtitle = `${subjectName ?? 'Subjek'} tidak sempat menjawab. Poin untuk ${guesserName ?? 'Penebak'}`
+      title = 'Waktu habis'
+      subtitle = `${subjectName ?? 'Penjawab'} tidak sempat menjawab. Poin untuk ${guesserName ?? 'penebak'}`
       break
     case 'guesser_timeout':
-      title = 'Waktu habis!'
-      subtitle = `${guesserName ?? 'Penebak'} tidak sempat menebak. Tidak ada poin tambahan`
+      title = 'Waktu habis'
+      subtitle = `${guesserName ?? 'Penebak'} tidak sempat menebak. Tidak ada poin`
       break
   }
 
-  const countdownLabel = isLastRound && isLastQuestion
-    ? 'Menuju hasil akhir'
-    : !isLastRound && isLastQuestion
-    ? 'Bersiap tukar peran'
-    : 'Pertanyaan berikutnya'
+  const diff = myScore - theirScore
+  const leadText = diff > 0 ? `Kamu unggul ${diff} poin` : diff < 0 ? `Tertinggal ${Math.abs(diff)} poin, kejar!` : 'Skor masih seri'
 
   return (
-    <div className="flex-1 flex flex-col px-4 py-4 bg-primary text-primary-foreground">
-      <div className="bg-primary/20 rounded-2xl border border-primary/50 shadow-xl overflow-hidden relative">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-primary to-secondary" />
-        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-primary/[0.03] pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-accent/[0.03] pointer-events-none" />
+    <div className="relative flex flex-col gap-4 animate-tb-slide-in">
+      {resultType === 'correct' && <Confetti pieces={16} seed={myScore + theirScore + 1} />}
+      <div className={`tb-board p-5 flex flex-col items-center text-center ${resultType === 'wrong' ? 'animate-tb-shake' : ''}`}>
+        <Tebi mood={mood} size={84} className="animate-tb-pop" />
+        <h2 className={`font-tebak text-3xl font-semibold mt-2 ${accent}`}>{title}</h2>
+        <p className="text-sm text-tb-soft mt-1 max-w-[30ch]">{subtitle}</p>
+        {resultType === 'wrong' && correctAnswer ? (
+          <p className="mt-3 rounded-2xl border-2 border-tb-yes/60 bg-tb-yes/10 px-4 py-2.5 text-[15px] font-semibold text-tb-ink">{correctAnswer}</p>
+        ) : null}
 
-        <div className="p-6 flex flex-col items-center gap-4 relative z-10 min-h-[420px]">
-          {/* Icon + Title */}
-          <div className={`w-20 h-20 rounded-full flex items-center justify-center ${iconBg}`}>
-            {icon}
-          </div>
-          <h2 className="text-xl font-bold text-primary-foreground text-center">{title}</h2>
-          <p className="text-sm text-primary-foreground/70 text-center max-w-xs">{subtitle}</p>
+        <div className="mt-5 flex items-center gap-4">
+          <span className="font-tebak text-4xl font-semibold text-tb-me tabular-nums">{myScore}</span>
+          <span className="font-tebak text-tb-soft">vs</span>
+          <span className="font-tebak text-4xl font-semibold text-tb-them tabular-nums">{theirScore}</span>
+        </div>
+        <p className="text-sm font-semibold text-tb-ink/80 mt-1">{leadText}</p>
 
-          {/* Score bar */}
-          <div className="w-full max-w-xs flex items-center justify-between px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-semibold">
-            <span className="text-primary-foreground">{myScore}</span>
-            <span className="text-primary-foreground/50">—</span>
-            <span className="text-primary-foreground">{theirScore}</span>
-          </div>
-
-          {/* Lead indicator */}
-          {(() => {
-            const diff = myScore - theirScore
-            let text = ''
-            if (diff > 0) text = `Kamu unggul ${diff} poin 🔥`
-            else if (diff < 0) text = `Tertinggal ${Math.abs(diff)} poin — kejar!`
-            else text = 'Skor seri — siapa duluan?'
-            return (
-              <p className="text-sm font-semibold text-primary-foreground/70 text-center">{text}</p>
-            )
-          })()}
-
-          {/* Banner slot */}
-          {bannerUrl && (
-            <div className="w-full max-w-xs">
-              <img
-                src={bannerUrl}
-                alt="Banner"
-                className="w-full object-cover rounded-lg"
-              />
-            </div>
-          )}
-
-          {/* Countdown */}
-          <div className="mt-auto pt-4">
-            <DigitalClock deadline={deadline} onTimeout={onAdvance} label={countdownLabel} />
-          </div>
-          {sessionId ? <div className="mt-2"><AdBanner location="jeda" sessionId={sessionId} /></div> : null}
+        <div className="w-full mt-5">
+          <DigitalClock deadline={deadline} onTimeout={onAdvance} label={countdownLabel} />
         </div>
       </div>
+      {banner}
+      {ad}
     </div>
   )
 }

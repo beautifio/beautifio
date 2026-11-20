@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
-import { Zap } from "lucide-react"
+import { Tebi } from "./art/Tebi"
+import { IconBolt } from "./art/icons"
 
 type Props = {
   myName?: string | null
@@ -39,100 +40,53 @@ export function MatchIntro({ myName, opponentName, onBegin, deadline }: Props) {
 
   const myInit = myName?.[0]?.toUpperCase() || "?"
   const oppInit = opponentName?.[0]?.toUpperCase() || "?"
-  const progressPct = ((8 - remaining) / 8) * 100
+
+  const Player = ({ init, name, sub, tone, from }: { init: string; name: string; sub: string; tone: "me" | "them"; from: number }) => (
+    <div
+      className="flex-1 min-w-0 flex flex-col items-center text-center"
+      style={{
+        transform: show ? "translateX(0)" : `translateX(${from}px)`,
+        opacity: show ? 1 : 0,
+        transition: "transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 400ms ease",
+      }}
+    >
+      <span
+        className={`w-20 h-20 rounded-full flex items-center justify-center font-tebak text-3xl font-semibold text-tb-stage border-4 border-tb-deep ${tone === "me" ? "bg-tb-me" : "bg-tb-them"}`}
+        style={{ boxShadow: "0 5px 0 var(--color-tb-deep)" }}
+      >
+        {init}
+      </span>
+      <p className={`mt-3 font-tebak text-lg font-semibold truncate max-w-full ${tone === "me" ? "text-tb-me" : "text-tb-them"}`}>{name}</p>
+      <p className="text-xs text-tb-soft">{sub}</p>
+    </div>
+  )
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 relative overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, #084463 0%, #042436 50%, #0B1A2E 100%)",
-      }}>
-      {/* Grid pattern */}
-      <div className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }} />
-
-      {/* Glow orbs */}
-      <div className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full opacity-10 blur-3xl" style={{ background: "#6BB9D4" }} />
-      <div className="absolute bottom-1/4 right-1/4 w-40 h-40 rounded-full opacity-10 blur-3xl" style={{ background: "#FFC64F" }} />
-
-      {/* Player Cards */}
-      <div className="flex items-center justify-center gap-4 w-full max-w-md mb-6 relative z-10">
-        {/* My Card */}
-        <div
-          className={`flex-1 p-4 rounded-2xl border text-center transition-all duration-700 ease-out`}
-          style={{
-            background: "rgba(255,255,255,0.05)",
-            borderColor: "rgba(107,185,212,0.3)",
-            transform: show ? "translateX(0)" : "translateX(-60px)",
-            opacity: show ? 1 : 0,
-          }}>
-          <div className="w-14 h-14 rounded-xl mx-auto mb-2 flex items-center justify-center text-xl font-bold text-white"
-            style={{ background: "linear-gradient(135deg, #6BB9D4, #084463)" }}>
-            {myInit}
-          </div>
-          <p className="text-sm font-bold text-white truncate">{myName || "Kamu"}</p>
-          <p className="text-[10px] text-white/40 mt-0.5">Player</p>
-        </div>
-
-        {/* VS Badge */}
-        <div className="relative flex-shrink-0">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center animate-pulse"
-            style={{ background: "linear-gradient(135deg, rgba(255,198,79,0.2), rgba(255,198,79,0.05))", border: "1px solid rgba(255,198,79,0.3)" }}>
-            <Zap size={20} style={{ color: "#FFC64F", filter: "drop-shadow(0 0 8px rgba(255,198,79,0.5))" }} />
-          </div>
-          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-white/30 tracking-widest uppercase">VS</span>
-        </div>
-
-        {/* Opponent Card */}
-        <div
-          className={`flex-1 p-4 rounded-2xl border text-center transition-all duration-700 ease-out delay-150`}
-          style={{
-            background: "rgba(255,255,255,0.05)",
-            borderColor: "rgba(255,198,79,0.3)",
-            transform: show ? "translateX(0)" : "translateX(60px)",
-            opacity: show ? 1 : 0,
-          }}>
-          <div className="w-14 h-14 rounded-xl mx-auto mb-2 flex items-center justify-center text-xl font-bold text-white"
-            style={{ background: "linear-gradient(135deg, #FFC64F, #E85D75)" }}>
-            {oppInit}
-          </div>
-          <p className="text-sm font-bold text-white truncate">{opponentName || "Lawan"}</p>
-          <p className="text-[10px] text-white/40 mt-0.5">Lawan</p>
-        </div>
+    <div className="flex-1 flex flex-col items-center justify-center gap-8 py-6">
+      <div className="text-center">
+        <Tebi mood="party" size={88} className="mx-auto animate-tb-bob" />
+        <p className="font-tebak text-2xl font-semibold text-tb-ink mt-2">Lawan ditemukan!</p>
+        <p className="text-sm text-tb-soft">Siap-siap kenalan sambil main</p>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full max-w-md h-1.5 rounded-full mb-6 relative z-10"
-        style={{ background: "rgba(255,255,255,0.08)" }}>
-        <div className="h-full rounded-full transition-all duration-500 ease-linear"
-          style={{
-            width: `${progressPct}%`,
-            background: remaining > 3 ? "linear-gradient(90deg, #6BB9D4, #FFC64F)" : "linear-gradient(90deg, #FFC64F, #EF4444)",
-          }} />
+      <div className="w-full flex items-center gap-3">
+        <Player init={myInit} name={myName || "Kamu"} sub="Kamu" tone="me" from={-60} />
+        <span className="w-12 h-12 shrink-0 rounded-full bg-tb-me text-tb-stage flex items-center justify-center animate-tb-wiggle border-2 border-tb-deep">
+          <IconBolt size={22} />
+        </span>
+        <Player init={oppInit} name={opponentName || "Lawan"} sub="Lawan" tone="them" from={60} />
       </div>
 
-      {/* Countdown */}
-      <div className="relative z-10 flex flex-col items-center">
-        <div className={`transition-all duration-300 ${remaining <= 3 ? "scale-110" : "scale-100"}`}>
-          <span className={`text-6xl font-bold font-mono tabular-nums transition-colors duration-500`}
-            style={{
-              color: remaining > 5 ? "#FFFFFF" : remaining > 3 ? "#FFC64F" : remaining > 1 ? "#F97316" : "#EF4444",
-              textShadow: remaining <= 3
-                ? `0 0 ${remaining === 1 ? 60 : 30}px ${remaining === 1 ? "rgba(239,68,68,0.5)" : "rgba(249,115,22,0.4)"}`
-                : "0 0 20px rgba(255,255,255,0.15)",
-            }}>
-            {remaining}
-          </span>
-        </div>
-        <span className="text-[10px] text-white/20 tracking-widest uppercase mt-1">detik</span>
+      <div className="flex flex-col items-center">
+        <span
+          key={remaining}
+          className={`font-tebak text-7xl font-semibold tabular-nums leading-none animate-tb-bump ${remaining <= 3 ? "text-tb-me" : "text-tb-ink"}`}
+          aria-live="polite"
+        >
+          {remaining > 0 ? remaining : "Mulai!"}
+        </span>
+        <span className="text-sm text-tb-soft mt-2">Ronde 1 dimulai</span>
       </div>
-
-      {/* Round Info */}
-      <p className="absolute bottom-8 text-xs text-white/20 tracking-wider z-10">
-        🎮 Ronde 1 · DISC
-      </p>
     </div>
   )
 }

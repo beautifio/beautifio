@@ -2,11 +2,12 @@
 
 import { useState, useEffect, use, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, ArrowLeft } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { supabase } from "@/lib/supabase/client"
 import { TebakWaiting } from "@/components/tebak/TebakWaiting"
 import { GameRoom } from "@/components/tebak/GameRoom"
+import { TebakStage, TebakTopBar } from "@/components/tebak/TebakStage"
+import { Tebi } from "@/components/tebak/art/Tebi"
 import type { TebakSession } from "@/lib/tebak/queries"
 
 export default function TebakSessionPage({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -36,9 +37,9 @@ export default function TebakSessionPage({ params }: { params: Promise<{ session
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
+      <TebakStage className="items-center justify-center">
+        <Tebi mood="think" size={80} className="animate-tb-bob" title="Memuat permainan" />
+      </TebakStage>
     )
   }
 
@@ -46,17 +47,10 @@ export default function TebakSessionPage({ params }: { params: Promise<{ session
 
   if (session.status === "waiting") {
     return (
-      <div className="min-h-screen bg-bg">
-        <div className="bg-surface border-b border-border">
-          <div className="max-w-content mx-auto px-4 py-4 flex items-center gap-3">
-            <button onClick={() => router.back()} className="w-8 h-8 rounded-xl flex items-center justify-center text-text-secondary hover:bg-muted transition-colors cursor-pointer">
-              <ArrowLeft size={20} />
-            </button>
-            <h1 className="text-lg font-bold text-text-primary">Tebak Aku</h1>
-          </div>
-        </div>
+      <TebakStage>
+        <TebakTopBar mood="think" onBack={() => router.push("/tebak")} />
         <TebakWaiting sessionId={sessionId} isPlayerA={true} onMatched={handleMatched} onCancel={() => router.push("/tebak")} onReMatched={(newId) => router.push(`/tebak/${newId}`)} />
-      </div>
+      </TebakStage>
     )
   }
 

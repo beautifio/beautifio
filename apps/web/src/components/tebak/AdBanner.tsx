@@ -33,11 +33,11 @@ export function AdBanner({ location, sessionId }: Props) {
   }
 
   return (
-    <div className="w-full max-w-xs mx-auto">
+    <div className="w-full">
       <img
         src={banner.image_url}
         alt=""
-        className="w-full rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
+        className="w-full rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
         onClick={handleClick}
       />
     </div>

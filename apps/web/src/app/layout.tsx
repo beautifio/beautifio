@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, Inter } from "next/font/google";
+import { Poppins, Inter, Fredoka } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -18,6 +18,12 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const fredoka = Fredoka({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-fredoka",
+});
+
 export const metadata: Metadata = {
   title: "Beautifio — Masa Depan Dimulai Hari Ini",
   description:
@@ -33,7 +39,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id">
-      <body className={`${poppins.variable} ${inter.variable} font-sans antialiased`}>
+      <body className={`${poppins.variable} ${inter.variable} ${fredoka.variable} font-sans antialiased`}>
         <ErrorBoundary>
           <Providers>
             <NavWrapper>{children}</NavWrapper>

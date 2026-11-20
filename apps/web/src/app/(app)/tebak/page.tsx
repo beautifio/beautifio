@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Users, HelpCircle, ArrowRight, Loader2, Check, X, Trophy, Crown } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { Tebi } from "@/components/tebak/art/Tebi"
+import { DiscCritter } from "@/components/tebak/art/DiscCritters"
+import { IconBolt, IconChat, IconHeart, IconSearch, IconTrophy } from "@/components/tebak/art/icons"
 import { useAuth } from "@/hooks/use-auth"
 import { joinTebakQueue } from "@/lib/tebak/actions"
 
@@ -37,93 +40,86 @@ export default function TebakPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="tb-stage min-h-[100dvh] flex items-center justify-center">
+        <Tebi mood="think" size={80} className="animate-tb-bob" title="Memuat" />
       </div>
     )
   }
 
+  const steps = [
+    { icon: <IconChat size={20} />, tone: "text-tb-me bg-tb-me/15", title: "Kenalan dulu", desc: "Ronde 1–2: jawab 5 soal tentang dirimu, barengan dengan lawan." },
+    { icon: <IconSearch size={20} />, tone: "text-tb-them bg-tb-them/15", title: "Tebak lawan", desc: "Ronde 3–4: tebak jawaban lawan dalam 15 detik. Benar = 10 poin." },
+    { icon: <IconHeart size={20} />, tone: "text-tb-no bg-tb-no/15", title: "Lihat kecocokan", desc: "Dapatkan hewan kepribadianmu, skor kecocokan, lalu lanjut ngobrol di Bisik." },
+  ]
+
   return (
-    <div className="min-h-screen bg-bg pb-24">
-      <div className="bg-surface border-b border-border">
-        <div className="max-w-content mx-auto px-4 py-4">
-          <h1 className="text-xl font-bold text-text-primary">Tebak Aku</h1>
-          <p className="text-xs text-text-secondary mt-0.5">Kenali kepribadianmu & lawan bicaramu</p>
-        </div>
-      </div>
-
-      <div className="max-w-content mx-auto px-4 py-6 space-y-6">
+    <div className="tb-stage min-h-[100dvh] pb-28">
+      <div className="max-w-content mx-auto px-4 pt-6 flex flex-col gap-5">
         {/* Hero */}
-        <div className="flex flex-col items-center py-8">
-          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Users size={48} className="text-primary" />
+        <section className="tb-board px-5 pt-6 pb-5 text-center">
+          <div className="relative h-[140px] flex items-end justify-center">
+            <DiscCritter type="D" size={46} className="absolute left-1 top-2 -rotate-12 animate-tb-bob [animation-delay:-0.4s]" />
+            <DiscCritter type="I" size={42} className="absolute right-2 top-0 rotate-12 animate-tb-bob [animation-delay:-1.1s]" />
+            <DiscCritter type="S" size={44} className="absolute left-6 bottom-0 animate-tb-bob [animation-delay:-1.7s]" />
+            <DiscCritter type="C" size={44} className="absolute right-6 bottom-1 animate-tb-bob [animation-delay:-0.8s]" />
+            <Tebi mood="happy" size={112} className="relative" />
           </div>
-          <h2 className="text-lg font-bold text-text-primary text-center mb-2">
-            4 Ronde Seru, 1 Profil Kepribadian
-          </h2>
-          <p className="text-sm text-text-secondary text-center max-w-xs">
-            Jawab pertanyaan tentang dirimu, tebak kepribadian lawan, lalu lihat kecocokan untuk jadi teman ngobrol.
+          <h1 className="font-tebak text-[2rem] leading-tight font-semibold text-tb-ink mt-3">Tebak Aku</h1>
+          <p className="text-sm text-tb-soft mt-1 max-w-[30ch] mx-auto">
+            Main 1 lawan 1, saling menebak, lalu temukan hewan kepribadianmu.
           </p>
-        </div>
+        </section>
 
-        {/* How it works */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-text-primary">Cara bermain:</h3>
-          <div className="space-y-2.5">
-            {[
-              "Ronde 1 — Jawab 10 pertanyaan DISC tentang dirimu (serentak dengan lawan)",
-              "Ronde 2 — Jawab 10 pertanyaan gaya komunikasimu (serentak dengan lawan)",
-              "Ronde 3 & 4 — Giliran tebak jawaban lawan dalam 15 detik, benar = 10 poin",
-              "Lihat Profil Kepribadian DISC kamu & lawan (Dominan / Influence / Steadiness / Conscientious)",
-              "Cek skor kecocokan kalian & lanjut ngobrol di Bisik!",
-            ].map((rule, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-primary">{i + 1}</span>
-                </div>
-                <p className="text-sm text-text-secondary">{rule}</p>
+        {/* Cara main */}
+        <section aria-label="Cara bermain" className="flex flex-col gap-2.5">
+          {steps.map(st => (
+            <div key={st.title} className="flex items-start gap-3 rounded-3xl bg-tb-deep/60 border border-tb-line px-4 py-3">
+              <span className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${st.tone}`}>{st.icon}</span>
+              <div className="min-w-0">
+                <p className="font-tebak text-base font-semibold text-tb-ink leading-tight">{st.title}</p>
+                <p className="text-sm text-tb-soft leading-snug mt-0.5">{st.desc}</p>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          ))}
+        </section>
 
         {error && (
-          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600">
-            {error}
-          </div>
+          <p className="rounded-2xl border-2 border-tb-no/50 bg-tb-no/10 px-4 py-3 text-sm text-tb-ink">{error}</p>
         )}
 
         {limitMsg && (
-          <div className="p-4 rounded-xl border text-center" style={{ background: "#F8FAFC", borderColor: "#FFC64F" }}>
-            <Crown size={20} className="mx-auto mb-2" style={{ color: "#FFC64F" }} />
-            <p className="text-sm font-semibold" style={{ color: "#1E2938" }}>Batas harian tercapai</p>
-            <p className="text-xs mt-1" style={{ color: "#647488" }}>Kamu sudah main {limitMsg.max}x hari ini. Upgrade untuk main lebih banyak.</p>
-            <button onClick={() => router.push("/bisik/upgrade")}
-              className="mt-3 px-6 py-2 rounded-xl text-xs font-bold cursor-pointer" style={{ background: "#FFC64F", color: "#084463" }}>
-              Upgrade Sekarang
+          <div className="tb-board p-5 text-center flex flex-col items-center">
+            <Tebi mood="sleepy" size={64} />
+            <p className="font-tebak text-lg font-semibold text-tb-ink mt-2">Jatah main hari ini habis</p>
+            <p className="text-sm text-tb-soft mt-1">Kamu sudah main {limitMsg.max}x hari ini. Upgrade untuk main lebih banyak.</p>
+            <button
+              onClick={() => router.push("/bisik/upgrade")}
+              className="tb-chunky mt-4 px-6 py-3 bg-tb-them border-tb-them text-tb-stage text-sm font-semibold cursor-pointer [--tb-edge:var(--color-tb-them-dark)]"
+            >
+              Upgrade sekarang
             </button>
           </div>
         )}
 
-        <button
-          onClick={handleStart}
-          disabled={joining}
-          className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-50 cursor-pointer"
-        >
-          {joining ? (
-            <><Loader2 size={16} className="animate-spin" /> Mencari lawan... (max 10 detik)</>
-          ) : (
-            <><Users size={16} /> Mulai Bermain</>
-          )}
-        </button>
-
-        <button
-          onClick={() => router.push("/tebak/leaderboard")}
-          className="w-full py-3.5 rounded-xl border-2 border-primary/20 text-primary font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors cursor-pointer"
-        >
-          <Trophy size={16} />
-          Leaderboard
-        </button>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={handleStart}
+            disabled={joining}
+            className="tb-chunky w-full py-4 bg-tb-me border-tb-me text-tb-stage font-tebak text-lg font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 [--tb-edge:var(--color-tb-me-dark)]"
+          >
+            {joining ? (
+              <><Loader2 size={18} className="animate-spin" /> Mencari lawan…</>
+            ) : (
+              <><IconBolt size={20} /> Mulai bermain</>
+            )}
+          </button>
+          <button
+            onClick={() => router.push("/tebak/leaderboard")}
+            className="tb-chunky w-full py-3.5 bg-transparent border-tb-line text-tb-ink font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer hover:border-tb-them"
+          >
+            <IconTrophy size={18} className="text-tb-me" /> Papan juara
+          </button>
+        </div>
       </div>
     </div>
   )
