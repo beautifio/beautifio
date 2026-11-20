@@ -1,9 +1,23 @@
 # Google OAuth — status & perbaikan
 
-## Temuan (2026-11-15)
+## Status (2026-11-20): DIPERBAIKI ✅
 
-Login Google **belum bisa dipakai**, bukan karena kurang akun uji, tapi karena
-**redirect URI belum terdaftar** di Google Cloud Console.
+Login Google sekarang **aktif**. Penyebab asli: client ID di aplikasi tidak sama
+dengan client yang punya redirect URI di console (mismatch), sehingga Google
+menolak dengan `redirect_uri_mismatch`.
+
+Perbaikan:
+- Client ID di `deploy/.env.production` diganti ke
+  `749634304606-q0gidgf7drsdvd1dnnu1hped3nauvjfv.apps.googleusercontent.com`
+  (client yang redirect URI-nya sudah terdaftar).
+- Client secret baru dibuat (lama `****t622` tidak bisa dilihat lagi → dibuat
+  secret baru (disimpan di env VPS, tidak di git); secret lama masih aktif
+  sampai dihapus manual untuk keamanan).
+- `scripts/verify-google-oauth.sh` sekarang **PASS**.
+
+Bukti (langsung ke endpoint Google, tanpa akun):
+- `client_id` + `redirect_uri=https://beautifio.com/auth/callback` → **diterima**
+  (tidak ada `redirect_uri_mismatch` / `invalid_client`).
 
 Bukti langsung ke endpoint Google (bukan tebakan dari env):
 
@@ -28,7 +42,7 @@ Yang sudah benar di sisi aplikasi:
   `code` palsu → `307 /login?error=google_token_exchange_failed`. **Tidak ada 5xx.**
 - `/login` dan `AuthModal` membangun URL OAuth yang identik.
 
-## Yang harus dilakukan (butuh akses Google Cloud Console)
+## Yang harus dilakukan (butuh akses Google Cloud Console) — SELESAI ✅
 
 1. Buka <https://console.cloud.google.com/apis/credentials>.
 2. Pilih project yang memiliki OAuth client
