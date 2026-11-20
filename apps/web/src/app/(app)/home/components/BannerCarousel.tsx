@@ -75,7 +75,7 @@ export function BannerCarousel() {
 
   return (
     <div
-      className="relative w-full aspect-[2/1] rounded-2xl overflow-hidden bg-gray-100 cursor-pointer"
+      className="relative w-full aspect-[2/1] rounded-xl overflow-hidden bg-laut-100 shadow-md ring-1 ring-inset ring-laut-950/5 cursor-pointer"
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
     >
@@ -86,8 +86,8 @@ export function BannerCarousel() {
         >
           <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
           {banner.redirect_label && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12">
-              <span className="inline-block bg-[#FFC64F] text-[#1E2938] text-xs font-bold px-3 py-1.5 rounded-lg">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-laut-950/70 to-transparent p-4 pt-12">
+              <span className="inline-block bg-fajar text-laut-950 text-xs font-semibold px-3 py-1.5 rounded-sm shadow-sm">
                 {banner.redirect_label}
               </span>
             </div>
@@ -97,13 +97,15 @@ export function BannerCarousel() {
 
       {/* Dots */}
       {banners.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-laut-950/30 px-2 py-1.5 backdrop-blur">
           {banners.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrent(idx)}
-              className={`w-2 h-2 rounded-full transition-all cursor-pointer ${
-                idx === current ? "bg-white w-4" : "bg-white/50"
+              aria-label={`Banner ${idx + 1}`}
+              aria-current={idx === current}
+              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                idx === current ? "w-5 bg-white" : "w-1.5 bg-white/50"
               }`}
             />
           ))}

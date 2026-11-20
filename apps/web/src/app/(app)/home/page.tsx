@@ -16,17 +16,50 @@ import { ArticlePick } from "./components/ArticlePick"
 import { BannerCarousel } from "./components/BannerCarousel"
 
 import { AchievementNotif } from "@/features/familia/components/AchievementNotif"
-import { Ticket, ShoppingBag, Calendar, Briefcase, Shield, Compass, HeartHandshake } from "lucide-react"
+import Link from "next/link"
+import { Ticket, ShoppingBag, Calendar, Briefcase, Shield, Compass, HeartHandshake, Sparkles, ChevronRight, Clock } from "lucide-react"
+import { IconTile, ProgressBar, Skeleton } from "@beautifio/ui"
 import { journeyUrl } from "@/lib/journey-queries"
 
 const JourneyOnboardingModal = dynamic(() => import("@/features/journey/journey-onboarding-modal").then(m => ({ default: m.JourneyOnboardingModal })), { ssr: false })
 
 const FEATURE_BUTTONS = [
-  { href: "/voucher",     label: "Voucher",   icon: Ticket,      color: "bg-accent/20 text-primary" },
-  { href: "/belanja",     label: "Deals",      icon: ShoppingBag, color: "bg-secondary/20 text-secondary" },
-  { href: "/event",       label: "Event",      icon: Calendar,    color: "bg-primary/10 text-primary" },
-  { href: "/opportunity", label: "Peluang",    icon: Briefcase,   color: "bg-success/10 text-success" },
+  { href: "/voucher",     label: "Voucher", icon: Ticket,      tone: "fajar" as const },
+  { href: "/belanja",     label: "Deals",   icon: ShoppingBag, tone: "senja" as const },
+  { href: "/event",       label: "Event",   icon: Calendar,    tone: "langit" as const },
+  { href: "/opportunity", label: "Peluang", icon: Briefcase,   tone: "success" as const },
 ]
+
+/** One pattern for every "go somewhere" card on Beranda. */
+function ActionCard({
+  href, icon, tone, title, text, emphasis = false, quiet = false,
+}: {
+  href: string
+  icon: React.ReactNode
+  tone: "laut" | "langit" | "fajar" | "senja" | "success"
+  title: string
+  text: string
+  emphasis?: boolean
+  quiet?: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      className={`group flex items-center gap-3.5 rounded-xl p-4 transition-[transform,box-shadow] duration-200 ease-out-expo active:scale-[0.99] ${
+        quiet
+          ? "border border-dashed border-laut-700/15 bg-white/50 hover:bg-white"
+          : "bg-white shadow-sm ring-1 ring-inset ring-laut-700/[0.06] hover:shadow-md"
+      } ${emphasis ? "ring-laut-700/10" : ""}`}
+    >
+      <IconTile tone={tone} size="md">{icon}</IconTile>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[15px] font-semibold text-tinta">{title}</span>
+        <span className="mt-0.5 block text-[13px] leading-snug text-kabut">{text}</span>
+      </span>
+      <ChevronRight size={18} className="shrink-0 text-kabut/60 transition-transform group-hover:translate-x-0.5" aria-hidden />
+    </Link>
+  )
+}
 
 export default function HomeScreen({
   searchParams,
@@ -137,125 +170,106 @@ export default function HomeScreen({
   } : null
 
   return (
-    <div className="min-h-screen bg-bg">
-      <div className="max-w-content mx-auto px-5 pt-6 pb-24 space-y-3">
+    <div className="min-h-screen bg-mist">
+      <div className="max-w-content mx-auto px-4 pt-5 pb-28 space-y-4">
         {/* Trial banner */}
         {trialDays && (
-          <div className="bg-accent/5 border border-accent rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-primary">🕐 Mode Tamu</p>
-              <p className="text-xs text-text-secondary">Sisa {trialDays.remaining} hari</p>
+          <div className="surface-raised rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="flex items-center gap-2 text-sm font-semibold text-tinta">
+                <Clock size={15} className="text-[#9A6300]" aria-hidden /> Mode Tamu
+              </p>
+              <p className="text-xs font-medium text-kabut">Sisa {trialDays.remaining} hari</p>
             </div>
-            <div className="w-full bg-accent/20 rounded-full h-1.5 mb-2">
-              <div
-                className="h-1.5 rounded-full bg-accent transition-all"
-                style={{ width: `${(trialDays.currentDay / trialDays.totalDays) * 100}%` }}
-              />
-            </div>
-            <p className="text-[11px] text-text-secondary">Daftar untuk simpan progress selamanya</p>
+            <ProgressBar value={trialDays.currentDay} max={trialDays.totalDays} size="sm" variant="accent" />
+            <p className="mt-2.5 text-xs text-kabut">
+              <Link href="/register?upgrade=true" className="font-semibold text-laut-500 hover:underline">Daftar</Link>{" "}
+              untuk menyimpan progresmu selamanya.
+            </p>
           </div>
         )}
 
-        {/* Quote Card */}
+        {/* Greeting first, data second */}
         <QuoteCard userName={user ? userName : "Sobat"} />
 
         <BannerCarousel />
 
-        {/* Feature Buttons */}
-        <div className="grid grid-cols-4 gap-2">
+        {/* Feature shortcuts */}
+        <nav aria-label="Pintasan" className="grid grid-cols-4 gap-2.5">
           {FEATURE_BUTTONS.map((btn) => {
             const Icon = btn.icon
             return (
-              <button key={btn.href} onClick={() => router.push(btn.href)}
-                className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-surface border border-border hover:bg-muted transition-colors cursor-pointer">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${btn.color}`}><Icon size={14} /></div>
-                <span className="text-[9px] font-medium text-text-primary">{btn.label}</span>
-              </button>
+              <Link key={btn.href} href={btn.href}
+                className="group flex flex-col items-center gap-2 rounded-xl bg-white px-1 py-3 shadow-sm ring-1 ring-inset ring-laut-700/[0.06] transition-[transform,box-shadow] duration-200 ease-out-expo hover:shadow-md active:scale-[0.97]">
+                <IconTile tone={btn.tone} size="sm"><Icon /></IconTile>
+                <span className="text-xs font-medium text-tinta">{btn.label}</span>
+              </Link>
             )
           })}
+        </nav>
+
+        <div className="space-y-2.5">
+          <ActionCard
+            href={journey ? journeyUrl(journey) : "/journey"}
+            icon={<Compass />}
+            tone="laut"
+            title={journey ? "Lanjutkan Journey" : "Mulai Journey"}
+            text={journey ? "Lanjutkan perjalananmu" : "Mulai perjalanan barumu"}
+            emphasis
+          />
+          <ActionCard
+            href="/tes-arah-hidup"
+            icon={<Sparkles />}
+            tone="fajar"
+            title="Tes Arah Hidup"
+            text="Kenali kepribadian, minat, dan nilai hidupmu"
+          />
         </div>
 
-        {/* Bold Cards */}
-        <button onClick={() => router.push(journey ? journeyUrl(journey) : "/journey")}
-          className="w-full flex items-center gap-3 p-4 rounded-2xl transition-colors text-left cursor-pointer"
-          style={{ background: "#E8F4F8", border: "2px solid #6BB9D4" }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#6BB9D4" }}>
-            <Compass size={20} style={{ color: "#FFFFFF" }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold" style={{ color: "#084463" }}>Mulai Journey</p>
-            <p className="text-xs" style={{ color: "#647488" }}>{journey ? "Lanjutkan perjalananmu" : "Mulai perjalanan barumu"}</p>
-          </div>
-          <span className="text-lg" style={{ color: "#6BB9D4" }}>→</span>
-        </button>
-
-        <button onClick={() => router.push("/tes-arah-hidup")}
-          className="w-full flex items-center gap-3 p-4 rounded-2xl transition-colors text-left cursor-pointer"
-          style={{ background: "#FFF8E1", border: "2px solid #FFC64F" }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FFC64F" }}>
-            <Compass size={20} style={{ color: "#084463" }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold" style={{ color: "#1E2938" }}>Tes Arah Hidup</p>
-            <p className="text-xs" style={{ color: "#647488" }}>Kenali kepribadian, minat, dan nilai hidupmu</p>
-          </div>
-          <span className="text-lg" style={{ color: "#FFC64F" }}>→</span>
-        </button>
-
         {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 rounded-2xl bg-surface border border-border animate-pulse" />
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <Skeleton key={i} className="h-20 rounded-xl" />
             ))}
           </div>
         ) : loadError ? (
-          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-center">
-            <p className="text-sm text-red-600">Gagal memuat data</p>
-            <button onClick={() => { setLoadError(false); setLoading(true); setJourney(null); }} className="mt-2 text-xs text-red-500 underline">Coba lagi</button>
+          <div className="rounded-xl bg-danger-soft p-4 text-center">
+            <p className="text-sm text-danger">Data belum berhasil dimuat.</p>
+            <button onClick={() => { setLoadError(false); setLoading(true); setJourney(null); }} className="mt-2 text-xs font-semibold text-danger underline">Coba lagi</button>
           </div>
         ) : null}
 
-        {/* Beautifio Care */}
-        <button
-          onClick={() => router.push("/care")}
-          className="w-full flex items-center gap-3 p-4 rounded-2xl transition-colors text-left cursor-pointer"
-          style={{ background: "#FFF8E1", border: "2px solid #FFC64F" }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FFC64F" }}>
-            <Shield size={20} style={{ color: "#084463" }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold" style={{ color: "#1E2938" }}>Beautifio Care</p>
-            <p className="text-xs" style={{ color: "#647488" }}>Konsultasi & bantuan darurat</p>
-          </div>
-          <span className="text-lg" style={{ color: "#FFC64F" }}>→</span>
-        </button>
+        <ActionCard
+          href="/care"
+          icon={<Shield />}
+          tone="senja"
+          title="Beautifio Care"
+          text="Konsultasi dan bantuan darurat"
+        />
+
         <ArticlePick journey={journey} />
 
         {growthZone && (() => {
           const dimInfo = DIMENSION_LABELS[growthZone]
           return (
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-accent/10 to-primary/10 border border-accent/20">
-              <h3 className="text-sm font-bold text-text-primary mb-1">🌱 Zona Tumbuhmu</h3>
-              <p className="text-lg font-bold text-accent mt-1">{dimInfo?.emoji} {dimInfo?.label || growthZone}</p>
-              <p className="text-sm text-text-secondary mt-1 leading-relaxed">
-                Fokus kembangkan dimensi <strong>{dimInfo?.label || growthZone}</strong>
+            <div className="surface-raised rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-kabut">🌱 Zona Tumbuhmu</h3>
+              <p className="mt-1 font-display text-lg font-semibold text-tinta">{dimInfo?.emoji} {dimInfo?.label || growthZone}</p>
+              <p className="text-sm text-kabut mt-1 leading-relaxed">
+                Fokus kembangkan dimensi <strong className="text-tinta">{dimInfo?.label || growthZone}</strong>
               </p>
             </div>
           )
         })()}
 
-        <button onClick={() => router.push("/daftar-mitra")}
-          className="w-full flex items-center gap-3 p-4 rounded-2xl transition-colors text-left cursor-pointer"
-          style={{ background: "#F0FDF4", border: "2px solid #22C55E" }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "#22C55E" }}>
-            <HeartHandshake size={20} style={{ color: "#FFFFFF" }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold" style={{ color: "#1E2938" }}>Ingin Membantu Sesama?</p>
-            <p className="text-xs" style={{ color: "#647488" }}>Bergabung sebagai Volunteer atau Psikolog. Dampingi komunitas untuk tumbuh.</p>
-          </div>
-          <span className="text-lg" style={{ color: "#22C55E" }}>→</span>
-        </button>
+        <ActionCard
+          href="/daftar-mitra"
+          icon={<HeartHandshake />}
+          tone="success"
+          title="Ingin membantu sesama?"
+          text="Bergabung sebagai Volunteer atau Psikolog. Dampingi komunitas untuk tumbuh."
+          quiet
+        />
       </div>
 
       <AchievementNotif />
