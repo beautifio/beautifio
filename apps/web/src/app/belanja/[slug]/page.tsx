@@ -88,7 +88,7 @@ export default function DealDetailPage() {
         )}
 
         {/* Title + meta */}
-        <h1 className="text-lg font-bold mb-1" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>{deal.title}</h1>
+        <h1 className="text-lg font-bold mb-1" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>{deal.title}</h1>
         <div className="flex items-center gap-2 mb-3">
           <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: "#F8FAFC", color: "#647488", border: "1px solid #E2E8F0" }}>{deal.category}</span>
           {deal.is_featured && <Flame size={14} style={{ color: "#EF4444" }} />}

@@ -663,13 +663,13 @@ export default function BisikHome() {
               }}>
                 <div style={{ fontSize: 64, marginBottom: 16 }}>✨</div>
                 <h3 style={{
-                  fontFamily: "Poppins", fontSize: 20, fontWeight: 700,
+                  fontFamily: "var(--font-poppins), Poppins, sans-serif", fontSize: 20, fontWeight: 700,
                   color: "#1E2938", marginBottom: 8,
                 }}>
                   Semua kartu sudah kamu lihat
                 </h3>
                 <p style={{
-                  fontFamily: "Inter", fontSize: 14, color: "#647488",
+                  fontFamily: "var(--font-inter), Inter, sans-serif", fontSize: 14, color: "#647488",
                   marginBottom: 24, lineHeight: 1.6,
                 }}>
                   Belum ada kartu baru untuk sekarang.
@@ -681,7 +681,7 @@ export default function BisikHome() {
                     background: "#084463", color: "#FFFFFF",
                     border: "none", borderRadius: 12,
                     padding: "12px 24px",
-                    fontFamily: "Poppins", fontSize: 14, fontWeight: 600,
+                    fontFamily: "var(--font-poppins), Poppins, sans-serif", fontSize: 14, fontWeight: 600,
                     cursor: "pointer",
                   }}
                 >
@@ -793,8 +793,8 @@ export default function BisikHome() {
                     display: "flex", justifyContent: "center",
                     gap: 80, marginTop: 8,
                   }}>
-                    <span style={{ fontSize: 11, color: "#647488", fontFamily: "Inter" }}>Lewati</span>
-                    <span style={{ fontSize: 11, color: "#647488", fontFamily: "Inter" }}>Dengerin</span>
+                    <span style={{ fontSize: 11, color: "#647488", fontFamily: "var(--font-inter), Inter, sans-serif" }}>Lewati</span>
+                    <span style={{ fontSize: 11, color: "#647488", fontFamily: "var(--font-inter), Inter, sans-serif" }}>Dengerin</span>
                   </div>
                 </div>
               </>

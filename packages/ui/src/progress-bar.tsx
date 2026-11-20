@@ -13,8 +13,8 @@ const sizeStyles = {
 };
 
 const variantStyles = {
-  default: "bg-gradient-to-r from-primary to-secondary",
-  accent: "bg-gradient-to-r from-accent to-secondary",
+  default: "bg-laut-700",
+  accent: "bg-fajar",
 };
 
 export function ProgressBar({
@@ -30,7 +30,7 @@ export function ProgressBar({
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div
-        className={`flex-1 bg-muted rounded-full overflow-hidden ${sizeStyles[size]}`}
+        className={`flex-1 bg-laut-100 rounded-full overflow-hidden shadow-[inset_0_1px_2px_rgba(3,24,42,0.08)] ${sizeStyles[size]}`}
       >
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out ${variantStyles[variant]}`}
@@ -38,7 +38,7 @@ export function ProgressBar({
         />
       </div>
       {showLabel && (
-        <span className="text-xs font-semibold text-text-secondary tabular-nums">
+        <span className="text-xs font-semibold text-kabut tabular-nums">
           {percentage}%
         </span>
       )}

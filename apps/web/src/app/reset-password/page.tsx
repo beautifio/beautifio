@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "#F8FAFC" }}>
       <div className="w-full max-w-sm">
         <Link href="/login" className="flex items-center gap-1 text-sm mb-6" style={{ color: "#647488" }}><ArrowLeft size={16} /> Kembali</Link>
-        <h1 className="text-xl font-bold mb-1" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Atur Password Baru</h1>
+        <h1 className="text-xl font-bold mb-1" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Atur Password Baru</h1>
         <p className="text-xs mb-6" style={{ color: "#647488" }}>Masukkan password baru untuk akunmu</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">

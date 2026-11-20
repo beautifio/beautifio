@@ -31,7 +31,7 @@ export function IdentityHero({ user, disc, tesAh, lifeEngine }: IdentityData) {
           )}
         </div>
 
-        <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>{user.name}</h1>
+        <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>{user.name}</h1>
 
         {user.bio && (
           <p className="text-xs text-center mt-0.5 max-w-xs" style={{ color: "#647488" }}>{user.bio}</p>

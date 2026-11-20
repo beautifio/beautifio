@@ -70,7 +70,7 @@ function TicketContent() {
       <div className="max-w-lg mx-auto print:max-w-none">
 
         <div className="text-center mb-6 print:hidden">
-          <h1 className="text-xl font-bold mb-1" style={{ color: DEEP_SLATE, fontFamily: "Poppins, sans-serif" }}>E-Ticket</h1>
+          <h1 className="text-xl font-bold mb-1" style={{ color: DEEP_SLATE, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>E-Ticket</h1>
           <p className="text-xs" style={{ color: SLATE }}>Tunjukkan tiket ini saat check-in</p>
           <button onClick={handlePrint}
             className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95"
@@ -96,7 +96,7 @@ function TicketContent() {
             <div className="relative px-6 py-5 flex items-center justify-between">
               <div>
                 <p className="text-[8px] uppercase tracking-[.3em] font-semibold" style={{ color: "rgba(255,255,255,0.5)" }}>Beautifio</p>
-                <p className="text-lg font-bold tracking-tight mt-0.5" style={{ color: "#FFFFFF", fontFamily: "Poppins, sans-serif" }}>E-Ticket</p>
+                <p className="text-lg font-bold tracking-tight mt-0.5" style={{ color: "#FFFFFF", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>E-Ticket</p>
               </div>
               <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-bold"
                 style={{ background: "rgba(255,255,255,0.12)", color: "#FFFFFF", backdropFilter: "blur(4px)" }}>
@@ -119,7 +119,7 @@ function TicketContent() {
 
           {/* Body */}
           <div className="px-6 pt-4 pb-3">
-            <h2 className="text-lg font-bold leading-tight mb-4" style={{ color: DEEP_SLATE, fontFamily: "Poppins, sans-serif" }}>
+            <h2 className="text-lg font-bold leading-tight mb-4" style={{ color: DEEP_SLATE, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>
               {event.title}
             </h2>
 

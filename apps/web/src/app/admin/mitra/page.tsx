@@ -28,7 +28,7 @@ export default function AdminMitraPage() {
 
   return (
     <div className="space-y-4 max-w-2xl p-6">
-      <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>👥 Manajemen Mitra</h1>
+      <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>👥 Manajemen Mitra</h1>
       <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
         {(["pending","approved","rejected"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} className="flex-1 py-2 rounded-lg text-xs font-semibold cursor-pointer" style={{ background: tab === t ? "#FFFFFF" : "transparent", color: tab === t ? "#1E2938" : "#647488", boxShadow: tab === t ? "0 1px 3px rgba(0,0,0,0.06)" : "none" }}>{t === "pending" ? `⏳ Pending (${apps.filter(a => a.status === "pending_review").length})` : t === "approved" ? "✅ Disetujui" : "❌ Ditolak"}</button>

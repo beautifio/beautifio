@@ -66,7 +66,7 @@ export default function TesDashboard() {
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(8,68,99,0.08)" }}>
             <Compass size={28} style={{ color: "#084463" }} />
           </div>
-          <h1 className="text-xl font-bold mb-2" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Tes Arah Hidup</h1>
+          <h1 className="text-xl font-bold mb-2" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Tes Arah Hidup</h1>
           <p className="text-sm leading-relaxed max-w-sm mx-auto" style={{ color: "#647488" }}>
             Bingung mau jadi apa? Jurusan apa yang cocok? Pekerjaan apa yang sesuai dengan kepribadianmu?
           </p>

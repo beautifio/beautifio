@@ -178,7 +178,7 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
           padding: "6px 14px",
           borderRadius: 20,
           fontSize: 13, fontWeight: 600,
-          fontFamily: "Inter",
+          fontFamily: "var(--font-inter), Inter, sans-serif",
           border: "1px solid rgba(255,255,255,0.25)",
         }}>
           {card.topic?.emoji} {card.topic?.name}
@@ -188,7 +188,7 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
       {/* Content */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", padding: "24px 0" }}>
         <p style={{
-          fontFamily: "Poppins",
+          fontFamily: "var(--font-poppins), Poppins, sans-serif",
           fontSize: 22,
           fontWeight: 700,
           color: "#FFFFFF",
@@ -209,13 +209,13 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
       }}>
         <span style={{
           color: "rgba(255,255,255,0.8)",
-          fontSize: 13, fontFamily: "Inter",
+          fontSize: 13, fontFamily: "var(--font-inter), Inter, sans-serif",
         }}>
           {card.owner_name || "Anonymous"}
         </span>
         <span style={{
           color: "rgba(255,255,255,0.6)",
-          fontSize: 12, fontFamily: "Inter",
+          fontSize: 12, fontFamily: "var(--font-inter), Inter, sans-serif",
         }}>
           {getTimeAgo(card.created_at)}
         </span>
@@ -233,7 +233,7 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
           transform: "rotate(-15deg)",
           border: "3px solid #FFFFFF",
           opacity: Math.min(dragX / 100, 1),
-          fontFamily: "Inter",
+          fontFamily: "var(--font-inter), Inter, sans-serif",
         }}>
           DENGERIN ❤
         </div>
@@ -251,7 +251,7 @@ export default function BisikCard({ card, onSwipeLeft, onSwipeRight, isTop, stac
           transform: "rotate(15deg)",
           border: "3px solid #FFFFFF",
           opacity: Math.min(Math.abs(dragX) / 100, 1),
-          fontFamily: "Inter",
+          fontFamily: "var(--font-inter), Inter, sans-serif",
         }}>
           LEWATI ✗
         </div>

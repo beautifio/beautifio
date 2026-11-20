@@ -35,7 +35,7 @@ export default function KeuanganPage() {
   return (
     <div className="space-y-4 max-w-4xl p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>💰 Laporan Keuangan</h1>
+        <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>💰 Laporan Keuangan</h1>
         <div className="flex gap-2">
           <select value={year} onChange={e => setYear(Number(e.target.value))} className="px-3 py-1.5 text-xs rounded-lg border" style={{ borderColor: "#E2E8F0" }}>
             {[2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}

@@ -113,7 +113,7 @@ export default function CareChatRoom() {
             color: '#FFFFFF', cursor: 'pointer',
             fontSize: 20, padding: 0 }}>←</button>
         <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: 'Poppins', fontSize: 15,
+          <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 15,
             fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
             Beautifio Care
           </p>
@@ -122,7 +122,7 @@ export default function CareChatRoom() {
             <div style={{ width: 8, height: 8,
               borderRadius: '50%',
               background: isOnline ? '#22C55E' : '#9CA3AF' }} />
-            <span style={{ fontFamily: 'Inter', fontSize: 11,
+            <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
               color: 'rgba(255,255,255,0.75)' }}>
               {isOnline ? 'Petugas online' : 'Petugas offline'}
               {session?.category && ` · ${session.category}`}
@@ -135,7 +135,7 @@ export default function CareChatRoom() {
         <div style={{ background: '#FFF8E7',
           borderBottom: '1px solid #FFC64F',
           padding: '12px 16px', flexShrink: 0 }}>
-          <p style={{ fontFamily: 'Inter', fontSize: 12,
+          <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
             color: '#92400E', margin: 0, lineHeight: 1.5 }}>
             ⏰ Tidak ada petugas yang tersedia saat ini.
             {formatNext(schedule?.next_available ?? null) &&
@@ -157,7 +157,7 @@ export default function CareChatRoom() {
               padding: '8px 16px' }}>
               <span style={{ background: '#F1F5F9',
                 borderRadius: 20, padding: '6px 14px',
-                fontFamily: 'Inter', fontSize: 11,
+                fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
                 color: '#647488' }}>{msg.content}</span>
             </div>
           );
@@ -175,9 +175,9 @@ export default function CareChatRoom() {
                 padding: '10px 14px',
                 boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
               }}>
-                <p style={{ fontFamily: 'Inter', fontSize: 13,
+                <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                   margin: 0, lineHeight: 1.6 }}>{msg.content}</p>
-                <p style={{ fontFamily: 'Inter', fontSize: 10,
+                <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 10,
                   margin: '4px 0 0',
                   color: isUser
                     ? 'rgba(255,255,255,0.6)' : '#9CA3AF',
@@ -210,7 +210,7 @@ export default function CareChatRoom() {
           rows={1}
           style={{ flex: 1, border: '1.5px solid #E2E8F0',
             borderRadius: 20, padding: '10px 16px',
-            fontFamily: 'Inter', fontSize: 14,
+            fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14,
             resize: 'none', outline: 'none',
             maxHeight: 100, overflow: 'auto' }} />
         <button onClick={sendMessage}

@@ -58,7 +58,7 @@ interface TabsListProps {
 export function TabsList({ children, className = "" }: TabsListProps) {
   return (
     <div
-      className={`inline-flex items-center gap-1 p-1 bg-muted rounded-lg ${className}`}
+      className={`inline-flex items-center gap-1 p-1 bg-laut-50 rounded-lg shadow-[inset_0_1px_2px_rgba(3,24,42,0.06)] ${className}`}
     >
       {children}
     </div>
@@ -85,10 +85,10 @@ export function TabsTrigger({
     <button
       onClick={() => setActiveTab(value)}
       disabled={disabled}
-      className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+      className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-out-expo cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
           isActive
-            ? "bg-surface text-primary shadow-sm"
-            : "text-text-secondary hover:text-text-primary hover:bg-surface/50"
+            ? "bg-white text-laut-700 shadow-sm"
+            : "text-kabut hover:text-tinta"
         } ${className}`}
     >
       {children}

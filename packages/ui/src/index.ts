@@ -7,3 +7,5 @@ export { ProgressBar, MilestoneCheck } from "./progress-bar";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { BottomNavigation } from "./bottom-nav";
 export { Skeleton } from "./skeleton";
+export { IconTile } from "./icon-tile";
+export { SectionHeader } from "./section-header";

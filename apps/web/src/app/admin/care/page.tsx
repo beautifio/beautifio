@@ -97,11 +97,11 @@ export default function AdminCarePage() {
   return (
     <div style={{ maxWidth: 900, padding: '24px' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontFamily: 'Poppins', fontSize: 22,
+        <h1 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 22,
           fontWeight: 700, color: '#1E2938', margin: '0 0 4px' }}>
           Beautifio Care
         </h1>
-        <p style={{ fontFamily: 'Inter', fontSize: 13,
+        <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
           color: '#647488', margin: 0 }}>
           Kelola petugas, sesi chat, dan kategori bantuan
         </p>
@@ -115,7 +115,7 @@ export default function AdminCarePage() {
             style={{
               background: 'none', border: 'none',
               padding: '10px 16px', cursor: 'pointer',
-              fontFamily: 'Inter', fontSize: 13, fontWeight: 600,
+              fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13, fontWeight: 600,
               color: activeTab === tab.key ? '#084463' : '#647488',
               borderBottom: activeTab === tab.key
                 ? '2px solid #084463' : '2px solid transparent',
@@ -144,12 +144,12 @@ export default function AdminCarePage() {
                     {categoryEmoji[schedule.category] || '💬'}
                   </span>
                   <div>
-                    <p style={{ fontFamily: 'Poppins', fontSize: 15,
+                    <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 15,
                       fontWeight: 700, color: '#1E2938', margin: 0,
                       textTransform: 'capitalize' }}>
                       {schedule.category}
                     </p>
-                    <p style={{ fontFamily: 'Inter', fontSize: 12,
+                    <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                       color: schedule.is_online ? '#15803D' : '#9CA3AF',
                       margin: 0 }}>
                       {schedule.is_online ? '● Online' : '● Offline'}
@@ -158,7 +158,7 @@ export default function AdminCarePage() {
                 </div>
                 <div style={{ display: 'flex',
                   alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontFamily: 'Inter', fontSize: 13,
+                  <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                     color: '#647488' }}>
                     {schedule.is_online ? 'Online' : 'Offline'}
                   </span>
@@ -188,7 +188,7 @@ export default function AdminCarePage() {
 
               {!schedule.is_online && (
                 <div style={{ marginBottom: 12 }}>
-                  <label style={{ fontFamily: 'Inter', fontSize: 12,
+                  <label style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                     fontWeight: 600, color: '#647488',
                     display: 'block', marginBottom: 6 }}>
                     Petugas kembali pada:
@@ -207,14 +207,14 @@ export default function AdminCarePage() {
                     style={{ width: '100%',
                       border: '1.5px solid #E2E8F0',
                       borderRadius: 10, padding: '10px 14px',
-                      fontFamily: 'Inter', fontSize: 13,
+                      fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                       boxSizing: 'border-box', outline: 'none',
                       maxWidth: 280 }} />
                 </div>
               )}
 
               <div>
-                <label style={{ fontFamily: 'Inter', fontSize: 12,
+                <label style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                   fontWeight: 600, color: '#647488',
                   display: 'block', marginBottom: 6 }}>
                   Pesan untuk user saat offline:
@@ -226,9 +226,9 @@ export default function AdminCarePage() {
                   style={{ width: '100%',
                     border: '1.5px solid #E2E8F0',
                     borderRadius: 10, padding: '10px 14px',
-                    fontFamily: 'Inter', fontSize: 13,
+                    fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                     boxSizing: 'border-box', outline: 'none' }} />
-                <p style={{ fontFamily: 'Inter', fontSize: 11,
+                <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
                   color: '#9CA3AF', marginTop: 4 }}>
                   Pesan ini tampil di ruang chat saat petugas offline
                 </p>
@@ -243,7 +243,7 @@ export default function AdminCarePage() {
         <div>
           {sessions.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 48 }}>
-              <p style={{ fontFamily: 'Inter', fontSize: 14,
+              <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14,
                 color: '#647488' }}>Belum ada sesi chat</p>
             </div>
           ) : (
@@ -253,7 +253,7 @@ export default function AdminCarePage() {
                 <thead>
                   <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
                     {['Nama User','Kategori','Status','Waktu','Aksi'].map(h => (
-                      <th key={h} style={{ fontFamily: 'Inter',
+                      <th key={h} style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                         fontSize: 11, fontWeight: 600,
                         color: '#647488', textAlign: 'left',
                         padding: '8px 12px', textTransform: 'uppercase',
@@ -268,7 +268,7 @@ export default function AdminCarePage() {
                     <tr key={session.id}
                       style={{ borderBottom: '1px solid #F1F5F9' }}>
                       <td style={{ padding: 12,
-                        fontFamily: 'Inter', fontSize: 13,
+                        fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                         color: '#1E2938', fontWeight: 500 }}>
                         {session.user_name}
                         {session.user_phone && (
@@ -278,7 +278,7 @@ export default function AdminCarePage() {
                         )}
                       </td>
                       <td style={{ padding: 12 }}>
-                        <span style={{ fontFamily: 'Inter',
+                        <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                           fontSize: 12, textTransform: 'capitalize',
                           color: '#1E2938' }}>
                           {categoryEmoji[session.category]}{' '}
@@ -296,7 +296,7 @@ export default function AdminCarePage() {
                             : session.status === 'waiting'
                             ? '#92400E' : '#647488',
                           padding: '3px 10px', borderRadius: 20,
-                          fontSize: 11, fontFamily: 'Inter',
+                          fontSize: 11, fontFamily: 'var(--font-inter), Inter, sans-serif',
                           fontWeight: 600 }}>
                           {session.status === 'active' ? 'Aktif'
                             : session.status === 'waiting'
@@ -304,7 +304,7 @@ export default function AdminCarePage() {
                         </span>
                       </td>
                       <td style={{ padding: 12,
-                        fontFamily: 'Inter', fontSize: 12,
+                        fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                         color: '#647488' }}>
                         {new Date(session.created_at)
                           .toLocaleDateString('id-ID', {
@@ -318,7 +318,7 @@ export default function AdminCarePage() {
                             style={{
                               background: '#084463', color: '#FFFFFF',
                               padding: '6px 14px', borderRadius: 8,
-                              fontSize: 12, fontFamily: 'Inter',
+                              fontSize: 12, fontFamily: 'var(--font-inter), Inter, sans-serif',
                               fontWeight: 600, textDecoration: 'none',
                               display: 'inline-block',
                             }}>
@@ -348,11 +348,11 @@ export default function AdminCarePage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 24 }}>{cat.emoji}</span>
                 <div>
-                  <p style={{ fontFamily: 'Poppins', fontSize: 14,
+                  <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 14,
                     fontWeight: 600, color: '#1E2938', margin: 0 }}>
                     {cat.name}
                   </p>
-                  <p style={{ fontFamily: 'Inter', fontSize: 11,
+                  <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
                     color: '#647488', margin: 0 }}>
                     {cat.contact_phone && `📞 ${cat.contact_phone}`}
                     {cat.contact_wa && ` · 💬 ${cat.contact_wa}`}
@@ -364,13 +364,13 @@ export default function AdminCarePage() {
                 background: cat.is_active ? '#F0FDF4' : '#F1F5F9',
                 color: cat.is_active ? '#15803D' : '#647488',
                 padding: '3px 10px', borderRadius: 20,
-                fontSize: 11, fontFamily: 'Inter', fontWeight: 600,
+                fontSize: 11, fontFamily: 'var(--font-inter), Inter, sans-serif', fontWeight: 600,
               }}>
                 {cat.is_active ? 'Aktif' : 'Nonaktif'}
               </span>
             </div>
           ))}
-          <p style={{ fontFamily: 'Inter', fontSize: 12,
+          <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
             color: '#9CA3AF', textAlign: 'center' }}>
             Edit detail kategori via Supabase Dashboard
           </p>

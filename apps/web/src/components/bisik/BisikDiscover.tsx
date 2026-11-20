@@ -247,8 +247,8 @@ export default function BisikDiscover({
         display: "flex", justifyContent: "center",
         gap: 80, marginTop: 8,
       }}>
-        <span style={{ fontSize: 11, color: "#647488", fontFamily: "Inter" }}>Lewati</span>
-        <span style={{ fontSize: 11, color: "#647488", fontFamily: "Inter" }}>Dengerin</span>
+        <span style={{ fontSize: 11, color: "#647488", fontFamily: "var(--font-inter), Inter, sans-serif" }}>Lewati</span>
+        <span style={{ fontSize: 11, color: "#647488", fontFamily: "var(--font-inter), Inter, sans-serif" }}>Dengerin</span>
       </div>
 
       {error && (

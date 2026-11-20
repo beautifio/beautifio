@@ -60,11 +60,11 @@ export default function LaporPage() {
               color: '#1E2938', cursor: 'pointer',
               fontSize: 20, padding: 0 }}>←</button>
           <div style={{ flex: 1 }}>
-            <h1 style={{ fontFamily: 'Poppins', fontSize: 16,
+            <h1 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 16,
               fontWeight: 700, color: '#1E2938', margin: 0 }}>
               Laporkan Masalah
             </h1>
-            <p style={{ fontFamily: 'Inter', fontSize: 11,
+            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
               color: 'rgba(255,255,255,0.7)', margin: 0 }}>
               Langkah {step} dari 4
             </p>
@@ -86,12 +86,12 @@ export default function LaporPage() {
         {/* STEP 1: Pilih Kategori */}
         {step === 1 && (
           <div>
-            <h2 style={{ fontFamily: 'Poppins', fontSize: 18,
+            <h2 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 18,
               fontWeight: 700, color: '#1E2938',
               margin: '0 0 8px' }}>
               Masalah apa yang kamu alami?
             </h2>
-            <p style={{ fontFamily: 'Inter', fontSize: 13,
+            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
               color: '#647488', marginBottom: 20 }}>
               Pilih kategori yang paling sesuai.
             </p>
@@ -110,7 +110,7 @@ export default function LaporPage() {
                       ? '2px solid #084463'
                       : '1.5px solid #E2E8F0',
                     borderRadius: 14, padding: '16px 12px',
-                    fontFamily: 'Poppins', fontSize: 13,
+                    fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 13,
                     fontWeight: 600, cursor: 'pointer',
                     textAlign: 'center',
                     boxShadow: selected?.id === cat.id
@@ -131,7 +131,7 @@ export default function LaporPage() {
                 background: selected ? '#084463' : '#E2E8F0',
                 color: selected ? '#FFFFFF' : '#9CA3AF',
                 border: 'none', borderRadius: 14, padding: '14px',
-                fontFamily: 'Poppins', fontSize: 15,
+                fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 15,
                 fontWeight: 700,
                 cursor: selected ? 'pointer' : 'not-allowed',
               }}>
@@ -146,12 +146,12 @@ export default function LaporPage() {
             <div style={{ display: 'flex',
               alignItems: 'center', gap: 10, marginBottom: 16 }}>
               <span style={{ fontSize: 32 }}>{selected.emoji}</span>
-              <h2 style={{ fontFamily: 'Poppins', fontSize: 18,
+              <h2 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 18,
                 fontWeight: 700, color: '#1E2938', margin: 0 }}>
                 {selected.name}
               </h2>
             </div>
-            <p style={{ fontFamily: 'Inter', fontSize: 13,
+            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
               color: '#647488', marginBottom: 20,
               lineHeight: 1.6 }}>
               Panduan jika kamu mengalami ini:
@@ -167,10 +167,10 @@ export default function LaporPage() {
                     background: '#084463', color: '#1E2938',
                     display: 'flex', alignItems: 'center',
                     justifyContent: 'center',
-                    fontFamily: 'Poppins', fontSize: 12,
+                    fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 12,
                     fontWeight: 700, flexShrink: 0,
                   }}>{i+1}</div>
-                  <p style={{ fontFamily: 'Inter', fontSize: 13,
+                  <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                     color: '#1E2938', margin: 0,
                     lineHeight: 1.6, paddingTop: 4 }}>{s}</p>
                 </div>
@@ -180,7 +180,7 @@ export default function LaporPage() {
               width: '100%', background: '#084463',
               color: '#1E2938', border: 'none',
               borderRadius: 14, padding: '14px',
-              fontFamily: 'Poppins', fontSize: 15,
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 15,
               fontWeight: 700, cursor: 'pointer',
               boxShadow: '0 4px 12px rgba(8,68,99,0.3)',
             }}>
@@ -192,12 +192,12 @@ export default function LaporPage() {
         {/* STEP 3: Form */}
         {step === 3 && (
           <div>
-            <h2 style={{ fontFamily: 'Poppins', fontSize: 18,
+            <h2 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 18,
               fontWeight: 700, color: '#1E2938',
               margin: '0 0 8px' }}>
               Isi detail laporan
             </h2>
-            <p style={{ fontFamily: 'Inter', fontSize: 13,
+            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
               color: '#647488', marginBottom: 20 }}>
               Template sudah disiapkan, kamu tinggal mengisi.
             </p>
@@ -218,7 +218,7 @@ export default function LaporPage() {
                 placeholder: 'Opsional' },
             ].map(field => (
               <div key={field.key} style={{ marginBottom: 16 }}>
-                <label style={{ fontFamily: 'Inter',
+                <label style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                   fontSize: 12, fontWeight: 600, color: '#647488',
                   display: 'block', marginBottom: 6 }}>
                   {field.label} {field.required && '*'}
@@ -232,7 +232,7 @@ export default function LaporPage() {
                     style={{ width: '100%',
                       border: '1.5px solid #E2E8F0',
                       borderRadius: 12, padding: '12px 14px',
-                      fontFamily: 'Inter', fontSize: 13,
+                      fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                       resize: 'none', boxSizing: 'border-box',
                       outline: 'none' }} />
                 ) : (
@@ -244,7 +244,7 @@ export default function LaporPage() {
                     style={{ width: '100%',
                       border: '1.5px solid #E2E8F0',
                       borderRadius: 12, padding: '12px 14px',
-                      fontFamily: 'Inter', fontSize: 13,
+                      fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                       boxSizing: 'border-box', outline: 'none' }} />
                 )}
               </div>
@@ -260,7 +260,7 @@ export default function LaporPage() {
               width: '100%', background: '#084463',
               color: '#1E2938', border: 'none',
               borderRadius: 14, padding: '14px',
-              fontFamily: 'Poppins', fontSize: 15,
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 15,
               fontWeight: 700, cursor: 'pointer',
             }}>
               Generate Laporan →
@@ -280,11 +280,11 @@ export default function LaporPage() {
             }}>
               <span style={{ fontSize: 24 }}>✅</span>
               <div>
-                <p style={{ fontFamily: 'Poppins', fontSize: 14,
+                <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 14,
                   fontWeight: 700, color: '#15803D', margin: 0 }}>
                   Laporan siap dikirimkan!
                 </p>
-                <p style={{ fontFamily: 'Inter', fontSize: 12,
+                <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                   color: '#166534', margin: 0 }}>
                   Pilih cara kirim laporan di bawah
                 </p>
@@ -292,7 +292,7 @@ export default function LaporPage() {
             </div>
 
             {selected.contact_name && (
-              <p style={{ fontFamily: 'Poppins', fontSize: 14,
+              <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 14,
                 fontWeight: 600, color: '#1E2938',
                 marginBottom: 16 }}>
                 Kontak: {selected.contact_name}
@@ -320,12 +320,12 @@ export default function LaporPage() {
                       📞
                     </div>
                     <div>
-                      <p style={{ fontFamily: 'Poppins',
+                      <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif',
                         fontSize: 14, fontWeight: 700,
                         color: '#1E2938', margin: 0 }}>
                         Telepon Langsung
                       </p>
-                      <p style={{ fontFamily: 'Inter',
+                      <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                         fontSize: 12, color: '#647488', margin: 0 }}>
                         {selected.contact_phone}
                       </p>
@@ -359,12 +359,12 @@ export default function LaporPage() {
                       💬
                     </div>
                     <div>
-                      <p style={{ fontFamily: 'Poppins',
+                      <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif',
                         fontSize: 14, fontWeight: 700,
                         color: '#1E2938', margin: 0 }}>
                         Kirim via WhatsApp
                       </p>
-                      <p style={{ fontFamily: 'Inter',
+                      <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                         fontSize: 12, color: '#647488', margin: 0 }}>
                         Template pesan sudah disiapkan
                       </p>
@@ -373,7 +373,7 @@ export default function LaporPage() {
                   <div style={{ background: '#F8FAFC',
                     borderRadius: 10, padding: '10px 12px',
                     border: '1px solid #E2E8F0' }}>
-                    <p style={{ fontFamily: 'Inter', fontSize: 11,
+                    <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
                       color: '#647488', margin: 0,
                       whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                       {generateTemplate(
@@ -401,12 +401,12 @@ export default function LaporPage() {
                       📧
                     </div>
                     <div>
-                      <p style={{ fontFamily: 'Poppins',
+                      <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif',
                         fontSize: 14, fontWeight: 700,
                         color: '#1E2938', margin: 0 }}>
                         Kirim via Email
                       </p>
-                      <p style={{ fontFamily: 'Inter',
+                      <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                         fontSize: 12, color: '#647488', margin: 0 }}>
                         {selected.contact_email}
                       </p>
@@ -416,7 +416,7 @@ export default function LaporPage() {
                     borderRadius: 10, padding: '10px 12px',
                     border: '1px solid #E2E8F0', marginBottom: 10,
                     maxHeight: 100, overflow: 'hidden' }}>
-                    <p style={{ fontFamily: 'Inter', fontSize: 11,
+                    <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
                       color: '#647488', margin: 0,
                       whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                       {generateTemplate(
@@ -434,7 +434,7 @@ export default function LaporPage() {
                       flex: 1, background: '#F8FAFC',
                       border: '1.5px solid #E2E8F0',
                       borderRadius: 10, padding: '10px',
-                      fontFamily: 'Inter', fontSize: 12,
+                      fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                       fontWeight: 600, color: '#647488',
                       cursor: 'pointer',
                     }}>📋 Salin Pesan</button>
@@ -450,7 +450,7 @@ export default function LaporPage() {
                     }} style={{
                       flex: 1, background: '#084463',
                       border: 'none', borderRadius: 10,
-                      padding: '10px', fontFamily: 'Inter',
+                      padding: '10px', fontFamily: 'var(--font-inter), Inter, sans-serif',
                       fontSize: 12, fontWeight: 600,
                       color: '#1E2938', cursor: 'pointer',
                     }}>Buka Email App</button>
@@ -459,7 +459,7 @@ export default function LaporPage() {
               )}
             </div>
 
-            <p style={{ fontFamily: 'Inter', fontSize: 11,
+            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
               color: '#9CA3AF', textAlign: 'center',
               marginTop: 16, lineHeight: 1.5 }}>
               Laporan ini juga tersimpan di akunmu

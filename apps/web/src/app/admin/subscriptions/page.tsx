@@ -231,7 +231,7 @@ export default function AdminSubscriptions() {
   return (
     <div className="space-y-4 max-w-2xl p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold" style={{ color: COLORS.deepSlate, fontFamily: "Poppins, sans-serif" }}>Subscription</h1>
+        <h1 className="text-lg font-bold" style={{ color: COLORS.deepSlate, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Subscription</h1>
         <div className="flex gap-1 p-1 rounded-xl" style={{ background: COLORS.cloud, border: `1px solid ${COLORS.border}` }}>
           {(["dashboard", "plans", "users", "settings", "vouchers"] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)}
@@ -249,7 +249,7 @@ export default function AdminSubscriptions() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-4 rounded-xl border" style={{ background: COLORS.white, borderColor: COLORS.border }}>
               <p className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: COLORS.slate }}>Active Subs</p>
-              <p className="text-2xl font-bold" style={{ color: COLORS.peacock, fontFamily: "Poppins, sans-serif" }}>{stats?.activeTotal ?? "-"}</p>
+              <p className="text-2xl font-bold" style={{ color: COLORS.peacock, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>{stats?.activeTotal ?? "-"}</p>
               <div className="flex gap-3 mt-1 text-[10px]" style={{ color: COLORS.slate }}>
                 <span>Pro: {stats?.byPro ?? 0}</span>
                 <span>Ultimate: {stats?.byUltimate ?? 0}</span>
@@ -257,17 +257,17 @@ export default function AdminSubscriptions() {
             </div>
             <div className="p-4 rounded-xl border" style={{ background: COLORS.white, borderColor: COLORS.border }}>
               <p className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: COLORS.slate }}>MRR</p>
-              <p className="text-2xl font-bold" style={{ color: COLORS.success, fontFamily: "Poppins, sans-serif" }}>Rp {(stats?.mrr ?? 0).toLocaleString("id-ID")}</p>
+              <p className="text-2xl font-bold" style={{ color: COLORS.success, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Rp {(stats?.mrr ?? 0).toLocaleString("id-ID")}</p>
               <p className="text-[10px] mt-1" style={{ color: COLORS.slate }}>Estimasi /bulan</p>
             </div>
             <div className="p-4 rounded-xl border" style={{ background: COLORS.white, borderColor: COLORS.border }}>
               <p className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: COLORS.slate }}>Total Subs</p>
-              <p className="text-2xl font-bold" style={{ color: COLORS.deepSlate, fontFamily: "Poppins, sans-serif" }}>{stats?.totalSubs ?? "-"}</p>
+              <p className="text-2xl font-bold" style={{ color: COLORS.deepSlate, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>{stats?.totalSubs ?? "-"}</p>
               <p className="text-[10px] mt-1" style={{ color: COLORS.slate }}>Semua waktu</p>
             </div>
             <div className="p-4 rounded-xl border" style={{ background: COLORS.white, borderColor: COLORS.border }}>
               <p className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: COLORS.slate }}>Trial Users</p>
-              <p className="text-2xl font-bold" style={{ color: "#6BB9D4", fontFamily: "Poppins, sans-serif" }}>{stats?.trialUsers ?? "-"}</p>
+              <p className="text-2xl font-bold" style={{ color: "#6BB9D4", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>{stats?.trialUsers ?? "-"}</p>
               <p className="text-[10px] mt-1" style={{ color: COLORS.slate }}>Aktif trial</p>
             </div>
           </div>
@@ -288,7 +288,7 @@ export default function AdminSubscriptions() {
             </div>
             <div className="p-4 rounded-xl border" style={{ background: COLORS.white, borderColor: COLORS.border }}>
               <p className="text-[10px] uppercase tracking-wider font-semibold mb-3" style={{ color: COLORS.slate }}>Total Revenue</p>
-              <p className="text-2xl font-bold" style={{ color: COLORS.peacock, fontFamily: "Poppins, sans-serif" }}>Rp {(stats?.totalRevenue ?? 0).toLocaleString("id-ID")}</p>
+              <p className="text-2xl font-bold" style={{ color: COLORS.peacock, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Rp {(stats?.totalRevenue ?? 0).toLocaleString("id-ID")}</p>
               <p className="text-[10px] mt-1" style={{ color: COLORS.slate }}>Semua waktu (harga gross)</p>
             </div>
           </div>
@@ -552,7 +552,7 @@ export default function AdminSubscriptions() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative w-full max-w-md rounded-2xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-200" style={{ background: COLORS.white }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold" style={{ color: COLORS.deepSlate, fontFamily: "Poppins, sans-serif" }}>{editPlanId ? "Edit Plan" : "Tambah Plan"}</h3>
+              <h3 className="text-sm font-bold" style={{ color: COLORS.deepSlate, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>{editPlanId ? "Edit Plan" : "Tambah Plan"}</h3>
               <button onClick={() => setShowPlanModal(false)} className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer" style={{ background: COLORS.cloud }}>
                 <X size={14} style={{ color: COLORS.slate }} />
               </button>
@@ -604,7 +604,7 @@ export default function AdminSubscriptions() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative w-full max-w-md rounded-2xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-200" style={{ background: COLORS.white }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold" style={{ color: COLORS.deepSlate, fontFamily: "Poppins, sans-serif" }}>{editVoucherId ? "Edit Voucher" : "Tambah Voucher"}</h3>
+              <h3 className="text-sm font-bold" style={{ color: COLORS.deepSlate, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>{editVoucherId ? "Edit Voucher" : "Tambah Voucher"}</h3>
               <button onClick={() => setShowVoucherModal(false)} className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer" style={{ background: COLORS.cloud }}><X size={14} style={{ color: COLORS.slate }} /></button>
             </div>
             <div className="space-y-3">
@@ -650,7 +650,7 @@ export default function AdminSubscriptions() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative w-full max-w-md rounded-2xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-200" style={{ background: COLORS.white }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold" style={{ color: COLORS.deepSlate, fontFamily: "Poppins, sans-serif" }}>Tambah Subscription</h3>
+              <h3 className="text-sm font-bold" style={{ color: COLORS.deepSlate, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Tambah Subscription</h3>
               <button onClick={() => setShowSubModal(false)} className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer" style={{ background: COLORS.cloud }}>
                 <X size={14} style={{ color: COLORS.slate }} />
               </button>

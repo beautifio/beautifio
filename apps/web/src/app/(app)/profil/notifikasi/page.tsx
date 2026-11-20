@@ -148,7 +148,7 @@ export default function NotifikasiPage() {
           <ArrowLeft size={16} /> Kembali
         </button>
 
-        <h1 className="text-lg font-bold mb-4" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Notifikasi</h1>
+        <h1 className="text-lg font-bold mb-4" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Notifikasi</h1>
 
         <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
           {(["history", "preferences"] as const).map(t => (

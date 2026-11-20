@@ -16,7 +16,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium text-text-primary"
+            className="text-sm font-medium text-tinta"
           >
             {label}
           </label>
@@ -24,16 +24,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
-          className={`h-12 px-4 rounded-md border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-ring/20 ${
-            error ? "border-destructive" : "border-border"
+          className={`h-12 px-4 rounded-md border bg-white text-[15px] text-tinta shadow-xs outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-kabut/60 hover:border-laut-700/30 focus:border-laut-500 focus:ring-4 focus:ring-laut-500/15 ${
+            error ? "border-danger" : "border-garis"
           } ${className}`}
           {...props}
         />
         {error && (
-          <span className="text-xs text-destructive">{error}</span>
+          <span className="text-xs text-danger">{error}</span>
         )}
         {hint && !error && (
-          <span className="text-xs text-text-secondary">{hint}</span>
+          <span className="text-xs text-kabut">{hint}</span>
         )}
       </div>
     );
@@ -56,7 +56,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium text-text-primary"
+            className="text-sm font-medium text-tinta"
           >
             {label}
           </label>
@@ -64,13 +64,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           id={inputId}
-          className={`min-h-[100px] px-4 py-3 rounded-md border bg-surface text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/50 resize-y focus:border-primary focus:ring-2 focus:ring-ring/20 ${
-            error ? "border-destructive" : "border-border"
+          className={`min-h-[100px] px-4 py-3 rounded-md border bg-white text-[15px] text-tinta shadow-xs outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-kabut/60 hover:border-laut-700/30 resize-y focus:border-laut-500 focus:ring-4 focus:ring-laut-500/15 ${
+            error ? "border-danger" : "border-garis"
           } ${className}`}
           {...props}
         />
         {error && (
-          <span className="text-xs text-destructive">{error}</span>
+          <span className="text-xs text-danger">{error}</span>
         )}
       </div>
     );

@@ -225,7 +225,7 @@ export default function RegisterPage({
               borderRadius: 12, padding: '12px 14px',
             }}>
               <p style={{
-                fontFamily: 'Inter', fontSize: 12,
+                fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                 color: '#0E7490', margin: 0, lineHeight: 1.6,
               }}>
                 💜 Beautifio adalah platform yang dirancang untuk
@@ -236,7 +236,7 @@ export default function RegisterPage({
 
             <div>
               <label style={{
-                fontFamily: 'Inter', fontSize: 12, fontWeight: 600,
+                fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12, fontWeight: 600,
                 color: '#647488', display: 'block', marginBottom: 8,
               }}>
                 Gender *
@@ -268,7 +268,7 @@ export default function RegisterPage({
                       flexShrink: 0, transition: 'all 0.15s ease',
                     }} />
                     <span style={{
-                      fontFamily: 'Inter', fontSize: 14,
+                      fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14,
                       color: '#1E2938', fontWeight: 500,
                     }}>
                       {opt.label}

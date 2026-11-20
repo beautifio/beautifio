@@ -143,7 +143,7 @@ function EventDetailContent() {
             style={{ background: "rgba(8,68,99,0.08)", color: "#084463" }}>💰 Rp {event.price?.toLocaleString("id-ID")}</span>}
         </div>
 
-        <h1 className="text-lg font-bold mb-1" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>{event.title}</h1>
+        <h1 className="text-lg font-bold mb-1" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>{event.title}</h1>
         {event.partner_name && <p className="text-sm mb-4" style={{ color: "#647488" }}>Diselenggarakan oleh {event.partner_name}</p>}
 
         <div className="flex flex-col gap-2 mb-5 text-sm" style={{ color: "#647488" }}>

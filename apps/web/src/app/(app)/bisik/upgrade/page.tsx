@@ -82,7 +82,7 @@ export default function UpgradePage() {
         <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(255,255,255,0.15)" }}>
           <Crown size={22} style={{ color: SF }} />
         </div>
-        <h1 className="text-lg font-bold" style={{ color: WH, fontFamily: "Poppins, sans-serif" }}>Upgrade Akunmu</h1>
+        <h1 className="text-lg font-bold" style={{ color: WH, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Upgrade Akunmu</h1>
         <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.6)" }}>Lebih banyak ngobrol. Lebih bebas berekspresi.</p>
       </div>
 
@@ -125,7 +125,7 @@ export default function UpgradePage() {
             {plan.original_price_idr && (
               <p className="text-sm line-through mb-1" style={{ color: SL }}>{fp(plan.original_price_idr)}</p>
             )}
-            <p className="text-4xl font-extrabold" style={{ color: DS, fontFamily: "Poppins, sans-serif" }}>{fp(plan.price_idr)}</p>
+            <p className="text-4xl font-extrabold" style={{ color: DS, fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>{fp(plan.price_idr)}</p>
             <p className="text-xs mt-0.5" style={{ color: SL }}>/ {duration === "yearly" ? "tahun" : "bulan"}</p>
             {saving > 0 && (
               <p className="text-xs mt-2 font-semibold" style={{ color: GR }}>

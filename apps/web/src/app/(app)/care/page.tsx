@@ -53,7 +53,7 @@ export default function CarePage() {
     <div style={{ display: 'flex', justifyContent: 'center',
       alignItems: 'center', minHeight: '100svh',
       background: '#F8FAFC' }}>
-      <p style={{ fontFamily: 'Inter', fontSize: 14,
+      <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14,
         color: '#647488' }}>Memuat...</p>
     </div>
   );
@@ -77,12 +77,12 @@ export default function CarePage() {
           }}>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div style={{ fontSize: 52, marginBottom: 12 }}>💜</div>
-              <h2 style={{ fontFamily: 'Poppins', fontSize: 20,
+              <h2 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 20,
                 fontWeight: 700, color: '#1E2938',
                 margin: '0 0 8px' }}>
                 Selamat datang di Beautifio Care
               </h2>
-              <p style={{ fontFamily: 'Inter', fontSize: 14,
+              <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14,
                 color: '#647488', margin: 0, lineHeight: 1.6 }}>
                 Ruang aman untuk perempuan saling mendukung
               </p>
@@ -92,7 +92,7 @@ export default function CarePage() {
               background: '#F8FAFC', borderRadius: 16,
               padding: '20px', marginBottom: 20,
             }}>
-              <h3 style={{ fontFamily: 'Poppins', fontSize: 14,
+              <h3 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 14,
                 fontWeight: 700, color: '#1E2938',
                 margin: '0 0 16px' }}>
                 Panduan Komunitas
@@ -115,12 +115,12 @@ export default function CarePage() {
                     {item.icon}
                   </span>
                   <div>
-                    <p style={{ fontFamily: 'Poppins', fontSize: 13,
+                    <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 13,
                       fontWeight: 600, color: '#1E2938',
                       margin: '0 0 2px' }}>
                       {item.title}
                     </p>
-                    <p style={{ fontFamily: 'Inter', fontSize: 12,
+                    <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                       color: '#647488', margin: 0, lineHeight: 1.5 }}>
                       {item.desc}
                     </p>
@@ -129,7 +129,7 @@ export default function CarePage() {
               ))}
             </div>
 
-            <p style={{ fontFamily: 'Inter', fontSize: 12,
+            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
               color: '#9CA3AF', textAlign: 'center',
               marginBottom: 16, lineHeight: 1.5 }}>
               Dengan menekan tombol di bawah, kamu menyatakan
@@ -143,7 +143,7 @@ export default function CarePage() {
                 background: accepting ? '#9CA3AF' : '#084463',
                 color: '#FFFFFF', border: 'none',
                 borderRadius: 14, padding: '15px',
-                fontFamily: 'Poppins', fontSize: 15,
+                fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 15,
                 fontWeight: 700,
                 cursor: accepting ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 12px rgba(8,68,99,0.3)',
@@ -155,7 +155,7 @@ export default function CarePage() {
 
             <button onClick={() => router.back()} style={{
               width: '100%', background: 'none', border: 'none',
-              cursor: 'pointer', fontFamily: 'Inter', fontSize: 13,
+              cursor: 'pointer', fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
               color: '#9CA3AF', padding: '10px',
             }}>
               Kembali
@@ -171,7 +171,7 @@ export default function CarePage() {
             <div className="max-w-content mx-auto px-6 pt-4">
              <button onClick={() => router.back()}
                className="flex items-center gap-1 text-sm cursor-pointer mb-2" style={{ color: "#647488" }}>← Kembali</button>
-             <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Beautifio Care</h1>
+             <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Beautifio Care</h1>
              <p className="text-xs" style={{ color: "#647488" }}>Kami ada untukmu</p>
            </div>
 
@@ -186,7 +186,7 @@ export default function CarePage() {
                   display: 'flex', justifyContent: 'space-between',
                   alignItems: 'center', cursor: 'pointer',
                 }}>
-                <span style={{ fontFamily: 'Inter', fontSize: 13,
+                <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                   color: '#084463', fontWeight: 500 }}>
                   💬 Kamu punya {activeSessions} sesi chat aktif
                 </span>
@@ -206,10 +206,10 @@ export default function CarePage() {
               }}>
                 <div>
                   <div style={{ fontSize: 36, marginBottom: 8 }}>🆘</div>
-                  <h2 style={{ fontFamily: 'Poppins', fontSize: 20,
+                  <h2 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 20,
                     fontWeight: 800, color: '#FFFFFF',
                     margin: '0 0 6px' }}>Darurat</h2>
-                  <p style={{ fontFamily: 'Inter', fontSize: 13,
+                  <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                     color: 'rgba(255,255,255,0.85)', margin: 0,
                     lineHeight: 1.5 }}>
                     Situasi mengancam jiwa?
@@ -219,7 +219,7 @@ export default function CarePage() {
                 <div style={{
                   background: 'rgba(255,255,255,0.2)',
                   borderRadius: 12, padding: '10px 16px',
-                  color: '#FFFFFF', fontFamily: 'Poppins',
+                  color: '#FFFFFF', fontFamily: 'var(--font-poppins), Poppins, sans-serif',
                   fontSize: 20, fontWeight: 800,
                   border: '1px solid rgba(255,255,255,0.3)',
                 }}>📞 112</div>
@@ -237,10 +237,10 @@ export default function CarePage() {
               }}>
               <div>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📝</div>
-                <h2 style={{ fontFamily: 'Poppins', fontSize: 20,
+                <h2 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 20,
                   fontWeight: 800, color: '#FFFFFF',
                   margin: '0 0 6px' }}>Laporkan Masalah</h2>
-                <p style={{ fontFamily: 'Inter', fontSize: 13,
+                <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                   color: 'rgba(255,255,255,0.85)', margin: 0,
                   lineHeight: 1.5 }}>
                   Panduan lapor, kontak lembaga,
@@ -262,10 +262,10 @@ export default function CarePage() {
               }}>
               <div>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>💬</div>
-                <h2 style={{ fontFamily: 'Poppins', fontSize: 20,
+                <h2 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 20,
                   fontWeight: 800, color: '#FFFFFF',
                   margin: '0 0 6px' }}>Chat Beautifio Care</h2>
-                <p style={{ fontFamily: 'Inter', fontSize: 13,
+                <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                   color: 'rgba(255,255,255,0.9)', margin: 0,
                   lineHeight: 1.5 }}>
                   Konsultasi dengan petugas kami
@@ -279,7 +279,7 @@ export default function CarePage() {
             <div style={{ textAlign: 'center', padding: '12px',
               background: '#FFFFFF', borderRadius: 14,
               border: '1px solid #E2E8F0' }}>
-              <p style={{ fontFamily: 'Inter', fontSize: 12,
+              <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                 color: '#647488', margin: 0, lineHeight: 1.6 }}>
                 🔒 Semua yang kamu ceritakan bersifat rahasia
                 dan tidak akan dibagikan tanpa izinmu.

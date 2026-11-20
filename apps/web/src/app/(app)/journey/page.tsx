@@ -270,7 +270,7 @@ export default function JourneyPage() {
                 <h2
                   className="text-[16px] font-semibold mt-1"
                   style={{
-                    fontFamily: "Poppins, sans-serif",
+                    fontFamily: "var(--font-poppins), Poppins, sans-serif",
                     color: "#FFFFFF",
                   }}
                 >
@@ -281,7 +281,7 @@ export default function JourneyPage() {
                   <p
                     className="text-[12px] mt-0.5"
                     style={{
-                      fontFamily: "Inter, sans-serif",
+                      fontFamily: "var(--font-inter), Inter, sans-serif",
                       color: "rgba(255,255,255,0.6)",
                     }}
                   >
@@ -310,7 +310,7 @@ export default function JourneyPage() {
                 <p
                   className="text-[11px] mt-1"
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-inter), Inter, sans-serif",
                     color: "rgba(255,255,255,0.7)",
                   }}
                 >
@@ -338,7 +338,7 @@ export default function JourneyPage() {
               <p
                 className="text-sm"
                 style={{
-                  fontFamily: "Poppins, sans-serif",
+                  fontFamily: "var(--font-poppins), Poppins, sans-serif",
                   fontWeight: 500,
                   color: "#1E2938",
                 }}
@@ -348,7 +348,7 @@ export default function JourneyPage() {
               <p
                 className="text-sm mt-1"
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-inter), Inter, sans-serif",
                   color: "#647488",
                 }}
               >
@@ -364,7 +364,7 @@ export default function JourneyPage() {
             <h2
               className="text-[11px] font-semibold uppercase tracking-widest"
               style={{
-                fontFamily: "Poppins, sans-serif",
+                fontFamily: "var(--font-poppins), Poppins, sans-serif",
                 color: "#647488",
               }}
             >
@@ -373,7 +373,7 @@ export default function JourneyPage() {
             <span
               className="text-[12px] font-medium"
               style={{
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-inter), Inter, sans-serif",
                 color: "#6BB9D4",
               }}
             >
@@ -392,7 +392,7 @@ export default function JourneyPage() {
                 onClick={() => setActiveFilter(tab.value)}
                 className="shrink-0 px-4 py-2.5 cursor-pointer transition-colors"
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-inter), Inter, sans-serif",
                   fontSize: "13px",
                   color:
                     activeFilter === tab.value ? "#084463" : "#647488",
@@ -479,7 +479,7 @@ export default function JourneyPage() {
                         <p
                           className="text-[13px] font-medium truncate"
                           style={{
-                            fontFamily: "Inter, sans-serif",
+                            fontFamily: "var(--font-inter), Inter, sans-serif",
                             color: "#1E2938",
                           }}
                         >
@@ -488,7 +488,7 @@ export default function JourneyPage() {
                         <p
                           className="text-[12px] truncate mt-0.5"
                           style={{
-                            fontFamily: "Inter, sans-serif",
+                            fontFamily: "var(--font-inter), Inter, sans-serif",
                             color: "#647488",
                           }}
                         >

@@ -51,7 +51,7 @@ export default function UbahPasswordPage() {
     <div className="min-h-screen py-12 px-6" style={{ background: "#F8FAFC" }}>
       <div className="max-w-sm mx-auto">
         <Link href="/profil" className="flex items-center gap-1 text-sm mb-6" style={{ color: "#647488" }}><ArrowLeft size={16} /> Kembali</Link>
-        <h1 className="text-xl font-bold mb-1" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Ubah Password</h1>
+        <h1 className="text-xl font-bold mb-1" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Ubah Password</h1>
         <p className="text-xs mb-6" style={{ color: "#647488" }}>Masukkan password saat ini dan password baru</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">

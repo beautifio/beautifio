@@ -38,7 +38,7 @@ export default function MitraLayout({ children }: { children: React.ReactNode })
             <LayoutDashboard size={20} style={{ color: "#084463" }} />
           </div>
           <div>
-            <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Mitra Beautifio</h1>
+            <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Mitra Beautifio</h1>
             <p className="text-xs" style={{ color: "#647488" }}>{stats.today} sesi hari ini · {stats.pending} menunggu</p>
           </div>
         </div>

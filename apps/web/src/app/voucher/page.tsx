@@ -113,7 +113,7 @@ export default function VoucherPage() {
 
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Voucher</h1>
+            <h1 className="text-xl font-bold" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Voucher</h1>
             <p className="text-xs mt-0.5" style={{ color: "#647488" }}>Klaim voucher dari merchant partner</p>
           </div>
           <button onClick={() => router.push("/voucher/me")}

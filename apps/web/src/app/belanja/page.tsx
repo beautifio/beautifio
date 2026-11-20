@@ -107,7 +107,7 @@ export default function BelanjaPage() {
 
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Belanja</h1>
+            <h1 className="text-xl font-bold" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Belanja</h1>
             <p className="text-xs mt-0.5" style={{ color: "#647488" }}>Penawaran spesial dari partner</p>
           </div>
           <span className="text-xs font-medium" style={{ color: "#6BB9D4" }}>

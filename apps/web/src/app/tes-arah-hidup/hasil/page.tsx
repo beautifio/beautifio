@@ -111,7 +111,7 @@ function HasilContent() {
             <Sparkles size={22} style={{ color: "#FFC64F" }} />
           </div>
           <div>
-            <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Hasil Tes</h1>
+            <h1 className="text-lg font-bold" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Hasil Tes</h1>
             <p className="text-xs" style={{ color: "#647488" }}>{modul ? "Hasil per modul" : "Semua hasil"}</p>
           </div>
         </div>

@@ -51,7 +51,7 @@ export default function DaftarMitraPage() {
           <>
             <div className="text-center mb-6">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(8,68,99,0.08)" }}><Heart size={28} style={{ color: "#084463" }} /></div>
-              <h1 className="text-xl font-bold" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Bergabung sebagai Mitra</h1>
+              <h1 className="text-xl font-bold" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Bergabung sebagai Mitra</h1>
               <p className="text-xs mt-1" style={{ color: "#647488" }}>Pilih peran yang sesuai denganmu</p>
             </div>
             <div className="space-y-3">

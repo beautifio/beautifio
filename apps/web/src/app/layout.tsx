@@ -32,8 +32,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id">
-      <body className={`${poppins.variable} ${inter.variable} font-sans antialiased`}>
+    <html lang="id" className={`${poppins.variable} ${inter.variable}`}>
+      <body className="font-sans antialiased">
         <ErrorBoundary>
           <Providers>
             <NavWrapper>{children}</NavWrapper>

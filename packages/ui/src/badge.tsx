@@ -14,12 +14,12 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: "bg-muted text-muted-foreground",
-  accent: "bg-accent/15 text-accent-foreground",
-  secondary: "bg-secondary/15 text-secondary-foreground",
-  success: "bg-emerald-50 text-emerald-700",
-  warning: "bg-amber-50 text-amber-700",
-  destructive: "bg-destructive/10 text-destructive",
+  default: "bg-laut-50 text-kabut",
+  accent: "bg-fajar-soft text-[#8A5A00]",
+  secondary: "bg-langit-soft text-laut-700",
+  success: "bg-success-soft text-success",
+  warning: "bg-warning-soft text-[#8A5A00]",
+  destructive: "bg-danger-soft text-danger",
 };
 
 export function Badge({
@@ -30,7 +30,7 @@ export function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-md ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-sm ${variantStyles[variant]} ${className}`}
       {...props}
     >
       {children}
@@ -40,12 +40,12 @@ export function Badge({
 
 export function BadgeDot({ variant = "default" }: { variant?: BadgeVariant }) {
   const dotStyles: Record<BadgeVariant, string> = {
-    default: "bg-text-secondary",
+    default: "bg-kabut",
     accent: "bg-accent",
     secondary: "bg-secondary",
-    success: "bg-emerald-500",
-    warning: "bg-amber-500",
-    destructive: "bg-destructive",
+    success: "bg-success",
+    warning: "bg-warning",
+    destructive: "bg-danger",
   };
 
   return (

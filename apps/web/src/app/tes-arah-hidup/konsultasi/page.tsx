@@ -92,7 +92,7 @@ export default function KonsultasiPage() {
     <div className="min-h-screen pb-24" style={{ background: "#F8FAFC" }}>
       <div className="max-w-content mx-auto px-5 pt-6">
         <button onClick={() => router.push("/tes-arah-hidup")} className="flex items-center gap-1 text-sm cursor-pointer mb-4" style={{ color: "#647488" }}><ArrowLeft size={16} /> Kembali</button>
-        <h1 className="text-lg font-bold mb-4" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Booking Konsultasi</h1>
+        <h1 className="text-lg font-bold mb-4" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Booking Konsultasi</h1>
 
         {/* Step 1: Pick Psychologist */}
         <p className="text-xs font-semibold mb-2" style={{ color: "#647488" }}>1. Pilih Psikolog</p>

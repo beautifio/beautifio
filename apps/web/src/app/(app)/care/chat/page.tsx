@@ -131,7 +131,7 @@ export default function CareChatPage() {
           style={{ background: 'none', border: 'none',
             color: '#1E2938', cursor: 'pointer',
             fontSize: 20, padding: 0 }}>←</button>
-        <h1 style={{ fontFamily: 'Poppins', fontSize: 18,
+        <h1 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 18,
           fontWeight: 700, color: '#1E2938', margin: 0 }}>
           Chat Beautifio Care
         </h1>
@@ -145,7 +145,7 @@ export default function CareChatPage() {
         <button onClick={() => setActiveTab('new')}
           style={{
             padding: '12px 16px', cursor: 'pointer',
-            fontFamily: 'Inter', fontSize: 13,
+            fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
             color: activeTab === 'new' ? '#084463' : '#647488',
             fontWeight: activeTab === 'new' ? 600 : 400,
             border: 'none', background: 'none',
@@ -158,7 +158,7 @@ export default function CareChatPage() {
         <button onClick={() => setActiveTab('history')}
           style={{
             padding: '12px 16px', cursor: 'pointer',
-            fontFamily: 'Inter', fontSize: 13,
+            fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
             color: activeTab === 'history' ? '#084463' : '#647488',
             fontWeight: activeTab === 'history' ? 600 : 400,
             border: 'none', background: 'none',
@@ -177,12 +177,12 @@ export default function CareChatPage() {
         {/* ─── TAB: NEW CHAT ─── */}
         {activeTab === 'new' && step === 1 && (
           <div>
-            <h2 style={{ fontFamily: 'Poppins', fontSize: 18,
+            <h2 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 18,
               fontWeight: 700, color: '#1E2938',
               margin: '0 0 8px' }}>
               Konsultasi apa yang kamu butuhkan?
             </h2>
-            <p style={{ fontFamily: 'Inter', fontSize: 13,
+            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
               color: '#647488', marginBottom: 20 }}>
               Pilih kategori konsultasi.
             </p>
@@ -214,12 +214,12 @@ export default function CareChatPage() {
                       {t.emoji}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontFamily: 'Poppins',
+                      <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif',
                         fontSize: 14, fontWeight: 700,
                         color: '#1E2938', margin: '0 0 2px' }}>
                         {t.label}
                       </p>
-                      <p style={{ fontFamily: 'Inter',
+                      <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                         fontSize: 12, color: '#647488',
                         margin: '0 0 6px' }}>{t.desc}</p>
                       <div style={{ display: 'flex',
@@ -228,7 +228,7 @@ export default function CareChatPage() {
                           borderRadius: '50%',
                           background: isOnline
                             ? '#22C55E' : '#9CA3AF' }} />
-                        <span style={{ fontFamily: 'Inter',
+                        <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                           fontSize: 11,
                           color: isOnline ? '#15803D' : '#9CA3AF' }}>
                           {isOnline ? 'Petugas tersedia' :
@@ -254,12 +254,12 @@ export default function CareChatPage() {
               <span style={{ fontSize: 28 }}>
                 {types.find(t => t.key === selectedType)?.emoji}
               </span>
-              <h2 style={{ fontFamily: 'Poppins', fontSize: 18,
+              <h2 style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 18,
                 fontWeight: 700, color: '#1E2938', margin: 0 }}>
                 {types.find(t => t.key === selectedType)?.label}
               </h2>
             </div>
-            <p style={{ fontFamily: 'Inter', fontSize: 13,
+            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
               color: '#647488', marginBottom: 20,
               lineHeight: 1.6 }}>
               Perkenalkan dirimu sebelum mulai chat.
@@ -274,7 +274,7 @@ export default function CareChatPage() {
                 placeholder: 'Jakarta, Bandung, dll' },
             ].map(field => (
               <div key={field.key} style={{ marginBottom: 14 }}>
-                <label style={{ fontFamily: 'Inter', fontSize: 12,
+                <label style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 12,
                   fontWeight: 600, color: '#647488',
                   display: 'block', marginBottom: 6 }}>
                   {field.label} {field.required && '*'}
@@ -286,7 +286,7 @@ export default function CareChatPage() {
                   style={{ width: '100%',
                     border: '1.5px solid #E2E8F0',
                     borderRadius: 12, padding: '12px 14px',
-                    fontFamily: 'Inter', fontSize: 13,
+                    fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                     boxSizing: 'border-box', outline: 'none' }} />
               </div>
             ))}
@@ -296,7 +296,7 @@ export default function CareChatPage() {
                 background: starting ? '#9CA3AF' : '#084463',
                 color: '#1E2938', border: 'none',
                 borderRadius: 14, padding: '14px',
-                fontFamily: 'Poppins', fontSize: 15,
+                fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 15,
                 fontWeight: 700,
                 cursor: starting ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 12px rgba(8,68,99,0.3)',
@@ -313,12 +313,12 @@ export default function CareChatPage() {
               <div style={{ textAlign: 'center',
                 padding: '48px 24px' }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>💬</div>
-                <p style={{ fontFamily: 'Poppins', fontSize: 16,
+                <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 16,
                   fontWeight: 700, color: '#1E2938',
                   marginBottom: 8 }}>
                   Belum ada sesi chat
                 </p>
-                <p style={{ fontFamily: 'Inter', fontSize: 13,
+                <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                   color: '#647488' }}>
                   Mulai chat baru dengan petugas kami
                 </p>
@@ -326,7 +326,7 @@ export default function CareChatPage() {
                   marginTop: 16, background: '#084463',
                   color: '#1E2938', border: 'none',
                   borderRadius: 12, padding: '12px 24px',
-                  fontFamily: 'Poppins', fontSize: 14,
+                  fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 14,
                   fontWeight: 600, cursor: 'pointer',
                 }}>
                   Mulai Chat Baru
@@ -362,7 +362,7 @@ export default function CareChatPage() {
                             {categoryEmoji[session.category] || '💬'}
                           </span>
                           <span style={{
-                            fontFamily: 'Poppins', fontSize: 14,
+                            fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 14,
                             fontWeight: 700, color: '#1E2938',
                             textTransform: 'capitalize' }}>
                             {session.category}
@@ -374,7 +374,7 @@ export default function CareChatPage() {
                             borderRadius: '50%',
                             background: statusColor[session.status]
                               || '#9CA3AF' }} />
-                          <span style={{ fontFamily: 'Inter',
+                          <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                             fontSize: 11,
                             color: statusColor[session.status]
                               || '#9CA3AF' }}>
@@ -384,7 +384,7 @@ export default function CareChatPage() {
                         </div>
                       </div>
                       {lastMsg && (
-                        <p style={{ fontFamily: 'Inter',
+                        <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                           fontSize: 12, color: '#647488',
                           margin: '0 0 10px', lineHeight: 1.5,
                           display: '-webkit-box',
@@ -397,11 +397,11 @@ export default function CareChatPage() {
                       <div style={{ display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center' }}>
-                        <span style={{ fontFamily: 'Inter',
+                        <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                           fontSize: 11, color: '#9CA3AF' }}>
                           {timeAgo}
                         </span>
-                        <span style={{ fontFamily: 'Inter',
+                        <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif',
                           fontSize: 12, color: '#084463',
                           fontWeight: 600 }}>
                           Lanjutkan →

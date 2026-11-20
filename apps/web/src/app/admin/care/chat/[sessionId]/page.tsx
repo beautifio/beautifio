@@ -111,13 +111,13 @@ export default function AdminCareReply() {
             color: '#FFFFFF', cursor: 'pointer',
             fontSize: 20, padding: 0 }}>←</button>
         <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: 'Poppins', fontSize: 15,
+          <p style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: 15,
             fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
             {session?.user_name || 'Memuat...'}
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {session?.category && (
-              <span style={{ fontFamily: 'Inter', fontSize: 11,
+              <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
                 color: 'rgba(255,255,255,0.75)' }}>
                 {categoryEmoji[session.category]} {session.category}
               </span>
@@ -127,7 +127,7 @@ export default function AdminCareReply() {
                 marginLeft: 8 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%',
                   background: statusColor[session.status] }} />
-                <span style={{ fontFamily: 'Inter', fontSize: 11,
+                <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
                   color: 'rgba(255,255,255,0.75)' }}>
                   {statusLabel[session.status]}
                 </span>
@@ -135,7 +135,7 @@ export default function AdminCareReply() {
             )}
           </div>
           {session?.user_phone && (
-            <p style={{ fontFamily: 'Inter', fontSize: 10,
+            <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 10,
               color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>
               📞 {session.user_phone}
               {session?.user_address && ` · ${session.user_address}`}
@@ -170,7 +170,7 @@ export default function AdminCareReply() {
               padding: '8px 16px' }}>
               <span style={{ background: '#F1F5F9',
                 borderRadius: 20, padding: '6px 14px',
-                fontFamily: 'Inter', fontSize: 11,
+                fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 11,
                 color: '#647488' }}>{msg.content}</span>
             </div>
           );
@@ -188,9 +188,9 @@ export default function AdminCareReply() {
                 padding: '10px 14px',
                 boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
               }}>
-                <p style={{ fontFamily: 'Inter', fontSize: 13,
+                <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13,
                   margin: 0, lineHeight: 1.6 }}>{msg.content}</p>
-                <p style={{ fontFamily: 'Inter', fontSize: 10,
+                <p style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 10,
                   margin: '4px 0 0',
                   color: isOfficer
                     ? 'rgba(255,255,255,0.6)' : '#9CA3AF',
@@ -222,7 +222,7 @@ export default function AdminCareReply() {
           rows={1}
           style={{ flex: 1, border: '1.5px solid #E2E8F0',
             borderRadius: 20, padding: '10px 16px',
-            fontFamily: 'Inter', fontSize: 14,
+            fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14,
             resize: 'none', outline: 'none',
             maxHeight: 100, overflow: 'auto' }} />
         <button onClick={sendMessage}

@@ -186,7 +186,7 @@ export default function VoucherMePage() {
           <ArrowLeft size={16} style={{ color: "#647488" }} />
         </button>
 
-        <h1 className="text-xl font-bold mb-4" style={{ color: "#1E2938", fontFamily: "Poppins, sans-serif" }}>Voucherku</h1>
+        <h1 className="text-xl font-bold mb-4" style={{ color: "#1E2938", fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>Voucherku</h1>
 
         {/* Tabs */}
         <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
